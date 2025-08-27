@@ -114,8 +114,8 @@ gitGraph
 ```sh
 arm config add registry ai-rules https://github.com/my-user/ai-rules --type git
 
-arm config add sink q --directories .amazonq/rules --rulesets ai-rules/amazonq-rules
-arm config add sink cursor --directories .cursor/rules --rulesets ai-rules/cursor-rules
+arm config add sink q --directories .amazonq/rules --include ai-rules/amazonq-* --exclude ai-rules/cursor-*
+arm config add sink cursor --directories .cursor/rules --include ai-rules/cursor-* --exclude ai-rules/amazonq-*
 ```
 
 `.armrc.json`
@@ -133,16 +133,22 @@ arm config add sink cursor --directories .cursor/rules --rulesets ai-rules/curso
             "directories": [
                 ".amazonq/rules"
             ],
-            "rulesets": [
-                "ai-rules/amazonq-rules"
+            "include": [
+                "ai-rules/amazonq-*"
+            ],
+            "exclude": [
+                "ai-rules/cursor-*"
             ]
         },
         "cursor": {
             "directories": [
                 ".cursor/rules"
             ],
-            "rulesets": [
-                "ai-rules/cursor-rules"
+            "include": [
+                "ai-rules/cursor-*"
+            ],
+            "exclude": [
+                "ai-rules/amazonq-*"
             ]
         }
     }
@@ -156,8 +162,8 @@ arm config add sink cursor --directories .cursor/rules --rulesets ai-rules/curso
 When a user installs without specifying a version, ARM finds the latest semver tag, and constrains the version within the latest major.
 
 ```sh
-arm install ai-rules/amazonq-rules --patterns rules/amazonq/*.md
-arm install ai-rules/cursor-rules --patterns rules/cursor/*.mdc
+arm install ai-rules/amazonq-rules --include rules/amazonq/*.md
+arm install ai-rules/cursor-rules --include rules/cursor/*.mdc
 ```
 
 `arm.json`
@@ -168,11 +174,11 @@ arm install ai-rules/cursor-rules --patterns rules/cursor/*.mdc
         "ai-rules": {
             "amazonq-rules": {
                 "version": "^2.1.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "version": "^2.1.0",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -190,14 +196,14 @@ arm install ai-rules/cursor-rules --patterns rules/cursor/*.mdc
                 "type": "git",
                 "constraint": "^2.1.0",
                 "resolved": "2.1.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "url": "https://github.com/my-user/ai-rules",
                 "type": "git",
                 "constraint": "^2.1.0",
                 "resolved": "2.1.0",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -244,7 +250,7 @@ registries/
                 .git/
                 ...
         rulesets/
-            sha256("rules/amazonq/*.mdc") <- ruleset cache key is hashed normalized patterns
+            sha256("rules/amazonq/*.mdc") <- ruleset cache key is hashed normalized include
                 6666666/
                     rules/
                         amazonq/
@@ -271,7 +277,7 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_patterns": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -284,7 +290,7 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_patterns": ["rules/amazonq/*.mdc"],
+      "normalized_ruleset_include": ["rules/amazonq/*.mdc"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -305,8 +311,8 @@ registries/
 specifying the full version string will pin (e.g., `=1.0.0`)
 
 ```sh
-arm install ai-rules/amazonq-rules@1.0.0 --patterns rules/amazonq/*.md
-arm install ai-rules/cursor-rules@1.0.0 --patterns rules/cursor/*.mdc
+arm install ai-rules/amazonq-rules@1.0.0 --include rules/amazonq/*.md
+arm install ai-rules/cursor-rules@1.0.0 --include rules/cursor/*.mdc
 ```
 
 `arm.json`
@@ -317,11 +323,11 @@ arm install ai-rules/cursor-rules@1.0.0 --patterns rules/cursor/*.mdc
         "ai-rules": {
             "amazonq-rules": {
                 "version": "=1.0.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "version": "=1.0.0",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -339,14 +345,14 @@ arm install ai-rules/cursor-rules@1.0.0 --patterns rules/cursor/*.mdc
                 "type": "git",
                 "constraint": "=1.0.0",
                 "resolved": "1.0.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "url": "https://github.com/my-user/ai-rules",
                 "type": "git",
                 "constraint": "=1.0.0",
                 "resolved": "1.0.0",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -412,7 +418,7 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_patterns": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -425,7 +431,7 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_patterns": ["rules/amazonq/*.md"],
+      "normalized_ruleset_include": ["rules/amazonq/*.md"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -446,8 +452,8 @@ registries/
 specifying the major and minor will pin within minor (e.g., `~1.0.0`)
 
 ```sh
-arm install ai-rules/amazonq-rules@1.0 --patterns rules/amazonq/*.md
-arm install ai-rules/cursor-rules@1.0 --patterns rules/cursor/*.mdc
+arm install ai-rules/amazonq-rules@1.0 --include rules/amazonq/*.md
+arm install ai-rules/cursor-rules@1.0 --include rules/cursor/*.mdc
 ```
 
 `arm.json`
@@ -458,11 +464,11 @@ arm install ai-rules/cursor-rules@1.0 --patterns rules/cursor/*.mdc
         "ai-rules": {
             "amazonq-rules": {
                 "version": "~1.0.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "version": "~1.0.0",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -480,14 +486,14 @@ arm install ai-rules/cursor-rules@1.0 --patterns rules/cursor/*.mdc
                 "type": "git",
                 "constraint": "~1.0.0",
                 "resolved": "1.0.1",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "url": "https://github.com/my-user/ai-rules",
                 "type": "git",
                 "constraint": "~1.0.0",
                 "resolved": "1.0.1",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -553,7 +559,7 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_patterns": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -566,7 +572,7 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_patterns": ["rules/amazonq/*.md"],
+      "normalized_ruleset_include": ["rules/amazonq/*.md"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -587,8 +593,8 @@ registries/
 specifying the major will allow within major (e.g., `^1.0.0`)
 
 ```sh
-arm install ai-rules/amazonq-rules@1 --patterns rules/amazonq/*.md
-arm install ai-rules/cursor-rules@1 --patterns rules/cursor/*.mdc
+arm install ai-rules/amazonq-rules@1 --include rules/amazonq/*.md
+arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
 ```
 
 `arm.json`
@@ -599,11 +605,11 @@ arm install ai-rules/cursor-rules@1 --patterns rules/cursor/*.mdc
         "ai-rules": {
             "amazonq-rules": {
                 "version": "^1.0.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "version": "^1.0.0",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -621,14 +627,14 @@ arm install ai-rules/cursor-rules@1 --patterns rules/cursor/*.mdc
                 "type": "git",
                 "constraint": "^1.0.0",
                 "resolved": "1.1.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "url": "https://github.com/my-user/ai-rules",
                 "type": "git",
                 "constraint": "^1.0.0",
                 "resolved": "1.1.0",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -702,7 +708,7 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_patterns": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -715,7 +721,7 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_patterns": ["rules/amazonq/*.md"],
+      "normalized_ruleset_include": ["rules/amazonq/*.md"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -736,8 +742,8 @@ registries/
 specifying a branch name will track the head of the branch
 
 ```sh
-arm install ai-rules/amazonq-rules@main --patterns rules/amazonq/*.md
-arm install ai-rules/cursor-rules@main --patterns rules/cursor/*.mdc
+arm install ai-rules/amazonq-rules@main --include rules/amazonq/*.md
+arm install ai-rules/cursor-rules@main --include rules/cursor/*.mdc
 ```
 
 `arm.json`
@@ -748,11 +754,11 @@ arm install ai-rules/cursor-rules@main --patterns rules/cursor/*.mdc
         "ai-rules": {
             "amazonq-rules": {
                 "version": "main",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "version": "main",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -770,14 +776,14 @@ arm install ai-rules/cursor-rules@main --patterns rules/cursor/*.mdc
                 "type": "git",
                 "constraint": "main",
                 "resolved": "6666666",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "url": "https://github.com/my-user/ai-rules",
                 "type": "git",
                 "constraint": "main",
                 "resolved": "6666666",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -855,7 +861,7 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_patterns": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -868,7 +874,7 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_patterns": ["rules/amazonq/*.md"],
+      "normalized_ruleset_include": ["rules/amazonq/*.md"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -887,8 +893,8 @@ registries/
 ## Uninstall
 
 ```sh
-arm install ai-rules/amazonq-rules --patterns rules/amazonq/*.md
-arm install ai-rules/cursor-rules --patterns rules/cursor/*.mdc
+arm install ai-rules/amazonq-rules --include rules/amazonq/*.md
+arm install ai-rules/cursor-rules --include rules/cursor/*.mdc
 arm uninstall ai-rules/cursor-rules
 ```
 
@@ -900,7 +906,7 @@ arm uninstall ai-rules/cursor-rules
         "ai-rules": {
             "amazonq-rules": {
                 "version": "^2.1.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             }
         }
     }
@@ -918,7 +924,7 @@ arm uninstall ai-rules/cursor-rules
                 "type": "git",
                 "constraint": "^2.1.0",
                 "resolved": "2.1.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             }
         }
     }
@@ -987,7 +993,7 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_patterns": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -1000,7 +1006,7 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_patterns": ["rules/amazonq/*.md"],
+      "normalized_ruleset_include": ["rules/amazonq/*.md"],
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -1019,8 +1025,8 @@ registries/
 ## Outdated
 
 ```sh
-arm install ai-rules/amazonq-rules@1 --patterns rules/amazonq/*.md
-arm install ai-rules/cursor-rules@1 --patterns rules/cursor/*.mdc
+arm install ai-rules/amazonq-rules@1 --include rules/amazonq/*.md
+arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
 arm outdated
 
 | Registry | Ruleset       | Current | Wanted | Latest  |
@@ -1034,8 +1040,8 @@ arm outdated
 ### 1. After Release of 1.0.0, Prior to Release of 1.1.0
 
 ```sh
-arm install ai-rules/amazonq-rules@1 --patterns rules/amazonq/*.md
-arm install ai-rules/cursor-rules@1 --patterns rules/cursor/*.mdc
+arm install ai-rules/amazonq-rules@1 --include rules/amazonq/*.md
+arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
 arm outdated
 
 All rulesets are up to date!
@@ -1049,11 +1055,11 @@ All rulesets are up to date!
         "ai-rules": {
             "amazonq-rules": {
                 "version": "^1.0.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "version": "^1.0.0",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -1071,14 +1077,14 @@ All rulesets are up to date!
                 "type": "git",
                 "constraint": "^1.0.0",
                 "resolved": "1.0.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "url": "https://github.com/my-user/ai-rules",
                 "type": "git",
                 "constraint": "^1.0.0",
                 "resolved": "1.0.0",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -1131,11 +1137,11 @@ arm update
         "ai-rules": {
             "amazonq-rules": {
                 "version": "^1.0.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "version": "^1.0.0",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -1153,14 +1159,14 @@ arm update
                 "type": "git",
                 "constraint": "^1.0.0",
                 "resolved": "1.1.0",
-                "patterns": ["rules/amazonq/*.md"]
+                "include": ["rules/amazonq/*.md"]
             },
             "cursor-rules": {
                 "url": "https://github.com/my-user/ai-rules",
                 "type": "git",
                 "constraint": "^1.0.0",
                 "resolved": "1.1.0",
-                "patterns": ["rules/cursor/*.mdc"]
+                "include": ["rules/cursor/*.mdc"]
             },
         }
     }
@@ -1234,15 +1240,15 @@ registries/
 ## Info
 
 ```sh
-arm install ai-rules/amazonq-rules@1 --patterns rules/amazonq/*.md
-arm install ai-rules/cursor-rules@1 --patterns rules/cursor/*.mdc
+arm install ai-rules/amazonq-rules@1 --include rules/amazonq/*.md
+arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
 arm info ai-rules/amazonq-rules
 ```
 
 ```
 Ruleset: ai-rules/amazonq-rules
 Registry: https://github.com/my-user/ai-rules (git)
-Patterns:
+include:
   - rules/amazonq/*.md
 Installed:
   - .amazonq/rules/arm/ai-rules/amazonq-rules/1.1.0/
@@ -1261,7 +1267,7 @@ arm info
 ```
 ai-rules/amazonq-rules
   Registry: https://github.com/my-user/ai-rules (git)
-  Patterns:
+  include:
     - rules/amazonq/*.md
   Installed:
     - .amazonq/rules/arm/ai-rules/amazonq-rules/1.1.0/
@@ -1271,7 +1277,7 @@ ai-rules/amazonq-rules
 
 ai-rules/cursor-rules
   Registry: https://github.com/my-user/ai-rules (git)
-  Patterns:
+  include:
     - rules/cursor/*.mdc
   Installed:
     - .cursor/rules/arm/ai-rules/cursor-rules/1.1.0/
@@ -1319,8 +1325,8 @@ Options:
 ## List
 
 ```sh
-arm install ai-rules/amazonq-rules@1 --patterns rules/amazonq/*.md
-arm install ai-rules/cursor-rules@1 --patterns rules/cursor/*.mdc
+arm install ai-rules/amazonq-rules@1 --include rules/amazonq/*.md
+arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
 arm list
 ```
 
