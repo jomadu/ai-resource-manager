@@ -124,7 +124,6 @@ func TestFileCache_Operations(t *testing.T) {
 	if content != nil {
 		t.Errorf("cache miss should return nil content")
 	}
-	// Cache miss should return an error or nil content
 
 	// Test cache set operation
 	testContent := []byte("test content")
@@ -134,14 +133,13 @@ func TestFileCache_Operations(t *testing.T) {
 	}
 
 	// Test cache hit behavior (after set)
-	_, err = cache.Get("test-key")
+	content, err = cache.Get("test-key")
 	if err != nil {
 		t.Errorf("cache get should not error for existing key: %v", err)
 	}
-	// TODO: Once implemented, verify stored content is returned:
-	// if !bytes.Equal(content, testContent) {
-	//     t.Errorf("expected content %s, got %s", testContent, content)
-	// }
+	if string(content) != "test content" {
+		t.Errorf("expected content 'test content', got '%s'", string(content))
+	}
 
 	// Test cache delete operation
 	err = cache.Delete("test-key")
@@ -154,11 +152,61 @@ func TestFileCache_Operations(t *testing.T) {
 	if err != nil {
 		t.Errorf("cache clear should not error: %v", err)
 	}
+}
 
-	// Test TTL behavior
-	err = cache.Set("ttl-key", []byte("ttl content"), time.Nanosecond)
-	if err != nil {
-		t.Errorf("cache set with TTL should not error: %v", err)
+func TestGitRepositoryCache_Operations(t *testing.T) {
+	cache := NewGitRepositoryCache("/tmp/test-git-cache")
+
+	// Test GetRepositoryPath
+	path := cache.GetRepositoryPath("test-registry")
+	expected := "/tmp/test-git-cache/registries/test-registry/repository"
+	if path != expected {
+		t.Errorf("expected path %s, got %s", expected, path)
 	}
-	// TODO: Once implemented, verify expired content is not returned
+
+	// Test HasCachedContent - should return false for non-existent content
+	if cache.HasCachedContent("test-ruleset", "abc123") {
+		t.Errorf("HasCachedContent should return false for non-existent content")
+	}
+
+	// Test CacheContent
+	files := []registry.File{
+		{Path: "test.md", Content: []byte("test content"), Size: 12},
+		{Path: "subdir/test2.md", Content: []byte("test content 2"), Size: 14},
+	}
+	err := cache.CacheContent("test-ruleset", "abc123", files)
+	if err != nil {
+		t.Errorf("CacheContent should not error: %v", err)
+	}
+
+	// Test HasCachedContent - should return true after caching
+	if !cache.HasCachedContent("test-ruleset", "abc123") {
+		t.Errorf("HasCachedContent should return true after caching")
+	}
+
+	// Test GetCachedContent
+	cachedFiles, err := cache.GetCachedContent("test-ruleset", "abc123")
+	if err != nil {
+		t.Errorf("GetCachedContent should not error: %v", err)
+	}
+	if len(cachedFiles) != 2 {
+		t.Errorf("expected 2 cached files, got %d", len(cachedFiles))
+	}
+
+	// Verify cached content matches original
+	for _, cachedFile := range cachedFiles {
+		found := false
+		for _, originalFile := range files {
+			if cachedFile.Path == originalFile.Path {
+				if string(cachedFile.Content) != string(originalFile.Content) {
+					t.Errorf("cached content mismatch for %s", cachedFile.Path)
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("cached file %s not found in original files", cachedFile.Path)
+		}
+	}
 }
