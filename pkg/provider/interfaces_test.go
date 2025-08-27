@@ -49,6 +49,15 @@ func TestGitRegistryProvider_CreateComponents(t *testing.T) {
 	if keyGenerator == nil {
 		t.Errorf("expected cache key generator, got nil")
 	}
+
+	// Test CreateCache
+	cache, err := provider.CreateCache("/tmp/test-cache")
+	if err != nil {
+		t.Errorf("unexpected error creating cache: %v", err)
+	}
+	if cache == nil {
+		t.Errorf("expected cache, got nil")
+	}
 }
 
 func TestGitRegistryProvider_ComponentTypes(t *testing.T) {
@@ -88,5 +97,15 @@ func TestGitRegistryProvider_ComponentTypes(t *testing.T) {
 	key := keyGenerator.RegistryKey("https://github.com/user/repo")
 	if len(key) != 64 {
 		t.Errorf("expected 64 character hash, got %d characters", len(key))
+	}
+
+	// Test that cache can be called
+	cache, _ := provider.CreateCache("/tmp/test")
+	path := cache.GetRepositoryPath("test-registry")
+	if path == "" {
+		t.Errorf("expected non-empty repository path")
+	}
+	if !cache.HasCachedContent("test", "abc123") {
+		// Should return false for non-existent content - this is expected
 	}
 }

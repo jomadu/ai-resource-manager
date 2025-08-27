@@ -1,5 +1,10 @@
 package config
 
+import (
+	"encoding/json"
+	"os"
+)
+
 // ConfigManager handles three-tier project configuration system
 type ConfigManager interface {
 	// LoadInfraConfig loads .armrc.json (registry definitions and sink mappings)
@@ -80,31 +85,64 @@ func NewFileConfigManager(infraPath, manifestPath, lockPath string) *FileConfigM
 }
 
 func (f *FileConfigManager) LoadInfraConfig() (*InfraConfig, error) {
-	// TODO: implement
-	return nil, nil
+	data, err := os.ReadFile(f.infraPath)
+	if os.IsNotExist(err) {
+		return &InfraConfig{Registries: make(map[string]*RegistryConfig), Sinks: make(map[string]*SinkConfig)}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var config InfraConfig
+	err = json.Unmarshal(data, &config)
+	return &config, err
 }
 
 func (f *FileConfigManager) SaveInfraConfig(config *InfraConfig) error {
-	// TODO: implement
-	return nil
+	data, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(f.infraPath, data, 0644)
 }
 
 func (f *FileConfigManager) LoadManifest() (*Manifest, error) {
-	// TODO: implement
-	return nil, nil
+	data, err := os.ReadFile(f.manifestPath)
+	if os.IsNotExist(err) {
+		return &Manifest{Rulesets: make(map[string]map[string]*ManifestEntry)}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var manifest Manifest
+	err = json.Unmarshal(data, &manifest)
+	return &manifest, err
 }
 
 func (f *FileConfigManager) SaveManifest(manifest *Manifest) error {
-	// TODO: implement
-	return nil
+	data, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(f.manifestPath, data, 0644)
 }
 
 func (f *FileConfigManager) LoadLockFile() (*LockFile, error) {
-	// TODO: implement
-	return nil, nil
+	data, err := os.ReadFile(f.lockPath)
+	if os.IsNotExist(err) {
+		return &LockFile{Rulesets: make(map[string]map[string]*LockEntry)}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var lockFile LockFile
+	err = json.Unmarshal(data, &lockFile)
+	return &lockFile, err
 }
 
 func (f *FileConfigManager) SaveLockFile(lockFile *LockFile) error {
-	// TODO: implement
-	return nil
+	data, err := json.MarshalIndent(lockFile, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(f.lockPath, data, 0644)
 }

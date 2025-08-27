@@ -13,6 +13,8 @@ type RegistryProvider interface {
 	CreateVersionResolver() (version.VersionResolver, error)
 	CreateContentResolver() (version.ContentResolver, error)
 	CreateCacheKeyGenerator() (cache.CacheKeyGenerator, error)
+	CreateRepositoryCache(basePath string) (cache.RepositoryCache, error)
+	CreateRulesetCache(basePath string) (cache.RulesetCache, error)
 }
 
 // GitRegistryProvider implements RegistryProvider for Git repositories
@@ -23,21 +25,25 @@ func NewGitRegistryProvider() *GitRegistryProvider {
 }
 
 func (g *GitRegistryProvider) CreateRegistry(config *config.RegistryConfig) (registry.Registry, error) {
-	// TODO: implement
 	return registry.NewGitRegistry(config.URL), nil
 }
 
 func (g *GitRegistryProvider) CreateVersionResolver() (version.VersionResolver, error) {
-	// TODO: implement
 	return version.NewSemVerResolver(), nil
 }
 
 func (g *GitRegistryProvider) CreateContentResolver() (version.ContentResolver, error) {
-	// TODO: implement
 	return version.NewGitContentResolver(), nil
 }
 
 func (g *GitRegistryProvider) CreateCacheKeyGenerator() (cache.CacheKeyGenerator, error) {
-	// TODO: implement
 	return cache.NewGitCacheKeyGenerator(), nil
+}
+
+func (g *GitRegistryProvider) CreateRepositoryCache(basePath string) (cache.RepositoryCache, error) {
+	return cache.NewGitRepositoryCache(basePath), nil
+}
+
+func (g *GitRegistryProvider) CreateRulesetCache(basePath string) (cache.RulesetCache, error) {
+	return cache.NewFileRulesetCache(basePath), nil
 }
