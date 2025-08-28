@@ -9,8 +9,8 @@ import (
 type Manager interface {
 	GetEntry(ctx context.Context, registry, ruleset string) (*Entry, error)
 	GetEntries(ctx context.Context) (map[string]map[string]Entry, error)
-	CreateEntry(ctx context.Context, registry, ruleset string, entry Entry) error
-	UpdateEntry(ctx context.Context, registry, ruleset string, entry Entry) error
+	CreateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error
+	UpdateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error
 	RemoveEntry(ctx context.Context, registry, ruleset string) error
 }
 
@@ -30,11 +30,11 @@ func (f *FileManager) GetEntries(ctx context.Context) (map[string]map[string]Ent
 	return nil, errors.New("not implemented")
 }
 
-func (f *FileManager) CreateEntry(ctx context.Context, registry, ruleset string, entry Entry) error {
+func (f *FileManager) CreateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error {
 	return errors.New("not implemented")
 }
 
-func (f *FileManager) UpdateEntry(ctx context.Context, registry, ruleset string, entry Entry) error {
+func (f *FileManager) UpdateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error {
 	return errors.New("not implemented")
 }
 

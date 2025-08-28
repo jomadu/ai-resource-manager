@@ -10,7 +10,7 @@ type Manager interface {
 	GetRegistries(ctx context.Context) (map[string]RegistryConfig, error)
 	GetSinks(ctx context.Context) (map[string]SinkConfig, error)
 	AddRegistry(ctx context.Context, name, url, registryType string) error
-	AddSink(ctx context.Context, name string, dirs []string, include, exclude []string) error
+	AddSink(ctx context.Context, name string, dirs, include, exclude []string) error
 	RemoveRegistry(ctx context.Context, name string) error
 	RemoveSink(ctx context.Context, name string) error
 }
@@ -35,7 +35,7 @@ func (f *FileManager) AddRegistry(ctx context.Context, name, url, registryType s
 	return errors.New("not implemented")
 }
 
-func (f *FileManager) AddSink(ctx context.Context, name string, dirs []string, include, exclude []string) error {
+func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, exclude []string) error {
 	return errors.New("not implemented")
 }
 
