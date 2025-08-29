@@ -5,9 +5,9 @@
 - [x] `resolver.Constraint` - Version constraint with semantic versioning
 - [x] `lockfile.LockFile` - Complete arm.lock structure
 - [x] `lockfile.Entry` - Single ruleset entry in lock file
-- [ ] `manifest.Manifest` - Complete arm.json structure
-- [ ] `manifest.Entry` - Single ruleset entry in manifest
-- [ ] `config.RCConfig` - Complete .armrc.json structure
+- [x] `manifest.Manifest` - Complete arm.json structure
+- [x] `manifest.Entry` - Single ruleset entry in manifest
+- [x] `config.RCConfig` - Complete .armrc.json structure
 
 ## Medium Priority
 
