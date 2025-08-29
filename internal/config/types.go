@@ -9,7 +9,8 @@ type RegistryConfig struct {
 // SinkConfig defines a sink configuration for rule deployment.
 type SinkConfig struct {
 	Directories []string `json:"directories"`
-	Rulesets    []string `json:"rulesets"`
+	Include     []string `json:"include"`
+	Exclude     []string `json:"exclude"`
 }
 
 // Config represents the .armrc.json configuration file structure.
