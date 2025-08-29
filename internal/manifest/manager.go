@@ -2,7 +2,9 @@ package manifest
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"os"
 )
 
 // Manager handles arm.json manifest file operations.
@@ -23,21 +25,97 @@ func NewFileManager() *FileManager {
 }
 
 func (f *FileManager) GetEntry(ctx context.Context, registry, ruleset string) (*Entry, error) {
-	return nil, errors.New("not implemented")
+	entries, err := f.GetEntries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	registryMap, exists := entries[registry]
+	if !exists {
+		return nil, errors.New("registry not found")
+	}
+	entry, exists := registryMap[ruleset]
+	if !exists {
+		return nil, errors.New("ruleset not found")
+	}
+	return &entry, nil
 }
 
 func (f *FileManager) GetEntries(ctx context.Context) (map[string]map[string]Entry, error) {
-	return nil, errors.New("not implemented")
+	data, err := os.ReadFile("arm.json")
+	if err != nil {
+		return nil, err
+	}
+	var manifest Manifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return nil, err
+	}
+	return manifest.Rulesets, nil
 }
 
 func (f *FileManager) CreateEntry(ctx context.Context, registry, ruleset string, entry Entry) error {
-	return errors.New("not implemented")
+	manifest, err := f.loadManifest()
+	if err != nil {
+		manifest = &Manifest{Rulesets: make(map[string]map[string]Entry)}
+	}
+	if manifest.Rulesets[registry] == nil {
+		manifest.Rulesets[registry] = make(map[string]Entry)
+	}
+	if _, exists := manifest.Rulesets[registry][ruleset]; exists {
+		return errors.New("entry already exists")
+	}
+	manifest.Rulesets[registry][ruleset] = entry
+	return f.saveManifest(manifest)
 }
 
 func (f *FileManager) UpdateEntry(ctx context.Context, registry, ruleset string, entry Entry) error {
-	return errors.New("not implemented")
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+	if manifest.Rulesets[registry] == nil {
+		return errors.New("registry not found")
+	}
+	if _, exists := manifest.Rulesets[registry][ruleset]; !exists {
+		return errors.New("entry not found")
+	}
+	manifest.Rulesets[registry][ruleset] = entry
+	return f.saveManifest(manifest)
 }
 
 func (f *FileManager) RemoveEntry(ctx context.Context, registry, ruleset string) error {
-	return errors.New("not implemented")
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+	if manifest.Rulesets[registry] == nil {
+		return errors.New("registry not found")
+	}
+	if _, exists := manifest.Rulesets[registry][ruleset]; !exists {
+		return errors.New("entry not found")
+	}
+	delete(manifest.Rulesets[registry], ruleset)
+	if len(manifest.Rulesets[registry]) == 0 {
+		delete(manifest.Rulesets, registry)
+	}
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) loadManifest() (*Manifest, error) {
+	data, err := os.ReadFile("arm.json")
+	if err != nil {
+		return nil, err
+	}
+	var manifest Manifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return nil, err
+	}
+	return &manifest, nil
+}
+
+func (f *FileManager) saveManifest(manifest *Manifest) error {
+	data, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile("arm.json", data, 0o644)
 }
