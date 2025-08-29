@@ -16,9 +16,11 @@ type Service interface {
 	InstallFromManifest(ctx context.Context) error
 	Uninstall(ctx context.Context, registry, ruleset string) error
 	Update(ctx context.Context, registry, ruleset string) error
+	UpdateFromManifest(ctx context.Context) error
 	Outdated(ctx context.Context) ([]OutdatedRuleset, error)
 	List(ctx context.Context) ([]InstalledRuleset, error)
 	Info(ctx context.Context, registry, ruleset string) (*RulesetInfo, error)
+	InfoAll(ctx context.Context) ([]*RulesetInfo, error)
 	Version() VersionInfo
 }
 
@@ -98,6 +100,17 @@ func (a *ArmService) Info(ctx context.Context, registry, ruleset string) (*Rules
 	// 4. Find matching sinks based on include/exclude patterns
 	// 5. List installation directories
 	// 6. Return formatted info structure
+	return nil, errors.New("not implemented")
+}
+
+func (a *ArmService) UpdateFromManifest(ctx context.Context) error {
+	// 1. For each ruleset in manifest, call Update()
+	return errors.New("not implemented")
+}
+
+func (a *ArmService) InfoAll(ctx context.Context) ([]*RulesetInfo, error) {
+	// 1. Get all installed rulesets from List()
+	// 2. For each ruleset, call Info() and collect results
 	return nil, errors.New("not implemented")
 }
 
