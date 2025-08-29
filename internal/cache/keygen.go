@@ -1,6 +1,10 @@
 package cache
 
-import "github.com/jomadu/ai-rules-manager/internal/arm"
+import (
+	"strings"
+
+	"github.com/jomadu/ai-rules-manager/internal/arm"
+)
 
 // KeyGenerator creates consistent hash keys for cache storage.
 type KeyGenerator interface {
@@ -17,9 +21,18 @@ func NewGitKeyGen() *GitKeyGen {
 }
 
 func (d *GitKeyGen) RegistryKey(url, registryType string) string {
-	return "" // TODO: implement SHA256 hash
+	normalizedURL := normalizeURL(url)
+	normalizedType := strings.ToLower(registryType)
+	input := normalizedURL + normalizedType
+	return sha256Hash(input)
 }
 
 func (d *GitKeyGen) RulesetKey(selector arm.ContentSelector) string {
-	return "" // TODO: implement SHA256 hash
+	normalizedIncludes := normalizePatterns(selector.Include)
+	normalizedExcludes := normalizePatterns(selector.Exclude)
+	input := strings.Join(normalizedIncludes, ",")
+	if len(normalizedExcludes) > 0 {
+		input += "|" + strings.Join(normalizedExcludes, ",")
+	}
+	return sha256Hash(input)
 }
