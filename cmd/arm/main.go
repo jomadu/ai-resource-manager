@@ -38,9 +38,9 @@ func init() {
 }
 
 var installCmd = &cobra.Command{
-	Use:   "install [ruleset]",
-	Short: "Install a ruleset",
-	Long:  "Install a ruleset from a registry. If no ruleset is specified, installs from manifest.",
+	Use:   "install [ruleset...]",
+	Short: "Install rulesets",
+	Long:  "Install rulesets from a registry. If no ruleset is specified, installs from manifest.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 
@@ -51,10 +51,13 @@ var installCmd = &cobra.Command{
 		include, _ := cmd.Flags().GetStringSlice("include")
 		exclude, _ := cmd.Flags().GetStringSlice("exclude")
 
-		// Parse registry/ruleset[@version]
-		registry, ruleset, version := parseRulesetArg(args[0])
-
-		return armService.Install(ctx, registry, ruleset, version, include, exclude)
+		for _, arg := range args {
+			registry, ruleset, version := parseRulesetArg(arg)
+			if err := armService.Install(ctx, registry, ruleset, version, include, exclude); err != nil {
+				return err
+			}
+		}
+		return nil
 	},
 }
 
@@ -70,29 +73,23 @@ var uninstallCmd = &cobra.Command{
 }
 
 var updateCmd = &cobra.Command{
-	Use:   "update [ruleset]",
+	Use:   "update [ruleset...]",
 	Short: "Update rulesets",
 	Long:  "Update rulesets. If no ruleset is specified, updates all rulesets.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 
 		if len(args) == 0 {
-			// Update all - iterate through installed rulesets
-			installed, err := armService.List(ctx)
-			if err != nil {
-				return err
-			}
-
-			for _, ruleset := range installed {
-				if err := armService.Update(ctx, ruleset.Registry, ruleset.Name); err != nil {
-					return err
-				}
-			}
-			return nil
+			return armService.UpdateFromManifest(ctx)
 		}
 
-		registry, ruleset, _ := parseRulesetArg(args[0])
-		return armService.Update(ctx, registry, ruleset)
+		for _, arg := range args {
+			registry, ruleset, _ := parseRulesetArg(arg)
+			if err := armService.Update(ctx, registry, ruleset); err != nil {
+				return err
+			}
+		}
+		return nil
 	},
 }
 
@@ -143,37 +140,38 @@ var listCmd = &cobra.Command{
 }
 
 var infoCmd = &cobra.Command{
-	Use:   "info [ruleset]",
+	Use:   "info [ruleset...]",
 	Short: "Show ruleset information",
-	Long:  "Show information about a specific ruleset or all installed rulesets.",
+	Long:  "Show information about specific rulesets or all installed rulesets.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 
 		if len(args) == 0 {
-			// Show info for all rulesets
-			installed, err := armService.List(ctx)
+			infos, err := armService.InfoAll(ctx)
 			if err != nil {
 				return err
 			}
 
-			for _, ruleset := range installed {
-				info, err := armService.Info(ctx, ruleset.Registry, ruleset.Name)
-				if err != nil {
-					return err
-				}
+			for _, info := range infos {
 				printRulesetInfo(info, false)
 				fmt.Println()
 			}
 			return nil
 		}
 
-		registry, ruleset, _ := parseRulesetArg(args[0])
-		info, err := armService.Info(ctx, registry, ruleset)
-		if err != nil {
-			return err
-		}
+		for i, arg := range args {
+			registry, ruleset, _ := parseRulesetArg(arg)
+			info, err := armService.Info(ctx, registry, ruleset)
+			if err != nil {
+				return err
+			}
 
-		printRulesetInfo(info, true)
+			detailed := len(args) == 1
+			printRulesetInfo(info, detailed)
+			if i < len(args)-1 {
+				fmt.Println()
+			}
+		}
 		return nil
 	},
 }
