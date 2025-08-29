@@ -8,8 +8,9 @@ import (
 )
 
 func normalizeURL(url string) string {
-	normalized := strings.ToLower(strings.TrimSuffix(url, "/"))
-	return normalized
+	url = strings.TrimSuffix(url, ".git")
+	url = strings.TrimSuffix(url, "/")
+	return strings.ToLower(url)
 }
 
 func normalizePatterns(patterns []string) []string {
