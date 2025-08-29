@@ -23,7 +23,10 @@ func main() {
 	// Initialize cache and registry components
 	keyGen := cache.NewGitKeyGen()
 	fileCache := cache.NewFileCache()
-	gitRepo := registry.NewGitRepo()
+	// TODO: This should be dynamically determined based on the registry URL
+	// For now, using a placeholder path that matches the PRD cache structure
+	repoWorkDir := "/tmp/arm-repo" // This will be replaced with proper cache path
+	gitRepo := registry.NewGitRepo(repoWorkDir)
 	gitRegistry := registry.NewGitRegistry(fileCache, gitRepo, keyGen)
 
 	// Create the main ARM service
