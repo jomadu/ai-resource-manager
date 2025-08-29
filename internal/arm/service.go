@@ -13,6 +13,7 @@ import (
 // Service provides the main ARM functionality for managing AI rule rulesets.
 type Service interface {
 	Install(ctx context.Context, ruleset, version string, include, exclude []string) error
+	InstallFromManifest(ctx context.Context) error
 	Uninstall(ctx context.Context, ruleset string) error
 	Update(ctx context.Context, ruleset string) error
 	Outdated(ctx context.Context) ([]OutdatedRuleset, error)
@@ -45,6 +46,10 @@ func NewArmService(
 }
 
 func (a *ArmService) Install(ctx context.Context, ruleset, version string, include, exclude []string) error {
+	return errors.New("not implemented")
+}
+
+func (a *ArmService) InstallFromManifest(ctx context.Context) error {
 	return errors.New("not implemented")
 }
 

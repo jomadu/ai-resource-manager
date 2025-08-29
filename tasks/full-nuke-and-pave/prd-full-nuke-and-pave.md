@@ -157,6 +157,172 @@ arm config add sink cursor --directories .cursor/rules --include ai-rules/cursor
 
 ## Install
 
+### Installing from Manifest
+
+When no arguments are provided, ARM installs all rulesets from the existing manifest and lock files.
+
+#### With Both arm.json and arm.lock Present
+
+```sh
+arm install
+```
+
+Existing `arm.json`
+
+```json
+{
+    "rulesets": {
+        "ai-rules": {
+            "amazonq-rules": {
+                "version": "^2.1.0",
+                "include": ["rules/amazonq/*.md"]
+            },
+            "cursor-rules": {
+                "version": "^2.1.0",
+                "include": ["rules/cursor/*.mdc"]
+            }
+        }
+    }
+}
+```
+
+Existing `arm.lock`
+
+```json
+{
+    "rulesets": {
+        "ai-rules": {
+            "amazonq-rules": {
+                "url": "https://github.com/my-user/ai-rules",
+                "type": "git",
+                "constraint": "^2.1.0",
+                "resolved": "2.1.0",
+                "include": ["rules/amazonq/*.md"]
+            },
+            "cursor-rules": {
+                "url": "https://github.com/my-user/ai-rules",
+                "type": "git",
+                "constraint": "^2.1.0",
+                "resolved": "2.1.0",
+                "include": ["rules/cursor/*.mdc"]
+            }
+        }
+    }
+}
+```
+
+`./`
+```
+.armrc.json
+arm.json
+arm.lock
+.cursor/
+    rules/
+        arm/
+            ai-rules/
+                cursor-rules/
+                    2.1.0/
+                        rules/
+                            cursor/
+                                grug-brained-dev.mdc
+                                generate-tasks.mdc
+                                process-tasks.mdc
+                                clean-code.mdc
+.amazonq/
+    rules/
+        arm/
+            ai-rules/
+                amazonq-rules/
+                    2.1.0/
+                        rules/
+                            amazonq/
+                                grug-brained-dev.md
+                                generate-tasks.md
+                                process-tasks.md
+                                clean-code.md
+```
+
+#### With Only arm.lock Present
+
+```sh
+arm install
+```
+
+Existing `arm.lock`
+
+```json
+{
+    "rulesets": {
+        "ai-rules": {
+            "amazonq-rules": {
+                "url": "https://github.com/my-user/ai-rules",
+                "type": "git",
+                "constraint": "^2.1.0",
+                "resolved": "2.1.0",
+                "include": ["rules/amazonq/*.md"]
+            },
+            "cursor-rules": {
+                "url": "https://github.com/my-user/ai-rules",
+                "type": "git",
+                "constraint": "^2.1.0",
+                "resolved": "2.1.0",
+                "include": ["rules/cursor/*.mdc"]
+            }
+        }
+    }
+}
+```
+
+`arm.json` (generated from lock file)
+
+```json
+{
+    "rulesets": {
+        "ai-rules": {
+            "amazonq-rules": {
+                "version": "^2.1.0",
+                "include": ["rules/amazonq/*.md"]
+            },
+            "cursor-rules": {
+                "version": "^2.1.0",
+                "include": ["rules/cursor/*.mdc"]
+            }
+        }
+    }
+}
+```
+
+`./`
+```
+.armrc.json
+arm.json
+arm.lock
+.cursor/
+    rules/
+        arm/
+            ai-rules/
+                cursor-rules/
+                    2.1.0/
+                        rules/
+                            cursor/
+                                grug-brained-dev.mdc
+                                generate-tasks.mdc
+                                process-tasks.mdc
+                                clean-code.mdc
+.amazonq/
+    rules/
+        arm/
+            ai-rules/
+                amazonq-rules/
+                    2.1.0/
+                        rules/
+                            amazonq/
+                                grug-brained-dev.md
+                                generate-tasks.md
+                                process-tasks.md
+                                clean-code.md
+```
+
 ### Specifying No Version
 
 When a user installs without specifying a version, ARM finds the latest semver tag, and constrains the version within the latest major.
@@ -1126,7 +1292,9 @@ arm outdated
 | ai-rules | amazonq-rules | 1.0.0   | 1.1.0  | 1.1.0   |
 | ai-rules | cursor-rules  | 1.0.0   | 1.1.0  | 1.1.0   |
 
-arm update
+arm update ai-rules/amazonq-rules
+arm update ai-rules/cursor-rules
+# equivilent to `arm update`, which updates all.
 ```
 
 `arm.json` (unchanged)
