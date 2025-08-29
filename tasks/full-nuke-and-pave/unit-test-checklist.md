@@ -8,6 +8,7 @@
 - [x] `manifest.Manifest` - Complete arm.json structure
 - [x] `manifest.Entry` - Single ruleset entry in manifest
 - [x] `config.RCConfig` - Complete .armrc.json structure
+- [x] `installer.FileInstaller`
 
 ## Medium Priority
 

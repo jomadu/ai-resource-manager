@@ -1,0 +1,153 @@
+package installer
+
+import (
+	"context"
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+func TestNewFileInstaller(t *testing.T) {
+	installer := NewFileInstaller()
+	if installer == nil {
+		t.Error("Expected non-nil installer")
+	}
+}
+
+func TestFileInstaller_Install(t *testing.T) {
+	installer := NewFileInstaller()
+	ctx := context.Background()
+
+	tempDir, err := os.MkdirTemp("", "installer_test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer func() { _ = os.RemoveAll(tempDir) }()
+
+	files := []File{
+		{Path: "rule1.json", Content: []byte(`{"rule": "test"}`), Size: 16},
+		{Path: "subdir/rule2.json", Content: []byte(`{"rule": "nested"}`), Size: 18},
+	}
+
+	err = installer.Install(ctx, tempDir, "test-ruleset", "1.0.0", files)
+	if err != nil {
+		t.Errorf("Install failed: %v", err)
+	}
+
+	// Verify files were created in ruleset/version directory
+	rule1Path := filepath.Join(tempDir, "test-ruleset", "1.0.0", "rule1.json")
+	if _, err := os.Stat(rule1Path); os.IsNotExist(err) {
+		t.Error("Expected rule1.json to be created")
+	}
+
+	rule2Path := filepath.Join(tempDir, "test-ruleset", "1.0.0", "subdir", "rule2.json")
+	if _, err := os.Stat(rule2Path); os.IsNotExist(err) {
+		t.Error("Expected subdir/rule2.json to be created")
+	}
+
+	// Verify content
+	content, err := os.ReadFile(rule1Path)
+	if err != nil {
+		t.Errorf("Failed to read rule1.json: %v", err)
+	}
+	if string(content) != `{"rule": "test"}` {
+		t.Errorf("Expected content %q, got %q", `{"rule": "test"}`, string(content))
+	}
+}
+
+func TestFileInstaller_Uninstall(t *testing.T) {
+	installer := NewFileInstaller()
+	ctx := context.Background()
+
+	tempDir, err := os.MkdirTemp("", "installer_test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer func() { _ = os.RemoveAll(tempDir) }()
+
+	// Create test files
+	rulesetDir := filepath.Join(tempDir, "test-ruleset")
+	_ = os.MkdirAll(rulesetDir, 0o755)
+	_ = os.WriteFile(filepath.Join(rulesetDir, "rule.json"), []byte("test"), 0o644)
+
+	err = installer.Uninstall(ctx, tempDir, "test-ruleset")
+	if err != nil {
+		t.Errorf("Uninstall failed: %v", err)
+	}
+
+	// Verify ruleset directory was removed
+	if _, err := os.Stat(rulesetDir); !os.IsNotExist(err) {
+		t.Error("Expected ruleset directory to be removed")
+	}
+}
+
+func TestFileInstaller_ListInstalled(t *testing.T) {
+	installer := NewFileInstaller()
+	ctx := context.Background()
+
+	tempDir, err := os.MkdirTemp("", "installer_test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer func() { _ = os.RemoveAll(tempDir) }()
+
+	// Create test installations with version directories
+	ruleset1Dir := filepath.Join(tempDir, "ruleset1", "1.0.0")
+	ruleset2Dir := filepath.Join(tempDir, "ruleset2", "2.1.0")
+	_ = os.MkdirAll(ruleset1Dir, 0o755)
+	_ = os.MkdirAll(ruleset2Dir, 0o755)
+
+	installations, err := installer.ListInstalled(ctx, tempDir)
+	if err != nil {
+		t.Errorf("ListInstalled failed: %v", err)
+	}
+
+	if len(installations) != 2 {
+		t.Errorf("Expected 2 installations, got %d", len(installations))
+	}
+
+	// Verify installation details
+	found := make(map[string]string)
+	for _, inst := range installations {
+		found[inst.Ruleset] = inst.Version
+	}
+
+	if found["ruleset1"] != "1.0.0" {
+		t.Errorf("Expected ruleset1 version 1.0.0, got %s", found["ruleset1"])
+	}
+	if found["ruleset2"] != "2.1.0" {
+		t.Errorf("Expected ruleset2 version 2.1.0, got %s", found["ruleset2"])
+	}
+}
+
+func TestFileInstaller_InstallEmptyFiles(t *testing.T) {
+	installer := NewFileInstaller()
+	ctx := context.Background()
+
+	tempDir, err := os.MkdirTemp("", "installer_test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer func() { _ = os.RemoveAll(tempDir) }()
+
+	err = installer.Install(ctx, tempDir, "empty-ruleset", "1.0.0", []File{})
+	if err != nil {
+		t.Errorf("Install with empty files failed: %v", err)
+	}
+}
+
+func TestFileInstaller_InstallInvalidPath(t *testing.T) {
+	installer := NewFileInstaller()
+	ctx := context.Background()
+
+	files := []File{{Path: "test.json", Content: []byte("test"), Size: 4}}
+
+	err := installer.Install(ctx, "/nonexistent/path", "test-ruleset", "1.0.0", files)
+	if err == nil {
+		t.Error("Expected error for invalid path")
+	}
+}
+
+func TestFileInstaller_ImplementsInterface(t *testing.T) {
+	var _ Installer = (*FileInstaller)(nil)
+}
