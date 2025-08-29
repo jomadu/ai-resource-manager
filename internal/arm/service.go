@@ -12,13 +12,13 @@ import (
 
 // Service provides the main ARM functionality for managing AI rule rulesets.
 type Service interface {
-	Install(ctx context.Context, ruleset, version string, include, exclude []string) error
+	Install(ctx context.Context, registry, ruleset, version string, include, exclude []string) error
 	InstallFromManifest(ctx context.Context) error
-	Uninstall(ctx context.Context, ruleset string) error
-	Update(ctx context.Context, ruleset string) error
+	Uninstall(ctx context.Context, registry, ruleset string) error
+	Update(ctx context.Context, registry, ruleset string) error
 	Outdated(ctx context.Context) ([]OutdatedRuleset, error)
 	List(ctx context.Context) ([]InstalledRuleset, error)
-	Info(ctx context.Context, ruleset string) (*RulesetInfo, error)
+	Info(ctx context.Context, registry, ruleset string) (*RulesetInfo, error)
 	Version() VersionInfo
 }
 
@@ -30,22 +30,17 @@ type ArmService struct {
 	installer       installer.Installer
 }
 
-// NewArmService creates a new ARM service instance.
-func NewArmService(
-	configManager config.Manager,
-	manifestManager manifest.Manager,
-	lockFileManager lockfile.Manager,
-	installer installer.Installer,
-) *ArmService {
+// NewArmService creates a new ARM service instance with all dependencies.
+func NewArmService() *ArmService {
 	return &ArmService{
-		configManager:   configManager,
-		manifestManager: manifestManager,
-		lockFileManager: lockFileManager,
-		installer:       installer,
+		configManager:   config.NewFileManager(),
+		manifestManager: manifest.NewFileManager(),
+		lockFileManager: lockfile.NewFileManager(),
+		installer:       installer.NewFileInstaller(),
 	}
 }
 
-func (a *ArmService) Install(ctx context.Context, ruleset, version string, include, exclude []string) error {
+func (a *ArmService) Install(ctx context.Context, registry, ruleset, version string, include, exclude []string) error {
 	return errors.New("not implemented")
 }
 
@@ -53,11 +48,11 @@ func (a *ArmService) InstallFromManifest(ctx context.Context) error {
 	return errors.New("not implemented")
 }
 
-func (a *ArmService) Uninstall(ctx context.Context, ruleset string) error {
+func (a *ArmService) Uninstall(ctx context.Context, registry, ruleset string) error {
 	return errors.New("not implemented")
 }
 
-func (a *ArmService) Update(ctx context.Context, ruleset string) error {
+func (a *ArmService) Update(ctx context.Context, registry, ruleset string) error {
 	return errors.New("not implemented")
 }
 
@@ -69,7 +64,7 @@ func (a *ArmService) List(ctx context.Context) ([]InstalledRuleset, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (a *ArmService) Info(ctx context.Context, ruleset string) (*RulesetInfo, error) {
+func (a *ArmService) Info(ctx context.Context, registry, ruleset string) (*RulesetInfo, error) {
 	return nil, errors.New("not implemented")
 }
 
