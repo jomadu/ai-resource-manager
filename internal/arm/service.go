@@ -2,8 +2,8 @@ package arm
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/jomadu/ai-rules-manager/internal/config"
 	"github.com/jomadu/ai-rules-manager/internal/installer"
@@ -11,6 +11,7 @@ import (
 	"github.com/jomadu/ai-rules-manager/internal/manifest"
 	"github.com/jomadu/ai-rules-manager/internal/registry"
 	"github.com/jomadu/ai-rules-manager/internal/types"
+	"github.com/jomadu/ai-rules-manager/internal/version"
 )
 
 // Service provides the main ARM functionality for managing AI rule rulesets.
@@ -24,7 +25,7 @@ type Service interface {
 	List(ctx context.Context) ([]InstalledRuleset, error)
 	Info(ctx context.Context, registry, ruleset string) (*RulesetInfo, error)
 	InfoAll(ctx context.Context) ([]*RulesetInfo, error)
-	Version() VersionInfo
+	Version() version.VersionInfo
 }
 
 // ArmService orchestrates all ARM operations.
@@ -120,67 +121,257 @@ func (a *ArmService) Install(ctx context.Context, registryName, ruleset, version
 }
 
 func (a *ArmService) InstallFromManifest(ctx context.Context) error {
-	// 1. Check if arm.json exists, if not check arm.lock
-	// 2. If only arm.lock exists, generate arm.json from lockfile
-	// 3. For each ruleset in manifest, call Install()
-	return errors.New("not implemented")
+	// Try to get manifest entries
+	manifestEntries, manifestErr := a.manifestManager.GetEntries(ctx)
+
+	// If manifest doesn't exist, try to generate from lockfile
+	if manifestErr != nil {
+		lockEntries, lockErr := a.lockFileManager.GetEntries(ctx)
+		if lockErr != nil {
+			return fmt.Errorf("neither arm.json nor arm.lock found")
+		}
+
+		// Generate manifest from lockfile
+		for registryName, rulesets := range lockEntries {
+			for rulesetName, lockEntry := range rulesets {
+				manifestEntry := manifest.Entry{
+					Version: lockEntry.Constraint,
+					Include: lockEntry.Include,
+					Exclude: lockEntry.Exclude,
+				}
+				if err := a.manifestManager.CreateEntry(ctx, registryName, rulesetName, manifestEntry); err != nil {
+					return fmt.Errorf("failed to create manifest entry: %w", err)
+				}
+			}
+		}
+		manifestEntries, _ = a.manifestManager.GetEntries(ctx)
+	}
+
+	// Install each ruleset from manifest
+	for registryName, rulesets := range manifestEntries {
+		for rulesetName, entry := range rulesets {
+			if err := a.Install(ctx, registryName, rulesetName, entry.Version, entry.Include, entry.Exclude); err != nil {
+				return fmt.Errorf("failed to install %s/%s: %w", registryName, rulesetName, err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (a *ArmService) Uninstall(ctx context.Context, registry, ruleset string) error {
-	// 1. Remove ruleset entry from manifest
-	// 2. Remove ruleset entry from lockfile
-	// 3. Remove installed files from sink directories
-	// 4. Clean up empty ARM directories if no rulesets remain
-	return errors.New("not implemented")
+	// Remove from manifest
+	if err := a.manifestManager.RemoveEntry(ctx, registry, ruleset); err != nil {
+		return fmt.Errorf("failed to remove from manifest: %w", err)
+	}
+
+	// Remove from lockfile
+	if err := a.lockFileManager.RemoveEntry(ctx, registry, ruleset); err != nil {
+		return fmt.Errorf("failed to remove from lockfile: %w", err)
+	}
+
+	// Remove installed files from sink directories
+	sinks, err := a.configManager.GetSinks(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get sinks: %w", err)
+	}
+
+	for _, sink := range sinks {
+		for _, dir := range sink.Directories {
+			if err := a.installer.Uninstall(ctx, dir, ruleset); err != nil {
+				return fmt.Errorf("failed to uninstall from %s: %w", dir, err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (a *ArmService) Update(ctx context.Context, registry, ruleset string) error {
-	// 1. Get current constraint and include/exclude from manifest
-	// 2. Resolve latest version within constraint from registry
-	// 3. If newer version available, call Install() with new version
-	return errors.New("not implemented")
+	manifestEntry, err := a.manifestManager.GetEntry(ctx, registry, ruleset)
+	if err != nil {
+		return fmt.Errorf("failed to get manifest entry: %w", err)
+	}
+
+	return a.Install(ctx, registry, ruleset, manifestEntry.Version, manifestEntry.Include, manifestEntry.Exclude)
 }
 
 func (a *ArmService) Outdated(ctx context.Context) ([]OutdatedRuleset, error) {
-	// 1. For each ruleset in lockfile:
-	//    - Get current resolved version
-	//    - Calculate wanted version within constraint
-	//    - Get latest available version from registry
-	// 2. Return table data with Current/Wanted/Latest columns
-	// 3. Show "All rulesets are up to date!" if none outdated
-	return nil, errors.New("not implemented")
+	lockEntries, err := a.lockFileManager.GetEntries(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get lockfile entries: %w", err)
+	}
+
+	registryConfigs, err := a.configManager.GetRegistries(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get registries: %w", err)
+	}
+
+	// Pre-create registry clients
+	registryClients := make(map[string]registry.Registry)
+	for registryName, registryConfig := range registryConfigs {
+		if client, err := registry.NewRegistry(registryName, registryConfig); err == nil {
+			registryClients[registryName] = client
+		}
+	}
+
+	var outdated []OutdatedRuleset
+	for registryName, rulesets := range lockEntries {
+		registryClient, exists := registryClients[registryName]
+		if !exists {
+			continue
+		}
+
+		for rulesetName, lockEntry := range rulesets {
+			versions, err := registryClient.ListVersions(ctx)
+			if err != nil || len(versions) == 0 {
+				continue
+			}
+			latestVersion := versions[len(versions)-1] // Assume last version is latest
+
+			wantedVersion, err := registryClient.ResolveVersion(ctx, lockEntry.Constraint)
+			if err != nil {
+				continue
+			}
+
+			if lockEntry.Resolved != latestVersion.ID || lockEntry.Resolved != wantedVersion.ID {
+				outdated = append(outdated, OutdatedRuleset{
+					Registry: registryName,
+					Name:     rulesetName,
+					Current:  lockEntry.Resolved,
+					Wanted:   wantedVersion.ID,
+					Latest:   latestVersion.ID,
+				})
+			}
+		}
+	}
+
+	return outdated, nil
 }
 
 func (a *ArmService) List(ctx context.Context) ([]InstalledRuleset, error) {
-	// 1. Read lockfile to get all installed rulesets
-	// 2. Return list in format: registry/ruleset@version
-	// 3. Sort by registry then ruleset name
-	return nil, errors.New("not implemented")
+	lockEntries, err := a.lockFileManager.GetEntries(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get lockfile entries: %w", err)
+	}
+
+	var rulesets []InstalledRuleset
+	for registryName, rulesetMap := range lockEntries {
+		for rulesetName, entry := range rulesetMap {
+			rulesets = append(rulesets, InstalledRuleset{
+				Registry: registryName,
+				Name:     rulesetName,
+				Version:  entry.Resolved,
+				Include:  entry.Include,
+				Exclude:  entry.Exclude,
+			})
+		}
+	}
+
+	// Sort by registry then ruleset name
+	sort.Slice(rulesets, func(i, j int) bool {
+		if rulesets[i].Registry != rulesets[j].Registry {
+			return rulesets[i].Registry < rulesets[j].Registry
+		}
+		return rulesets[i].Name < rulesets[j].Name
+	})
+
+	return rulesets, nil
 }
 
 func (a *ArmService) Info(ctx context.Context, registry, ruleset string) (*RulesetInfo, error) {
-	// 1. Get ruleset details from lockfile and manifest
-	// 2. Get registry URL and type from config
-	// 3. Calculate version information (constraint/resolved/wanted/latest)
-	// 4. Find matching sinks based on include/exclude patterns
-	// 5. List installation directories
-	// 6. Return formatted info structure
-	return nil, errors.New("not implemented")
+	// Get lockfile entry
+	lockEntry, err := a.lockFileManager.GetEntry(ctx, registry, ruleset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get lockfile entry: %w", err)
+	}
+
+	// Get manifest entry
+	manifestEntry, err := a.manifestManager.GetEntry(ctx, registry, ruleset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get manifest entry: %w", err)
+	}
+
+	// Get registry config
+	registries, err := a.configManager.GetRegistries(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get registries: %w", err)
+	}
+	registryConfig := registries[registry]
+
+	// Get sinks and find installation paths
+	sinks, err := a.configManager.GetSinks(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sinks: %w", err)
+	}
+
+	var installedPaths []string
+	var sinkNames []string
+	for sinkName, sink := range sinks {
+		for _, dir := range sink.Directories {
+			installations, err := a.installer.ListInstalled(ctx, dir)
+			if err != nil {
+				continue
+			}
+			for _, installation := range installations {
+				if installation.Ruleset == ruleset {
+					installedPaths = append(installedPaths, installation.Path)
+					sinkNames = append(sinkNames, sinkName)
+					break
+				}
+			}
+		}
+	}
+
+	return &RulesetInfo{
+		Registry:       registry,
+		Name:           ruleset,
+		RegistryURL:    registryConfig.URL,
+		RegistryType:   registryConfig.Type,
+		Include:        manifestEntry.Include,
+		Exclude:        manifestEntry.Exclude,
+		InstalledPaths: installedPaths,
+		Sinks:          sinkNames,
+		Constraint:     lockEntry.Constraint,
+		Resolved:       lockEntry.Resolved,
+	}, nil
 }
 
 func (a *ArmService) UpdateFromManifest(ctx context.Context) error {
-	// 1. For each ruleset in manifest, call Update()
-	return errors.New("not implemented")
+	manifestEntries, err := a.manifestManager.GetEntries(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get manifest entries: %w", err)
+	}
+
+	for registryName, rulesets := range manifestEntries {
+		for rulesetName := range rulesets {
+			if err := a.Update(ctx, registryName, rulesetName); err != nil {
+				return fmt.Errorf("failed to update %s/%s: %w", registryName, rulesetName, err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (a *ArmService) InfoAll(ctx context.Context) ([]*RulesetInfo, error) {
-	// 1. Get all installed rulesets from List()
-	// 2. For each ruleset, call Info() and collect results
-	return nil, errors.New("not implemented")
+	installed, err := a.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list installed rulesets: %w", err)
+	}
+
+	var infos []*RulesetInfo
+	for _, ruleset := range installed {
+		info, err := a.Info(ctx, ruleset.Registry, ruleset.Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get info for %s/%s: %w", ruleset.Registry, ruleset.Name, err)
+		}
+		infos = append(infos, info)
+	}
+
+	return infos, nil
 }
 
-func (a *ArmService) Version() VersionInfo {
-	// 1. Return build-time version info (version, commit, arch)
-	// 2. Format: "arm 1.2.3\ncommit: a1b2c3d4\narch: darwin/arm64"
-	return VersionInfo{}
+func (a *ArmService) Version() version.VersionInfo {
+	return version.GetVersionInfo()
 }

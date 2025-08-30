@@ -257,8 +257,6 @@ func printRulesetInfo(info *arm.RulesetInfo, detailed bool) {
 		}
 		fmt.Printf("Constraint: %s\n", info.Constraint)
 		fmt.Printf("Resolved: %s\n", info.Resolved)
-		fmt.Printf("Wanted: %s\n", info.Wanted)
-		fmt.Printf("Latest: %s\n", info.Latest)
 	} else {
 		fmt.Printf("%s/%s\n", info.Registry, info.Name)
 		fmt.Printf("  Registry: %s (%s)\n", info.RegistryURL, info.RegistryType)
@@ -274,7 +272,7 @@ func printRulesetInfo(info *arm.RulesetInfo, detailed bool) {
 		for _, sink := range info.Sinks {
 			fmt.Printf("    - %s\n", sink)
 		}
-		fmt.Printf("  Constraint: %s | Resolved: %s | Wanted: %s | Latest: %s\n",
-			info.Constraint, info.Resolved, info.Wanted, info.Latest)
+		fmt.Printf("  Constraint: %s | Resolved: %s\n",
+			info.Constraint, info.Resolved)
 	}
 }
