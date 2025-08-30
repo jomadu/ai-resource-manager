@@ -31,8 +31,6 @@ type RulesetInfo struct {
 	Sinks          []string `json:"sinks"`
 	Constraint     string   `json:"constraint"`
 	Resolved       string   `json:"resolved"`
-	Wanted         string   `json:"wanted"`
-	Latest         string   `json:"latest"`
 }
 
 // Installation represents an installed ruleset in a directory.
@@ -40,12 +38,4 @@ type Installation struct {
 	Ruleset string `json:"ruleset"`
 	Version string `json:"version"`
 	Path    string `json:"path"`
-}
-
-// VersionInfo provides version information about the ARM tool itself.
-type VersionInfo struct {
-	Arch      string `json:"arch"`
-	Version   string `json:"version"`
-	Commit    string `json:"commit"`
-	Timestamp string `json:"timestamp"`
 }
