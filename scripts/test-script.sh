@@ -14,4 +14,4 @@ cd sandbox
 ./arm config add registry ar https://github.com/PatrickJS/awesome-cursorrules/ --type git
 ./arm config add sink q --directories .amazonq/rules --include ar/*
 
-./arm install ar/python-rules --include rules-new/python.mdc
+./arm install ar/python-rules@main --include rules-new/python.mdc
