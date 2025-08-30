@@ -129,6 +129,7 @@ func TestGitRegistry_ListVersions(t *testing.T) {
 			keyGen := &mockKeyGenerator{registryKey: "test-reg", rulesetKey: "test-ruleset"}
 
 			g := NewGitRegistry(cache, repo, keyGen, "https://github.com/test/repo.git", "git")
+			g.initialized = true
 			got, err := g.ListVersions(context.Background())
 
 			if (err != nil) != tt.wantErr {
@@ -206,6 +207,7 @@ func TestGitRegistry_GetContent(t *testing.T) {
 			keyGen := &mockKeyGenerator{registryKey: "test-reg", rulesetKey: "test-ruleset"}
 
 			g := NewGitRegistry(cache, repo, keyGen, "https://github.com/test/repo.git", "git")
+			g.initialized = true
 			got, err := g.GetContent(context.Background(), tt.version, tt.selector)
 
 			if (err != nil) != tt.wantErr {
@@ -233,6 +235,116 @@ func equalVersionRefs(a, b []arm.VersionRef) bool {
 	}
 	for i := range a {
 		if a[i].ID != b[i].ID || a[i].Type != b[i].Type {
+			return false
+		}
+	}
+	return true
+}
+
+func TestGitRegistry_GetTags(t *testing.T) {
+	tests := []struct {
+		name    string
+		tags    []string
+		repoErr error
+		want    []string
+		wantErr bool
+	}{
+		{
+			name: "returns tags from repository",
+			tags: []string{"v1.0.0", "v1.1.0", "v2.0.0"},
+			want: []string{"v1.0.0", "v1.1.0", "v2.0.0"},
+		},
+		{
+			name:    "handles repository error",
+			repoErr: errors.New("git error"),
+			wantErr: true,
+		},
+		{
+			name: "handles empty repository",
+			want: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cache := &mockCache{}
+			repo := &mockRepository{
+				tags: tt.tags,
+				err:  tt.repoErr,
+			}
+			keyGen := &mockKeyGenerator{registryKey: "test-reg", rulesetKey: "test-ruleset"}
+
+			g := NewGitRegistry(cache, repo, keyGen, "https://github.com/test/repo.git", "git")
+			g.initialized = true
+			got, err := g.GetTags(context.Background())
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetTags() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr && !equalStringSlices(got, tt.want) {
+				t.Errorf("GetTags() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGitRegistry_GetBranches(t *testing.T) {
+	tests := []struct {
+		name     string
+		branches []string
+		repoErr  error
+		want     []string
+		wantErr  bool
+	}{
+		{
+			name:     "returns branches from repository",
+			branches: []string{"main", "develop", "feature/test"},
+			want:     []string{"main", "develop", "feature/test"},
+		},
+		{
+			name:    "handles repository error",
+			repoErr: errors.New("git error"),
+			wantErr: true,
+		},
+		{
+			name: "handles empty repository",
+			want: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cache := &mockCache{}
+			repo := &mockRepository{
+				branches: tt.branches,
+				err:      tt.repoErr,
+			}
+			keyGen := &mockKeyGenerator{registryKey: "test-reg", rulesetKey: "test-ruleset"}
+
+			g := NewGitRegistry(cache, repo, keyGen, "https://github.com/test/repo.git", "git")
+			g.initialized = true
+			got, err := g.GetBranches(context.Background())
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetBranches() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr && !equalStringSlices(got, tt.want) {
+				t.Errorf("GetBranches() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func equalStringSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
 			return false
 		}
 	}
