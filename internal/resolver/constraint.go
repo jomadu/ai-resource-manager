@@ -6,14 +6,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jomadu/ai-rules-manager/internal/arm"
+	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
 // ConstraintResolver handles semantic versioning and constraint resolution.
 type ConstraintResolver interface {
 	ParseConstraint(constraint string) (Constraint, error)
 	SatisfiesConstraint(version string, constraint Constraint) bool
-	FindBestMatch(constraint Constraint, versions []arm.VersionRef) (*arm.VersionRef, error)
+	FindBestMatch(constraint Constraint, versions []types.VersionRef) (*types.VersionRef, error)
 }
 
 // GitConstraintResolver implements semantic versioning constraint resolution.
@@ -119,8 +119,8 @@ func (g *GitConstraintResolver) SatisfiesConstraint(version string, constraint C
 
 // FindBestMatch finds the best matching version from available versions.
 // Returns the highest compatible version for semantic constraints or exact match for branches.
-func (g *GitConstraintResolver) FindBestMatch(constraint Constraint, versions []arm.VersionRef) (*arm.VersionRef, error) {
-	var candidates []*arm.VersionRef
+func (g *GitConstraintResolver) FindBestMatch(constraint Constraint, versions []types.VersionRef) (*types.VersionRef, error) {
+	var candidates []*types.VersionRef
 
 	for i := range versions {
 		if g.SatisfiesConstraint(versions[i].ID, constraint) {

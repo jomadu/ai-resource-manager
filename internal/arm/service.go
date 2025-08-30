@@ -3,11 +3,14 @@ package arm
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/jomadu/ai-rules-manager/internal/config"
 	"github.com/jomadu/ai-rules-manager/internal/installer"
 	"github.com/jomadu/ai-rules-manager/internal/lockfile"
 	"github.com/jomadu/ai-rules-manager/internal/manifest"
+	"github.com/jomadu/ai-rules-manager/internal/registry"
+	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
 // Service provides the main ARM functionality for managing AI rule rulesets.
@@ -42,16 +45,78 @@ func NewArmService() *ArmService {
 	}
 }
 
-func (a *ArmService) Install(ctx context.Context, registry, ruleset, version string, include, exclude []string) error {
-	// 1. Validate registry exists in config
-	// 2. Parse version constraint (^1.0.0, ~1.0.0, =1.0.0, branch name, or latest)
-	// 3. Resolve version from registry (git tags/branches)
-	// 4. Download ruleset files matching include patterns
-	// 5. Remove existing version directories if updating
-	// 6. Update manifest with new ruleset entry
-	// 7. Update lockfile with resolved version and metadata
-	// 8. Install files to configured sink directories
-	return errors.New("not implemented")
+func (a *ArmService) Install(ctx context.Context, registryName, ruleset, version string, include, exclude []string) error {
+	// Validate registry exists in config
+	registries, err := a.configManager.GetRegistries(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get registries: %w", err)
+	}
+	registryConfig, exists := registries[registryName]
+	if !exists {
+		return fmt.Errorf("registry %s not found", registryName)
+	}
+
+	// Create registry client
+	registryClient, err := registry.NewRegistry(registryName, registryConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create registry: %w", err)
+	}
+
+	// Resolve version from registry
+	resolvedVersion, err := registryClient.ResolveVersion(ctx, version)
+	if err != nil {
+		return err
+	}
+
+	// Download ruleset files
+	selector := types.ContentSelector{Include: include, Exclude: exclude}
+	files, err := registryClient.GetContent(ctx, *resolvedVersion, selector)
+	if err != nil {
+		return fmt.Errorf("failed to get content: %w", err)
+	}
+
+	// Update manifest
+	manifestEntry := manifest.Entry{
+		Version: version,
+		Include: include,
+		Exclude: exclude,
+	}
+	if err := a.manifestManager.CreateEntry(ctx, registryName, ruleset, manifestEntry); err != nil {
+		if err := a.manifestManager.UpdateEntry(ctx, registryName, ruleset, manifestEntry); err != nil {
+			return fmt.Errorf("failed to update manifest: %w", err)
+		}
+	}
+
+	// Update lockfile
+	lockEntry := &lockfile.Entry{
+		URL:        registryConfig.URL,
+		Type:       registryConfig.Type,
+		Constraint: version,
+		Resolved:   resolvedVersion.ID,
+		Include:    include,
+		Exclude:    exclude,
+	}
+	if err := a.lockFileManager.CreateEntry(ctx, registryName, ruleset, lockEntry); err != nil {
+		if err := a.lockFileManager.UpdateEntry(ctx, registryName, ruleset, lockEntry); err != nil {
+			return fmt.Errorf("failed to update lockfile: %w", err)
+		}
+	}
+
+	// Install files to sink directories
+	sinks, err := a.configManager.GetSinks(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get sinks: %w", err)
+	}
+
+	for _, sink := range sinks {
+		for _, dir := range sink.Directories {
+			if err := a.installer.Install(ctx, dir, ruleset, resolvedVersion.ID, files); err != nil {
+				return fmt.Errorf("failed to install to %s: %w", dir, err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (a *ArmService) InstallFromManifest(ctx context.Context) error {

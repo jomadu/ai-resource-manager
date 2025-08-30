@@ -4,11 +4,13 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+
+	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
 // Installer manages physical file deployment to sink directories.
 type Installer interface {
-	Install(ctx context.Context, dir, ruleset, version string, files []File) error
+	Install(ctx context.Context, dir, ruleset, version string, files []types.File) error
 	Uninstall(ctx context.Context, dir, ruleset string) error
 	ListInstalled(ctx context.Context, dir string) ([]Installation, error)
 }
@@ -21,7 +23,7 @@ func NewFileInstaller() *FileInstaller {
 	return &FileInstaller{}
 }
 
-func (f *FileInstaller) Install(ctx context.Context, dir, ruleset, version string, files []File) error {
+func (f *FileInstaller) Install(ctx context.Context, dir, ruleset, version string, files []types.File) error {
 	rulesetDir := filepath.Join(dir, ruleset, version)
 	if err := os.MkdirAll(rulesetDir, 0o755); err != nil {
 		return err
