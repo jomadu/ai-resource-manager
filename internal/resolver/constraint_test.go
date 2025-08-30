@@ -3,7 +3,7 @@ package resolver
 import (
 	"testing"
 
-	"github.com/jomadu/ai-rules-manager/internal/arm"
+	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
 func TestNewGitConstraintResolver(t *testing.T) {
@@ -79,12 +79,12 @@ func TestGitConstraintResolver_SatisfiesConstraint(t *testing.T) {
 func TestGitConstraintResolver_FindBestMatch(t *testing.T) {
 	resolver := NewGitConstraintResolver()
 
-	versions := []arm.VersionRef{
-		{ID: "1.0.0", Type: arm.Tag},
-		{ID: "1.0.1", Type: arm.Tag},
-		{ID: "1.1.0", Type: arm.Tag},
-		{ID: "2.0.0", Type: arm.Tag},
-		{ID: "main", Type: arm.Branch},
+	versions := []types.VersionRef{
+		{ID: "1.0.0", Type: types.Tag},
+		{ID: "1.0.1", Type: types.Tag},
+		{ID: "1.1.0", Type: types.Tag},
+		{ID: "2.0.0", Type: types.Tag},
+		{ID: "main", Type: types.Branch},
 	}
 
 	tests := []struct {

@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
 func TestNewFileInstaller(t *testing.T) {
@@ -24,7 +26,7 @@ func TestFileInstaller_Install(t *testing.T) {
 	}
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
-	files := []File{
+	files := []types.File{
 		{Path: "rule1.json", Content: []byte(`{"rule": "test"}`), Size: 16},
 		{Path: "subdir/rule2.json", Content: []byte(`{"rule": "nested"}`), Size: 18},
 	}
@@ -130,7 +132,7 @@ func TestFileInstaller_InstallEmptyFiles(t *testing.T) {
 	}
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
-	err = installer.Install(ctx, tempDir, "empty-ruleset", "1.0.0", []File{})
+	err = installer.Install(ctx, tempDir, "empty-ruleset", "1.0.0", []types.File{})
 	if err != nil {
 		t.Errorf("Install with empty files failed: %v", err)
 	}
@@ -140,7 +142,7 @@ func TestFileInstaller_InstallInvalidPath(t *testing.T) {
 	installer := NewFileInstaller()
 	ctx := context.Background()
 
-	files := []File{{Path: "test.json", Content: []byte("test"), Size: 4}}
+	files := []types.File{{Path: "test.json", Content: []byte("test"), Size: 4}}
 
 	err := installer.Install(ctx, "/nonexistent/path", "test-ruleset", "1.0.0", files)
 	if err == nil {

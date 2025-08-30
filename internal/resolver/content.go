@@ -3,12 +3,12 @@ package resolver
 import (
 	"errors"
 
-	"github.com/jomadu/ai-rules-manager/internal/arm"
+	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
 // ContentResolver applies include/exclude patterns to filter ruleset files.
 type ContentResolver interface {
-	ResolveContent(selector arm.ContentSelector, files []arm.File) ([]arm.File, error)
+	ResolveContent(selector types.ContentSelector, files []types.File) ([]types.File, error)
 }
 
 // GitContentResolver implements glob pattern matching for file filtering.
@@ -19,6 +19,6 @@ func NewGitContentResolver() *GitContentResolver {
 	return &GitContentResolver{}
 }
 
-func (g *GitContentResolver) ResolveContent(selector arm.ContentSelector, files []arm.File) ([]arm.File, error) {
+func (g *GitContentResolver) ResolveContent(selector types.ContentSelector, files []types.File) ([]types.File, error) {
 	return nil, errors.New("not implemented")
 }

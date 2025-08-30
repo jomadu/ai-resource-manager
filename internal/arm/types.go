@@ -1,33 +1,5 @@
 package arm
 
-// File represents a file with its content and metadata.
-type File struct {
-	Path    string `json:"path"`
-	Content []byte `json:"content"`
-	Size    int64  `json:"size"`
-}
-
-// VersionRefType defines the type of version reference.
-type VersionRefType int
-
-const (
-	Tag VersionRefType = iota
-	Branch
-	Commit
-)
-
-// VersionRef represents a version reference in a repository.
-type VersionRef struct {
-	ID   string         `json:"id"`
-	Type VersionRefType `json:"type"`
-}
-
-// ContentSelector defines include/exclude patterns for content filtering.
-type ContentSelector struct {
-	Include []string `json:"include"`
-	Exclude []string `json:"exclude"`
-}
-
 // OutdatedRuleset represents a ruleset that has newer versions available.
 type OutdatedRuleset struct {
 	Registry string `json:"registry"`

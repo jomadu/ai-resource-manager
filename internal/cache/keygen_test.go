@@ -3,7 +3,7 @@ package cache
 import (
 	"testing"
 
-	"github.com/jomadu/ai-rules-manager/internal/arm"
+	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
 func TestGitKeyGen_RegistryKey(t *testing.T) {
@@ -51,33 +51,33 @@ func TestGitKeyGen_RulesetKey(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		selector arm.ContentSelector
+		selector types.ContentSelector
 		want     string
 	}{
 		{
 			name: "amazonq_rules_selector",
-			selector: arm.ContentSelector{
+			selector: types.ContentSelector{
 				Include: []string{"rules/amazonq/*.md"},
 			},
 			want: "sha256(\"rules/amazonq/*.md\")",
 		},
 		{
 			name: "cursor_rules_selector",
-			selector: arm.ContentSelector{
+			selector: types.ContentSelector{
 				Include: []string{"rules/cursor/*.mdc"},
 			},
 			want: "sha256(\"rules/cursor/*.mdc\")",
 		},
 		{
 			name: "multiple_includes",
-			selector: arm.ContentSelector{
+			selector: types.ContentSelector{
 				Include: []string{"rules/amazonq/*.md", "rules/cursor/*.mdc"},
 			},
 			want: "sha256(\"rules/amazonq/*.md,rules/cursor/*.mdc\")",
 		},
 		{
 			name: "with_excludes",
-			selector: arm.ContentSelector{
+			selector: types.ContentSelector{
 				Include: []string{"rules/**/*.md"},
 				Exclude: []string{"rules/test/*.md"},
 			},
@@ -85,7 +85,7 @@ func TestGitKeyGen_RulesetKey(t *testing.T) {
 		},
 		{
 			name:     "empty_selector",
-			selector: arm.ContentSelector{},
+			selector: types.ContentSelector{},
 			want:     "sha256(\"\")",
 		},
 	}
@@ -115,7 +115,7 @@ func TestGitKeyGen_ConsistentKeys(t *testing.T) {
 		t.Errorf("RegistryKey() not consistent: %s != %s", key1, key2)
 	}
 
-	selector := arm.ContentSelector{
+	selector := types.ContentSelector{
 		Include: []string{"rules/amazonq/*.md"},
 	}
 
@@ -139,8 +139,8 @@ func TestGitKeyGen_DifferentInputsDifferentKeys(t *testing.T) {
 	}
 
 	// Different selectors should produce different keys
-	selector1 := arm.ContentSelector{Include: []string{"rules/amazonq/*.md"}}
-	selector2 := arm.ContentSelector{Include: []string{"rules/cursor/*.mdc"}}
+	selector1 := types.ContentSelector{Include: []string{"rules/amazonq/*.md"}}
+	selector2 := types.ContentSelector{Include: []string{"rules/cursor/*.mdc"}}
 
 	rulesetKey1 := keyGen.RulesetKey(selector1)
 	rulesetKey2 := keyGen.RulesetKey(selector2)
@@ -175,8 +175,8 @@ func TestGitKeyGen_Normalization(t *testing.T) {
 	}
 
 	// Include order normalization
-	selector1 := arm.ContentSelector{Include: []string{"rules/amazonq/*.md", "rules/cursor/*.mdc"}}
-	selector2 := arm.ContentSelector{Include: []string{"rules/cursor/*.mdc", "rules/amazonq/*.md"}}
+	selector1 := types.ContentSelector{Include: []string{"rules/amazonq/*.md", "rules/cursor/*.mdc"}}
+	selector2 := types.ContentSelector{Include: []string{"rules/cursor/*.mdc", "rules/amazonq/*.md"}}
 	rulesetKey1 := keyGen.RulesetKey(selector1)
 	rulesetKey2 := keyGen.RulesetKey(selector2)
 	if rulesetKey1 != rulesetKey2 {
@@ -184,8 +184,8 @@ func TestGitKeyGen_Normalization(t *testing.T) {
 	}
 
 	// Exclude order normalization
-	selector3 := arm.ContentSelector{Include: []string{"rules/*.md"}, Exclude: []string{"rules/test/*.md", "rules/tmp/*.md"}}
-	selector4 := arm.ContentSelector{Include: []string{"rules/*.md"}, Exclude: []string{"rules/tmp/*.md", "rules/test/*.md"}}
+	selector3 := types.ContentSelector{Include: []string{"rules/*.md"}, Exclude: []string{"rules/test/*.md", "rules/tmp/*.md"}}
+	selector4 := types.ContentSelector{Include: []string{"rules/*.md"}, Exclude: []string{"rules/tmp/*.md", "rules/test/*.md"}}
 	rulesetKey3 := keyGen.RulesetKey(selector3)
 	rulesetKey4 := keyGen.RulesetKey(selector4)
 	if rulesetKey3 != rulesetKey4 {
