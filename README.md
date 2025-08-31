@@ -4,6 +4,26 @@
 
 A package manager for AI coding rules that syncs rulesets across different AI tools like Cursor and Amazon Q.
 
+## Installation
+
+### Quick Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jomadu/ai-rules-manager/main/scripts/install.sh | bash
+```
+
+### Install Specific Version
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jomadu/ai-rules-manager/main/scripts/install.sh | bash -s v1.0.0
+```
+
+### Manual Installation
+
+1. Download the latest release from [GitHub](https://github.com/jomadu/ai-rules-manager/releases)
+2. Extract and move the binary to your PATH
+3. Run `arm help` to verify installation
+
 ## Quick Start
 
 ```bash
