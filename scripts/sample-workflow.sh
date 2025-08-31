@@ -240,33 +240,6 @@ success "Install from manifest complete"
 show_tree "Project structure after manifest install"
 pause
 
-# === INSTALL FROM LOCKFILE ONLY ===
-log "=== INSTALL FROM LOCKFILE ONLY ==="
-log "Removing manifest and installing from lockfile only..."
-rm -rf .cursor .amazonq arm.json
-
-run_arm install
-
-success "Install from lockfile complete"
-
-log "Regenerated arm.json from lockfile:"
-cat arm.json | jq .
-
-show_tree "Project structure after lockfile install"
-pause
-
-# === UPDATE ALL ===
-log "=== UPDATE ALL ==="
-log "Updating all rulesets..."
-run_arm update
-
-success "Update all complete"
-
-log "Final arm-lock.json:"
-cat arm-lock.json | jq .
-
-show_tree "Final project structure"
-
 # === SUMMARY ===
 log "=== WORKFLOW COMPLETE ==="
 success "Sample workflow completed successfully!"
