@@ -27,6 +27,8 @@ func TestGitConstraintResolver_ParseConstraint(t *testing.T) {
 		{"Tilde constraint", "~1.2.3", Constraint{Type: Tilde, Version: "1.2.3", Major: 1, Minor: 2, Patch: 3}, false},
 		{"Branch constraint", "main", Constraint{Type: BranchHead, Version: "main"}, false},
 		{"Latest constraint explicit", "latest", Constraint{Type: Latest}, false},
+		{"Major version shorthand", "1", Constraint{Type: Caret, Version: "1.0.0", Major: 1, Minor: 0, Patch: 0}, false},
+		{"Minor version shorthand", "1.2", Constraint{Type: Caret, Version: "1.2.0", Major: 1, Minor: 2, Patch: 0}, false},
 		{"Empty constraint", "", Constraint{}, true},
 		{"Invalid constraint", "invalid", Constraint{}, true},
 	}
