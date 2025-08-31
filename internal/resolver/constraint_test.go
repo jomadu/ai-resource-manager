@@ -26,6 +26,8 @@ func TestGitConstraintResolver_ParseConstraint(t *testing.T) {
 		{"Caret constraint", "^1.0.0", Constraint{Type: Caret, Version: "1.0.0", Major: 1, Minor: 0, Patch: 0}, false},
 		{"Tilde constraint", "~1.2.3", Constraint{Type: Tilde, Version: "1.2.3", Major: 1, Minor: 2, Patch: 3}, false},
 		{"Branch constraint", "main", Constraint{Type: BranchHead, Version: "main"}, false},
+		{"Latest constraint explicit", "latest", Constraint{Type: Latest}, false},
+		{"Empty constraint", "", Constraint{}, true},
 		{"Invalid constraint", "invalid", Constraint{}, true},
 	}
 
@@ -97,6 +99,7 @@ func TestGitConstraintResolver_FindBestMatch(t *testing.T) {
 		{"Caret constraint", Constraint{Type: Caret, Version: "1.0.0"}, "1.1.0", false},
 		{"Tilde constraint", Constraint{Type: Tilde, Version: "1.0.0"}, "1.0.1", false},
 		{"Branch constraint", Constraint{Type: BranchHead, Version: "main"}, "main", false},
+		{"Latest constraint", Constraint{Type: Latest}, "2.0.0", false},
 		{"No match", Constraint{Type: Pin, Version: "3.0.0"}, "", true},
 	}
 

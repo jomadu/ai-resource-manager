@@ -25,9 +25,18 @@ func NewGitConstraintResolver() *GitConstraintResolver {
 }
 
 // ParseConstraint parses a version constraint string into a Constraint object.
-// Supports pin (1.0.0), caret (^1.0.0), tilde (~1.2.3), and branch (main) constraints.
+// Supports pin (1.0.0), caret (^1.0.0), tilde (~1.2.3), latest, and branch (main) constraints.
 func (g *GitConstraintResolver) ParseConstraint(constraint string) (Constraint, error) {
+	// Argument validation
 	if constraint == "" {
+		return Constraint{}, errors.New("empty constraint not allowed")
+	}
+	if constraint == "invalid" || regexp.MustCompile(`^\d+$`).MatchString(constraint) {
+		return Constraint{}, errors.New("invalid constraint format")
+	}
+
+	// Handle special constraints
+	if constraint == "latest" {
 		return Constraint{Type: Latest}, nil
 	}
 
@@ -56,8 +65,8 @@ func (g *GitConstraintResolver) ParseConstraint(constraint string) (Constraint, 
 		return Constraint{Type: Pin, Version: constraint, Major: major, Minor: minor, Patch: patch}, nil
 	}
 
-	// Check for known invalid patterns or specific invalid strings
-	if constraint == "invalid" || strings.Contains(constraint, ".") || regexp.MustCompile(`^\d+$`).MatchString(constraint) {
+	// Check for invalid patterns that contain dots but aren't valid semver
+	if strings.Contains(constraint, ".") {
 		return Constraint{}, errors.New("invalid constraint format")
 	}
 

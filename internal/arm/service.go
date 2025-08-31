@@ -47,6 +47,11 @@ func NewArmService() *ArmService {
 }
 
 func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, version string, include, exclude []string) error {
+	// Normalize empty version to "latest"
+	if version == "" {
+		version = "latest"
+	}
+
 	// Validate registry exists in config
 	registries, err := a.configManager.GetRegistries(ctx)
 	if err != nil {
@@ -63,7 +68,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
 
-	// Resolve version from registry
+	// Resolve version from registry (resolver expects "latest", not empty string)
 	resolvedVersion, err := registryClient.ResolveVersion(ctx, version)
 	if err != nil {
 		return err
