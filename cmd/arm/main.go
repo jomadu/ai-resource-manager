@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/jomadu/ai-rules-manager/internal/arm"
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -108,16 +109,16 @@ var outdatedCmd = &cobra.Command{
 			return nil
 		}
 
-		fmt.Printf("| %-10s | %-15s | %-7s | %-6s | %-7s |\n", "Registry", "Ruleset", "Current", "Wanted", "Latest")
-		fmt.Printf("|%s|%s|%s|%s|%s|\n",
-			"----------", "---------------", "-------", "------", "-------")
+		table := tablewriter.NewWriter(os.Stdout)
+		table.Header("Registry", "Ruleset", "Current", "Wanted", "Latest")
 
 		for _, r := range outdated {
-			fmt.Printf("| %-10s | %-15s | %-7s | %-6s | %-7s |\n",
-				r.Registry, r.Name, r.Current, r.Wanted, r.Latest)
+			if err := table.Append(r.Registry, r.Name, r.Current, r.Wanted, r.Latest); err != nil {
+				return err
+			}
 		}
 
-		return nil
+		return table.Render()
 	},
 }
 
