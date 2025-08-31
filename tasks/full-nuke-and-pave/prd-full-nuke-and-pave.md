@@ -159,9 +159,11 @@ arm config add sink cursor --directories .cursor/rules --include ai-rules/cursor
 
 ### Installing from Manifest
 
-When no arguments are provided, ARM installs all rulesets from the existing manifest and lock files.
+When no arguments are provided, ARM installs all rulesets using npm-like behavior:
 
-#### With Both arm.json and arm.lock Present
+#### With Both arm.json and arm-lock.json Present
+
+ARM uses exact versions from lockfile (fast, deterministic like `npm install`).
 
 ```sh
 arm install
@@ -186,7 +188,7 @@ Existing `arm.json`
 }
 ```
 
-Existing `arm.lock`
+Existing `arm-lock.json`
 
 ```json
 {
@@ -215,7 +217,7 @@ Existing `arm.lock`
 ```
 .armrc.json
 arm.json
-arm.lock
+arm-lock.json
 .cursor/
     rules/
         arm/
@@ -242,86 +244,33 @@ arm.lock
                                 clean-code.md
 ```
 
-#### With Only arm.lock Present
+#### With arm.json Present, No arm-lock.json
+
+ARM resolves from manifest and creates lockfile (like `npm install` without lockfile).
 
 ```sh
 arm install
 ```
 
-Existing `arm.lock`
+#### With Only arm-lock.json Present
 
-```json
-{
-    "rulesets": {
-        "ai-rules": {
-            "amazonq-rules": {
-                "url": "https://github.com/my-user/ai-rules",
-                "type": "git",
-                "constraint": "^2.1.0",
-                "resolved": "2.1.0",
-                "include": ["rules/amazonq/*.md"]
-            },
-            "cursor-rules": {
-                "url": "https://github.com/my-user/ai-rules",
-                "type": "git",
-                "constraint": "^2.1.0",
-                "resolved": "2.1.0",
-                "include": ["rules/cursor/*.mdc"]
-            }
-        }
-    }
-}
+ARM errors - requires arm.json (like npm requires package.json).
+
+```sh
+arm install
 ```
 
-`arm.json` (generated from lock file)
+**Error:** `arm.json not found`
 
-```json
-{
-    "rulesets": {
-        "ai-rules": {
-            "amazonq-rules": {
-                "version": "^2.1.0",
-                "include": ["rules/amazonq/*.md"]
-            },
-            "cursor-rules": {
-                "version": "^2.1.0",
-                "include": ["rules/cursor/*.mdc"]
-            }
-        }
-    }
-}
+#### With Neither File Present
+
+ARM errors - requires arm.json.
+
+```sh
+arm install
 ```
 
-`./`
-```
-.armrc.json
-arm.json
-arm.lock
-.cursor/
-    rules/
-        arm/
-            ai-rules/
-                cursor-rules/
-                    2.1.0/
-                        rules/
-                            cursor/
-                                grug-brained-dev.mdc
-                                generate-tasks.mdc
-                                process-tasks.mdc
-                                clean-code.mdc
-.amazonq/
-    rules/
-        arm/
-            ai-rules/
-                amazonq-rules/
-                    2.1.0/
-                        rules/
-                            amazonq/
-                                grug-brained-dev.md
-                                generate-tasks.md
-                                process-tasks.md
-                                clean-code.md
-```
+**Error:** `neither arm.json nor arm-lock.json found`
 
 ### Specifying No Version
 
@@ -351,7 +300,7 @@ arm install ai-rules/cursor-rules --include rules/cursor/*.mdc
 }
 ```
 
-`arm.lock`
+`arm-lock.json`
 
 ```json
 {
@@ -380,7 +329,7 @@ arm install ai-rules/cursor-rules --include rules/cursor/*.mdc
 ```
 .armrc.json
 arm.json
-arm.lock
+arm-lock.json
 .cursor/
     rules/
         arm/
@@ -500,7 +449,7 @@ arm install ai-rules/cursor-rules@1.0.0 --include rules/cursor/*.mdc
 }
 ```
 
-`arm.lock`
+`arm-lock.json`
 
 ```json
 {
@@ -529,7 +478,7 @@ arm install ai-rules/cursor-rules@1.0.0 --include rules/cursor/*.mdc
 ```
 .armrc.json
 arm.json
-arm.lock
+arm-lock.json
 .cursor/
     rules/
         arm/
@@ -641,7 +590,7 @@ arm install ai-rules/cursor-rules@1.0 --include rules/cursor/*.mdc
 }
 ```
 
-`arm.lock`
+`arm-lock.json`
 
 ```json
 {
@@ -670,7 +619,7 @@ arm install ai-rules/cursor-rules@1.0 --include rules/cursor/*.mdc
 ```
 .armrc.json
 arm.json
-arm.lock
+arm-lock.json
 .cursor/
     rules/
         arm/
@@ -782,7 +731,7 @@ arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
 }
 ```
 
-`arm.lock`
+`arm-lock.json`
 
 ```json
 {
@@ -811,7 +760,7 @@ arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
 ```
 .armrc.json
 arm.json
-arm.lock
+arm-lock.json
 .cursor/
     rules/
         arm/
@@ -931,7 +880,7 @@ arm install ai-rules/cursor-rules@main --include rules/cursor/*.mdc
 }
 ```
 
-`arm.lock`
+`arm-lock.json`
 
 ```json
 {
@@ -960,7 +909,7 @@ arm install ai-rules/cursor-rules@main --include rules/cursor/*.mdc
 ```
 .armrc.json
 arm.json
-arm.lock
+arm-lock.json
 .cursor/
     rules/
         arm/
@@ -1079,7 +1028,7 @@ arm uninstall ai-rules/cursor-rules
 }
 ```
 
-`arm.lock`
+`arm-lock.json`
 
 ```json
 {
@@ -1101,7 +1050,7 @@ arm uninstall ai-rules/cursor-rules
 ```
 .armrc.json
 arm.json
-arm.lock
+arm-lock.json
 .cursor/
     rules/
         (arm directory removed - no rulesets installed)
@@ -1203,6 +1152,13 @@ arm outdated
 
 ## Update
 
+### Update Behavior
+
+ARM update follows npm-like behavior:
+- Requires arm.json (like npm requires package.json)
+- Updates within manifest version constraints
+- Updates arm-lock.json with new resolved versions
+
 ### 1. After Release of 1.0.0, Prior to Release of 1.1.0
 
 ```sh
@@ -1232,7 +1188,7 @@ All rulesets are up to date!
 }
 ```
 
-`arm.lock`
+`arm-lock.json`
 
 ```json
 {
@@ -1261,7 +1217,7 @@ All rulesets are up to date!
 ```
 .armrc.json
 arm.json
-arm.lock
+arm-lock.json
 .cursor/
     rules/
         arm/
@@ -1316,7 +1272,7 @@ arm update ai-rules/cursor-rules
 }
 ```
 
-`arm.lock` (updated resolved versions)
+`arm-lock.json` (updated resolved versions)
 
 ```json
 {
@@ -1345,7 +1301,7 @@ arm update ai-rules/cursor-rules
 ```
 .armrc.json
 arm.json
-arm.lock
+arm-lock.json
 .cursor/
     rules/
         arm/

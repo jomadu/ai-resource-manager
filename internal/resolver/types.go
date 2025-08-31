@@ -8,6 +8,7 @@ const (
 	Caret
 	Tilde
 	BranchHead
+	Latest
 )
 
 // Constraint represents a version constraint.

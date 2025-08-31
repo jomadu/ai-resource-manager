@@ -28,7 +28,7 @@ func NewGitConstraintResolver() *GitConstraintResolver {
 // Supports pin (1.0.0), caret (^1.0.0), tilde (~1.2.3), and branch (main) constraints.
 func (g *GitConstraintResolver) ParseConstraint(constraint string) (Constraint, error) {
 	if constraint == "" {
-		return Constraint{}, errors.New("empty constraint")
+		return Constraint{Type: Latest}, nil
 	}
 
 	// Check for caret constraint
@@ -70,7 +70,7 @@ func (g *GitConstraintResolver) ParseConstraint(constraint string) (Constraint, 
 func (g *GitConstraintResolver) SatisfiesConstraint(version string, constraint Constraint) bool {
 	switch constraint.Type {
 	case Pin:
-		return version == constraint.Version
+		return normalizeVersion(version) == normalizeVersion(constraint.Version)
 	case BranchHead:
 		return version == constraint.Version
 	case Caret:
@@ -120,6 +120,30 @@ func (g *GitConstraintResolver) SatisfiesConstraint(version string, constraint C
 // FindBestMatch finds the best matching version from available versions.
 // Returns the highest compatible version for semantic constraints or exact match for branches.
 func (g *GitConstraintResolver) FindBestMatch(constraint Constraint, versions []types.VersionRef) (*types.VersionRef, error) {
+	// For latest constraint, find highest semantic version or first tag
+	if constraint.Type == Latest {
+		if len(versions) == 0 {
+			return nil, errors.New("no versions available")
+		}
+		// Prefer tags over branches
+		var tags []*types.VersionRef
+		for i := range versions {
+			if versions[i].Type == types.Tag {
+				tags = append(tags, &versions[i])
+			}
+		}
+		if len(tags) > 0 {
+			best := tags[0]
+			for _, tag := range tags[1:] {
+				if isHigherVersion(tag.ID, best.ID) {
+					best = tag
+				}
+			}
+			return best, nil
+		}
+		return &versions[0], nil
+	}
+
 	var candidates []*types.VersionRef
 
 	for i := range versions {
@@ -148,8 +172,18 @@ func (g *GitConstraintResolver) FindBestMatch(constraint Constraint, versions []
 	return best, nil
 }
 
+// normalizeVersion strips the v prefix from version strings if present.
+func normalizeVersion(version string) string {
+	if strings.HasPrefix(version, "v") {
+		return version[1:]
+	}
+	return version
+}
+
 // parseVersion parses a semantic version string into major, minor, and patch components.
 func parseVersion(version string) (major, minor, patch int, err error) {
+	version = normalizeVersion(version)
+
 	re := regexp.MustCompile(`^(\d+)\.(\d+)\.(\d+)$`)
 	matches := re.FindStringSubmatch(version)
 	if len(matches) != 4 {

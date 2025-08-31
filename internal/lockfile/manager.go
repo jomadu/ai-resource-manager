@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// Manager handles arm.lock file operations.
+// Manager handles arm-lock.json file operations.
 type Manager interface {
 	GetEntry(ctx context.Context, registry, ruleset string) (*Entry, error)
 	GetEntries(ctx context.Context) (map[string]map[string]Entry, error)
@@ -23,7 +23,7 @@ type FileManager struct {
 
 // NewFileManager creates a new file-based lock file manager.
 func NewFileManager() *FileManager {
-	return &FileManager{lockPath: "arm.lock"}
+	return &FileManager{lockPath: "arm-lock.json"}
 }
 
 // NewFileManagerWithPath creates a new file-based lock file manager with custom path.

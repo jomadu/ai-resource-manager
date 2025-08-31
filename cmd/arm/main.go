@@ -45,7 +45,7 @@ var installCmd = &cobra.Command{
 		ctx := context.Background()
 
 		if len(args) == 0 {
-			return armService.InstallFromManifest(ctx)
+			return armService.Install(ctx)
 		}
 
 		include, _ := cmd.Flags().GetStringSlice("include")
@@ -53,7 +53,7 @@ var installCmd = &cobra.Command{
 
 		for _, arg := range args {
 			registry, ruleset, version := parseRulesetArg(arg)
-			if err := armService.Install(ctx, registry, ruleset, version, include, exclude); err != nil {
+			if err := armService.InstallRuleset(ctx, registry, ruleset, version, include, exclude); err != nil {
 				return err
 			}
 		}
@@ -80,12 +80,12 @@ var updateCmd = &cobra.Command{
 		ctx := context.Background()
 
 		if len(args) == 0 {
-			return armService.UpdateFromManifest(ctx)
+			return armService.Update(ctx)
 		}
 
 		for _, arg := range args {
 			registry, ruleset, _ := parseRulesetArg(arg)
-			if err := armService.Update(ctx, registry, ruleset); err != nil {
+			if err := armService.UpdateRuleset(ctx, registry, ruleset); err != nil {
 				return err
 			}
 		}
