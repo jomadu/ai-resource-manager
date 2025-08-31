@@ -25,6 +25,11 @@ warn() {
     echo -e "${YELLOW}⚠${NC} $1"
 }
 
+run_arm() {
+    echo -e "${BLUE}$ ./arm $*${NC}"
+    ./arm "$@"
+}
+
 show_tree() {
     local title="$1"
     echo ""
@@ -62,11 +67,11 @@ show_tree "Initial sandbox structure"
 log "=== SETUP PHASE ==="
 
 log "Adding registry configuration..."
-./arm config add registry ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
+run_arm config add registry ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 
 log "Adding sink configurations..."
-./arm config add sink q --directories .amazonq/rules --include ai-rules/amazonq-* --exclude ai-rules/cursor-*
-./arm config add sink cursor --directories .cursor/rules --include ai-rules/cursor-* --exclude ai-rules/amazonq-*
+run_arm config add sink q --directories .amazonq/rules --include ai-rules/amazonq-* --exclude ai-rules/cursor-*
+run_arm config add sink cursor --directories .cursor/rules --include ai-rules/cursor-* --exclude ai-rules/amazonq-*
 
 success "Configuration complete"
 
@@ -76,58 +81,58 @@ pause
 
 # === VERSION ===
 log "=== VERSION COMMAND ==="
-./arm version
+run_arm version
 pause
 
 # === HELP ===
 log "=== HELP COMMAND ==="
-./arm help
+run_arm help
 pause
 
 # === INSTALL - Latest Version ===
 log "=== INSTALL - Latest Version ==="
 log "Installing latest version (should resolve to ^2.1.0)..."
-./arm install ai-rules/amazonq-rules --include rules/amazonq/*.md
-./arm install ai-rules/cursor-rules --include rules/cursor/*.mdc
+run_arm install ai-rules/amazonq-rules --include rules/amazonq/*.md
+run_arm install ai-rules/cursor-rules --include rules/cursor/*.mdc
 
 success "Installation complete"
 
 log "Generated arm.json:"
 cat arm.json | jq .
 
-log "Generated arm.lock:"
-cat arm.lock | jq .
+log "Generated arm-lock.json:"
+cat arm-lock.json | jq .
 
 show_tree "Project structure after latest install"
 pause
 
 # === LIST ===
 log "=== LIST COMMAND ==="
-./arm list
+run_arm list
 pause
 
 # === INFO - Single Ruleset ===
 log "=== INFO - Single Ruleset ==="
-./arm info ai-rules/amazonq-rules
+run_arm info ai-rules/amazonq-rules
 pause
 
 # === INFO - All Rulesets ===
 log "=== INFO - All Rulesets ==="
-./arm info
+run_arm info
 pause
 
 # === UNINSTALL ===
 log "=== UNINSTALL ==="
 log "Uninstalling cursor rules..."
-./arm uninstall ai-rules/cursor-rules
+run_arm uninstall ai-rules/cursor-rules
 
 success "Uninstall complete"
 
 log "Updated arm.json:"
 cat arm.json | jq .
 
-log "Updated arm.lock:"
-cat arm.lock | jq .
+log "Updated arm-lock.json:"
+cat arm-lock.json | jq .
 
 show_tree "Project structure after uninstall"
 pause
@@ -135,33 +140,33 @@ pause
 # === INSTALL - Specific Version ===
 log "=== INSTALL - Specific Version ==="
 log "Installing specific version 1.0.0..."
-./arm install ai-rules/cursor-rules@1.0.0 --include rules/cursor/*.mdc
+run_arm install ai-rules/cursor-rules@1.0.0 --include rules/cursor/*.mdc
 
 success "Version-specific installation complete"
 
 log "Updated arm.json:"
 cat arm.json | jq .
 
-log "Updated arm.lock:"
-cat arm.lock | jq .
+log "Updated arm-lock.json:"
+cat arm-lock.json | jq .
 
 show_tree "Project structure after version-specific install"
 pause
 
 # === OUTDATED ===
 log "=== OUTDATED COMMAND ==="
-./arm outdated
+run_arm outdated
 pause
 
 # === UPDATE ===
 log "=== UPDATE COMMAND ==="
 log "Updating cursor rules to latest compatible version..."
-./arm update ai-rules/cursor-rules
+run_arm update ai-rules/cursor-rules
 
 success "Update complete"
 
-log "Updated arm.lock after update:"
-cat arm.lock | jq .
+log "Updated arm-lock.json after update:"
+cat arm-lock.json | jq .
 
 show_tree "Project structure after update"
 pause
@@ -169,18 +174,18 @@ pause
 # === INSTALL - Major Version ===
 log "=== INSTALL - Major Version ==="
 log "Reinstalling with major version constraint..."
-rm -rf .cursor .amazonq arm.json arm.lock
+rm -rf .cursor .amazonq arm.json arm-lock.json
 
-./arm install ai-rules/amazonq-rules@1 --include rules/amazonq/*.md
-./arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
+run_arm install ai-rules/amazonq-rules@1 --include rules/amazonq/*.md
+run_arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
 
 success "Major version installation complete"
 
 log "arm.json with major version constraints:"
 cat arm.json | jq .
 
-log "arm.lock with resolved versions:"
-cat arm.lock | jq .
+log "arm-lock.json with resolved versions:"
+cat arm-lock.json | jq .
 
 show_tree "Project structure with major version constraints"
 pause
@@ -188,18 +193,18 @@ pause
 # === INSTALL - Minor Version ===
 log "=== INSTALL - Minor Version ==="
 log "Reinstalling with minor version constraint..."
-rm -rf .cursor .amazonq arm.json arm.lock
+rm -rf .cursor .amazonq arm.json arm-lock.json
 
-./arm install ai-rules/amazonq-rules@1.0 --include rules/amazonq/*.md
-./arm install ai-rules/cursor-rules@1.0 --include rules/cursor/*.mdc
+run_arm install ai-rules/amazonq-rules@1.0 --include rules/amazonq/*.md
+run_arm install ai-rules/cursor-rules@1.0 --include rules/cursor/*.mdc
 
 success "Minor version installation complete"
 
 log "arm.json with minor version constraints:"
 cat arm.json | jq .
 
-log "arm.lock with resolved versions:"
-cat arm.lock | jq .
+log "arm-lock.json with resolved versions:"
+cat arm-lock.json | jq .
 
 show_tree "Project structure with minor version constraints"
 pause
@@ -207,18 +212,18 @@ pause
 # === INSTALL - Branch ===
 log "=== INSTALL - Branch ==="
 log "Reinstalling from main branch..."
-rm -rf .cursor .amazonq arm.json arm.lock
+rm -rf .cursor .amazonq arm.json arm-lock.json
 
-./arm install ai-rules/amazonq-rules@main --include rules/amazonq/*.md
-./arm install ai-rules/cursor-rules@main --include rules/cursor/*.mdc
+run_arm install ai-rules/amazonq-rules@main --include rules/amazonq/*.md
+run_arm install ai-rules/cursor-rules@main --include rules/cursor/*.mdc
 
 success "Branch installation complete"
 
 log "arm.json with branch constraints:"
 cat arm.json | jq .
 
-log "arm.lock with commit hashes:"
-cat arm.lock | jq .
+log "arm-lock.json with commit hashes:"
+cat arm-lock.json | jq .
 
 show_tree "Project structure with branch tracking"
 pause
@@ -228,7 +233,7 @@ log "=== INSTALL FROM MANIFEST ==="
 log "Removing installed files and reinstalling from manifest..."
 rm -rf .cursor .amazonq
 
-./arm install
+run_arm install
 
 success "Install from manifest complete"
 
@@ -240,7 +245,7 @@ log "=== INSTALL FROM LOCKFILE ONLY ==="
 log "Removing manifest and installing from lockfile only..."
 rm -rf .cursor .amazonq arm.json
 
-./arm install
+run_arm install
 
 success "Install from lockfile complete"
 
@@ -253,12 +258,12 @@ pause
 # === UPDATE ALL ===
 log "=== UPDATE ALL ==="
 log "Updating all rulesets..."
-./arm update
+run_arm update
 
 success "Update all complete"
 
-log "Final arm.lock:"
-cat arm.lock | jq .
+log "Final arm-lock.json:"
+cat arm-lock.json | jq .
 
 show_tree "Final project structure"
 
@@ -279,6 +284,6 @@ echo ""
 echo "Check the generated files:"
 echo "• .armrc.json - Configuration"
 echo "• arm.json - Manifest"
-echo "• arm.lock - Lockfile"
+echo "• arm-lock.json - Lockfile"
 echo "• .cursor/rules/ - Cursor rules"
 echo "• .amazonq/rules/ - Amazon Q rules"
