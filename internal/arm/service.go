@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"sort"
 
 	"github.com/jomadu/ai-rules-manager/internal/config"
@@ -52,6 +53,9 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 	if version == "" {
 		version = "latest"
 	}
+
+	// Expand shorthand constraints for storage
+	version = expandVersionShorthand(version)
 
 	// Validate registry exists in config
 	registries, err := a.configManager.GetRegistries(ctx)
@@ -458,4 +462,18 @@ func (a *ArmService) matchesSink(rulesetKey string, sink config.SinkConfig) bool
 
 func (a *ArmService) Version() version.VersionInfo {
 	return version.GetVersionInfo()
+}
+
+// expandVersionShorthand expands npm-style version shorthands to proper semantic version constraints.
+// "1" -> "^1.0.0", "1.2" -> "^1.2.0"
+func expandVersionShorthand(constraint string) string {
+	// Match pure major version (e.g., "1")
+	if matched, _ := regexp.MatchString(`^\d+$`, constraint); matched {
+		return "^" + constraint + ".0.0"
+	}
+	// Match major.minor version (e.g., "1.2")
+	if matched, _ := regexp.MatchString(`^\d+\.\d+$`, constraint); matched {
+		return "^" + constraint + ".0"
+	}
+	return constraint
 }
