@@ -197,6 +197,48 @@ func TestIntegrationSpecificVersion(t *testing.T) {
 	}
 }
 
+func TestIntegrationLatestConstraint(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	service, ctx := setupTest(t)
+
+	// Install without version constraint (should normalize to "latest")
+	err := service.InstallRuleset(ctx, "ai-rules", "amazonq-rules", "", []string{"rules/amazonq/*.md"}, nil)
+	if err != nil {
+		t.Fatalf("Failed to install with empty constraint: %v", err)
+	}
+
+	// Verify manifest shows "latest"
+	manifestData, err := os.ReadFile("arm.json")
+	if err != nil {
+		t.Fatalf("Failed to read manifest: %v", err)
+	}
+	var manifestFile manifest.Manifest
+	if err := json.Unmarshal(manifestData, &manifestFile); err != nil {
+		t.Fatalf("Failed to parse manifest: %v", err)
+	}
+	entry := manifestFile.Rulesets["ai-rules"]["amazonq-rules"]
+	if entry.Version != "latest" {
+		t.Errorf("Expected manifest version 'latest', got '%s'", entry.Version)
+	}
+
+	// Verify lockfile shows "latest"
+	lockData, err := os.ReadFile("arm-lock.json")
+	if err != nil {
+		t.Fatalf("Failed to read lockfile: %v", err)
+	}
+	var lockFile lockfile.LockFile
+	if err := json.Unmarshal(lockData, &lockFile); err != nil {
+		t.Fatalf("Failed to parse lockfile: %v", err)
+	}
+	lockEntry := lockFile.Rulesets["ai-rules"]["amazonq-rules"]
+	if lockEntry.Constraint != "latest" {
+		t.Errorf("Expected lockfile constraint 'latest', got '%s'", lockEntry.Constraint)
+	}
+}
+
 func TestIntegrationNpmLikeBehavior(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

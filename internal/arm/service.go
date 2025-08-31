@@ -3,6 +3,7 @@ package arm
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"sort"
 
 	"github.com/jomadu/ai-rules-manager/internal/config"
@@ -114,10 +115,13 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 		return fmt.Errorf("failed to get sinks: %w", err)
 	}
 
+	rulesetKey := fmt.Sprintf("%s/%s", registryName, ruleset)
 	for _, sink := range sinks {
-		for _, dir := range sink.Directories {
-			if err := a.installer.Install(ctx, dir, ruleset, resolvedVersion.ID, files); err != nil {
-				return fmt.Errorf("failed to install to %s: %w", dir, err)
+		if a.matchesSink(rulesetKey, sink) {
+			for _, dir := range sink.Directories {
+				if err := a.installer.Install(ctx, dir, ruleset, resolvedVersion.ID, files); err != nil {
+					return fmt.Errorf("failed to install to %s: %w", dir, err)
+				}
 			}
 		}
 	}
@@ -173,10 +177,13 @@ func (a *ArmService) Uninstall(ctx context.Context, registry, ruleset string) er
 		return fmt.Errorf("failed to get sinks: %w", err)
 	}
 
+	rulesetKey := fmt.Sprintf("%s/%s", registry, ruleset)
 	for _, sink := range sinks {
-		for _, dir := range sink.Directories {
-			if err := a.installer.Uninstall(ctx, dir, ruleset); err != nil {
-				return fmt.Errorf("failed to uninstall from %s: %w", dir, err)
+		if a.matchesSink(rulesetKey, sink) {
+			for _, dir := range sink.Directories {
+				if err := a.installer.Uninstall(ctx, dir, ruleset); err != nil {
+					return fmt.Errorf("failed to uninstall from %s: %w", dir, err)
+				}
 			}
 		}
 	}
@@ -412,15 +419,41 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 		return fmt.Errorf("failed to get sinks: %w", err)
 	}
 
+	rulesetKey := fmt.Sprintf("%s/%s", registryName, ruleset)
 	for _, sink := range sinks {
-		for _, dir := range sink.Directories {
-			if err := a.installer.Install(ctx, dir, ruleset, lockEntry.Resolved, files); err != nil {
-				return fmt.Errorf("failed to install to %s: %w", dir, err)
+		if a.matchesSink(rulesetKey, sink) {
+			for _, dir := range sink.Directories {
+				if err := a.installer.Install(ctx, dir, ruleset, lockEntry.Resolved, files); err != nil {
+					return fmt.Errorf("failed to install to %s: %w", dir, err)
+				}
 			}
 		}
 	}
 
 	return nil
+}
+
+func (a *ArmService) matchesSink(rulesetKey string, sink config.SinkConfig) bool {
+	// Check exclude patterns first
+	for _, pattern := range sink.Exclude {
+		if matched, _ := filepath.Match(pattern, rulesetKey); matched {
+			return false
+		}
+	}
+
+	// If no include patterns, allow all (that aren't excluded)
+	if len(sink.Include) == 0 {
+		return true
+	}
+
+	// Check include patterns
+	for _, pattern := range sink.Include {
+		if matched, _ := filepath.Match(pattern, rulesetKey); matched {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (a *ArmService) Version() version.VersionInfo {
