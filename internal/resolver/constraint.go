@@ -26,14 +26,18 @@ func NewGitConstraintResolver() *GitConstraintResolver {
 
 // ParseConstraint parses a version constraint string into a Constraint object.
 // Supports pin (1.0.0), caret (^1.0.0), tilde (~1.2.3), latest, and branch (main) constraints.
+// Also supports npm-style shorthands: "1" -> "^1.0.0", "1.2" -> "^1.2.0"
 func (g *GitConstraintResolver) ParseConstraint(constraint string) (Constraint, error) {
 	// Argument validation
 	if constraint == "" {
 		return Constraint{}, errors.New("empty constraint not allowed")
 	}
-	if constraint == "invalid" || regexp.MustCompile(`^\d+$`).MatchString(constraint) {
+	if constraint == "invalid" {
 		return Constraint{}, errors.New("invalid constraint format")
 	}
+
+	// Expand npm-style shorthands
+	constraint = expandVersionShorthand(constraint)
 
 	// Handle special constraints
 	if constraint == "latest" {
@@ -220,4 +224,18 @@ func isHigherVersion(v1, v2 string) bool {
 		return minor1 > minor2
 	}
 	return patch1 > patch2
+}
+
+// expandVersionShorthand expands npm-style version shorthands to proper semantic version constraints.
+// "1" -> "^1.0.0", "1.2" -> "^1.2.0"
+func expandVersionShorthand(constraint string) string {
+	// Match pure major version (e.g., "1")
+	if matched, _ := regexp.MatchString(`^\d+$`, constraint); matched {
+		return "^" + constraint + ".0.0"
+	}
+	// Match major.minor version (e.g., "1.2")
+	if matched, _ := regexp.MatchString(`^\d+\.\d+$`, constraint); matched {
+		return "^" + constraint + ".0"
+	}
+	return constraint
 }
