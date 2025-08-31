@@ -70,8 +70,8 @@ log "Adding registry configuration..."
 run_arm config add registry ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 
 log "Adding sink configurations..."
-run_arm config add sink q --directories .amazonq/rules --include ai-rules/amazonq-* --exclude ai-rules/cursor-*
-run_arm config add sink cursor --directories .cursor/rules --include ai-rules/cursor-* --exclude ai-rules/amazonq-*
+run_arm config add sink q --directories .amazonq/rules --include "ai-rules/amazonq-*" --exclude "ai-rules/cursor-*"
+run_arm config add sink cursor --directories .cursor/rules --include "ai-rules/cursor-*" --exclude "ai-rules/amazonq-*"
 
 success "Configuration complete"
 
