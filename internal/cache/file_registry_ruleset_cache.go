@@ -2,29 +2,36 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
+	"time"
 
 	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
 // FileRegistryRulesetCache implements filesystem-based ruleset caching.
 type FileRegistryRulesetCache struct {
-	registryKey string
-	baseDir     string
+	registryKey  string
+	baseDir      string
+	registryURL  string
+	registryType string
 }
 
 // NewRegistryRulesetCache creates a new registry-scoped ruleset cache.
-func NewRegistryRulesetCache(registryKey string) *FileRegistryRulesetCache {
+func NewRegistryRulesetCache(registryKey, registryURL, registryType string) *FileRegistryRulesetCache {
 	homeDir, _ := os.UserHomeDir()
 	baseDir := filepath.Join(homeDir, ".arm", "cache", "registries", registryKey)
 
 	return &FileRegistryRulesetCache{
-		registryKey: registryKey,
-		baseDir:     baseDir,
+		registryKey:  registryKey,
+		baseDir:      baseDir,
+		registryURL:  registryURL,
+		registryType: registryType,
 	}
 }
 
@@ -86,10 +93,15 @@ func (f *FileRegistryRulesetCache) GetRulesetVersion(ctx context.Context, rulese
 		return nil
 	})
 
+	// Update index on access
+	if err == nil {
+		_ = f.updateIndexOnAccess(rulesetKey, version)
+	}
+
 	return files, err
 }
 
-func (f *FileRegistryRulesetCache) SetRulesetVersion(ctx context.Context, rulesetKey, version string, files []types.File) error {
+func (f *FileRegistryRulesetCache) SetRulesetVersion(ctx context.Context, rulesetKey, version string, selector types.ContentSelector, files []types.File) error {
 	versionDir := filepath.Join(f.baseDir, "rulesets", rulesetKey, version)
 	if err := os.MkdirAll(versionDir, 0o755); err != nil {
 		return err
@@ -106,6 +118,9 @@ func (f *FileRegistryRulesetCache) SetRulesetVersion(ctx context.Context, rulese
 		}
 	}
 
+	// Update index on set
+	_ = f.updateIndexOnSet(rulesetKey, version, selector)
+
 	return nil
 }
 
@@ -117,4 +132,151 @@ func (f *FileRegistryRulesetCache) InvalidateRuleset(ctx context.Context, rulese
 func (f *FileRegistryRulesetCache) InvalidateVersion(ctx context.Context, rulesetKey, version string) error {
 	versionDir := filepath.Join(f.baseDir, "rulesets", rulesetKey, version)
 	return os.RemoveAll(versionDir)
+}
+
+// RegistryIndex tracks metadata for cached registry data.
+type RegistryIndex struct {
+	CreatedOn              time.Time                    `json:"created_on"`
+	LastUpdatedOn          time.Time                    `json:"last_updated_on"`
+	LastAccessedOn         time.Time                    `json:"last_accessed_on"`
+	NormalizedRegistryURL  string                       `json:"normalized_registry_url"`
+	NormalizedRegistryType string                       `json:"normalized_registry_type"`
+	Rulesets               map[string]RulesetIndexEntry `json:"rulesets"`
+}
+
+// RulesetIndexEntry tracks metadata for a cached ruleset.
+type RulesetIndexEntry struct {
+	NormalizedRulesetSelector NormalizedSelector           `json:"normalized_ruleset_selector"`
+	CreatedOn                 time.Time                    `json:"created_on"`
+	LastUpdatedOn             time.Time                    `json:"last_updated_on"`
+	LastAccessedOn            time.Time                    `json:"last_accessed_on"`
+	Versions                  map[string]VersionIndexEntry `json:"versions"`
+}
+
+// NormalizedSelector represents normalized include/exclude patterns.
+type NormalizedSelector struct {
+	Include []string `json:"include"`
+	Exclude []string `json:"exclude"`
+}
+
+// VersionIndexEntry tracks metadata for a cached version.
+type VersionIndexEntry struct {
+	CreatedOn      time.Time `json:"created_on"`
+	LastUpdatedOn  time.Time `json:"last_updated_on"`
+	LastAccessedOn time.Time `json:"last_accessed_on"`
+}
+
+// loadIndex loads the registry index from disk, creating a new one if it doesn't exist.
+func (f *FileRegistryRulesetCache) loadIndex() (*RegistryIndex, error) {
+	indexPath := filepath.Join(f.baseDir, "index.json")
+
+	data, err := os.ReadFile(indexPath)
+	if os.IsNotExist(err) {
+		// Create new index
+		now := time.Now().UTC()
+		// Create new index with normalized values
+		normalizedURL := normalizeURL(f.registryURL)
+		normalizedType := strings.ToLower(f.registryType)
+		return &RegistryIndex{
+			CreatedOn:              now,
+			LastUpdatedOn:          now,
+			LastAccessedOn:         now,
+			NormalizedRegistryURL:  normalizedURL,
+			NormalizedRegistryType: normalizedType,
+			Rulesets:               make(map[string]RulesetIndexEntry),
+		}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var index RegistryIndex
+	if err := json.Unmarshal(data, &index); err != nil {
+		return nil, err
+	}
+
+	return &index, nil
+}
+
+// saveIndex saves the registry index to disk.
+func (f *FileRegistryRulesetCache) saveIndex(index *RegistryIndex) error {
+	if err := os.MkdirAll(f.baseDir, 0o755); err != nil {
+		return err
+	}
+
+	indexPath := filepath.Join(f.baseDir, "index.json")
+	data, err := json.MarshalIndent(index, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(indexPath, data, 0o644)
+}
+
+// updateIndexOnAccess updates the index when a ruleset version is accessed.
+func (f *FileRegistryRulesetCache) updateIndexOnAccess(rulesetKey, version string) error {
+	index, err := f.loadIndex()
+	if err != nil {
+		return err
+	}
+
+	now := time.Now().UTC()
+	index.LastAccessedOn = now
+
+	// Update existing ruleset entry (should exist since we're accessing cached data)
+	rulesetEntry, exists := index.Rulesets[rulesetKey]
+	if exists {
+		rulesetEntry.LastAccessedOn = now
+
+		// Update existing version entry
+		versionEntry, versionExists := rulesetEntry.Versions[version]
+		if versionExists {
+			versionEntry.LastAccessedOn = now
+			rulesetEntry.Versions[version] = versionEntry
+		}
+
+		index.Rulesets[rulesetKey] = rulesetEntry
+	}
+
+	return f.saveIndex(index)
+}
+
+// updateIndexOnSet updates the index when a ruleset version is cached.
+func (f *FileRegistryRulesetCache) updateIndexOnSet(rulesetKey, version string, selector types.ContentSelector) error {
+	index, err := f.loadIndex()
+	if err != nil {
+		return err
+	}
+
+	now := time.Now().UTC()
+	index.LastUpdatedOn = now
+
+	// Update or create ruleset entry
+	rulesetEntry, exists := index.Rulesets[rulesetKey]
+	if !exists {
+		rulesetEntry = RulesetIndexEntry{
+			NormalizedRulesetSelector: NormalizedSelector{
+				Include: normalizePatterns(selector.Include),
+				Exclude: normalizePatterns(selector.Exclude),
+			},
+			CreatedOn:      now,
+			LastUpdatedOn:  now,
+			LastAccessedOn: now,
+			Versions:       make(map[string]VersionIndexEntry),
+		}
+	} else {
+		rulesetEntry.LastUpdatedOn = now
+	}
+
+	// Update or create version entry
+	versionEntry := VersionIndexEntry{
+		CreatedOn:      now,
+		LastUpdatedOn:  now,
+		LastAccessedOn: now,
+	}
+
+	rulesetEntry.Versions[version] = versionEntry
+	index.Rulesets[rulesetKey] = rulesetEntry
+
+	return f.saveIndex(index)
 }

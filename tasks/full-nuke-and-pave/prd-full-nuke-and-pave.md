@@ -392,7 +392,10 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/cursor/*.mdc"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -405,7 +408,10 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_include": ["rules/amazonq/*.mdc"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/amazonq/*.md"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -533,7 +539,10 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/cursor/*.mdc"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -546,7 +555,10 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_include": ["rules/amazonq/*.md"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/amazonq/*.md"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -674,7 +686,10 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/cursor/*.mdc"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -687,7 +702,10 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_include": ["rules/amazonq/*.md"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/amazonq/*.md"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -823,7 +841,10 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/cursor/*.mdc"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -836,7 +857,10 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_include": ["rules/amazonq/*.md"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/amazonq/*.md"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -976,7 +1000,10 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/cursor/*.mdc"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -989,7 +1016,10 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_include": ["rules/amazonq/*.md"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/amazonq/*.md"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -1108,7 +1138,10 @@ registries/
   "normalized_registry_type": "git",
   "rulesets": {
     "xyz789abc123...": {
-      "normalized_ruleset_include": ["rules/cursor/*.mdc"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/cursor/*.mdc"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",
@@ -1121,7 +1154,10 @@ registries/
       }
     },
     "aadbbf3222b3...": {
-      "normalized_ruleset_include": ["rules/amazonq/*.md"],
+      "normalized_ruleset_selector": {
+        "include": ["rules/amazonq/*.md"],
+        "exclude": []
+      },
       "created_on": "2024-01-15T10:30:00Z",
       "last_updated_on": "2024-01-15T10:30:00Z",
       "last_accessed_on": "2024-01-15T10:30:00Z",

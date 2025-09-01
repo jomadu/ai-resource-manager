@@ -72,7 +72,7 @@ func (g *GitRegistry) GetContent(ctx context.Context, version types.VersionRef, 
 	}
 
 	// Cache the result
-	_ = g.cache.SetRulesetVersion(ctx, rulesetKey, version.ID, files)
+	_ = g.cache.SetRulesetVersion(ctx, rulesetKey, version.ID, selector, files)
 
 	return files, nil
 }
