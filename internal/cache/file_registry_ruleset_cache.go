@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/jomadu/ai-rules-manager/internal/types"
@@ -16,22 +15,18 @@ import (
 
 // FileRegistryRulesetCache implements filesystem-based ruleset caching.
 type FileRegistryRulesetCache struct {
-	registryKey  string
-	baseDir      string
-	registryURL  string
-	registryType string
+	registryKey string
+	baseDir     string
 }
 
 // NewRegistryRulesetCache creates a new registry-scoped ruleset cache.
-func NewRegistryRulesetCache(registryKey, registryURL, registryType string) *FileRegistryRulesetCache {
+func NewRegistryRulesetCache(registryKey string) *FileRegistryRulesetCache {
 	homeDir, _ := os.UserHomeDir()
 	baseDir := filepath.Join(homeDir, ".arm", "cache", "registries", registryKey)
 
 	return &FileRegistryRulesetCache{
-		registryKey:  registryKey,
-		baseDir:      baseDir,
-		registryURL:  registryURL,
-		registryType: registryType,
+		registryKey: registryKey,
+		baseDir:     baseDir,
 	}
 }
 
@@ -119,7 +114,7 @@ func (f *FileRegistryRulesetCache) SetRulesetVersion(ctx context.Context, rulese
 	}
 
 	// Update index on set
-	_ = f.updateIndexOnSet(rulesetKey, version, selector)
+	_ = f.updateIndexOnSet(rulesetKey, version)
 
 	return nil
 }
@@ -136,27 +131,18 @@ func (f *FileRegistryRulesetCache) InvalidateVersion(ctx context.Context, rulese
 
 // RegistryIndex tracks metadata for cached registry data.
 type RegistryIndex struct {
-	CreatedOn              time.Time                    `json:"created_on"`
-	LastUpdatedOn          time.Time                    `json:"last_updated_on"`
-	LastAccessedOn         time.Time                    `json:"last_accessed_on"`
-	NormalizedRegistryURL  string                       `json:"normalized_registry_url"`
-	NormalizedRegistryType string                       `json:"normalized_registry_type"`
-	Rulesets               map[string]RulesetIndexEntry `json:"rulesets"`
+	CreatedOn      time.Time                    `json:"created_on"`
+	LastUpdatedOn  time.Time                    `json:"last_updated_on"`
+	LastAccessedOn time.Time                    `json:"last_accessed_on"`
+	Rulesets       map[string]RulesetIndexEntry `json:"rulesets"`
 }
 
 // RulesetIndexEntry tracks metadata for a cached ruleset.
 type RulesetIndexEntry struct {
-	NormalizedRulesetSelector NormalizedSelector           `json:"normalized_ruleset_selector"`
-	CreatedOn                 time.Time                    `json:"created_on"`
-	LastUpdatedOn             time.Time                    `json:"last_updated_on"`
-	LastAccessedOn            time.Time                    `json:"last_accessed_on"`
-	Versions                  map[string]VersionIndexEntry `json:"versions"`
-}
-
-// NormalizedSelector represents normalized include/exclude patterns.
-type NormalizedSelector struct {
-	Include []string `json:"include"`
-	Exclude []string `json:"exclude"`
+	CreatedOn      time.Time                    `json:"created_on"`
+	LastUpdatedOn  time.Time                    `json:"last_updated_on"`
+	LastAccessedOn time.Time                    `json:"last_accessed_on"`
+	Versions       map[string]VersionIndexEntry `json:"versions"`
 }
 
 // VersionIndexEntry tracks metadata for a cached version.
@@ -174,16 +160,11 @@ func (f *FileRegistryRulesetCache) loadIndex() (*RegistryIndex, error) {
 	if os.IsNotExist(err) {
 		// Create new index
 		now := time.Now().UTC()
-		// Create new index with normalized values
-		normalizedURL := normalizeURL(f.registryURL)
-		normalizedType := strings.ToLower(f.registryType)
 		return &RegistryIndex{
-			CreatedOn:              now,
-			LastUpdatedOn:          now,
-			LastAccessedOn:         now,
-			NormalizedRegistryURL:  normalizedURL,
-			NormalizedRegistryType: normalizedType,
-			Rulesets:               make(map[string]RulesetIndexEntry),
+			CreatedOn:      now,
+			LastUpdatedOn:  now,
+			LastAccessedOn: now,
+			Rulesets:       make(map[string]RulesetIndexEntry),
 		}, nil
 	}
 	if err != nil {
@@ -242,7 +223,7 @@ func (f *FileRegistryRulesetCache) updateIndexOnAccess(rulesetKey, version strin
 }
 
 // updateIndexOnSet updates the index when a ruleset version is cached.
-func (f *FileRegistryRulesetCache) updateIndexOnSet(rulesetKey, version string, selector types.ContentSelector) error {
+func (f *FileRegistryRulesetCache) updateIndexOnSet(rulesetKey, version string) error {
 	index, err := f.loadIndex()
 	if err != nil {
 		return err
@@ -255,10 +236,6 @@ func (f *FileRegistryRulesetCache) updateIndexOnSet(rulesetKey, version string, 
 	rulesetEntry, exists := index.Rulesets[rulesetKey]
 	if !exists {
 		rulesetEntry = RulesetIndexEntry{
-			NormalizedRulesetSelector: NormalizedSelector{
-				Include: normalizePatterns(selector.Include),
-				Exclude: normalizePatterns(selector.Exclude),
-			},
 			CreatedOn:      now,
 			LastUpdatedOn:  now,
 			LastAccessedOn: now,
@@ -279,4 +256,37 @@ func (f *FileRegistryRulesetCache) updateIndexOnSet(rulesetKey, version string, 
 	index.Rulesets[rulesetKey] = rulesetEntry
 
 	return f.saveIndex(index)
+}
+
+// CleanupOldVersions removes cached versions that haven't been accessed within maxAge.
+func (f *FileRegistryRulesetCache) CleanupOldVersions(ctx context.Context, maxAge time.Duration) error {
+	index, err := f.loadIndex()
+	if err != nil {
+		return err
+	}
+
+	cutoff := time.Now().UTC().Add(-maxAge)
+	modified := false
+
+	for rulesetKey, rulesetEntry := range index.Rulesets {
+		for version, versionEntry := range rulesetEntry.Versions {
+			if versionEntry.LastAccessedOn.Before(cutoff) {
+				// Remove version directory
+				versionDir := filepath.Join(f.baseDir, "rulesets", rulesetKey, version)
+				if err := os.RemoveAll(versionDir); err != nil {
+					return err
+				}
+				// Remove from index
+				delete(rulesetEntry.Versions, version)
+				modified = true
+			}
+		}
+		// Update index entry
+		index.Rulesets[rulesetKey] = rulesetEntry
+	}
+
+	if modified {
+		return f.saveIndex(index)
+	}
+	return nil
 }
