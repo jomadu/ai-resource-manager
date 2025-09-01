@@ -20,7 +20,7 @@ func NewRegistry(name string, config config.RegistryConfig) (Registry, error) {
 func newGitRegistry(name string, config config.RegistryConfig) *GitRegistry {
 	keyGen := cache.NewGitKeyGen()
 	registryKey := keyGen.RegistryKey(config.URL, config.Type)
-	rulesetCache := cache.NewRegistryRulesetCache(registryKey, config.URL, config.Type)
+	rulesetCache := cache.NewRegistryRulesetCache(registryKey)
 	repoCache := cache.NewGitRepoCache(registryKey, name, config.URL)
 
 	return NewGitRegistry(rulesetCache, repoCache, config.URL, config.Type)
