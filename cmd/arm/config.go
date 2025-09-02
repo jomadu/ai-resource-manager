@@ -74,7 +74,7 @@ Sinks define where installed rules should be placed in your filesystem.
 Examples:
   arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
   arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
-  arm config sink add copilot --directories .copilot/rules --include "ai-rules/*" --layout flat`,
+  arm config sink add github --directories .github/instructions --include "ai-rules/*" --layout flat`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
