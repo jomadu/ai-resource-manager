@@ -3,6 +3,7 @@ package arm
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -64,6 +65,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 	}
 	registryConfig, exists := registries[registryName]
 	if !exists {
+		slog.ErrorContext(ctx, "Registry not found", "registry", registryName)
 		return fmt.Errorf("registry %s not found", registryName)
 	}
 
@@ -114,17 +116,19 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 	}
 
 	// Install files to sink directories
+	slog.InfoContext(ctx, "Installing ruleset", "registry", registryName, "ruleset", ruleset, "version", resolvedVersion.ID)
 	sinks, err := a.configManager.GetSinks(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get sinks: %w", err)
 	}
 
-	rulesetKey := fmt.Sprintf("%s/%s", registryName, ruleset)
+	rulesetKey := registryName + "/" + ruleset
 	for _, sink := range sinks {
 		if a.matchesSink(rulesetKey, sink) {
 			for _, dir := range sink.Directories {
 				if err := a.installer.Install(ctx, dir, ruleset, resolvedVersion.ID, files); err != nil {
-					return fmt.Errorf("failed to install to %s: %w", dir, err)
+					slog.ErrorContext(ctx, "Failed to install to directory", "dir", dir, "error", err)
+					return err
 				}
 			}
 		}
@@ -139,11 +143,13 @@ func (a *ArmService) Install(ctx context.Context) error {
 
 	// Case: No manifest, no lockfile
 	if manifestErr != nil && lockErr != nil {
+		slog.ErrorContext(ctx, "No manifest or lockfile found")
 		return fmt.Errorf("neither arm.json nor arm-lock.json found")
 	}
 
 	// Case: No manifest, lockfile exists
 	if manifestErr != nil && lockErr == nil {
+		slog.ErrorContext(ctx, "Manifest file not found")
 		return fmt.Errorf("arm.json not found")
 	}
 
@@ -156,7 +162,8 @@ func (a *ArmService) Install(ctx context.Context) error {
 	for registryName, rulesets := range manifestEntries {
 		for rulesetName, entry := range rulesets {
 			if err := a.InstallRuleset(ctx, registryName, rulesetName, entry.Version, entry.Include, entry.Exclude); err != nil {
-				return fmt.Errorf("failed to install %s/%s: %w", registryName, rulesetName, err)
+				slog.ErrorContext(ctx, "Failed to install ruleset", "registry", registryName, "ruleset", rulesetName, "error", err)
+				return err
 			}
 		}
 	}
@@ -176,17 +183,19 @@ func (a *ArmService) Uninstall(ctx context.Context, registry, ruleset string) er
 	}
 
 	// Remove installed files from sink directories
+	slog.InfoContext(ctx, "Uninstalling ruleset", "registry", registry, "ruleset", ruleset)
 	sinks, err := a.configManager.GetSinks(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get sinks: %w", err)
 	}
 
-	rulesetKey := fmt.Sprintf("%s/%s", registry, ruleset)
+	rulesetKey := registry + "/" + ruleset
 	for _, sink := range sinks {
 		if a.matchesSink(rulesetKey, sink) {
 			for _, dir := range sink.Directories {
 				if err := a.installer.Uninstall(ctx, dir, ruleset); err != nil {
-					return fmt.Errorf("failed to uninstall from %s: %w", dir, err)
+					slog.ErrorContext(ctx, "Failed to uninstall from directory", "dir", dir, "error", err)
+					return err
 				}
 			}
 		}
@@ -201,6 +210,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registry, ruleset string
 		return fmt.Errorf("failed to get manifest entry: %w", err)
 	}
 
+	slog.InfoContext(ctx, "Updating ruleset", "registry", registry, "ruleset", ruleset)
 	return a.InstallRuleset(ctx, registry, ruleset, manifestEntry.Version, manifestEntry.Include, manifestEntry.Exclude)
 }
 
@@ -351,11 +361,13 @@ func (a *ArmService) Update(ctx context.Context) error {
 
 	// Case: No manifest, no lockfile
 	if manifestErr != nil && lockErr != nil {
+		slog.ErrorContext(ctx, "No manifest or lockfile found for update")
 		return fmt.Errorf("neither arm.json nor arm-lock.json found")
 	}
 
 	// Case: No manifest, lockfile exists
 	if manifestErr != nil && lockErr == nil {
+		slog.ErrorContext(ctx, "Manifest file not found for update")
 		return fmt.Errorf("arm.json not found")
 	}
 
@@ -363,7 +375,8 @@ func (a *ArmService) Update(ctx context.Context) error {
 	for registryName, rulesets := range manifestEntries {
 		for rulesetName := range rulesets {
 			if err := a.UpdateRuleset(ctx, registryName, rulesetName); err != nil {
-				return fmt.Errorf("failed to update %s/%s: %w", registryName, rulesetName, err)
+				slog.ErrorContext(ctx, "Failed to update ruleset", "registry", registryName, "ruleset", rulesetName, "error", err)
+				return err
 			}
 		}
 	}
@@ -393,7 +406,8 @@ func (a *ArmService) installFromLockfile(ctx context.Context, lockEntries map[st
 	for registryName, rulesets := range lockEntries {
 		for rulesetName, lockEntry := range rulesets {
 			if err := a.installExactVersion(ctx, registryName, rulesetName, &lockEntry); err != nil {
-				return fmt.Errorf("failed to install %s/%s: %w", registryName, rulesetName, err)
+				slog.ErrorContext(ctx, "Failed to install exact version", "registry", registryName, "ruleset", rulesetName, "error", err)
+				return err
 			}
 		}
 	}
@@ -423,12 +437,13 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 		return fmt.Errorf("failed to get sinks: %w", err)
 	}
 
-	rulesetKey := fmt.Sprintf("%s/%s", registryName, ruleset)
+	rulesetKey := registryName + "/" + ruleset
 	for _, sink := range sinks {
 		if a.matchesSink(rulesetKey, sink) {
 			for _, dir := range sink.Directories {
 				if err := a.installer.Install(ctx, dir, ruleset, lockEntry.Resolved, files); err != nil {
-					return fmt.Errorf("failed to install to %s: %w", dir, err)
+					slog.ErrorContext(ctx, "Failed to install exact version to directory", "dir", dir, "error", err)
+					return err
 				}
 			}
 		}

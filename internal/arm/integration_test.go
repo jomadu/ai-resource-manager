@@ -61,8 +61,8 @@ func TestIntegrationInstallLatest(t *testing.T) {
 	// Verify files created
 	assertFileExists(t, "arm.json")
 	assertFileExists(t, "arm-lock.json")
-	assertFileExists(t, ".amazonq/rules")
-	assertFileExists(t, ".cursor/rules")
+	assertFileExists(t, ".amazonq/rules/arm")
+	assertFileExists(t, ".cursor/rules/arm")
 
 	// Verify manifest content
 	manifestData, err := os.ReadFile("arm.json")
@@ -282,7 +282,7 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to install with both files: %v", err)
 	}
-	assertFileExists(t, ".amazonq/rules")
+	assertFileExists(t, ".amazonq/rules/arm")
 
 	// Test lockfile only
 	_ = os.Remove("arm.json")
