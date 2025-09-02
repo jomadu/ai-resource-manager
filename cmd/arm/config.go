@@ -9,65 +9,95 @@ import (
 )
 
 func init() {
-	configCmd.AddCommand(configAddCmd)
-	configCmd.AddCommand(configRemoveCmd)
+	configCmd.AddCommand(configRegistryCmd)
+	configCmd.AddCommand(configSinkCmd)
 	configCmd.AddCommand(configListCmd)
 }
 
-var configAddCmd = &cobra.Command{
-	Use:   "add <type> <name> [url]",
-	Short: "Add registry or sink configuration",
-	Long:  "Add a registry or sink to the configuration. Type must be 'registry' or 'sink'.",
-	Args:  cobra.MinimumNArgs(2),
+var configRegistryCmd = &cobra.Command{
+	Use:   "registry",
+	Short: "Manage registry configuration",
+}
+
+var configSinkCmd = &cobra.Command{
+	Use:   "sink",
+	Short: "Manage sink configuration",
+}
+
+var registryAddCmd = &cobra.Command{
+	Use:   "add <name> <url>",
+	Short: "Add registry configuration",
+	Long: `Add a registry to the configuration.
+
+Registries are remote sources where rulesets are stored and versioned.
+
+Examples:
+  arm config registry add ai-rules https://github.com/user/rules-repo --type git
+  arm config registry add company-rules https://gitlab.com/company/rules --type git`,
+	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		configType := args[0]
-		name := args[1]
-
-		switch configType {
-		case "registry":
-			if len(args) < 3 {
-				return fmt.Errorf("registry requires a URL argument")
-			}
-			url := args[2]
-			registryType, _ := cmd.Flags().GetString("type")
-			if registryType == "" {
-				registryType = "git" // default
-			}
-
-			configManager := config.NewFileManager()
-			return configManager.AddRegistry(context.Background(), name, url, registryType)
-
-		case "sink":
-			directories, _ := cmd.Flags().GetStringSlice("directories")
-			include, _ := cmd.Flags().GetStringSlice("include")
-			exclude, _ := cmd.Flags().GetStringSlice("exclude")
-
-			configManager := config.NewFileManager()
-			return configManager.AddSink(context.Background(), name, directories, include, exclude)
-
-		default:
-			return fmt.Errorf("invalid type '%s'. Must be 'registry' or 'sink'", configType)
+		name := args[0]
+		url := args[1]
+		registryType, _ := cmd.Flags().GetString("type")
+		if registryType == "" {
+			registryType = "git"
 		}
+
+		configManager := config.NewFileManager()
+		return configManager.AddRegistry(context.Background(), name, url, registryType)
 	},
 }
 
-var configRemoveCmd = &cobra.Command{
-	Use:   "remove <type> <name>",
-	Short: "Remove registry or sink configuration",
-	Args:  cobra.ExactArgs(2),
+var registryRemoveCmd = &cobra.Command{
+	Use:   "remove <name>",
+	Short: "Remove registry configuration",
+	Long: `Remove a registry from the configuration.
+
+Examples:
+  arm config registry remove ai-rules`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		configType := args[0]
-		name := args[1]
+		name := args[0]
+		configManager := config.NewFileManager()
+		return configManager.RemoveRegistry(context.Background(), name)
+	},
+}
+
+var sinkAddCmd = &cobra.Command{
+	Use:   "add <name>",
+	Short: "Add sink configuration",
+	Long: `Add a sink to the configuration.
+
+Sinks define where installed rules should be placed in your filesystem.
+
+Examples:
+  arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
+  arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
+  arm config sink add all --directories .rules --exclude "*test*"`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		name := args[0]
+		directories, _ := cmd.Flags().GetStringSlice("directories")
+		include, _ := cmd.Flags().GetStringSlice("include")
+		exclude, _ := cmd.Flags().GetStringSlice("exclude")
 
 		configManager := config.NewFileManager()
-		switch configType {
-		case "registry":
-			return configManager.RemoveRegistry(context.Background(), name)
-		case "sink":
-			return configManager.RemoveSink(context.Background(), name)
-		default:
-			return fmt.Errorf("invalid type '%s'. Must be 'registry' or 'sink'", configType)
-		}
+		return configManager.AddSink(context.Background(), name, directories, include, exclude)
+	},
+}
+
+var sinkRemoveCmd = &cobra.Command{
+	Use:   "remove <name>",
+	Short: "Remove sink configuration",
+	Long: `Remove a sink from the configuration.
+
+Examples:
+  arm config sink remove q`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		name := args[0]
+		configManager := config.NewFileManager()
+		return configManager.RemoveSink(context.Background(), name)
 	},
 }
 
@@ -102,8 +132,13 @@ var configListCmd = &cobra.Command{
 }
 
 func init() {
-	configAddCmd.Flags().String("type", "git", "Registry type (git, http)")
-	configAddCmd.Flags().StringSlice("directories", nil, "Sink directories")
-	configAddCmd.Flags().StringSlice("include", nil, "Sink include patterns")
-	configAddCmd.Flags().StringSlice("exclude", nil, "Sink exclude patterns")
+	configRegistryCmd.AddCommand(registryAddCmd)
+	configRegistryCmd.AddCommand(registryRemoveCmd)
+	configSinkCmd.AddCommand(sinkAddCmd)
+	configSinkCmd.AddCommand(sinkRemoveCmd)
+
+	registryAddCmd.Flags().String("type", "git", "Registry type (git, http)")
+	sinkAddCmd.Flags().StringSlice("directories", nil, "Sink directories")
+	sinkAddCmd.Flags().StringSlice("include", nil, "Sink include patterns")
+	sinkAddCmd.Flags().StringSlice("exclude", nil, "Sink exclude patterns")
 }
