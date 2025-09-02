@@ -253,7 +253,10 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 
 	service, ctx := setupTest(t)
 
-	// Test no files
+	// Test no files - remove files created by setup
+	_ = os.Remove("arm.json")
+	_ = os.Remove(".armrc.json")
+
 	err := service.Install(ctx)
 	if err == nil {
 		t.Fatal("Expected error with no files")
@@ -262,7 +265,12 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 		t.Errorf("Expected 'neither arm.json nor arm-lock.json found', got: %v", err)
 	}
 
-	// Test manifest only
+	// Test manifest only - recreate sink config
+	err = service.configManager.AddSink(ctx, "q", []string{".amazonq/rules"}, []string{"ai-rules/amazonq-*"}, []string{"ai-rules/cursor-*"})
+	if err != nil {
+		t.Fatalf("Failed to recreate q sink: %v", err)
+	}
+
 	manifestFile := manifest.Manifest{
 		Registries: map[string]manifest.RegistryConfig{
 			"ai-rules": {URL: testRegistry, Type: "git"},
