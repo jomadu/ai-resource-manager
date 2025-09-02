@@ -13,6 +13,7 @@ import (
 
 // FileGitRepoCache implements filesystem-based git repository operations.
 type FileGitRepoCache struct {
+	registryDir string
 	repoDir     string
 	url         string
 	initialized bool
@@ -26,11 +27,13 @@ func NewGitRepoCache(keyObj interface{}, repoName, url string) (*FileGitRepoCach
 	}
 
 	homeDir, _ := os.UserHomeDir()
-	repoDir := filepath.Join(homeDir, ".arm", "cache", "registries", registryKey, "repository", repoName)
+	registryDir := filepath.Join(homeDir, ".arm", "cache", "registries", registryKey)
+	repoDir := filepath.Join(registryDir, "repository", repoName)
 
 	return &FileGitRepoCache{
-		repoDir: repoDir,
-		url:     url,
+		registryDir: registryDir,
+		repoDir:     repoDir,
+		url:         url,
 	}, nil
 }
 
@@ -62,6 +65,12 @@ func (g *FileGitRepoCache) ensureInitialized(ctx context.Context) error {
 }
 
 func (g *FileGitRepoCache) GetTags(ctx context.Context) ([]string, error) {
+	lock, err := AcquireRegistryLock(g.registryDir)
+	if err != nil {
+		return nil, err
+	}
+	defer lock.ReleaseIgnoreError()
+
 	if err := g.ensureInitialized(ctx); err != nil {
 		return nil, err
 	}
@@ -76,6 +85,12 @@ func (g *FileGitRepoCache) GetTags(ctx context.Context) ([]string, error) {
 }
 
 func (g *FileGitRepoCache) GetBranches(ctx context.Context) ([]string, error) {
+	lock, err := AcquireRegistryLock(g.registryDir)
+	if err != nil {
+		return nil, err
+	}
+	defer lock.ReleaseIgnoreError()
+
 	if err := g.ensureInitialized(ctx); err != nil {
 		return nil, err
 	}
@@ -93,6 +108,12 @@ func (g *FileGitRepoCache) GetBranches(ctx context.Context) ([]string, error) {
 }
 
 func (g *FileGitRepoCache) GetFiles(ctx context.Context, ref string, selector types.ContentSelector) ([]types.File, error) {
+	lock, err := AcquireRegistryLock(g.registryDir)
+	if err != nil {
+		return nil, err
+	}
+	defer lock.ReleaseIgnoreError()
+
 	if err := g.ensureInitialized(ctx); err != nil {
 		return nil, err
 	}
@@ -105,7 +126,7 @@ func (g *FileGitRepoCache) GetFiles(ctx context.Context, ref string, selector ty
 	}
 
 	var files []types.File
-	err := filepath.WalkDir(g.repoDir, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(g.repoDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
