@@ -1,0 +1,14 @@
+{
+  "sinks": {
+    "github": {
+      "directories": [
+        ".github/instructions"
+      ],
+      "include": [
+        "ai-rules/*"
+      ],
+      "exclude": [],
+      "layout": "flat"
+    }
+  }
+}

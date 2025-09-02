@@ -74,7 +74,7 @@ arm config sink add cursor --directories .cursor/rules --include "ai-rules/curso
 ```
 
 ```bash
-arm config sink add copilot --directories .copilot/rules --include "ai-rules/*" --layout flat
+arm config sink add github --directories .github/instructions --include "ai-rules/*" --layout flat
 ```
 
 Install rulesets:
@@ -127,7 +127,7 @@ Preserves the original directory structure from rulesets:
 Places all files in a single directory with hash-prefixed names:
 
 ```
-.copilot/rules/
+.github/instructions/
 ├── 183791a9_rules_amazonq_clean-code.md
 ├── 3554667c_rules_amazonq_generate-tasks.md
 └── arm-index.json
@@ -142,8 +142,8 @@ Configure layout in `.armrc.json`:
       "layout": "hierarchical",
       "include": ["ai-rules/cursor-*"]
     },
-    "copilot": {
-      "directories": [".copilot/rules"],
+    "github": {
+      "directories": [".github/instructions"],
       "layout": "flat",
       "include": ["ai-rules/*"]
     }
