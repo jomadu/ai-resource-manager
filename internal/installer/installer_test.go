@@ -153,3 +153,72 @@ func TestFileInstaller_InstallInvalidPath(t *testing.T) {
 func TestFileInstaller_ImplementsInterface(t *testing.T) {
 	var _ Installer = (*FileInstaller)(nil)
 }
+
+func TestFileInstaller_UninstallCleansUpEmptyDirectories(t *testing.T) {
+	installer := NewFileInstaller()
+	ctx := context.Background()
+
+	tempDir, err := os.MkdirTemp("", "installer_test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer func() { _ = os.RemoveAll(tempDir) }()
+
+	// Create test files for last ruleset in registry
+	rulesetDir := filepath.Join(tempDir, "arm", "test-registry", "last-ruleset")
+	_ = os.MkdirAll(rulesetDir, 0o755)
+	_ = os.WriteFile(filepath.Join(rulesetDir, "rule.json"), []byte("test"), 0o644)
+
+	err = installer.Uninstall(ctx, tempDir, "test-registry", "last-ruleset")
+	if err != nil {
+		t.Errorf("Uninstall failed: %v", err)
+	}
+
+	// Verify registry directory was removed
+	registryDir := filepath.Join(tempDir, "arm", "test-registry")
+	if _, err := os.Stat(registryDir); !os.IsNotExist(err) {
+		t.Error("Expected empty registry directory to be removed")
+	}
+
+	// Verify arm directory was removed
+	armDir := filepath.Join(tempDir, "arm")
+	if _, err := os.Stat(armDir); !os.IsNotExist(err) {
+		t.Error("Expected empty arm directory to be removed")
+	}
+}
+
+func TestFileInstaller_UninstallKeepsNonEmptyDirectories(t *testing.T) {
+	installer := NewFileInstaller()
+	ctx := context.Background()
+
+	tempDir, err := os.MkdirTemp("", "installer_test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer func() { _ = os.RemoveAll(tempDir) }()
+
+	// Create test files for multiple rulesets
+	ruleset1Dir := filepath.Join(tempDir, "arm", "test-registry", "ruleset1")
+	ruleset2Dir := filepath.Join(tempDir, "arm", "test-registry", "ruleset2")
+	_ = os.MkdirAll(ruleset1Dir, 0o755)
+	_ = os.MkdirAll(ruleset2Dir, 0o755)
+	_ = os.WriteFile(filepath.Join(ruleset1Dir, "rule.json"), []byte("test"), 0o644)
+	_ = os.WriteFile(filepath.Join(ruleset2Dir, "rule.json"), []byte("test"), 0o644)
+
+	err = installer.Uninstall(ctx, tempDir, "test-registry", "ruleset1")
+	if err != nil {
+		t.Errorf("Uninstall failed: %v", err)
+	}
+
+	// Verify registry directory still exists (has ruleset2)
+	registryDir := filepath.Join(tempDir, "arm", "test-registry")
+	if _, err := os.Stat(registryDir); os.IsNotExist(err) {
+		t.Error("Expected non-empty registry directory to remain")
+	}
+
+	// Verify arm directory still exists
+	armDir := filepath.Join(tempDir, "arm")
+	if _, err := os.Stat(armDir); os.IsNotExist(err) {
+		t.Error("Expected non-empty arm directory to remain")
+	}
+}
