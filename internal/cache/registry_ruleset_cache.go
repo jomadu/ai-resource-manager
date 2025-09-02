@@ -8,9 +8,9 @@ import (
 
 // RegistryRulesetCache provides registry-scoped storage for cached rulesets.
 type RegistryRulesetCache interface {
-	ListVersions(ctx context.Context, rulesetKey string) ([]string, error)
-	GetRulesetVersion(ctx context.Context, rulesetKey, version string) ([]types.File, error)
-	SetRulesetVersion(ctx context.Context, rulesetKey, version string, selector types.ContentSelector, files []types.File) error
+	ListVersions(ctx context.Context, keyObj interface{}) ([]string, error)
+	GetRulesetVersion(ctx context.Context, keyObj interface{}, version string) ([]types.File, error)
+	SetRulesetVersion(ctx context.Context, keyObj interface{}, version string, files []types.File) error
 	InvalidateRuleset(ctx context.Context, rulesetKey string) error
 	InvalidateVersion(ctx context.Context, rulesetKey, version string) error
 }

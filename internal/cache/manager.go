@@ -2,6 +2,8 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -30,17 +32,55 @@ func (m *Manager) CleanupOldVersions(ctx context.Context, maxAge time.Duration) 
 	}
 
 	for _, entry := range entries {
-		if entry.IsDir() {
-			registryKey := entry.Name()
-			cache := &FileRegistryRulesetCache{
-				registryKey: registryKey,
-				baseDir:     filepath.Join(m.cacheDir, registryKey),
-			}
-			if err := cache.CleanupOldVersions(ctx, maxAge); err != nil {
+		if !entry.IsDir() {
+			continue
+		}
+
+		baseDir := filepath.Join(m.cacheDir, entry.Name())
+
+		// Try to read registry metadata from existing index
+		registryKeyObj, err := m.readRegistryMetadata(baseDir)
+		if err != nil {
+			// Nuke corrupted registry - it will repopulate later
+			if err := os.RemoveAll(baseDir); err != nil {
 				return err
 			}
+			continue
+		}
+
+		cache, err := NewRegistryRulesetCache(registryKeyObj)
+		if err != nil {
+			// Nuke registry with invalid metadata
+			if err := os.RemoveAll(baseDir); err != nil {
+				return err
+			}
+			continue
+		}
+
+		if err := cache.CleanupOldVersions(ctx, maxAge); err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+func (m *Manager) readRegistryMetadata(baseDir string) (interface{}, error) {
+	indexPath := filepath.Join(baseDir, "index.json")
+
+	data, err := os.ReadFile(indexPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var index RegistryIndex
+	if err := json.Unmarshal(data, &index); err != nil {
+		return nil, err
+	}
+
+	if index.RegistryMetadata == nil {
+		return nil, fmt.Errorf("missing registry metadata")
+	}
+
+	return index.RegistryMetadata, nil
 }
