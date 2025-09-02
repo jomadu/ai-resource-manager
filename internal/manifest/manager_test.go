@@ -22,6 +22,9 @@ func TestFileManager_GetEntry(t *testing.T) {
 		{
 			name: "existing entry",
 			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{
+					"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
+				},
 				Rulesets: map[string]map[string]Entry{
 					"ai-rules": {
 						"amazonq-rules": {
@@ -41,7 +44,8 @@ func TestFileManager_GetEntry(t *testing.T) {
 		{
 			name: "missing registry",
 			manifestData: &Manifest{
-				Rulesets: map[string]map[string]Entry{},
+				Registries: map[string]RegistryConfig{},
+				Rulesets:   map[string]map[string]Entry{},
 			},
 			registry: "missing-registry",
 			ruleset:  "some-ruleset",
@@ -50,6 +54,9 @@ func TestFileManager_GetEntry(t *testing.T) {
 		{
 			name: "missing ruleset",
 			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{
+					"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
+				},
 				Rulesets: map[string]map[string]Entry{
 					"ai-rules": {},
 				},
@@ -94,6 +101,9 @@ func TestFileManager_GetEntries(t *testing.T) {
 		{
 			name: "valid manifest",
 			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{
+					"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
+				},
 				Rulesets: map[string]map[string]Entry{
 					"ai-rules": {
 						"amazonq-rules": {
@@ -121,9 +131,12 @@ func TestFileManager_GetEntries(t *testing.T) {
 			},
 		},
 		{
-			name:         "empty manifest",
-			manifestData: &Manifest{Rulesets: map[string]map[string]Entry{}},
-			want:         map[string]map[string]Entry{},
+			name: "empty manifest",
+			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{},
+				Rulesets:   map[string]map[string]Entry{},
+			},
+			want: map[string]map[string]Entry{},
 		},
 		{
 			name:    "missing manifest file",
@@ -157,6 +170,67 @@ func TestFileManager_GetEntries(t *testing.T) {
 	}
 }
 
+func TestFileManager_GetRegistries(t *testing.T) {
+	tests := []struct {
+		name         string
+		manifestData *Manifest
+		want         map[string]RegistryConfig
+		wantErr      bool
+	}{
+		{
+			name: "valid registries",
+			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{
+					"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
+					"company":  {URL: "https://gitlab.com/company/rules", Type: "git"},
+				},
+				Rulesets: map[string]map[string]Entry{},
+			},
+			want: map[string]RegistryConfig{
+				"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
+				"company":  {URL: "https://gitlab.com/company/rules", Type: "git"},
+			},
+		},
+		{
+			name: "empty registries",
+			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{},
+				Rulesets:   map[string]map[string]Entry{},
+			},
+			want: map[string]RegistryConfig{},
+		},
+		{
+			name:    "missing manifest file",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			oldWd, _ := os.Getwd()
+			_ = os.Chdir(tempDir)
+			defer func() { _ = os.Chdir(oldWd) }()
+
+			if tt.manifestData != nil {
+				writeManifest(t, tt.manifestData)
+			}
+
+			fm := NewFileManager()
+			got, err := fm.GetRegistries(context.Background())
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetRegistries() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr && !registriesEqual(got, tt.want) {
+				t.Errorf("GetRegistries() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestFileManager_CreateEntry(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -167,10 +241,13 @@ func TestFileManager_CreateEntry(t *testing.T) {
 		wantErr      bool
 	}{
 		{
-			name:         "create in empty manifest",
-			manifestData: &Manifest{Rulesets: map[string]map[string]Entry{}},
-			registry:     "ai-rules",
-			ruleset:      "amazonq-rules",
+			name: "create in empty manifest",
+			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{},
+				Rulesets:   map[string]map[string]Entry{},
+			},
+			registry: "ai-rules",
+			ruleset:  "amazonq-rules",
 			entry: Entry{
 				Version: "^1.0.0",
 				Include: []string{"rules/amazonq/*.md"},
@@ -179,6 +256,9 @@ func TestFileManager_CreateEntry(t *testing.T) {
 		{
 			name: "create in existing registry",
 			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{
+					"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
+				},
 				Rulesets: map[string]map[string]Entry{
 					"ai-rules": {
 						"cursor-rules": {
@@ -198,6 +278,9 @@ func TestFileManager_CreateEntry(t *testing.T) {
 		{
 			name: "create duplicate entry",
 			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{
+					"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
+				},
 				Rulesets: map[string]map[string]Entry{
 					"ai-rules": {
 						"amazonq-rules": {
@@ -253,6 +336,9 @@ func TestFileManager_UpdateEntry(t *testing.T) {
 		{
 			name: "update existing entry",
 			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{
+					"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
+				},
 				Rulesets: map[string]map[string]Entry{
 					"ai-rules": {
 						"amazonq-rules": {
@@ -271,10 +357,13 @@ func TestFileManager_UpdateEntry(t *testing.T) {
 			},
 		},
 		{
-			name:         "update non-existent entry",
-			manifestData: &Manifest{Rulesets: map[string]map[string]Entry{}},
-			registry:     "ai-rules",
-			ruleset:      "amazonq-rules",
+			name: "update non-existent entry",
+			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{},
+				Rulesets:   map[string]map[string]Entry{},
+			},
+			registry: "ai-rules",
+			ruleset:  "amazonq-rules",
 			entry: Entry{
 				Version: "^1.0.0",
 				Include: []string{"rules/amazonq/*.md"},
@@ -318,6 +407,9 @@ func TestFileManager_RemoveEntry(t *testing.T) {
 		{
 			name: "remove existing entry",
 			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{
+					"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
+				},
 				Rulesets: map[string]map[string]Entry{
 					"ai-rules": {
 						"amazonq-rules": {
@@ -337,6 +429,9 @@ func TestFileManager_RemoveEntry(t *testing.T) {
 		{
 			name: "remove last entry in registry",
 			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{
+					"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
+				},
 				Rulesets: map[string]map[string]Entry{
 					"ai-rules": {
 						"amazonq-rules": {
@@ -350,11 +445,14 @@ func TestFileManager_RemoveEntry(t *testing.T) {
 			ruleset:  "amazonq-rules",
 		},
 		{
-			name:         "remove non-existent entry",
-			manifestData: &Manifest{Rulesets: map[string]map[string]Entry{}},
-			registry:     "ai-rules",
-			ruleset:      "amazonq-rules",
-			wantErr:      true,
+			name: "remove non-existent entry",
+			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{},
+				Rulesets:   map[string]map[string]Entry{},
+			},
+			registry: "ai-rules",
+			ruleset:  "amazonq-rules",
+			wantErr:  true,
 		},
 	}
 
@@ -494,4 +592,168 @@ func stringSlicesEqual(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+func registriesEqual(a, b map[string]RegistryConfig) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for name, aReg := range a {
+		bReg, exists := b[name]
+		if !exists || aReg.URL != bReg.URL || aReg.Type != bReg.Type {
+			return false
+		}
+	}
+	return true
+}
+
+func TestFileManager_AddRegistry(t *testing.T) {
+	tests := []struct {
+		name         string
+		manifestData *Manifest
+		registryName string
+		url          string
+		registryType string
+		wantErr      bool
+	}{
+		{
+			name: "add to empty manifest",
+			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{},
+				Rulesets:   map[string]map[string]Entry{},
+			},
+			registryName: "ai-rules",
+			url:          "https://github.com/test/repo",
+			registryType: "git",
+		},
+		{
+			name: "add duplicate registry",
+			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{
+					"ai-rules": {URL: "https://github.com/existing/repo", Type: "git"},
+				},
+				Rulesets: map[string]map[string]Entry{},
+			},
+			registryName: "ai-rules",
+			url:          "https://github.com/test/repo",
+			registryType: "git",
+			wantErr:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempDir := setupTestDir(t, tt.manifestData)
+			defer func() { _ = os.RemoveAll(tempDir) }()
+
+			oldWd, _ := os.Getwd()
+			_ = os.Chdir(tempDir)
+			defer func() { _ = os.Chdir(oldWd) }()
+
+			fm := NewFileManager()
+			err := fm.AddRegistry(context.Background(), tt.registryName, tt.url, tt.registryType)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("AddRegistry() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr {
+				verifyRegistryExists(t, tt.registryName, tt.url, tt.registryType)
+			}
+		})
+	}
+}
+
+func TestFileManager_RemoveRegistry(t *testing.T) {
+	tests := []struct {
+		name         string
+		manifestData *Manifest
+		registryName string
+		wantErr      bool
+	}{
+		{
+			name: "remove existing registry",
+			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{
+					"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
+				},
+				Rulesets: map[string]map[string]Entry{},
+			},
+			registryName: "ai-rules",
+		},
+		{
+			name: "remove non-existent registry",
+			manifestData: &Manifest{
+				Registries: map[string]RegistryConfig{},
+				Rulesets:   map[string]map[string]Entry{},
+			},
+			registryName: "nonexistent",
+			wantErr:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempDir := setupTestDir(t, tt.manifestData)
+			defer func() { _ = os.RemoveAll(tempDir) }()
+
+			oldWd, _ := os.Getwd()
+			_ = os.Chdir(tempDir)
+			defer func() { _ = os.Chdir(oldWd) }()
+
+			fm := NewFileManager()
+			err := fm.RemoveRegistry(context.Background(), tt.registryName)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("RemoveRegistry() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr {
+				verifyRegistryNotExists(t, tt.registryName)
+			}
+		})
+	}
+}
+
+func verifyRegistryExists(t *testing.T, name, url, registryType string) {
+	data, err := os.ReadFile(TEST_MANIFEST_FILE)
+	if err != nil {
+		t.Fatalf("Failed to read manifest: %v", err)
+	}
+
+	var manifest Manifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatalf("Failed to unmarshal manifest: %v", err)
+	}
+
+	registry, exists := manifest.Registries[name]
+	if !exists {
+		t.Errorf("Registry %s not found", name)
+		return
+	}
+
+	if registry.URL != url {
+		t.Errorf("Expected URL %s, got %s", url, registry.URL)
+	}
+	if registry.Type != registryType {
+		t.Errorf("Expected type %s, got %s", registryType, registry.Type)
+	}
+}
+
+func verifyRegistryNotExists(t *testing.T, name string) {
+	data, err := os.ReadFile(TEST_MANIFEST_FILE)
+	if err != nil {
+		t.Fatalf("Failed to read manifest: %v", err)
+	}
+
+	var manifest Manifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatalf("Failed to unmarshal manifest: %v", err)
+	}
+
+	if _, exists := manifest.Registries[name]; exists {
+		t.Errorf("Registry %s should not exist", name)
+	}
 }

@@ -87,8 +87,8 @@ arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc"
 
 ## Files
 
-- `.armrc.json` - Registry and sink configuration
-- `arm.json` - Project manifest with dependencies
+- `.armrc.json` - Sink configuration (where rules are installed)
+- `arm.json` - Project manifest with registries and dependencies
 - `arm-lock.json` - Locked versions for reproducible installs
 
 ARM follows npm-like patterns for predictable dependency management across AI development environments.

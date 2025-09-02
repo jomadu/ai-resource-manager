@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jomadu/ai-rules-manager/internal/config"
+	"github.com/jomadu/ai-rules-manager/internal/manifest"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +28,7 @@ var configSinkCmd = &cobra.Command{
 var registryAddCmd = &cobra.Command{
 	Use:   "add <name> <url>",
 	Short: "Add registry configuration",
-	Long: `Add a registry to the configuration.
+	Long: `Add a registry to the manifest.
 
 Registries are remote sources where rulesets are stored and versioned.
 
@@ -43,23 +44,23 @@ Examples:
 			registryType = "git"
 		}
 
-		configManager := config.NewFileManager()
-		return configManager.AddRegistry(context.Background(), name, url, registryType)
+		manifestManager := manifest.NewFileManager()
+		return manifestManager.AddRegistry(context.Background(), name, url, registryType)
 	},
 }
 
 var registryRemoveCmd = &cobra.Command{
 	Use:   "remove <name>",
 	Short: "Remove registry configuration",
-	Long: `Remove a registry from the configuration.
+	Long: `Remove a registry from the manifest.
 
 Examples:
   arm config registry remove ai-rules`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
-		configManager := config.NewFileManager()
-		return configManager.RemoveRegistry(context.Background(), name)
+		manifestManager := manifest.NewFileManager()
+		return manifestManager.RemoveRegistry(context.Background(), name)
 	},
 }
 
@@ -105,27 +106,27 @@ var configListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List configuration",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		manifestManager := manifest.NewFileManager()
+		registries, err := manifestManager.GetRegistries(context.Background())
+		if err == nil {
+			fmt.Println("Registries:")
+			for name, reg := range registries {
+				fmt.Printf("  %s: %s (%s)\n", name, reg.URL, reg.Type)
+			}
+		}
+
 		configManager := config.NewFileManager()
-		registries, err := configManager.GetRegistries(context.Background())
-		if err != nil {
-			return err
-		}
 		sinks, err := configManager.GetSinks(context.Background())
-		if err != nil {
-			return err
-		}
-
-		fmt.Println("Registries:")
-		for name, reg := range registries {
-			fmt.Printf("  %s: %s (%s)\n", name, reg.URL, reg.Type)
-		}
-
-		fmt.Println("Sinks:")
-		for name, sink := range sinks {
-			fmt.Printf("  %s:\n", name)
-			fmt.Printf("    directories: %v\n", sink.Directories)
-			fmt.Printf("    include: %v\n", sink.Include)
-			fmt.Printf("    exclude: %v\n", sink.Exclude)
+		if err == nil {
+			fmt.Println("Sinks:")
+			for name, sink := range sinks {
+				fmt.Printf("  %s:\n", name)
+				fmt.Printf("    directories: %v\n", sink.Directories)
+				fmt.Printf("    include: %v\n", sink.Include)
+				fmt.Printf("    exclude: %v\n", sink.Exclude)
+			}
+		} else {
+			fmt.Println("Sinks: (none configured)")
 		}
 		return nil
 	},
