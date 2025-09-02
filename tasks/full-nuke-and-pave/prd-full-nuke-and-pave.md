@@ -113,7 +113,6 @@ gitGraph
 
 ```sh
 arm config registry add ai-rules https://github.com/my-user/ai-rules --type git
-
 arm config sink add q --directories .amazonq/rules --include ai-rules/amazonq-* --exclude ai-rules/cursor-*
 arm config sink add cursor --directories .cursor/rules --include ai-rules/cursor-* --exclude ai-rules/amazonq-*
 ```
@@ -122,12 +121,6 @@ arm config sink add cursor --directories .cursor/rules --include ai-rules/cursor
 
 ```json
 {
-    "registries": {
-        "ai-rules": {
-            "url": "https://github.com/my-user/ai-rules",
-            "type": "git"
-        }
-    },
     "sinks": {
         "q": {
             "directories": [
@@ -173,6 +166,12 @@ Existing `arm.json`
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -192,6 +191,12 @@ Existing `arm-lock.json`
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -285,6 +290,12 @@ arm install ai-rules/cursor-rules --include rules/cursor/*.mdc
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -304,6 +315,12 @@ arm install ai-rules/cursor-rules --include rules/cursor/*.mdc
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -440,6 +457,12 @@ arm install ai-rules/cursor-rules@1.0.0 --include rules/cursor/*.mdc
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -459,6 +482,12 @@ arm install ai-rules/cursor-rules@1.0.0 --include rules/cursor/*.mdc
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -587,6 +616,12 @@ arm install ai-rules/cursor-rules@1.0 --include rules/cursor/*.mdc
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -606,6 +641,12 @@ arm install ai-rules/cursor-rules@1.0 --include rules/cursor/*.mdc
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -734,6 +775,12 @@ arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -753,6 +800,12 @@ arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -889,6 +942,12 @@ arm install ai-rules/cursor-rules@main --include rules/cursor/*.mdc
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -908,6 +967,12 @@ arm install ai-rules/cursor-rules@main --include rules/cursor/*.mdc
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -1047,6 +1112,12 @@ arm uninstall ai-rules/cursor-rules
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -1062,6 +1133,12 @@ arm uninstall ai-rules/cursor-rules
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -1209,6 +1286,12 @@ All rulesets are up to date!
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -1228,6 +1311,12 @@ All rulesets are up to date!
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -1293,6 +1382,12 @@ arm update ai-rules/cursor-rules
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {
@@ -1312,6 +1407,12 @@ arm update ai-rules/cursor-rules
 
 ```json
 {
+    "registries": {
+        "ai-rules": {
+            "url": "https://github.com/my-user/ai-rules",
+            "type": "git"
+        }
+    },
     "rulesets": {
         "ai-rules": {
             "amazonq-rules": {

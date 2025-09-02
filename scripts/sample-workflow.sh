@@ -75,6 +75,9 @@ run_arm config sink add cursor --directories .cursor/rules --include "ai-rules/c
 
 success "Configuration complete"
 
+log "Showing arm.json manifest:"
+cat arm.json | jq .
+
 log "Showing .armrc.json configuration:"
 cat .armrc.json | jq .
 pause
@@ -176,6 +179,7 @@ log "=== INSTALL - Major Version ==="
 log "Reinstalling with major version constraint..."
 rm -rf .cursor .amazonq arm.json arm-lock.json
 
+run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 run_arm install ai-rules/amazonq-rules@1 --include rules/amazonq/*.md
 run_arm install ai-rules/cursor-rules@1 --include rules/cursor/*.mdc
 
@@ -195,6 +199,7 @@ log "=== INSTALL - Minor Version ==="
 log "Reinstalling with minor version constraint..."
 rm -rf .cursor .amazonq arm.json arm-lock.json
 
+run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 run_arm install ai-rules/amazonq-rules@1.0 --include rules/amazonq/*.md
 run_arm install ai-rules/cursor-rules@1.0 --include rules/cursor/*.mdc
 
@@ -214,6 +219,7 @@ log "=== INSTALL - Branch ==="
 log "Reinstalling from main branch..."
 rm -rf .cursor .amazonq arm.json arm-lock.json
 
+run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 run_arm install ai-rules/amazonq-rules@main --include rules/amazonq/*.md
 run_arm install ai-rules/cursor-rules@main --include rules/cursor/*.mdc
 

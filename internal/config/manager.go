@@ -11,11 +11,8 @@ const CONFIG_FILE = ".armrc.json"
 
 // Manager handles .armrc.json configuration file operations.
 type Manager interface {
-	GetRegistries(ctx context.Context) (map[string]RegistryConfig, error)
 	GetSinks(ctx context.Context) (map[string]SinkConfig, error)
-	AddRegistry(ctx context.Context, name, url, registryType string) error
 	AddSink(ctx context.Context, name string, dirs, include, exclude []string) error
-	RemoveRegistry(ctx context.Context, name string) error
 	RemoveSink(ctx context.Context, name string) error
 }
 
@@ -27,14 +24,6 @@ func NewFileManager() *FileManager {
 	return &FileManager{}
 }
 
-func (f *FileManager) GetRegistries(ctx context.Context) (map[string]RegistryConfig, error) {
-	config, err := f.loadConfig()
-	if err != nil {
-		return nil, err
-	}
-	return config.Registries, nil
-}
-
 func (f *FileManager) GetSinks(ctx context.Context) (map[string]SinkConfig, error) {
 	config, err := f.loadConfig()
 	if err != nil {
@@ -43,33 +32,11 @@ func (f *FileManager) GetSinks(ctx context.Context) (map[string]SinkConfig, erro
 	return config.Sinks, nil
 }
 
-func (f *FileManager) AddRegistry(ctx context.Context, name, url, registryType string) error {
-	config, err := f.loadConfig()
-	if err != nil {
-		config = &Config{
-			Registries: make(map[string]RegistryConfig),
-			Sinks:      make(map[string]SinkConfig),
-		}
-	}
-
-	if _, exists := config.Registries[name]; exists {
-		return fmt.Errorf("registry %s already exists", name)
-	}
-
-	config.Registries[name] = RegistryConfig{
-		URL:  url,
-		Type: registryType,
-	}
-
-	return f.saveConfig(config)
-}
-
 func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, exclude []string) error {
 	config, err := f.loadConfig()
 	if err != nil {
 		config = &Config{
-			Registries: make(map[string]RegistryConfig),
-			Sinks:      make(map[string]SinkConfig),
+			Sinks: make(map[string]SinkConfig),
 		}
 	}
 
@@ -83,20 +50,6 @@ func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, e
 		Exclude:     exclude,
 	}
 
-	return f.saveConfig(config)
-}
-
-func (f *FileManager) RemoveRegistry(ctx context.Context, name string) error {
-	config, err := f.loadConfig()
-	if err != nil {
-		return err
-	}
-
-	if _, exists := config.Registries[name]; !exists {
-		return fmt.Errorf("registry %s not found", name)
-	}
-
-	delete(config.Registries, name)
 	return f.saveConfig(config)
 }
 

@@ -21,10 +21,17 @@ func setupTest(t *testing.T) (*ArmService, context.Context) {
 	service := NewArmService()
 	ctx := context.Background()
 
-	// Setup registry and sinks
-	err := service.configManager.AddRegistry(ctx, "ai-rules", testRegistry, "git")
+	// Setup manifest with registry
+	manifestFile := manifest.Manifest{
+		Registries: map[string]manifest.RegistryConfig{
+			"ai-rules": {URL: testRegistry, Type: "git"},
+		},
+		Rulesets: map[string]map[string]manifest.Entry{},
+	}
+	data, _ := json.MarshalIndent(manifestFile, "", "  ")
+	err := os.WriteFile("arm.json", data, 0o644)
 	if err != nil {
-		t.Fatalf("Failed to add registry: %v", err)
+		t.Fatalf("Failed to create manifest: %v", err)
 	}
 
 	err = service.configManager.AddSink(ctx, "q", []string{".amazonq/rules"}, []string{"ai-rules/amazonq-*"}, []string{"ai-rules/cursor-*"})
@@ -257,6 +264,9 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 
 	// Test manifest only
 	manifestFile := manifest.Manifest{
+		Registries: map[string]manifest.RegistryConfig{
+			"ai-rules": {URL: testRegistry, Type: "git"},
+		},
 		Rulesets: map[string]map[string]manifest.Entry{
 			"ai-rules": {
 				"amazonq-rules": {
