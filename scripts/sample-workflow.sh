@@ -67,11 +67,11 @@ show_tree "Initial sandbox structure"
 log "=== SETUP PHASE ==="
 
 log "Adding registry configuration..."
-run_arm config add registry ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
+run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 
 log "Adding sink configurations..."
-run_arm config add sink q --directories .amazonq/rules --include "ai-rules/amazonq-*" --exclude "ai-rules/cursor-*"
-run_arm config add sink cursor --directories .cursor/rules --include "ai-rules/cursor-*" --exclude "ai-rules/amazonq-*"
+run_arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*" --exclude "ai-rules/cursor-*"
+run_arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*" --exclude "ai-rules/amazonq-*"
 
 success "Configuration complete"
 
