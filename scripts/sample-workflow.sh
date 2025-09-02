@@ -72,7 +72,7 @@ run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-
 log "Adding sink configurations..."
 run_arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*" --exclude "ai-rules/cursor-*"
 run_arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*" --exclude "ai-rules/amazonq-*"
-run_arm config sink add github --directories .github/instructions --include "ai-rules/*" --layout flat
+run_arm config sink add github --directories .github/instructions --include "ai-rules/amazonq-*" --layout flat
 
 success "Configuration complete"
 
