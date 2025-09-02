@@ -16,7 +16,7 @@ import (
 // FileRegistryRulesetCache implements filesystem-based ruleset caching.
 type FileRegistryRulesetCache struct {
 	registryKeyObj interface{}
-	baseDir        string
+	registryDir    string
 }
 
 // NewRegistryRulesetCache creates a new registry-scoped ruleset cache.
@@ -26,12 +26,12 @@ func NewRegistryRulesetCache(registryKeyObj interface{}) (*FileRegistryRulesetCa
 		return nil, err
 	}
 
-	homeDir, _ := os.UserHomeDir()
-	baseDir := filepath.Join(homeDir, ".arm", "cache", "registries", registryKey)
+	cacheDir := GetCacheDir()
+	registryDir := filepath.Join(cacheDir, registryKey)
 
 	return &FileRegistryRulesetCache{
 		registryKeyObj: registryKeyObj,
-		baseDir:        baseDir,
+		registryDir:    registryDir,
 	}, nil
 }
 
@@ -41,7 +41,7 @@ func (f *FileRegistryRulesetCache) ListVersions(ctx context.Context, keyObj inte
 		return nil, err
 	}
 
-	rulesetDir := filepath.Join(f.baseDir, "rulesets", rulesetKey)
+	rulesetDir := filepath.Join(f.registryDir, "rulesets", rulesetKey)
 	entries, err := os.ReadDir(rulesetDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -61,101 +61,105 @@ func (f *FileRegistryRulesetCache) ListVersions(ctx context.Context, keyObj inte
 }
 
 func (f *FileRegistryRulesetCache) GetRulesetVersion(ctx context.Context, keyObj interface{}, version string) ([]types.File, error) {
-	lock, err := AcquireRegistryLock(f.baseDir)
-	if err != nil {
-		return nil, err
-	}
-	defer lock.ReleaseIgnoreError()
-	rulesetKey, err := GenerateKey(keyObj)
-	if err != nil {
-		return nil, err
-	}
-
-	versionDir := filepath.Join(f.baseDir, "rulesets", rulesetKey, version)
-	if _, statErr := os.Stat(versionDir); os.IsNotExist(statErr) {
-		return nil, fmt.Errorf("version %s not found in cache", version)
-	}
-
+	registryKey, _ := GenerateKey(f.registryKeyObj)
 	var files []types.File
-	err = filepath.WalkDir(versionDir, func(path string, d fs.DirEntry, err error) error {
+	var walkErr error
+
+	err := WithRegistryLock(registryKey, func() error {
+		rulesetKey, err := GenerateKey(keyObj)
 		if err != nil {
 			return err
 		}
-		if d.IsDir() {
+
+		versionDir := filepath.Join(f.registryDir, "rulesets", rulesetKey, version)
+		if _, statErr := os.Stat(versionDir); os.IsNotExist(statErr) {
+			return fmt.Errorf("version %s not found in cache", version)
+		}
+
+		walkErr = filepath.WalkDir(versionDir, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() {
+				return nil
+			}
+
+			content, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			relPath, err := filepath.Rel(versionDir, path)
+			if err != nil {
+				return err
+			}
+
+			stat, err := os.Stat(path)
+			if err != nil {
+				return err
+			}
+
+			files = append(files, types.File{
+				Path:    filepath.ToSlash(relPath),
+				Content: content,
+				Size:    stat.Size(),
+			})
 			return nil
-		}
-
-		content, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		relPath, err := filepath.Rel(versionDir, path)
-		if err != nil {
-			return err
-		}
-
-		stat, err := os.Stat(path)
-		if err != nil {
-			return err
-		}
-
-		files = append(files, types.File{
-			Path:    filepath.ToSlash(relPath),
-			Content: content,
-			Size:    stat.Size(),
 		})
-		return nil
+
+		// Update index on access
+		if walkErr == nil {
+			_ = f.updateIndexOnAccess(keyObj, version)
+		}
+
+		return walkErr
 	})
 
-	// Update index on access
-	if err == nil {
-		_ = f.updateIndexOnAccess(keyObj, version)
+	if err != nil {
+		return nil, err
 	}
-
-	return files, err
+	return files, walkErr
 }
 
 func (f *FileRegistryRulesetCache) SetRulesetVersion(ctx context.Context, keyObj interface{}, version string, files []types.File) error {
-	lock, err := AcquireRegistryLock(f.baseDir)
-	if err != nil {
-		return err
-	}
-	defer lock.ReleaseIgnoreError()
-	rulesetKey, err := GenerateKey(keyObj)
-	if err != nil {
-		return err
-	}
+	registryKey, _ := GenerateKey(f.registryKeyObj)
 
-	versionDir := filepath.Join(f.baseDir, "rulesets", rulesetKey, version)
-	if err := os.MkdirAll(versionDir, 0o755); err != nil {
-		return err
-	}
-
-	for _, file := range files {
-		filePath := filepath.Join(versionDir, filepath.FromSlash(file.Path))
-		fileDir := filepath.Dir(filePath)
-		if err := os.MkdirAll(fileDir, 0o755); err != nil {
+	return WithRegistryLock(registryKey, func() error {
+		rulesetKey, err := GenerateKey(keyObj)
+		if err != nil {
 			return err
 		}
-		if err := os.WriteFile(filePath, file.Content, 0o644); err != nil {
+
+		versionDir := filepath.Join(f.registryDir, "rulesets", rulesetKey, version)
+		if err := os.MkdirAll(versionDir, 0o755); err != nil {
 			return err
 		}
-	}
 
-	// Update index on set
-	_ = f.updateIndexOnSet(keyObj, version)
+		for _, file := range files {
+			filePath := filepath.Join(versionDir, filepath.FromSlash(file.Path))
+			fileDir := filepath.Dir(filePath)
+			if err := os.MkdirAll(fileDir, 0o755); err != nil {
+				return err
+			}
+			if err := os.WriteFile(filePath, file.Content, 0o644); err != nil {
+				return err
+			}
+		}
 
-	return nil
+		// Update index on set
+		_ = f.updateIndexOnSet(keyObj, version)
+
+		return nil
+	})
 }
 
 func (f *FileRegistryRulesetCache) InvalidateRuleset(ctx context.Context, rulesetKey string) error {
-	rulesetDir := filepath.Join(f.baseDir, "rulesets", rulesetKey)
+	rulesetDir := filepath.Join(f.registryDir, "rulesets", rulesetKey)
 	return os.RemoveAll(rulesetDir)
 }
 
 func (f *FileRegistryRulesetCache) InvalidateVersion(ctx context.Context, rulesetKey, version string) error {
-	versionDir := filepath.Join(f.baseDir, "rulesets", rulesetKey, version)
+	versionDir := filepath.Join(f.registryDir, "rulesets", rulesetKey, version)
 	return os.RemoveAll(versionDir)
 }
 
@@ -186,7 +190,7 @@ type VersionIndexEntry struct {
 
 // loadIndex loads the registry index from disk, creating a new one if it doesn't exist.
 func (f *FileRegistryRulesetCache) loadIndex() (*RegistryIndex, error) {
-	indexPath := filepath.Join(f.baseDir, "index.json")
+	indexPath := filepath.Join(f.registryDir, "index.json")
 
 	data, err := os.ReadFile(indexPath)
 	if os.IsNotExist(err) {
@@ -214,11 +218,11 @@ func (f *FileRegistryRulesetCache) loadIndex() (*RegistryIndex, error) {
 
 // saveIndex saves the registry index to disk.
 func (f *FileRegistryRulesetCache) saveIndex(index *RegistryIndex) error {
-	if err := os.MkdirAll(f.baseDir, 0o755); err != nil {
+	if err := os.MkdirAll(f.registryDir, 0o755); err != nil {
 		return err
 	}
 
-	indexPath := filepath.Join(f.baseDir, "index.json")
+	indexPath := filepath.Join(f.registryDir, "index.json")
 	data, err := json.MarshalIndent(index, "", "  ")
 	if err != nil {
 		return err
@@ -316,7 +320,7 @@ func (f *FileRegistryRulesetCache) CleanupOldVersions(ctx context.Context, maxAg
 		for version, versionEntry := range rulesetEntry.Versions {
 			if versionEntry.LastAccessedOn.Before(cutoff) {
 				// Remove version directory
-				versionDir := filepath.Join(f.baseDir, "rulesets", rulesetKey, version)
+				versionDir := filepath.Join(f.registryDir, "rulesets", rulesetKey, version)
 				if err := os.RemoveAll(versionDir); err != nil {
 					return err
 				}
