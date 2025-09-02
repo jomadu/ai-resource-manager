@@ -9,6 +9,11 @@ import (
 	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
+func isEmpty(dir string) bool {
+	entries, err := os.ReadDir(dir)
+	return err == nil && len(entries) == 0
+}
+
 // Installer manages physical file deployment to sink directories.
 type Installer interface {
 	Install(ctx context.Context, dir, registry, ruleset, version string, files []types.File) error
@@ -51,6 +56,24 @@ func (f *FileInstaller) Uninstall(ctx context.Context, dir, registry, ruleset st
 		return err
 	}
 	slog.InfoContext(ctx, "Removed directory", "path", rulesetDir)
+
+	// Clean up empty parent directories
+	registryDir := filepath.Join(dir, "arm", registry)
+	if isEmpty(registryDir) {
+		if err := os.Remove(registryDir); err != nil {
+			return err
+		}
+		slog.InfoContext(ctx, "Removed empty registry directory", "path", registryDir)
+
+		armDir := filepath.Join(dir, "arm")
+		if isEmpty(armDir) {
+			if err := os.Remove(armDir); err != nil {
+				return err
+			}
+			slog.InfoContext(ctx, "Removed empty arm directory", "path", armDir)
+		}
+	}
+
 	return nil
 }
 
