@@ -61,6 +61,11 @@ func (f *FileRegistryRulesetCache) ListVersions(ctx context.Context, keyObj inte
 }
 
 func (f *FileRegistryRulesetCache) GetRulesetVersion(ctx context.Context, keyObj interface{}, version string) ([]types.File, error) {
+	lock, err := AcquireRegistryLock(f.baseDir)
+	if err != nil {
+		return nil, err
+	}
+	defer lock.ReleaseIgnoreError()
 	rulesetKey, err := GenerateKey(keyObj)
 	if err != nil {
 		return nil, err
@@ -112,6 +117,11 @@ func (f *FileRegistryRulesetCache) GetRulesetVersion(ctx context.Context, keyObj
 }
 
 func (f *FileRegistryRulesetCache) SetRulesetVersion(ctx context.Context, keyObj interface{}, version string, files []types.File) error {
+	lock, err := AcquireRegistryLock(f.baseDir)
+	if err != nil {
+		return err
+	}
+	defer lock.ReleaseIgnoreError()
 	rulesetKey, err := GenerateKey(keyObj)
 	if err != nil {
 		return err
