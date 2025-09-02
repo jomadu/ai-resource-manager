@@ -11,6 +11,7 @@ type SinkConfig struct {
 	Directories []string `json:"directories"`
 	Include     []string `json:"include"`
 	Exclude     []string `json:"exclude"`
+	Layout      string   `json:"layout,omitempty"`
 }
 
 // Config represents the .armrc.json configuration file structure.

@@ -44,6 +44,11 @@ func setupTest(t *testing.T) (*ArmService, context.Context) {
 		t.Fatalf("Failed to add cursor sink: %v", err)
 	}
 
+	err = service.configManager.AddSinkWithLayout(ctx, "copilot", []string{".copilot/rules"}, []string{"ai-rules/*"}, nil, "flat")
+	if err != nil {
+		t.Fatalf("Failed to add copilot sink: %v", err)
+	}
+
 	return service, ctx
 }
 
@@ -266,7 +271,7 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 	}
 
 	// Test manifest only - recreate sink config
-	err = service.configManager.AddSink(ctx, "q", []string{".amazonq/rules"}, []string{"ai-rules/amazonq-*"}, []string{"ai-rules/cursor-*"})
+	err = service.configManager.AddSinkWithLayout(ctx, "q", []string{".amazonq/rules"}, []string{"ai-rules/amazonq-*"}, []string{"ai-rules/cursor-*"}, "hierarchical")
 	if err != nil {
 		t.Fatalf("Failed to recreate q sink: %v", err)
 	}

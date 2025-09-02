@@ -36,7 +36,6 @@ type ArmService struct {
 	configManager   config.Manager
 	manifestManager manifest.Manager
 	lockFileManager lockfile.Manager
-	installer       installer.Installer
 }
 
 // NewArmService creates a new ARM service instance with all dependencies.
@@ -45,7 +44,6 @@ func NewArmService() *ArmService {
 		configManager:   config.NewFileManager(),
 		manifestManager: manifest.NewFileManager(),
 		lockFileManager: lockfile.NewFileManager(),
-		installer:       installer.NewFileInstaller(),
 	}
 }
 
@@ -127,9 +125,10 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 
 	rulesetKey := registryName + "/" + ruleset
 	for _, sink := range sinks {
-		if a.matchesSink(rulesetKey, sink) {
+		if a.matchesSink(rulesetKey, &sink) {
+			installer := installer.NewInstaller(&sink)
 			for _, dir := range sink.Directories {
-				if err := a.installer.Install(ctx, dir, registryName, ruleset, resolvedVersion.ID, files); err != nil {
+				if err := installer.Install(ctx, dir, registryName, ruleset, resolvedVersion.ID, files); err != nil {
 					slog.ErrorContext(ctx, "Failed to install to directory", "dir", dir, "error", err)
 					return err
 				}
@@ -194,9 +193,10 @@ func (a *ArmService) Uninstall(ctx context.Context, registry, ruleset string) er
 
 	rulesetKey := registry + "/" + ruleset
 	for _, sink := range sinks {
-		if a.matchesSink(rulesetKey, sink) {
+		if a.matchesSink(rulesetKey, &sink) {
+			installer := installer.NewInstaller(&sink)
 			for _, dir := range sink.Directories {
-				if err := a.installer.Uninstall(ctx, dir, registry, ruleset); err != nil {
+				if err := installer.Uninstall(ctx, dir, registry, ruleset); err != nil {
 					slog.ErrorContext(ctx, "Failed to uninstall from directory", "dir", dir, "error", err)
 					return err
 				}
@@ -332,8 +332,9 @@ func (a *ArmService) Info(ctx context.Context, registry, ruleset string) (*Rules
 	var installedPaths []string
 	var sinkNames []string
 	for sinkName, sink := range sinks {
+		installer := installer.NewInstaller(&sink)
 		for _, dir := range sink.Directories {
-			installations, err := a.installer.ListInstalled(ctx, dir)
+			installations, err := installer.ListInstalled(ctx, dir)
 			if err != nil {
 				continue
 			}
@@ -445,9 +446,10 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 
 	rulesetKey := registryName + "/" + ruleset
 	for _, sink := range sinks {
-		if a.matchesSink(rulesetKey, sink) {
+		if a.matchesSink(rulesetKey, &sink) {
+			installer := installer.NewInstaller(&sink)
 			for _, dir := range sink.Directories {
-				if err := a.installer.Install(ctx, dir, registryName, ruleset, lockEntry.Resolved, files); err != nil {
+				if err := installer.Install(ctx, dir, registryName, ruleset, lockEntry.Resolved, files); err != nil {
 					slog.ErrorContext(ctx, "Failed to install exact version to directory", "dir", dir, "error", err)
 					return err
 				}
@@ -458,7 +460,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 	return nil
 }
 
-func (a *ArmService) matchesSink(rulesetKey string, sink config.SinkConfig) bool {
+func (a *ArmService) matchesSink(rulesetKey string, sink *config.SinkConfig) bool {
 	// Check exclude patterns first
 	for _, pattern := range sink.Exclude {
 		if matched, _ := filepath.Match(pattern, rulesetKey); matched {

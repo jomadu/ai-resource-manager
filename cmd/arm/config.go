@@ -74,16 +74,17 @@ Sinks define where installed rules should be placed in your filesystem.
 Examples:
   arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
   arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
-  arm config sink add all --directories .rules --exclude "*test*"`,
+  arm config sink add copilot --directories .copilot/rules --include "ai-rules/*" --layout flat`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
 		directories, _ := cmd.Flags().GetStringSlice("directories")
 		include, _ := cmd.Flags().GetStringSlice("include")
 		exclude, _ := cmd.Flags().GetStringSlice("exclude")
+		layout, _ := cmd.Flags().GetString("layout")
 
 		configManager := config.NewFileManager()
-		return configManager.AddSink(context.Background(), name, directories, include, exclude)
+		return configManager.AddSinkWithLayout(context.Background(), name, directories, include, exclude, layout)
 	},
 }
 
@@ -124,6 +125,11 @@ var configListCmd = &cobra.Command{
 				fmt.Printf("    directories: %v\n", sink.Directories)
 				fmt.Printf("    include: %v\n", sink.Include)
 				fmt.Printf("    exclude: %v\n", sink.Exclude)
+				layout := sink.Layout
+				if layout == "" {
+					layout = "hierarchical"
+				}
+				fmt.Printf("    layout: %s\n", layout)
 			}
 		} else {
 			fmt.Println("Sinks: (none configured)")
@@ -142,4 +148,5 @@ func init() {
 	sinkAddCmd.Flags().StringSlice("directories", nil, "Sink directories")
 	sinkAddCmd.Flags().StringSlice("include", nil, "Sink include patterns")
 	sinkAddCmd.Flags().StringSlice("exclude", nil, "Sink exclude patterns")
+	sinkAddCmd.Flags().String("layout", "hierarchical", "Layout mode (hierarchical, flat)")
 }
