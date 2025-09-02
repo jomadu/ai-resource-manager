@@ -2,6 +2,7 @@ package installer
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -24,10 +25,11 @@ func NewFileInstaller() *FileInstaller {
 }
 
 func (f *FileInstaller) Install(ctx context.Context, dir, ruleset, version string, files []types.File) error {
-	rulesetDir := filepath.Join(dir, ruleset, version)
+	rulesetDir := filepath.Join(dir, "arm", ruleset, version)
 	if err := os.MkdirAll(rulesetDir, 0o755); err != nil {
 		return err
 	}
+	slog.InfoContext(ctx, "Created directory", "path", rulesetDir)
 
 	for _, file := range files {
 		filePath := filepath.Join(rulesetDir, file.Path)
@@ -39,16 +41,22 @@ func (f *FileInstaller) Install(ctx context.Context, dir, ruleset, version strin
 		}
 	}
 
+	slog.InfoContext(ctx, "Installed files", "count", len(files), "path", rulesetDir)
 	return nil
 }
 
 func (f *FileInstaller) Uninstall(ctx context.Context, dir, ruleset string) error {
-	rulesetDir := filepath.Join(dir, ruleset)
-	return os.RemoveAll(rulesetDir)
+	rulesetDir := filepath.Join(dir, "arm", ruleset)
+	if err := os.RemoveAll(rulesetDir); err != nil {
+		return err
+	}
+	slog.InfoContext(ctx, "Removed directory", "path", rulesetDir)
+	return nil
 }
 
 func (f *FileInstaller) ListInstalled(ctx context.Context, dir string) ([]Installation, error) {
-	entries, err := os.ReadDir(dir)
+	armDir := filepath.Join(dir, "arm")
+	entries, err := os.ReadDir(armDir)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +67,7 @@ func (f *FileInstaller) ListInstalled(ctx context.Context, dir string) ([]Instal
 			continue
 		}
 
-		rulesetPath := filepath.Join(dir, entry.Name())
+		rulesetPath := filepath.Join(armDir, entry.Name())
 		versionEntries, err := os.ReadDir(rulesetPath)
 		if err != nil {
 			continue
