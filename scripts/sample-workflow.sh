@@ -72,6 +72,7 @@ run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-
 log "Adding sink configurations..."
 run_arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*" --exclude "ai-rules/cursor-*"
 run_arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*" --exclude "ai-rules/amazonq-*"
+run_arm config sink add copilot --directories .copilot/rules --include "ai-rules/*" --layout flat
 
 success "Configuration complete"
 
@@ -264,5 +265,6 @@ echo "Check the generated files:"
 echo "• .armrc.json - Configuration"
 echo "• arm.json - Manifest"
 echo "• arm-lock.json - Lockfile"
-echo "• .cursor/rules/ - Cursor rules"
-echo "• .amazonq/rules/ - Amazon Q rules"
+echo "• .cursor/rules/ - Cursor rules (hierarchical)"
+echo "• .amazonq/rules/ - Amazon Q rules (hierarchical)"
+echo "• .copilot/rules/ - Copilot rules (flat layout)"

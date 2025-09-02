@@ -14,6 +14,7 @@ const CONFIG_FILE = ".armrc.json"
 type Manager interface {
 	GetSinks(ctx context.Context) (map[string]SinkConfig, error)
 	AddSink(ctx context.Context, name string, dirs, include, exclude []string) error
+	AddSinkWithLayout(ctx context.Context, name string, dirs, include, exclude []string, layout string) error
 	RemoveSink(ctx context.Context, name string) error
 }
 
@@ -34,6 +35,10 @@ func (f *FileManager) GetSinks(ctx context.Context) (map[string]SinkConfig, erro
 }
 
 func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, exclude []string) error {
+	return f.AddSinkWithLayout(ctx, name, dirs, include, exclude, "hierarchical")
+}
+
+func (f *FileManager) AddSinkWithLayout(ctx context.Context, name string, dirs, include, exclude []string, layout string) error {
 	config, err := f.loadConfig()
 	if err != nil {
 		config = &Config{
@@ -49,6 +54,7 @@ func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, e
 		Directories: dirs,
 		Include:     include,
 		Exclude:     exclude,
+		Layout:      layout,
 	}
 	config.Sinks[name] = newSink
 
@@ -57,7 +63,8 @@ func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, e
 		"name", name,
 		"directories", dirs,
 		"include", include,
-		"exclude", exclude)
+		"exclude", exclude,
+		"layout", layout)
 
 	return f.saveConfig(config)
 }

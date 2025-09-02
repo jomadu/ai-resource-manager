@@ -9,15 +9,15 @@ import (
 	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
-func TestNewFileInstaller(t *testing.T) {
-	installer := NewFileInstaller()
+func TestNewHierarchicalInstaller(t *testing.T) {
+	installer := NewHierarchicalInstaller()
 	if installer == nil {
 		t.Error("Expected non-nil installer")
 	}
 }
 
-func TestFileInstaller_Install(t *testing.T) {
-	installer := NewFileInstaller()
+func TestHierarchicalInstaller_Install(t *testing.T) {
+	installer := NewHierarchicalInstaller()
 	ctx := context.Background()
 
 	tempDir, err := os.MkdirTemp("", "installer_test")
@@ -57,8 +57,8 @@ func TestFileInstaller_Install(t *testing.T) {
 	}
 }
 
-func TestFileInstaller_Uninstall(t *testing.T) {
-	installer := NewFileInstaller()
+func TestHierarchicalInstaller_Uninstall(t *testing.T) {
+	installer := NewHierarchicalInstaller()
 	ctx := context.Background()
 
 	tempDir, err := os.MkdirTemp("", "installer_test")
@@ -83,8 +83,8 @@ func TestFileInstaller_Uninstall(t *testing.T) {
 	}
 }
 
-func TestFileInstaller_ListInstalled(t *testing.T) {
-	installer := NewFileInstaller()
+func TestHierarchicalInstaller_ListInstalled(t *testing.T) {
+	installer := NewHierarchicalInstaller()
 	ctx := context.Background()
 
 	tempDir, err := os.MkdirTemp("", "installer_test")
@@ -122,8 +122,8 @@ func TestFileInstaller_ListInstalled(t *testing.T) {
 	}
 }
 
-func TestFileInstaller_InstallEmptyFiles(t *testing.T) {
-	installer := NewFileInstaller()
+func TestHierarchicalInstaller_InstallEmptyFiles(t *testing.T) {
+	installer := NewHierarchicalInstaller()
 	ctx := context.Background()
 
 	tempDir, err := os.MkdirTemp("", "installer_test")
@@ -138,8 +138,8 @@ func TestFileInstaller_InstallEmptyFiles(t *testing.T) {
 	}
 }
 
-func TestFileInstaller_InstallInvalidPath(t *testing.T) {
-	installer := NewFileInstaller()
+func TestHierarchicalInstaller_InstallInvalidPath(t *testing.T) {
+	installer := NewHierarchicalInstaller()
 	ctx := context.Background()
 
 	files := []types.File{{Path: "test.json", Content: []byte("test"), Size: 4}}
@@ -150,12 +150,12 @@ func TestFileInstaller_InstallInvalidPath(t *testing.T) {
 	}
 }
 
-func TestFileInstaller_ImplementsInterface(t *testing.T) {
-	var _ Installer = (*FileInstaller)(nil)
+func TestHierarchicalInstaller_ImplementsInterface(t *testing.T) {
+	var _ Installer = (*HierarchicalInstaller)(nil)
 }
 
-func TestFileInstaller_UninstallCleansUpEmptyDirectories(t *testing.T) {
-	installer := NewFileInstaller()
+func TestHierarchicalInstaller_UninstallCleansUpEmptyDirectories(t *testing.T) {
+	installer := NewHierarchicalInstaller()
 	ctx := context.Background()
 
 	tempDir, err := os.MkdirTemp("", "installer_test")
@@ -187,8 +187,8 @@ func TestFileInstaller_UninstallCleansUpEmptyDirectories(t *testing.T) {
 	}
 }
 
-func TestFileInstaller_UninstallKeepsNonEmptyDirectories(t *testing.T) {
-	installer := NewFileInstaller()
+func TestHierarchicalInstaller_UninstallKeepsNonEmptyDirectories(t *testing.T) {
+	installer := NewHierarchicalInstaller()
 	ctx := context.Background()
 
 	tempDir, err := os.MkdirTemp("", "installer_test")

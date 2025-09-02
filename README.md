@@ -26,7 +26,12 @@ Registries are remote sources where rulesets are stored and versioned, similar t
 
 ### Sinks
 
-Sinks define where installed rules should be placed in your local filesystem and which AI tools should receive them. Each sink targets specific directories (like `.amazonq/rules` or `.cursor/rules`) and can filter rulesets using include/exclude patterns. This allows you to automatically distribute the right rules to the right AI tools without manual file management.
+Sinks define where installed rules should be placed in your local filesystem and which AI tools should receive them. Each sink targets specific directories (like `.amazonq/rules` or `.cursor/rules`) and can filter rulesets using include/exclude patterns. Sinks support two layout modes:
+
+- **Hierarchical Layout** (default): Preserves directory structure from rulesets
+- **Flat Layout**: Places all files in a single directory with hash-prefixed names for tools that require flat file structures
+
+This allows you to automatically distribute the right rules to the right AI tools without manual file management.
 
 ### Rulesets
 
@@ -68,6 +73,10 @@ arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*
 arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
 ```
 
+```bash
+arm config sink add copilot --directories .copilot/rules --include "ai-rules/*" --layout flat
+```
+
 Install rulesets:
 ```bash
 arm install ai-rules/amazonq-rules --include "rules/amazonq/*.md"
@@ -95,10 +104,58 @@ arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc"
 - `arm install ai-rules/rules@2` - Major updates (^2.0.0)
 - `arm install ai-rules/rules@main` - Track branch
 
+## Layout Modes
+
+### Hierarchical Layout (Default)
+
+Preserves the original directory structure from rulesets:
+
+```
+.cursor/rules/
+└── arm/
+    └── ai-rules/
+        └── cursor-rules/
+            └── 1.0.0/
+                └── rules/
+                    └── cursor/
+                        ├── grug-brained-dev.mdc
+                        └── clean-code.mdc
+```
+
+### Flat Layout
+
+Places all files in a single directory with hash-prefixed names:
+
+```
+.copilot/rules/
+├── 183791a9_rules_amazonq_clean-code.md
+├── 3554667c_rules_amazonq_generate-tasks.md
+└── arm-index.json
+```
+
+Configure layout in `.armrc.json`:
+```json
+{
+  "sinks": {
+    "cursor": {
+      "directories": [".cursor/rules"],
+      "layout": "hierarchical",
+      "include": ["ai-rules/cursor-*"]
+    },
+    "copilot": {
+      "directories": [".copilot/rules"],
+      "layout": "flat",
+      "include": ["ai-rules/*"]
+    }
+  }
+}
+```
+
 ## Files
 
 - `.armrc.json` - Sink configuration (where rules are installed)
 - `arm.json` - Project manifest with registries and dependencies
 - `arm-lock.json` - Locked versions for reproducible installs
+- `arm-index.json` - Flat layout index (maps hashes to original file paths)
 
 ARM follows npm-like patterns for predictable dependency management across AI development environments.
