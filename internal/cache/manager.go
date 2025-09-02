@@ -10,20 +10,17 @@ import (
 )
 
 // Manager provides cache management operations across all registries.
-type Manager struct {
-	cacheDir string
-}
+type Manager struct{}
 
 // NewManager creates a new cache manager.
 func NewManager() *Manager {
-	homeDir, _ := os.UserHomeDir()
-	cacheDir := filepath.Join(homeDir, ".arm", "cache", "registries")
-	return &Manager{cacheDir: cacheDir}
+	return &Manager{}
 }
 
 // CleanupOldVersions removes old cached versions across all registries.
 func (m *Manager) CleanupOldVersions(ctx context.Context, maxAge time.Duration) error {
-	entries, err := os.ReadDir(m.cacheDir)
+	cacheDir := GetCacheDir()
+	entries, err := os.ReadDir(cacheDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil // No cache directory exists
@@ -36,24 +33,24 @@ func (m *Manager) CleanupOldVersions(ctx context.Context, maxAge time.Duration) 
 			continue
 		}
 
-		baseDir := filepath.Join(m.cacheDir, entry.Name())
+		baseDir := filepath.Join(cacheDir, entry.Name())
 
 		// Try to read registry metadata from existing index
 		registryKeyObj, err := m.readRegistryMetadata(baseDir)
 		if err != nil {
-			// Nuke corrupted registry - it will repopulate later
-			if err := os.RemoveAll(baseDir); err != nil {
-				return err
-			}
+			// Remove corrupted registry and its lock
+			registryKey := entry.Name()
+			_ = os.RemoveAll(baseDir)
+			_ = os.Remove(filepath.Join(cacheDir, ".locks", registryKey+".lock"))
 			continue
 		}
 
 		cache, err := NewRegistryRulesetCache(registryKeyObj)
 		if err != nil {
-			// Nuke registry with invalid metadata
-			if err := os.RemoveAll(baseDir); err != nil {
-				return err
-			}
+			// Remove registry with invalid metadata and its lock
+			registryKey := entry.Name()
+			_ = os.RemoveAll(baseDir)
+			_ = os.Remove(filepath.Join(cacheDir, ".locks", registryKey+".lock"))
 			continue
 		}
 

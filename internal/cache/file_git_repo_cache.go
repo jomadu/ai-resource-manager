@@ -26,8 +26,8 @@ func NewGitRepoCache(keyObj interface{}, repoName, url string) (*FileGitRepoCach
 		return nil, err
 	}
 
-	homeDir, _ := os.UserHomeDir()
-	registryDir := filepath.Join(homeDir, ".arm", "cache", "registries", registryKey)
+	cacheDir := GetCacheDir()
+	registryDir := filepath.Join(cacheDir, registryKey)
 	repoDir := filepath.Join(registryDir, "repository", repoName)
 
 	return &FileGitRepoCache{
@@ -65,101 +65,107 @@ func (g *FileGitRepoCache) ensureInitialized(ctx context.Context) error {
 }
 
 func (g *FileGitRepoCache) GetTags(ctx context.Context) ([]string, error) {
-	lock, err := AcquireRegistryLock(g.registryDir)
-	if err != nil {
-		return nil, err
-	}
-	defer lock.ReleaseIgnoreError()
+	registryKey := filepath.Base(g.registryDir)
+	var tags []string
 
-	if err := g.ensureInitialized(ctx); err != nil {
-		return nil, err
-	}
-	cmd := exec.CommandContext(ctx, "git", "tag", "-l")
-	cmd.Dir = g.repoDir
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-	tags := strings.Fields(string(output))
-	return tags, nil
-}
-
-func (g *FileGitRepoCache) GetBranches(ctx context.Context) ([]string, error) {
-	lock, err := AcquireRegistryLock(g.registryDir)
-	if err != nil {
-		return nil, err
-	}
-	defer lock.ReleaseIgnoreError()
-
-	if err := g.ensureInitialized(ctx); err != nil {
-		return nil, err
-	}
-	cmd := exec.CommandContext(ctx, "git", "branch", "-r", "--format=%(refname:short)")
-	cmd.Dir = g.repoDir
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-	branches := strings.Fields(string(output))
-	for i, branch := range branches {
-		branches[i] = strings.TrimPrefix(branch, "origin/")
-	}
-	return branches, nil
-}
-
-func (g *FileGitRepoCache) GetFiles(ctx context.Context, ref string, selector types.ContentSelector) ([]types.File, error) {
-	lock, err := AcquireRegistryLock(g.registryDir)
-	if err != nil {
-		return nil, err
-	}
-	defer lock.ReleaseIgnoreError()
-
-	if err := g.ensureInitialized(ctx); err != nil {
-		return nil, err
-	}
-
-	// Checkout the specified ref
-	cmd := exec.CommandContext(ctx, "git", "checkout", ref)
-	cmd.Dir = g.repoDir
-	if err := cmd.Run(); err != nil {
-		return nil, err
-	}
-
-	var files []types.File
-	err = filepath.WalkDir(g.repoDir, func(path string, d fs.DirEntry, err error) error {
+	err := WithRegistryLock(registryKey, func() error {
+		if err := g.ensureInitialized(ctx); err != nil {
+			return err
+		}
+		cmd := exec.CommandContext(ctx, "git", "tag", "-l")
+		cmd.Dir = g.repoDir
+		output, err := cmd.Output()
 		if err != nil {
 			return err
 		}
-
-		if d.IsDir() || strings.Contains(path, ".git") {
-			return nil
-		}
-
-		relPath, err := filepath.Rel(g.repoDir, path)
-		if err != nil {
-			return err
-		}
-
-		if selector.Matches(relPath) {
-			content, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
-
-			info, err := d.Info()
-			if err != nil {
-				return err
-			}
-
-			files = append(files, types.File{
-				Path:    relPath,
-				Content: content,
-				Size:    info.Size(),
-			})
-		}
-
+		tags = strings.Fields(string(output))
 		return nil
 	})
 
-	return files, err
+	return tags, err
+}
+
+func (g *FileGitRepoCache) GetBranches(ctx context.Context) ([]string, error) {
+	registryKey := filepath.Base(g.registryDir)
+	var branches []string
+
+	err := WithRegistryLock(registryKey, func() error {
+		if err := g.ensureInitialized(ctx); err != nil {
+			return err
+		}
+		cmd := exec.CommandContext(ctx, "git", "branch", "-r", "--format=%(refname:short)")
+		cmd.Dir = g.repoDir
+		output, err := cmd.Output()
+		if err != nil {
+			return err
+		}
+		branches = strings.Fields(string(output))
+		for i, branch := range branches {
+			branches[i] = strings.TrimPrefix(branch, "origin/")
+		}
+		return nil
+	})
+
+	return branches, err
+}
+
+func (g *FileGitRepoCache) GetFiles(ctx context.Context, ref string, selector types.ContentSelector) ([]types.File, error) {
+	registryKey := filepath.Base(g.registryDir)
+	var files []types.File
+	var walkErr error
+
+	err := WithRegistryLock(registryKey, func() error {
+		if err := g.ensureInitialized(ctx); err != nil {
+			return err
+		}
+
+		// Checkout the specified ref
+		cmd := exec.CommandContext(ctx, "git", "checkout", ref)
+		cmd.Dir = g.repoDir
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+
+		walkErr = filepath.WalkDir(g.repoDir, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if d.IsDir() || strings.Contains(path, ".git") {
+				return nil
+			}
+
+			relPath, err := filepath.Rel(g.repoDir, path)
+			if err != nil {
+				return err
+			}
+
+			if selector.Matches(relPath) {
+				content, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+
+				info, err := d.Info()
+				if err != nil {
+					return err
+				}
+
+				files = append(files, types.File{
+					Path:    relPath,
+					Content: content,
+					Size:    info.Size(),
+				})
+			}
+
+			return nil
+		})
+
+		return walkErr
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return files, walkErr
 }

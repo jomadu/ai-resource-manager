@@ -15,7 +15,6 @@ import (
 type GitRegistry struct {
 	cache        cache.RegistryRulesetCache
 	repo         cache.GitRepoCache
-	keyGen       cache.KeyGenerator
 	registryURL  string
 	registryType string
 	resolver     resolver.ConstraintResolver
@@ -27,7 +26,6 @@ func NewGitRegistry(rulesetCache cache.RegistryRulesetCache, repoCache cache.Git
 	return &GitRegistry{
 		cache:        rulesetCache,
 		repo:         repoCache,
-		keyGen:       cache.NewGitKeyGen(),
 		registryURL:  registryURL,
 		registryType: registryType,
 		resolver:     resolver.NewGitConstraintResolver(),
