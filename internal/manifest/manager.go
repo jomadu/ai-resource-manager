@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"os"
 )
 
@@ -153,10 +154,17 @@ func (f *FileManager) AddRegistry(ctx context.Context, name, url, registryType s
 		return errors.New("registry already exists")
 	}
 
-	manifest.Registries[name] = RegistryConfig{
+	newRegistry := RegistryConfig{
 		URL:  url,
 		Type: registryType,
 	}
+	manifest.Registries[name] = newRegistry
+
+	slog.InfoContext(ctx, "Adding registry configuration",
+		"action", "registry_add",
+		"name", name,
+		"url", url,
+		"type", registryType)
 
 	return f.saveManifest(manifest)
 }
@@ -167,9 +175,16 @@ func (f *FileManager) RemoveRegistry(ctx context.Context, name string) error {
 		return err
 	}
 
-	if _, exists := manifest.Registries[name]; !exists {
+	removedRegistry, exists := manifest.Registries[name]
+	if !exists {
 		return errors.New("registry not found")
 	}
+
+	slog.InfoContext(ctx, "Removing registry configuration",
+		"action", "registry_remove",
+		"name", name,
+		"removed_url", removedRegistry.URL,
+		"removed_type", removedRegistry.Type)
 
 	delete(manifest.Registries, name)
 	return f.saveManifest(manifest)
