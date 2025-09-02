@@ -44,7 +44,7 @@ func setupTest(t *testing.T) (*ArmService, context.Context) {
 		t.Fatalf("Failed to add cursor sink: %v", err)
 	}
 
-	err = service.configManager.AddSinkWithLayout(ctx, "github", []string{".github/instructions"}, []string{"ai-rules/*"}, nil, "flat")
+	err = service.configManager.AddSinkWithLayout(ctx, "github", []string{".github/instructions"}, []string{"ai-rules/amazonq-*"}, nil, "flat")
 	if err != nil {
 		t.Fatalf("Failed to add github sink: %v", err)
 	}

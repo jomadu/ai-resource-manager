@@ -247,11 +247,11 @@ func (a *ArmService) Outdated(ctx context.Context) ([]OutdatedRuleset, error) {
 		}
 
 		for rulesetName, lockEntry := range rulesets {
-			versions, err := registryClient.ListVersions(ctx)
-			if err != nil || len(versions) == 0 {
+			// Get latest version using proper resolution (prefers latest tag, falls back to default branch)
+			latestVersion, err := registryClient.ResolveVersion(ctx, "latest")
+			if err != nil {
 				continue
 			}
-			latestVersion := versions[len(versions)-1] // Assume last version is latest
 
 			wantedVersion, err := registryClient.ResolveVersion(ctx, lockEntry.Constraint)
 			if err != nil {
