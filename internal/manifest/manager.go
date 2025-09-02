@@ -11,6 +11,9 @@ import (
 type Manager interface {
 	GetEntry(ctx context.Context, registry, ruleset string) (*Entry, error)
 	GetEntries(ctx context.Context) (map[string]map[string]Entry, error)
+	GetRegistries(ctx context.Context) (map[string]RegistryConfig, error)
+	AddRegistry(ctx context.Context, name, url, registryType string) error
+	RemoveRegistry(ctx context.Context, name string) error
 	CreateEntry(ctx context.Context, registry, ruleset string, entry Entry) error
 	UpdateEntry(ctx context.Context, registry, ruleset string, entry Entry) error
 	RemoveEntry(ctx context.Context, registry, ruleset string) error
@@ -41,21 +44,28 @@ func (f *FileManager) GetEntry(ctx context.Context, registry, ruleset string) (*
 }
 
 func (f *FileManager) GetEntries(ctx context.Context) (map[string]map[string]Entry, error) {
-	data, err := os.ReadFile("arm.json")
+	manifest, err := f.loadManifest()
 	if err != nil {
-		return nil, err
-	}
-	var manifest Manifest
-	if err := json.Unmarshal(data, &manifest); err != nil {
 		return nil, err
 	}
 	return manifest.Rulesets, nil
 }
 
+func (f *FileManager) GetRegistries(ctx context.Context) (map[string]RegistryConfig, error) {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return nil, err
+	}
+	return manifest.Registries, nil
+}
+
 func (f *FileManager) CreateEntry(ctx context.Context, registry, ruleset string, entry Entry) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
-		manifest = &Manifest{Rulesets: make(map[string]map[string]Entry)}
+		manifest = &Manifest{
+			Registries: make(map[string]RegistryConfig),
+			Rulesets:   make(map[string]map[string]Entry),
+		}
 	}
 	if manifest.Rulesets[registry] == nil {
 		manifest.Rulesets[registry] = make(map[string]Entry)
@@ -118,4 +128,49 @@ func (f *FileManager) saveManifest(manifest *Manifest) error {
 		return err
 	}
 	return os.WriteFile("arm.json", data, 0o644)
+}
+
+// LoadManifest loads the manifest file (public method)
+func (f *FileManager) LoadManifest() (*Manifest, error) {
+	return f.loadManifest()
+}
+
+// SaveManifest saves the manifest file (public method)
+func (f *FileManager) SaveManifest(manifest *Manifest) error {
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) AddRegistry(ctx context.Context, name, url, registryType string) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		manifest = &Manifest{
+			Registries: make(map[string]RegistryConfig),
+			Rulesets:   make(map[string]map[string]Entry),
+		}
+	}
+
+	if _, exists := manifest.Registries[name]; exists {
+		return errors.New("registry already exists")
+	}
+
+	manifest.Registries[name] = RegistryConfig{
+		URL:  url,
+		Type: registryType,
+	}
+
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) RemoveRegistry(ctx context.Context, name string) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := manifest.Registries[name]; !exists {
+		return errors.New("registry not found")
+	}
+
+	delete(manifest.Registries, name)
+	return f.saveManifest(manifest)
 }

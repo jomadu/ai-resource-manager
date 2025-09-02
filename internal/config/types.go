@@ -15,6 +15,5 @@ type SinkConfig struct {
 
 // Config represents the .armrc.json configuration file structure.
 type Config struct {
-	Registries map[string]RegistryConfig `json:"registries"`
-	Sinks      map[string]SinkConfig     `json:"sinks"`
+	Sinks map[string]SinkConfig `json:"sinks"`
 }
