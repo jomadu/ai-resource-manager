@@ -54,16 +54,26 @@ curl -fsSL https://raw.githubusercontent.com/jomadu/ai-rules-manager/main/script
 
 ## Quick Start
 
+Configure registry:
 ```bash
-# Configure registry
 arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
+```
 
-# Configure sinks for different AI tools
+Configure sinks for different AI tools:
+```bash
 arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
-arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
+```
 
-# Install rulesets
+```bash
+arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
+```
+
+Install rulesets:
+```bash
 arm install ai-rules/amazonq-rules --include "rules/amazonq/*.md"
+```
+
+```bash
 arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc"
 ```
 
