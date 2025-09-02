@@ -26,8 +26,8 @@ func NewRegistryRulesetCache(registryKeyObj interface{}) (*FileRegistryRulesetCa
 		return nil, err
 	}
 
-	cacheDir := GetCacheDir()
-	registryDir := filepath.Join(cacheDir, registryKey)
+	registriesDir := GetRegistriesDir()
+	registryDir := filepath.Join(registriesDir, registryKey)
 
 	return &FileRegistryRulesetCache{
 		registryKeyObj: registryKeyObj,

@@ -19,7 +19,7 @@ func NewManager() *Manager {
 
 // CleanupOldVersions removes old cached versions across all registries.
 func (m *Manager) CleanupOldVersions(ctx context.Context, maxAge time.Duration) error {
-	cacheDir := GetCacheDir()
+	cacheDir := GetRegistriesDir()
 	entries, err := os.ReadDir(cacheDir)
 	if err != nil {
 		if os.IsNotExist(err) {

@@ -17,8 +17,8 @@ func WithRegistryLock(registryKey string, fn func() error) error {
 	defer mu.Unlock()
 
 	// Create file lock in dedicated .locks subdirectory
-	cacheDir := GetCacheDir()
-	locksDir := filepath.Join(cacheDir, ".locks")
+	registriesDir := GetRegistriesDir()
+	locksDir := filepath.Join(registriesDir, ".locks")
 	lockFile := filepath.Join(locksDir, registryKey+".lock")
 	if err := os.MkdirAll(locksDir, 0o755); err != nil {
 		return err
