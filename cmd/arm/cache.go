@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jomadu/ai-rules-manager/internal/cache"
@@ -29,7 +31,7 @@ var cacheCleanCmd = &cobra.Command{
 		ctx := context.Background()
 
 		maxAgeStr, _ := cmd.Flags().GetString("max-age")
-		maxAge, err := time.ParseDuration(maxAgeStr)
+		maxAge, err := parseDuration(maxAgeStr)
 		if err != nil {
 			return fmt.Errorf("invalid max-age format: %w", err)
 		}
@@ -57,6 +59,35 @@ var cacheNukeCmd = &cobra.Command{
 		fmt.Println("Cache directory removed successfully")
 		return nil
 	},
+}
+
+// parseDuration extends time.ParseDuration to support days (d)
+func parseDuration(s string) (time.Duration, error) {
+	if strings.HasSuffix(s, "d") {
+		daysStr := strings.TrimSuffix(s, "d")
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return 0, fmt.Errorf("invalid days value: %s", daysStr)
+		}
+		return time.Duration(days) * 24 * time.Hour, nil
+	}
+	if strings.HasSuffix(s, "h") {
+		hoursStr := strings.TrimSuffix(s, "h")
+		hours, err := strconv.Atoi(hoursStr)
+		if err != nil {
+			return 0, fmt.Errorf("invalid hours value: %s", hoursStr)
+		}
+		return time.Duration(hours) * time.Hour, nil
+	}
+	if strings.HasSuffix(s, "m") {
+		minutesStr := strings.TrimSuffix(s, "m")
+		minutes, err := strconv.Atoi(minutesStr)
+		if err != nil {
+			return 0, fmt.Errorf("invalid minutes value: %s", minutesStr)
+		}
+		return time.Duration(minutes) * time.Minute, nil
+	}
+	return 0, fmt.Errorf("unsupported duration format: %s (use format like 30d, 24h, or 60m)", s)
 }
 
 func init() {
