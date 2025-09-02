@@ -36,13 +36,13 @@ func TestFileInstaller_Install(t *testing.T) {
 		t.Errorf("Install failed: %v", err)
 	}
 
-	// Verify files were created in ruleset/version directory
-	rule1Path := filepath.Join(tempDir, "test-ruleset", "1.0.0", "rule1.json")
+	// Verify files were created in arm/ruleset/version directory
+	rule1Path := filepath.Join(tempDir, "arm", "test-ruleset", "1.0.0", "rule1.json")
 	if _, err := os.Stat(rule1Path); os.IsNotExist(err) {
 		t.Error("Expected rule1.json to be created")
 	}
 
-	rule2Path := filepath.Join(tempDir, "test-ruleset", "1.0.0", "subdir", "rule2.json")
+	rule2Path := filepath.Join(tempDir, "arm", "test-ruleset", "1.0.0", "subdir", "rule2.json")
 	if _, err := os.Stat(rule2Path); os.IsNotExist(err) {
 		t.Error("Expected subdir/rule2.json to be created")
 	}
@@ -67,8 +67,8 @@ func TestFileInstaller_Uninstall(t *testing.T) {
 	}
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
-	// Create test files
-	rulesetDir := filepath.Join(tempDir, "test-ruleset")
+	// Create test files in arm subdirectory
+	rulesetDir := filepath.Join(tempDir, "arm", "test-ruleset")
 	_ = os.MkdirAll(rulesetDir, 0o755)
 	_ = os.WriteFile(filepath.Join(rulesetDir, "rule.json"), []byte("test"), 0o644)
 
@@ -93,9 +93,9 @@ func TestFileInstaller_ListInstalled(t *testing.T) {
 	}
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
-	// Create test installations with version directories
-	ruleset1Dir := filepath.Join(tempDir, "ruleset1", "1.0.0")
-	ruleset2Dir := filepath.Join(tempDir, "ruleset2", "2.1.0")
+	// Create test installations with version directories in arm subdirectory
+	ruleset1Dir := filepath.Join(tempDir, "arm", "ruleset1", "1.0.0")
+	ruleset2Dir := filepath.Join(tempDir, "arm", "ruleset2", "2.1.0")
 	_ = os.MkdirAll(ruleset1Dir, 0o755)
 	_ = os.MkdirAll(ruleset2Dir, 0o755)
 
