@@ -26,8 +26,8 @@ func NewGitRepoCache(keyObj interface{}, repoName, url string) (*FileGitRepoCach
 		return nil, err
 	}
 
-	cacheDir := GetCacheDir()
-	registryDir := filepath.Join(cacheDir, registryKey)
+	registriesDir := GetRegistriesDir()
+	registryDir := filepath.Join(registriesDir, registryKey)
 	repoDir := filepath.Join(registryDir, "repository", repoName)
 
 	return &FileGitRepoCache{

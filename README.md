@@ -76,6 +76,7 @@ arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc"
 - `arm outdated` - Check for updates
 - `arm info [ruleset]` - Show detailed information
 - `arm cache clean` - Remove old cached versions
+- `arm cache nuke` - Remove entire cache directory
 
 ## Version Constraints
 
