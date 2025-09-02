@@ -44,9 +44,9 @@ func setupTest(t *testing.T) (*ArmService, context.Context) {
 		t.Fatalf("Failed to add cursor sink: %v", err)
 	}
 
-	err = service.configManager.AddSinkWithLayout(ctx, "copilot", []string{".copilot/rules"}, []string{"ai-rules/*"}, nil, "flat")
+	err = service.configManager.AddSinkWithLayout(ctx, "github", []string{".github/instructions"}, []string{"ai-rules/*"}, nil, "flat")
 	if err != nil {
-		t.Fatalf("Failed to add copilot sink: %v", err)
+		t.Fatalf("Failed to add github sink: %v", err)
 	}
 
 	return service, ctx
