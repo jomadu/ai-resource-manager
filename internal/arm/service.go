@@ -129,7 +129,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 	for _, sink := range sinks {
 		if a.matchesSink(rulesetKey, sink) {
 			for _, dir := range sink.Directories {
-				if err := a.installer.Install(ctx, dir, ruleset, resolvedVersion.ID, files); err != nil {
+				if err := a.installer.Install(ctx, dir, registryName, ruleset, resolvedVersion.ID, files); err != nil {
 					slog.ErrorContext(ctx, "Failed to install to directory", "dir", dir, "error", err)
 					return err
 				}
@@ -196,7 +196,7 @@ func (a *ArmService) Uninstall(ctx context.Context, registry, ruleset string) er
 	for _, sink := range sinks {
 		if a.matchesSink(rulesetKey, sink) {
 			for _, dir := range sink.Directories {
-				if err := a.installer.Uninstall(ctx, dir, ruleset); err != nil {
+				if err := a.installer.Uninstall(ctx, dir, registry, ruleset); err != nil {
 					slog.ErrorContext(ctx, "Failed to uninstall from directory", "dir", dir, "error", err)
 					return err
 				}
@@ -447,7 +447,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 	for _, sink := range sinks {
 		if a.matchesSink(rulesetKey, sink) {
 			for _, dir := range sink.Directories {
-				if err := a.installer.Install(ctx, dir, ruleset, lockEntry.Resolved, files); err != nil {
+				if err := a.installer.Install(ctx, dir, registryName, ruleset, lockEntry.Resolved, files); err != nil {
 					slog.ErrorContext(ctx, "Failed to install exact version to directory", "dir", dir, "error", err)
 					return err
 				}

@@ -11,8 +11,8 @@ import (
 
 // Installer manages physical file deployment to sink directories.
 type Installer interface {
-	Install(ctx context.Context, dir, ruleset, version string, files []types.File) error
-	Uninstall(ctx context.Context, dir, ruleset string) error
+	Install(ctx context.Context, dir, registry, ruleset, version string, files []types.File) error
+	Uninstall(ctx context.Context, dir, registry, ruleset string) error
 	ListInstalled(ctx context.Context, dir string) ([]Installation, error)
 }
 
@@ -24,8 +24,8 @@ func NewFileInstaller() *FileInstaller {
 	return &FileInstaller{}
 }
 
-func (f *FileInstaller) Install(ctx context.Context, dir, ruleset, version string, files []types.File) error {
-	rulesetDir := filepath.Join(dir, "arm", ruleset, version)
+func (f *FileInstaller) Install(ctx context.Context, dir, registry, ruleset, version string, files []types.File) error {
+	rulesetDir := filepath.Join(dir, "arm", registry, ruleset, version)
 	if err := os.MkdirAll(rulesetDir, 0o755); err != nil {
 		return err
 	}
@@ -45,8 +45,8 @@ func (f *FileInstaller) Install(ctx context.Context, dir, ruleset, version strin
 	return nil
 }
 
-func (f *FileInstaller) Uninstall(ctx context.Context, dir, ruleset string) error {
-	rulesetDir := filepath.Join(dir, "arm", ruleset)
+func (f *FileInstaller) Uninstall(ctx context.Context, dir, registry, ruleset string) error {
+	rulesetDir := filepath.Join(dir, "arm", registry, ruleset)
 	if err := os.RemoveAll(rulesetDir); err != nil {
 		return err
 	}
@@ -56,33 +56,45 @@ func (f *FileInstaller) Uninstall(ctx context.Context, dir, ruleset string) erro
 
 func (f *FileInstaller) ListInstalled(ctx context.Context, dir string) ([]Installation, error) {
 	armDir := filepath.Join(dir, "arm")
-	entries, err := os.ReadDir(armDir)
+	registryEntries, err := os.ReadDir(armDir)
 	if err != nil {
 		return nil, err
 	}
 
 	var installations []Installation
-	for _, entry := range entries {
-		if !entry.IsDir() {
+	for _, registryEntry := range registryEntries {
+		if !registryEntry.IsDir() {
 			continue
 		}
 
-		rulesetPath := filepath.Join(armDir, entry.Name())
-		versionEntries, err := os.ReadDir(rulesetPath)
+		registryPath := filepath.Join(armDir, registryEntry.Name())
+		rulesetEntries, err := os.ReadDir(registryPath)
 		if err != nil {
 			continue
 		}
 
-		for _, versionEntry := range versionEntries {
-			if !versionEntry.IsDir() {
+		for _, rulesetEntry := range rulesetEntries {
+			if !rulesetEntry.IsDir() {
 				continue
 			}
 
-			installations = append(installations, Installation{
-				Ruleset: entry.Name(),
-				Version: versionEntry.Name(),
-				Path:    filepath.Join(rulesetPath, versionEntry.Name()),
-			})
+			rulesetPath := filepath.Join(registryPath, rulesetEntry.Name())
+			versionEntries, err := os.ReadDir(rulesetPath)
+			if err != nil {
+				continue
+			}
+
+			for _, versionEntry := range versionEntries {
+				if !versionEntry.IsDir() {
+					continue
+				}
+
+				installations = append(installations, Installation{
+					Ruleset: rulesetEntry.Name(),
+					Version: versionEntry.Name(),
+					Path:    filepath.Join(rulesetPath, versionEntry.Name()),
+				})
+			}
 		}
 	}
 
