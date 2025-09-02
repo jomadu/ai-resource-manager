@@ -5,6 +5,8 @@ permissions:
 on:
   pull_request:
     branches: [ main, rc ]
+  push:
+    branches: [ main, rc ]
 
 jobs:
   commitlint:
@@ -14,19 +16,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
+          python-version: '3.x'
 
-      - name: Install commitlint
-        run: |
-          npm install --save-dev @commitlint/config-conventional @commitlint/cli
+      - name: Install pre-commit
+        run: pip install pre-commit
 
-      - name: Validate current commit (last commit) with commitlint
+      - name: Validate current commit (last commit)
         if: github.event_name == 'push'
-        run: npx commitlint --from HEAD~1 --to HEAD --verbose
+        run: |
+          git log -1 --pretty=format:"%s" > /tmp/commit_msg
+          pre-commit run conventional-pre-commit --hook-stage commit-msg --commit-msg-filename /tmp/commit_msg
 
-      - name: Validate PR commits with commitlint
+      - name: Validate PR commits
         if: github.event_name == 'pull_request'
-        run: npx commitlint --from ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }} --to ${{ github.event.pull_request.head.sha }} --verbose
+        run: |
+          # Get all commit messages in the PR
+          git log --pretty=format:"%s" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > /tmp/pr_commits
+          # Validate each commit message
+          while IFS= read -r commit_msg; do
+            echo "$commit_msg" > /tmp/commit_msg
+            pre-commit run conventional-pre-commit --hook-stage commit-msg --commit-msg-filename /tmp/commit_msg
+          done < /tmp/pr_commits
