@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/jomadu/ai-rules-manager/internal/cache"
@@ -11,6 +12,7 @@ import (
 
 func init() {
 	cacheCmd.AddCommand(cacheCleanCmd)
+	cacheCmd.AddCommand(cacheNukeCmd)
 }
 
 var cacheCmd = &cobra.Command{
@@ -38,6 +40,21 @@ var cacheCleanCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Cache cleaned: removed versions older than %s\n", maxAgeStr)
+		return nil
+	},
+}
+
+var cacheNukeCmd = &cobra.Command{
+	Use:   "nuke",
+	Short: "Remove entire cache directory",
+	Long:  "Remove the entire ~/.arm/cache directory and all cached data.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cacheDir := cache.GetCacheDir()
+		if err := os.RemoveAll(cacheDir); err != nil {
+			return fmt.Errorf("failed to remove cache directory: %w", err)
+		}
+
+		fmt.Println("Cache directory removed successfully")
 		return nil
 	},
 }
