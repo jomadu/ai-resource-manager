@@ -112,10 +112,10 @@ gitGraph
 ## Setup
 
 ```sh
-arm config add registry ai-rules https://github.com/my-user/ai-rules --type git
+arm config registry add ai-rules https://github.com/my-user/ai-rules --type git
 
-arm config add sink q --directories .amazonq/rules --include ai-rules/amazonq-* --exclude ai-rules/cursor-*
-arm config add sink cursor --directories .cursor/rules --include ai-rules/cursor-* --exclude ai-rules/amazonq-*
+arm config sink add q --directories .amazonq/rules --include ai-rules/amazonq-* --exclude ai-rules/cursor-*
+arm config sink add cursor --directories .cursor/rules --include ai-rules/cursor-* --exclude ai-rules/amazonq-*
 ```
 
 `.armrc.json`
