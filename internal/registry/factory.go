@@ -11,17 +11,27 @@ import (
 func NewRegistry(name string, config config.RegistryConfig) (Registry, error) {
 	switch config.Type {
 	case "git":
-		return newGitRegistry(name, config), nil
+		return newGitRegistry(name, config)
 	default:
 		return nil, fmt.Errorf("unsupported registry type: %s", config.Type)
 	}
 }
 
-func newGitRegistry(name string, config config.RegistryConfig) *GitRegistry {
-	keyGen := cache.NewGitKeyGen()
-	registryKey := keyGen.RegistryKey(config.URL, config.Type)
-	rulesetCache := cache.NewRegistryRulesetCache(registryKey)
-	repoCache := cache.NewGitRepoCache(registryKey, name, config.URL)
+func newGitRegistry(name string, config config.RegistryConfig) (*GitRegistry, error) {
+	registryKeyObj := map[string]string{
+		"url":  config.URL,
+		"type": config.Type,
+	}
 
-	return NewGitRegistry(rulesetCache, repoCache, config.URL, config.Type)
+	rulesetCache, err := cache.NewRegistryRulesetCache(registryKeyObj)
+	if err != nil {
+		return nil, err
+	}
+
+	repoCache, err := cache.NewGitRepoCache(registryKeyObj, name, config.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewGitRegistry(rulesetCache, repoCache, config.URL, config.Type), nil
 }
