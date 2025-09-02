@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 )
 
@@ -44,11 +45,19 @@ func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, e
 		return fmt.Errorf("sink %s already exists", name)
 	}
 
-	config.Sinks[name] = SinkConfig{
+	newSink := SinkConfig{
 		Directories: dirs,
 		Include:     include,
 		Exclude:     exclude,
 	}
+	config.Sinks[name] = newSink
+
+	slog.InfoContext(ctx, "Adding sink configuration",
+		"action", "sink_add",
+		"name", name,
+		"directories", dirs,
+		"include", include,
+		"exclude", exclude)
 
 	return f.saveConfig(config)
 }
@@ -59,9 +68,17 @@ func (f *FileManager) RemoveSink(ctx context.Context, name string) error {
 		return err
 	}
 
-	if _, exists := config.Sinks[name]; !exists {
+	removedSink, exists := config.Sinks[name]
+	if !exists {
 		return fmt.Errorf("sink %s not found", name)
 	}
+
+	slog.InfoContext(ctx, "Removing sink configuration",
+		"action", "sink_remove",
+		"name", name,
+		"removed_directories", removedSink.Directories,
+		"removed_include", removedSink.Include,
+		"removed_exclude", removedSink.Exclude)
 
 	delete(config.Sinks, name)
 	return f.saveConfig(config)
