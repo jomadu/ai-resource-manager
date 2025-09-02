@@ -3,36 +3,22 @@ package cache
 import (
 	"os"
 	"path/filepath"
-	"sync"
-	"syscall"
+
+	"github.com/gofrs/flock"
 )
 
-var registryLocks sync.Map // map[string]*sync.Mutex
-
 func WithRegistryLock(registryKey string, fn func() error) error {
-	// Get or create mutex for this registry
-	mutex, _ := registryLocks.LoadOrStore(registryKey, &sync.Mutex{})
-	mu := mutex.(*sync.Mutex)
-	mu.Lock()
-	defer mu.Unlock()
-
-	// Create file lock in dedicated .locks subdirectory
-	registriesDir := GetRegistriesDir()
-	locksDir := filepath.Join(registriesDir, ".locks")
-	lockFile := filepath.Join(locksDir, registryKey+".lock")
+	locksDir := filepath.Join(GetRegistriesDir(), ".locks")
 	if err := os.MkdirAll(locksDir, 0o755); err != nil {
 		return err
 	}
 
-	file, err := os.OpenFile(lockFile, os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
+	lockFile := filepath.Join(locksDir, registryKey+".lock")
+	fileLock := flock.New(lockFile)
+	if err := fileLock.Lock(); err != nil {
 		return err
 	}
-	defer func() { _ = file.Close() }()
-
-	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX); err != nil {
-		return err
-	}
+	defer func() { _ = fileLock.Unlock() }()
 
 	return fn()
 }
