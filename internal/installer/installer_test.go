@@ -31,18 +31,18 @@ func TestFileInstaller_Install(t *testing.T) {
 		{Path: "subdir/rule2.json", Content: []byte(`{"rule": "nested"}`), Size: 18},
 	}
 
-	err = installer.Install(ctx, tempDir, "test-ruleset", "1.0.0", files)
+	err = installer.Install(ctx, tempDir, "test-registry", "test-ruleset", "1.0.0", files)
 	if err != nil {
 		t.Errorf("Install failed: %v", err)
 	}
 
-	// Verify files were created in arm/ruleset/version directory
-	rule1Path := filepath.Join(tempDir, "arm", "test-ruleset", "1.0.0", "rule1.json")
+	// Verify files were created in arm/registry/ruleset/version directory
+	rule1Path := filepath.Join(tempDir, "arm", "test-registry", "test-ruleset", "1.0.0", "rule1.json")
 	if _, err := os.Stat(rule1Path); os.IsNotExist(err) {
 		t.Error("Expected rule1.json to be created")
 	}
 
-	rule2Path := filepath.Join(tempDir, "arm", "test-ruleset", "1.0.0", "subdir", "rule2.json")
+	rule2Path := filepath.Join(tempDir, "arm", "test-registry", "test-ruleset", "1.0.0", "subdir", "rule2.json")
 	if _, err := os.Stat(rule2Path); os.IsNotExist(err) {
 		t.Error("Expected subdir/rule2.json to be created")
 	}
@@ -68,11 +68,11 @@ func TestFileInstaller_Uninstall(t *testing.T) {
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	// Create test files in arm subdirectory
-	rulesetDir := filepath.Join(tempDir, "arm", "test-ruleset")
+	rulesetDir := filepath.Join(tempDir, "arm", "test-registry", "test-ruleset")
 	_ = os.MkdirAll(rulesetDir, 0o755)
 	_ = os.WriteFile(filepath.Join(rulesetDir, "rule.json"), []byte("test"), 0o644)
 
-	err = installer.Uninstall(ctx, tempDir, "test-ruleset")
+	err = installer.Uninstall(ctx, tempDir, "test-registry", "test-ruleset")
 	if err != nil {
 		t.Errorf("Uninstall failed: %v", err)
 	}
@@ -93,9 +93,9 @@ func TestFileInstaller_ListInstalled(t *testing.T) {
 	}
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
-	// Create test installations with version directories in arm subdirectory
-	ruleset1Dir := filepath.Join(tempDir, "arm", "ruleset1", "1.0.0")
-	ruleset2Dir := filepath.Join(tempDir, "arm", "ruleset2", "2.1.0")
+	// Create test installations with version directories in arm/registry/ruleset subdirectory
+	ruleset1Dir := filepath.Join(tempDir, "arm", "test-registry", "ruleset1", "1.0.0")
+	ruleset2Dir := filepath.Join(tempDir, "arm", "test-registry", "ruleset2", "2.1.0")
 	_ = os.MkdirAll(ruleset1Dir, 0o755)
 	_ = os.MkdirAll(ruleset2Dir, 0o755)
 
@@ -132,7 +132,7 @@ func TestFileInstaller_InstallEmptyFiles(t *testing.T) {
 	}
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
-	err = installer.Install(ctx, tempDir, "empty-ruleset", "1.0.0", []types.File{})
+	err = installer.Install(ctx, tempDir, "test-registry", "empty-ruleset", "1.0.0", []types.File{})
 	if err != nil {
 		t.Errorf("Install with empty files failed: %v", err)
 	}
@@ -144,7 +144,7 @@ func TestFileInstaller_InstallInvalidPath(t *testing.T) {
 
 	files := []types.File{{Path: "test.json", Content: []byte("test"), Size: 4}}
 
-	err := installer.Install(ctx, "/nonexistent/path", "test-ruleset", "1.0.0", files)
+	err := installer.Install(ctx, "/nonexistent/path", "test-registry", "test-ruleset", "1.0.0", files)
 	if err == nil {
 		t.Error("Expected error for invalid path")
 	}
