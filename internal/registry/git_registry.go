@@ -57,10 +57,8 @@ func (g *GitRegistry) ListVersions(ctx context.Context) ([]types.VersionRef, err
 }
 
 func (g *GitRegistry) GetContent(ctx context.Context, version types.VersionRef, selector types.ContentSelector) ([]types.File, error) {
-	rulesetKey := g.keyGen.RulesetKey(selector)
-
 	// Try cache first
-	files, err := g.cache.GetRulesetVersion(ctx, rulesetKey, version.ID)
+	files, err := g.cache.GetRulesetVersion(ctx, selector, version.ID)
 	if err == nil {
 		return files, nil
 	}
@@ -72,7 +70,7 @@ func (g *GitRegistry) GetContent(ctx context.Context, version types.VersionRef, 
 	}
 
 	// Cache the result
-	_ = g.cache.SetRulesetVersion(ctx, rulesetKey, version.ID, selector, files)
+	_ = g.cache.SetRulesetVersion(ctx, selector, version.ID, files)
 
 	return files, nil
 }

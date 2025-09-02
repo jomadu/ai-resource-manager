@@ -15,22 +15,32 @@ import (
 
 // FileRegistryRulesetCache implements filesystem-based ruleset caching.
 type FileRegistryRulesetCache struct {
-	registryKey string
-	baseDir     string
+	registryKeyObj interface{}
+	baseDir        string
 }
 
 // NewRegistryRulesetCache creates a new registry-scoped ruleset cache.
-func NewRegistryRulesetCache(registryKey string) *FileRegistryRulesetCache {
+func NewRegistryRulesetCache(registryKeyObj interface{}) (*FileRegistryRulesetCache, error) {
+	registryKey, err := GenerateKey(registryKeyObj)
+	if err != nil {
+		return nil, err
+	}
+
 	homeDir, _ := os.UserHomeDir()
 	baseDir := filepath.Join(homeDir, ".arm", "cache", "registries", registryKey)
 
 	return &FileRegistryRulesetCache{
-		registryKey: registryKey,
-		baseDir:     baseDir,
-	}
+		registryKeyObj: registryKeyObj,
+		baseDir:        baseDir,
+	}, nil
 }
 
-func (f *FileRegistryRulesetCache) ListVersions(ctx context.Context, rulesetKey string) ([]string, error) {
+func (f *FileRegistryRulesetCache) ListVersions(ctx context.Context, keyObj interface{}) ([]string, error) {
+	rulesetKey, err := GenerateKey(keyObj)
+	if err != nil {
+		return nil, err
+	}
+
 	rulesetDir := filepath.Join(f.baseDir, "rulesets", rulesetKey)
 	entries, err := os.ReadDir(rulesetDir)
 	if err != nil {
@@ -50,14 +60,19 @@ func (f *FileRegistryRulesetCache) ListVersions(ctx context.Context, rulesetKey 
 	return versions, nil
 }
 
-func (f *FileRegistryRulesetCache) GetRulesetVersion(ctx context.Context, rulesetKey, version string) ([]types.File, error) {
+func (f *FileRegistryRulesetCache) GetRulesetVersion(ctx context.Context, keyObj interface{}, version string) ([]types.File, error) {
+	rulesetKey, err := GenerateKey(keyObj)
+	if err != nil {
+		return nil, err
+	}
+
 	versionDir := filepath.Join(f.baseDir, "rulesets", rulesetKey, version)
-	if _, err := os.Stat(versionDir); os.IsNotExist(err) {
+	if _, statErr := os.Stat(versionDir); os.IsNotExist(statErr) {
 		return nil, fmt.Errorf("version %s not found in cache", version)
 	}
 
 	var files []types.File
-	err := filepath.WalkDir(versionDir, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(versionDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -90,13 +105,18 @@ func (f *FileRegistryRulesetCache) GetRulesetVersion(ctx context.Context, rulese
 
 	// Update index on access
 	if err == nil {
-		_ = f.updateIndexOnAccess(rulesetKey, version)
+		_ = f.updateIndexOnAccess(keyObj, version)
 	}
 
 	return files, err
 }
 
-func (f *FileRegistryRulesetCache) SetRulesetVersion(ctx context.Context, rulesetKey, version string, selector types.ContentSelector, files []types.File) error {
+func (f *FileRegistryRulesetCache) SetRulesetVersion(ctx context.Context, keyObj interface{}, version string, files []types.File) error {
+	rulesetKey, err := GenerateKey(keyObj)
+	if err != nil {
+		return err
+	}
+
 	versionDir := filepath.Join(f.baseDir, "rulesets", rulesetKey, version)
 	if err := os.MkdirAll(versionDir, 0o755); err != nil {
 		return err
@@ -114,7 +134,7 @@ func (f *FileRegistryRulesetCache) SetRulesetVersion(ctx context.Context, rulese
 	}
 
 	// Update index on set
-	_ = f.updateIndexOnSet(rulesetKey, version)
+	_ = f.updateIndexOnSet(keyObj, version)
 
 	return nil
 }
@@ -131,18 +151,20 @@ func (f *FileRegistryRulesetCache) InvalidateVersion(ctx context.Context, rulese
 
 // RegistryIndex tracks metadata for cached registry data.
 type RegistryIndex struct {
-	CreatedOn      time.Time                    `json:"created_on"`
-	LastUpdatedOn  time.Time                    `json:"last_updated_on"`
-	LastAccessedOn time.Time                    `json:"last_accessed_on"`
-	Rulesets       map[string]RulesetIndexEntry `json:"rulesets"`
+	RegistryMetadata interface{}                  `json:"registry_metadata"`
+	CreatedOn        time.Time                    `json:"created_on"`
+	LastUpdatedOn    time.Time                    `json:"last_updated_on"`
+	LastAccessedOn   time.Time                    `json:"last_accessed_on"`
+	Rulesets         map[string]RulesetIndexEntry `json:"rulesets"`
 }
 
 // RulesetIndexEntry tracks metadata for a cached ruleset.
 type RulesetIndexEntry struct {
-	CreatedOn      time.Time                    `json:"created_on"`
-	LastUpdatedOn  time.Time                    `json:"last_updated_on"`
-	LastAccessedOn time.Time                    `json:"last_accessed_on"`
-	Versions       map[string]VersionIndexEntry `json:"versions"`
+	RulesetMetadata interface{}                  `json:"ruleset_metadata"`
+	CreatedOn       time.Time                    `json:"created_on"`
+	LastUpdatedOn   time.Time                    `json:"last_updated_on"`
+	LastAccessedOn  time.Time                    `json:"last_accessed_on"`
+	Versions        map[string]VersionIndexEntry `json:"versions"`
 }
 
 // VersionIndexEntry tracks metadata for a cached version.
@@ -161,10 +183,11 @@ func (f *FileRegistryRulesetCache) loadIndex() (*RegistryIndex, error) {
 		// Create new index
 		now := time.Now().UTC()
 		return &RegistryIndex{
-			CreatedOn:      now,
-			LastUpdatedOn:  now,
-			LastAccessedOn: now,
-			Rulesets:       make(map[string]RulesetIndexEntry),
+			RegistryMetadata: f.registryKeyObj,
+			CreatedOn:        now,
+			LastUpdatedOn:    now,
+			LastAccessedOn:   now,
+			Rulesets:         make(map[string]RulesetIndexEntry),
 		}, nil
 	}
 	if err != nil {
@@ -195,7 +218,12 @@ func (f *FileRegistryRulesetCache) saveIndex(index *RegistryIndex) error {
 }
 
 // updateIndexOnAccess updates the index when a ruleset version is accessed.
-func (f *FileRegistryRulesetCache) updateIndexOnAccess(rulesetKey, version string) error {
+func (f *FileRegistryRulesetCache) updateIndexOnAccess(keyObj interface{}, version string) error {
+	rulesetKey, err := GenerateKey(keyObj)
+	if err != nil {
+		return err
+	}
+
 	index, err := f.loadIndex()
 	if err != nil {
 		return err
@@ -223,7 +251,12 @@ func (f *FileRegistryRulesetCache) updateIndexOnAccess(rulesetKey, version strin
 }
 
 // updateIndexOnSet updates the index when a ruleset version is cached.
-func (f *FileRegistryRulesetCache) updateIndexOnSet(rulesetKey, version string) error {
+func (f *FileRegistryRulesetCache) updateIndexOnSet(keyObj interface{}, version string) error {
+	rulesetKey, err := GenerateKey(keyObj)
+	if err != nil {
+		return err
+	}
+
 	index, err := f.loadIndex()
 	if err != nil {
 		return err
@@ -236,10 +269,11 @@ func (f *FileRegistryRulesetCache) updateIndexOnSet(rulesetKey, version string) 
 	rulesetEntry, exists := index.Rulesets[rulesetKey]
 	if !exists {
 		rulesetEntry = RulesetIndexEntry{
-			CreatedOn:      now,
-			LastUpdatedOn:  now,
-			LastAccessedOn: now,
-			Versions:       make(map[string]VersionIndexEntry),
+			RulesetMetadata: keyObj,
+			CreatedOn:       now,
+			LastUpdatedOn:   now,
+			LastAccessedOn:  now,
+			Versions:        make(map[string]VersionIndexEntry),
 		}
 	} else {
 		rulesetEntry.LastUpdatedOn = now
