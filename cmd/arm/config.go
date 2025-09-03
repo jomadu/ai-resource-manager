@@ -18,19 +18,53 @@ func init() {
 var configRegistryCmd = &cobra.Command{
 	Use:   "registry",
 	Short: "Manage registry configuration",
+	Long: `Manage registry configuration for ARM.
+
+Registries are remote sources where rulesets are stored and versioned, similar to npm registries for JavaScript packages. ARM supports Git-based registries that can point to GitHub repositories, GitLab projects, or any Git remote containing rule collections.
+
+Available commands:
+  add     Add a new registry
+  remove  Remove an existing registry
+
+Examples:
+  arm config registry add ai-rules https://github.com/user/rules-repo --type git
+  arm config registry remove ai-rules`,
 }
 
 var configSinkCmd = &cobra.Command{
 	Use:   "sink",
 	Short: "Manage sink configuration",
+	Long: `Manage sink configuration for ARM.
+
+Sinks define where installed rules should be placed in your local filesystem and which AI tools should receive them. Each sink targets specific directories and can filter rulesets using include/exclude patterns.
+
+Sinks support two layout modes:
+- Hierarchical Layout (default): Preserves directory structure from rulesets
+- Flat Layout: Places all files in a single directory with hash-prefixed names
+
+Available commands:
+  add     Add a new sink
+  remove  Remove an existing sink
+
+Examples:
+  arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
+  arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
+  arm config sink add github --directories .github/instructions --layout flat`,
 }
 
 var registryAddCmd = &cobra.Command{
 	Use:   "add <name> <url>",
-	Short: "Add registry configuration",
+	Short: "Add a new registry",
 	Long: `Add a registry to the manifest.
 
-Registries are remote sources where rulesets are stored and versioned.
+Registries are remote sources where rulesets are stored and versioned, similar to npm registries for JavaScript packages. When you configure a registry, you're creating a named connection to a repository that contains multiple rulesets with proper semantic versioning.
+
+Arguments:
+  name  Registry name (used to reference the registry)
+  url   Registry URL (Git repository URL)
+
+Flags:
+  --type  Registry type (default: git)
 
 Examples:
   arm config registry add ai-rules https://github.com/user/rules-repo --type git
@@ -51,11 +85,17 @@ Examples:
 
 var registryRemoveCmd = &cobra.Command{
 	Use:   "remove <name>",
-	Short: "Remove registry configuration",
+	Short: "Remove an existing registry",
 	Long: `Remove a registry from the manifest.
 
+This will remove the registry configuration but will not affect any already installed rulesets from that registry. To remove installed rulesets, use 'arm uninstall'.
+
+Arguments:
+  name  Registry name to remove
+
 Examples:
-  arm config registry remove ai-rules`,
+  arm config registry remove ai-rules
+  arm config registry remove company-rules`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
@@ -66,10 +106,23 @@ Examples:
 
 var sinkAddCmd = &cobra.Command{
 	Use:   "add <name>",
-	Short: "Add sink configuration",
+	Short: "Add a new sink",
 	Long: `Add a sink to the configuration.
 
-Sinks define where installed rules should be placed in your filesystem.
+Sinks define where installed rules should be placed in your local filesystem and which AI tools should receive them. Each sink targets specific directories and can filter rulesets using include/exclude patterns.
+
+Arguments:
+  name  Sink name (used to reference the sink)
+
+Flags:
+  --directories   Target directories for rule installation (required)
+  --include       Include patterns to filter rulesets
+  --exclude       Exclude patterns to filter rulesets
+  --layout        Layout mode: hierarchical (default) or flat
+
+Layout Modes:
+- Hierarchical: Preserves directory structure from rulesets
+- Flat: Places all files in single directory with hash-prefixed names
 
 Examples:
   arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
@@ -90,11 +143,17 @@ Examples:
 
 var sinkRemoveCmd = &cobra.Command{
 	Use:   "remove <name>",
-	Short: "Remove sink configuration",
+	Short: "Remove an existing sink",
 	Long: `Remove a sink from the configuration.
 
+This will remove the sink configuration but will not delete any files that were previously installed to the sink's directories. To clean up installed files, manually delete them or reinstall rulesets after reconfiguring sinks.
+
+Arguments:
+  name  Sink name to remove
+
 Examples:
-  arm config sink remove q`,
+  arm config sink remove q
+  arm config sink remove cursor`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
