@@ -66,11 +66,11 @@ arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-samp
 
 Configure sinks for different AI tools:
 ```bash
-arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
+arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq"
 ```
 
 ```bash
-arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
+arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor"
 ```
 
 ```bash
@@ -79,11 +79,11 @@ arm config sink add github --directories .github/instructions --include "ai-rule
 
 Install rulesets:
 ```bash
-arm install ai-rules/amazonq-rules --include "rules/amazonq/*.md"
+arm install ai-rules/amazonq --include "rules/amazonq/*.md"
 ```
 
 ```bash
-arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc"
+arm install ai-rules/cursor --include "rules/cursor/*.mdc"
 ```
 
 ## Key Commands
