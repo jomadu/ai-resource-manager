@@ -101,14 +101,13 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 		}
 	}
 
+	// Generate checksum for integrity verification
+	checksum := lockfile.GenerateChecksum(files)
+
 	// Update lockfile
 	lockEntry := &lockfile.Entry{
-		URL:        registryConfig.URL,
-		Type:       registryConfig.Type,
-		Constraint: version,
-		Resolved:   resolvedVersion.ID,
-		Include:    include,
-		Exclude:    exclude,
+		Resolved: resolvedVersion.ID,
+		Checksum: checksum,
 	}
 	if err := a.lockFileManager.CreateEntry(ctx, registryName, ruleset, lockEntry); err != nil {
 		if err := a.lockFileManager.UpdateEntry(ctx, registryName, ruleset, lockEntry); err != nil {
@@ -223,6 +222,11 @@ func (a *ArmService) Outdated(ctx context.Context) ([]OutdatedRuleset, error) {
 		return nil, fmt.Errorf("failed to get lockfile entries: %w", err)
 	}
 
+	manifestEntries, err := a.manifestManager.GetEntries(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get manifest entries: %w", err)
+	}
+
 	registryConfigs, err := a.manifestManager.GetRegistries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get registries: %w", err)
@@ -247,13 +251,25 @@ func (a *ArmService) Outdated(ctx context.Context) ([]OutdatedRuleset, error) {
 		}
 
 		for rulesetName, lockEntry := range rulesets {
+			// Get constraint from manifest
+			var constraint string
+			if manifestRegistry, exists := manifestEntries[registryName]; exists {
+				if manifestEntry, exists := manifestRegistry[rulesetName]; exists {
+					constraint = manifestEntry.Version
+				} else {
+					continue
+				}
+			} else {
+				continue
+			}
+
 			// Get latest version using proper resolution (prefers latest tag, falls back to default branch)
 			latestVersion, err := registryClient.ResolveVersion(ctx, "latest")
 			if err != nil {
 				continue
 			}
 
-			wantedVersion, err := registryClient.ResolveVersion(ctx, lockEntry.Constraint)
+			wantedVersion, err := registryClient.ResolveVersion(ctx, constraint)
 			if err != nil {
 				continue
 			}
@@ -279,15 +295,29 @@ func (a *ArmService) List(ctx context.Context) ([]InstalledRuleset, error) {
 		return nil, fmt.Errorf("failed to get lockfile entries: %w", err)
 	}
 
+	manifestEntries, err := a.manifestManager.GetEntries(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get manifest entries: %w", err)
+	}
+
 	var rulesets []InstalledRuleset
 	for registryName, rulesetMap := range lockEntries {
-		for rulesetName, entry := range rulesetMap {
+		for rulesetName, lockEntry := range rulesetMap {
+			// Get include/exclude from manifest
+			var include, exclude []string
+			if manifestRegistry, exists := manifestEntries[registryName]; exists {
+				if manifestEntry, exists := manifestRegistry[rulesetName]; exists {
+					include = manifestEntry.Include
+					exclude = manifestEntry.Exclude
+				}
+			}
+
 			rulesets = append(rulesets, InstalledRuleset{
 				Registry: registryName,
 				Name:     rulesetName,
-				Version:  entry.Resolved,
-				Include:  entry.Include,
-				Exclude:  entry.Exclude,
+				Version:  lockEntry.Resolved,
+				Include:  include,
+				Exclude:  exclude,
 			})
 		}
 	}
@@ -357,7 +387,7 @@ func (a *ArmService) Info(ctx context.Context, registry, ruleset string) (*Rules
 		Exclude:        manifestEntry.Exclude,
 		InstalledPaths: installedPaths,
 		Sinks:          sinkNames,
-		Constraint:     lockEntry.Constraint,
+		Constraint:     manifestEntry.Version,
 		Resolved:       lockEntry.Resolved,
 	}, nil
 }
@@ -422,21 +452,40 @@ func (a *ArmService) installFromLockfile(ctx context.Context, lockEntries map[st
 }
 
 func (a *ArmService) installExactVersion(ctx context.Context, registryName, ruleset string, lockEntry *lockfile.Entry) error {
-	registryConfig := config.RegistryConfig{
-		URL:  lockEntry.URL,
-		Type: lockEntry.Type,
+	// Get registry config from manifest
+	registries, err := a.manifestManager.GetRegistries(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get registries: %w", err)
+	}
+	registryConfig, exists := registries[registryName]
+	if !exists {
+		return fmt.Errorf("registry %s not found in manifest", registryName)
 	}
 
-	registryClient, err := registry.NewRegistry(registryName, registryConfig)
+	// Get manifest entry for include/exclude patterns
+	manifestEntry, err := a.manifestManager.GetEntry(ctx, registryName, ruleset)
+	if err != nil {
+		return fmt.Errorf("failed to get manifest entry: %w", err)
+	}
+
+	registryClient, err := registry.NewRegistry(registryName, config.RegistryConfig{
+		URL:  registryConfig.URL,
+		Type: registryConfig.Type,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
 
 	resolvedVersion := &types.VersionRef{ID: lockEntry.Resolved}
-	selector := types.ContentSelector{Include: lockEntry.Include, Exclude: lockEntry.Exclude}
+	selector := types.ContentSelector{Include: manifestEntry.Include, Exclude: manifestEntry.Exclude}
 	files, err := registryClient.GetContent(ctx, *resolvedVersion, selector)
 	if err != nil {
 		return fmt.Errorf("failed to get content: %w", err)
+	}
+
+	// Verify checksum for integrity
+	if !lockfile.VerifyChecksum(files, lockEntry.Checksum) {
+		return fmt.Errorf("checksum verification failed for %s/%s@%s", registryName, ruleset, lockEntry.Resolved)
 	}
 
 	sinks, err := a.configManager.GetSinks(ctx)
