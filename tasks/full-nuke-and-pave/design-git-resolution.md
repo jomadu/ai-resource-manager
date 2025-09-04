@@ -188,16 +188,22 @@ To install from an available branch, use:
 
 ### Registry Configuration
 
-**Default Configuration:**
+**Default Git Registry:**
 ```bash
 arm config registry add ai-rules https://github.com/example/repo --type git
-# Creates registry with default branches: ["main", "master"]
+# Creates Git registry with default branches: ["main", "master"]
 ```
 
-**Custom Branches:**
+**Custom Git Branches:**
 ```bash
 arm config registry add ai-rules https://github.com/example/repo --type git --branches main,develop,staging
-# Creates registry with custom branches: ["main", "develop", "staging"]
+# Creates Git registry with custom branches: ["main", "develop", "staging"]
+```
+
+**Other Registry Types:**
+```bash
+arm config registry add api-rules https://api.example.com --type http
+# Creates HTTP registry (no Git-specific configuration)
 ```
 
 **Resulting Configuration:**
@@ -236,6 +242,16 @@ arm config registry add ai-rules https://github.com/example/repo --type git --br
 - **Update frequency**: Check for new commits on every ARM operation (no caching)
 - **CLI display**: Show normalized constraint forms in tables (e.g., ">=1.0.0 <2.0.0" instead of "^1.0.0")
 
+### Type-First Configuration
+- **CLI parsing**: Parse `--type` flag first, then route to type-specific methods
+- **Git registries**: Use `AddGitRegistry(name, url, branches)` for Git-specific configuration
+- **Other registries**: Use `AddRegistry(name, url, type)` for generic registries
+- **Factory validation**: Registry factory validates type and extracts appropriate configuration
+
+### Simplified Data Structures
+- **ResolvedVersion**: Flattened from nested `VersionRef` to simple `Version` string field
+- **Configuration storage**: Git-specific fields (like `branches`) stored directly in base config, not nested
+
 ## Architecture Notes
 
 - **Keep registry-specific logic isolated**: Avoid polluting high-level structs like `service.go` with Git registry implementation details
@@ -248,17 +264,12 @@ Introduce a `ResolvedVersion` struct that combines constraint and resolved versi
 
 ```go
 type ResolvedVersion struct {
-    Constraint  Constraint // Original constraint struct
-    VersionRef  VersionRef // Resolved version reference
-}
-
-type VersionRef struct {
-    Version string // Resolved version (e.g., "abc1234", "1.2.0")
-    // Additional registry-specific metadata can be added here
+    Constraint Constraint // Original constraint struct
+    Version    string     // Resolved version (e.g., "abc1234", "1.2.0")
 }
 ```
 
 **Usage:**
-- `ResolveVersion()` returns `ResolvedVersion` instead of separate constraint/resolved values
-- Encapsulates both the original user intent (constraint) and the concrete resolution (version ref)
-- Allows registries to include additional metadata in `VersionRef` without changing high-level APIs
+- `ResolveVersion()` returns `ResolvedVersion` with simplified structure
+- Encapsulates both the original user intent (constraint) and the concrete resolution (version string)
+- Clean, flat structure without unnecessary nesting
