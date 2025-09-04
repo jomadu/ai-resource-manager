@@ -48,7 +48,7 @@ warn() {
 
 
 create_version_1_0_0() {
-    mkdir -p rules/cursor rules/amazonq
+    mkdir -p rules/cursor rules/amazonq rules/copilot
 
     cat > README.md << 'EOF'
 # AI Rules Test Repository
@@ -59,6 +59,7 @@ Test repository for ARM (AI Rules Manager) with grug-brained-dev rules.
 
 - `rules/cursor/grug-brained-dev.mdc` - Cursor rules for grug-brained development
 - `rules/amazonq/grug-brained-dev.md` - Amazon Q rules for grug-brained development
+- `rules/copilot/grug-brained-dev.instructions.md` - GitHub Copilot instructions for grug-brained development
 EOF
 
     cat > rules/cursor/grug-brained-dev.mdc << 'EOF'
@@ -91,6 +92,31 @@ EOF
 - Grug test before ship
 - Broken code make grug sad
 - Test save grug from angry users
+EOF
+
+    cat > rules/copilot/grug-brained-dev.instructions.md << 'EOF'
+---
+description: 'Grug-brained development instructions for GitHub Copilot'
+---
+
+# Grug Brained Dev Instructions
+
+*Simple rules for simple grug brain.*
+
+## Instructions
+
+- Keep code simple - grug no like complex code
+- Simple code good, complex code bad
+- If grug no understand, too complex
+- Grug test before ship
+- Broken code make grug sad
+- Test save grug from angry users
+
+## Additional Guidelines
+
+- Write code that tells story
+- Use names that make sense
+- Small functions better than big functions
 EOF
 }
 
@@ -159,10 +185,60 @@ EOF
 - Ask for help if stuck
 - Learn from mistakes
 EOF
+
+    cat > rules/copilot/generate-tasks.instructions.md << 'EOF'
+---
+description: 'Task generation instructions for GitHub Copilot'
+---
+
+# Generate Tasks Instructions
+
+*Grug generate tasks for work.*
+
+## Instructions
+
+- Break big work into small tasks
+- Small tasks easier for grug brain
+- Write tasks down so grug no forget
+- Important tasks first
+- Easy tasks when grug tired
+- Hard tasks when grug fresh
+
+## Additional Guidelines
+
+- Use clear task descriptions
+- Include acceptance criteria
+- Estimate task complexity
+EOF
+
+    cat > rules/copilot/process-tasks.instructions.md << 'EOF'
+---
+description: 'Task processing instructions for GitHub Copilot'
+---
+
+# Process Tasks Instructions
+
+*Grug process tasks efficiently.*
+
+## Instructions
+
+- One task at time
+- Finish before start new
+- Mark done when complete
+- Check work before mark done
+- Ask for help if stuck
+- Learn from mistakes
+
+## Additional Guidelines
+
+- Update task status regularly
+- Document blockers and solutions
+- Review completed work
+EOF
 }
 
 create_version_1_2_0() {
-    # Bug fix in grug-brained-dev.mdc (patch release)
+    # Bug fix in grug-brained-dev files (patch release)
     cat > rules/cursor/grug-brained-dev.mdc << 'EOF'
 # Grug Brained Dev Rules (Cursor)
 
@@ -179,6 +255,33 @@ create_version_1_2_0() {
 - Broken code make grug sad
 - Test save grug from angry users
 - FIXED: Grug test edge cases too
+EOF
+
+    cat > rules/copilot/grug-brained-dev.instructions.md << 'EOF'
+---
+description: 'Grug-brained development instructions for GitHub Copilot'
+---
+
+# Grug Brained Dev Instructions
+
+*Simple rules for simple grug brain.*
+
+## Instructions
+
+- Keep code simple - grug no like complex code
+- Simple code good, complex code bad
+- If grug no understand, too complex
+- FIXED: Grug remember to save work often
+- Grug test before ship
+- Broken code make grug sad
+- Test save grug from angry users
+- FIXED: Grug test edge cases too
+
+## Additional Guidelines
+
+- Write code that tells story
+- Use names that make sense
+- Small functions better than big functions
 EOF
 }
 
@@ -246,6 +349,56 @@ EOF
 - Automated quality checks
 - Peer review requirements
 - Documentation standards
+EOF
+
+    cat > rules/copilot/generate-tasks.instructions.md << 'EOF'
+---
+description: 'Advanced task generation instructions for GitHub Copilot v2'
+---
+
+# Generate Tasks Instructions v2
+
+*BREAKING CHANGE: New task generation system.*
+
+## Instructions
+
+- Use AI to break down complex work
+- Estimate time for each task
+- Assign priority scores automatically
+- Use predefined templates for common work
+- Customize task structures
+- Integrate with project management tools
+
+## Additional Guidelines
+
+- Leverage automation for task creation
+- Apply consistent task categorization
+- Include dependency mapping
+EOF
+
+    cat > rules/copilot/process-tasks.instructions.md << 'EOF'
+---
+description: 'Advanced task processing instructions for GitHub Copilot v2'
+---
+
+# Process Tasks Instructions v2
+
+*BREAKING CHANGE: New task processing workflow.*
+
+## Instructions
+
+- Use smart task scheduling
+- Track dependencies automatically
+- Monitor progress continuously
+- Apply automated quality checks
+- Require peer review
+- Follow documentation standards
+
+## Additional Guidelines
+
+- Implement quality gates
+- Use automated validation
+- Maintain audit trails
 EOF
 }
 
@@ -359,6 +512,33 @@ EOF
 - Clean code little bit every day
 - Remove dead code
 - Fix bad names when see them
+EOF
+
+    cat > rules/copilot/clean-code.instructions.md << 'EOF'
+---
+description: 'Clean code instructions for GitHub Copilot'
+---
+
+# Clean Code Instructions
+
+*Grug write clean code for happy team.*
+
+## Instructions
+
+- Code should tell story
+- Names should make sense
+- Functions should be small
+- Comments explain why, not what
+- Clean code little bit every day
+- Remove dead code
+- Fix bad names when see them
+
+## Additional Guidelines
+
+- Apply consistent formatting
+- Use meaningful variable names
+- Keep functions focused on single responsibility
+- Refactor continuously
 EOF
 
     git add .
