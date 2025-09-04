@@ -16,11 +16,8 @@ func TestFileManager_GetEntry(t *testing.T) {
 		"rulesets": {
 			"ai-rules": {
 				"amazonq-rules": {
-					"url": "https://github.com/my-user/ai-rules",
-					"type": "git",
-					"constraint": "^2.1.0",
 					"resolved": "2.1.0",
-					"include": ["rules/amazonq/*.md"]
+					"checksum": "sha256:abc123def456789"
 				}
 			}
 		}
@@ -37,11 +34,8 @@ func TestFileManager_GetEntry(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if entry.URL != "https://github.com/my-user/ai-rules" {
-		t.Errorf("Expected URL 'https://github.com/my-user/ai-rules', got '%s'", entry.URL)
-	}
-	if entry.Constraint != "^2.1.0" {
-		t.Errorf("Expected constraint '^2.1.0', got '%s'", entry.Constraint)
+	if entry.Checksum != "sha256:abc123def456789" {
+		t.Errorf("Expected checksum 'sha256:abc123def456789', got '%s'", entry.Checksum)
 	}
 	if entry.Resolved != "2.1.0" {
 		t.Errorf("Expected resolved '2.1.0', got '%s'", entry.Resolved)
@@ -77,18 +71,12 @@ func TestFileManager_GetEntries(t *testing.T) {
 		"rulesets": {
 			"ai-rules": {
 				"amazonq-rules": {
-					"url": "https://github.com/my-user/ai-rules",
-					"type": "git",
-					"constraint": "^2.1.0",
 					"resolved": "2.1.0",
-					"include": ["rules/amazonq/*.md"]
+					"checksum": "sha256:abc123def456789"
 				},
 				"cursor-rules": {
-					"url": "https://github.com/my-user/ai-rules",
-					"type": "git",
-					"constraint": "^2.1.0",
 					"resolved": "2.1.0",
-					"include": ["rules/cursor/*.mdc"]
+					"checksum": "sha256:def456abc123789"
 				}
 			}
 		}
@@ -122,8 +110,8 @@ func TestFileManager_GetEntries(t *testing.T) {
 	if !exists {
 		t.Error("Expected 'amazonq-rules' ruleset to exist")
 	}
-	if amazonqRules.URL != "https://github.com/my-user/ai-rules" {
-		t.Errorf("Expected URL 'https://github.com/my-user/ai-rules', got '%s'", amazonqRules.URL)
+	if amazonqRules.Checksum != "sha256:abc123def456789" {
+		t.Errorf("Expected checksum 'sha256:abc123def456789', got '%s'", amazonqRules.Checksum)
 	}
 }
 
@@ -135,11 +123,8 @@ func TestFileManager_CreateEntry(t *testing.T) {
 	ctx := context.Background()
 
 	entry := &Entry{
-		URL:        "https://github.com/my-user/ai-rules",
-		Type:       "git",
-		Constraint: "^1.0.0",
-		Resolved:   "1.0.0",
-		Include:    []string{"rules/amazonq/*.md"},
+		Resolved: "1.0.0",
+		Checksum: "sha256:abc123def456789",
 	}
 
 	err := manager.CreateEntry(ctx, "ai-rules", "amazonq-rules", entry)
@@ -153,11 +138,8 @@ func TestFileManager_CreateEntry(t *testing.T) {
 		t.Fatalf("Expected no error retrieving entry, got %v", err)
 	}
 
-	if retrievedEntry.URL != entry.URL {
-		t.Errorf("Expected URL '%s', got '%s'", entry.URL, retrievedEntry.URL)
-	}
-	if retrievedEntry.Constraint != entry.Constraint {
-		t.Errorf("Expected constraint '%s', got '%s'", entry.Constraint, retrievedEntry.Constraint)
+	if retrievedEntry.Checksum != entry.Checksum {
+		t.Errorf("Expected checksum '%s', got '%s'", entry.Checksum, retrievedEntry.Checksum)
 	}
 }
 
@@ -170,11 +152,8 @@ func TestFileManager_UpdateEntry(t *testing.T) {
 		"rulesets": {
 			"ai-rules": {
 				"amazonq-rules": {
-					"url": "https://github.com/my-user/ai-rules",
-					"type": "git",
-					"constraint": "^1.0.0",
 					"resolved": "1.0.0",
-					"include": ["rules/amazonq/*.md"]
+					"checksum": "sha256:abc123def456789"
 				}
 			}
 		}
@@ -187,11 +166,8 @@ func TestFileManager_UpdateEntry(t *testing.T) {
 	ctx := context.Background()
 
 	updatedEntry := &Entry{
-		URL:        "https://github.com/my-user/ai-rules",
-		Type:       "git",
-		Constraint: "^1.0.0",
-		Resolved:   "1.1.0",
-		Include:    []string{"rules/amazonq/*.md"},
+		Resolved: "1.1.0",
+		Checksum: "sha256:def456abc123789",
 	}
 
 	err := manager.UpdateEntry(ctx, "ai-rules", "amazonq-rules", updatedEntry)
@@ -208,6 +184,9 @@ func TestFileManager_UpdateEntry(t *testing.T) {
 	if retrievedEntry.Resolved != "1.1.0" {
 		t.Errorf("Expected resolved '1.1.0', got '%s'", retrievedEntry.Resolved)
 	}
+	if retrievedEntry.Checksum != "sha256:def456abc123789" {
+		t.Errorf("Expected checksum 'sha256:def456abc123789', got '%s'", retrievedEntry.Checksum)
+	}
 }
 
 func TestFileManager_RemoveEntry(t *testing.T) {
@@ -219,18 +198,12 @@ func TestFileManager_RemoveEntry(t *testing.T) {
 		"rulesets": {
 			"ai-rules": {
 				"amazonq-rules": {
-					"url": "https://github.com/my-user/ai-rules",
-					"type": "git",
-					"constraint": "^2.1.0",
 					"resolved": "2.1.0",
-					"include": ["rules/amazonq/*.md"]
+					"checksum": "sha256:abc123def456789"
 				},
 				"cursor-rules": {
-					"url": "https://github.com/my-user/ai-rules",
-					"type": "git",
-					"constraint": "^2.1.0",
 					"resolved": "2.1.0",
-					"include": ["rules/cursor/*.mdc"]
+					"checksum": "sha256:def456abc123789"
 				}
 			}
 		}
@@ -269,11 +242,8 @@ func TestFileManager_RemoveEntry_LastInRegistry(t *testing.T) {
 		"rulesets": {
 			"ai-rules": {
 				"amazonq-rules": {
-					"url": "https://github.com/my-user/ai-rules",
-					"type": "git",
-					"constraint": "^2.1.0",
 					"resolved": "2.1.0",
-					"include": ["rules/amazonq/*.md"]
+					"checksum": "sha256:abc123def456789"
 				}
 			}
 		}
