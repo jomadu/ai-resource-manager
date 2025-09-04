@@ -60,7 +60,10 @@ ARM should resolve branches to specific commit hashes for reproducible, trackabl
   "registries": {
     "ai-rules": {
       "url": "https://github.com/jomadu/ai-rules-manager-sample-git-registry",
-      "type": "git"
+      "type": "git",
+      "branches" [
+        "main"
+      ]
     }
   },
   "rulesets": {
