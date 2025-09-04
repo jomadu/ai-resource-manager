@@ -70,9 +70,9 @@ log "Adding registry configuration..."
 run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 
 log "Adding sink configurations..."
-run_arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*" --exclude "ai-rules/cursor-*"
-run_arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*" --exclude "ai-rules/amazonq-*"
-run_arm config sink add github --directories .github/instructions --include "ai-rules/amazonq-*" --layout flat
+run_arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
+run_arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
+run_arm config sink add copilot --directories .github/instructions --include "ai-rules/copilot-*" --layout flat
 
 success "Configuration complete"
 
@@ -98,6 +98,7 @@ log "=== INSTALL - Latest Version ==="
 log "Installing latest version (should resolve to ^2.1.0)..."
 run_arm install ai-rules/amazonq-rules --include "rules/amazonq/*.md"
 run_arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc"
+run_arm install ai-rules/copilot-rules --include "rules/copilot/*.instructions.md"
 
 success "Installation complete"
 
@@ -145,6 +146,7 @@ pause
 log "=== INSTALL - Specific Version ==="
 log "Installing specific version 1.0.0..."
 run_arm install ai-rules/cursor-rules@1.0.0 --include "rules/cursor/*.mdc"
+run_arm install ai-rules/copilot-rules@1.0.0 --include "rules/copilot/*.instructions.md"
 
 success "Version-specific installation complete"
 
@@ -164,8 +166,9 @@ pause
 
 # === UPDATE ===
 log "=== UPDATE COMMAND ==="
-log "Updating cursor rules to latest compatible version..."
+log "Updating cursor and copilot rules to latest compatible version..."
 run_arm update ai-rules/cursor-rules
+run_arm update ai-rules/copilot-rules
 
 success "Update complete"
 
@@ -183,6 +186,7 @@ rm -rf .cursor .amazonq arm.json arm-lock.json
 run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 run_arm install ai-rules/amazonq-rules@1 --include "rules/amazonq/*.md"
 run_arm install ai-rules/cursor-rules@1 --include "rules/cursor/*.mdc"
+run_arm install ai-rules/copilot-rules@1 --include "rules/copilot/*.instructions.md"
 
 success "Major version installation complete"
 
@@ -203,6 +207,7 @@ rm -rf .cursor .amazonq arm.json arm-lock.json
 run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 run_arm install ai-rules/amazonq-rules@1.0 --include "rules/amazonq/*.md"
 run_arm install ai-rules/cursor-rules@1.0 --include "rules/cursor/*.mdc"
+run_arm install ai-rules/copilot-rules@1.0 --include "rules/copilot/*.instructions.md"
 
 success "Minor version installation complete"
 
@@ -223,6 +228,7 @@ rm -rf .cursor .amazonq arm.json arm-lock.json
 run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 run_arm install ai-rules/amazonq-rules@main --include "rules/amazonq/*.md"
 run_arm install ai-rules/cursor-rules@main --include "rules/cursor/*.mdc"
+run_arm install ai-rules/copilot-rules@main --include "rules/copilot/*.instructions.md"
 
 success "Branch installation complete"
 
@@ -238,7 +244,7 @@ pause
 # === INSTALL FROM MANIFEST ===
 log "=== INSTALL FROM MANIFEST ==="
 log "Removing installed files and reinstalling from manifest..."
-rm -rf .cursor .amazonq
+rm -rf .cursor .amazonq .github
 
 run_arm install
 
@@ -267,4 +273,4 @@ echo "• arm.json - Manifest"
 echo "• arm-lock.json - Lockfile"
 echo "• .cursor/rules/ - Cursor rules (hierarchical)"
 echo "• .amazonq/rules/ - Amazon Q rules (hierarchical)"
-echo "• .github/instructions/ - GitHub Copilot rules (flat layout)"
+echo "• .github/instructions/ - GitHub Copilot instructions (flat layout)"
