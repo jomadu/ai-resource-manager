@@ -2,12 +2,8 @@ package lockfile
 
 // Entry represents a single ruleset entry in the lock file.
 type Entry struct {
-	URL        string   `json:"url"`
-	Type       string   `json:"type"`
-	Constraint string   `json:"constraint"`
-	Resolved   string   `json:"resolved"`
-	Include    []string `json:"include"`
-	Exclude    []string `json:"exclude"`
+	Resolved string `json:"resolved"`
+	Checksum string `json:"checksum"`
 }
 
 // LockFile represents the arm.lock file structure.
