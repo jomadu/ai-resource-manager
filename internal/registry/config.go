@@ -9,5 +9,5 @@ type RegistryConfig struct {
 // GitRegistryConfig defines git-specific registry configuration.
 type GitRegistryConfig struct {
 	RegistryConfig
-	Branches []string `json:"branches,omitempty"`
+	Branches []string `json:"branches"`
 }
