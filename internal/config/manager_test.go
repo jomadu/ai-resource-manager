@@ -142,7 +142,7 @@ func TestFileManager_AddSink(t *testing.T) {
 			defer func() { _ = os.Chdir(oldWd) }()
 
 			fm := NewFileManager()
-			err := fm.AddSink(context.Background(), tt.sinkName, tt.dirs, tt.include, tt.exclude)
+			err := fm.AddSink(context.Background(), tt.sinkName, tt.dirs, tt.include, tt.exclude, "hierarchical", false)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AddSink() error = %v, wantErr %v", err, tt.wantErr)

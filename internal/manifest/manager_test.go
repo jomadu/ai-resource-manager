@@ -582,7 +582,7 @@ func TestFileManager_AddRegistry(t *testing.T) {
 			gitConfig := registry.GitRegistryConfig{
 				RegistryConfig: registry.RegistryConfig{URL: tt.url, Type: tt.registryType},
 			}
-			err := fm.AddGitRegistry(context.Background(), tt.registryName, gitConfig)
+			err := fm.AddGitRegistry(context.Background(), tt.registryName, gitConfig, false)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AddRegistry() error = %v, wantErr %v", err, tt.wantErr)

@@ -118,6 +118,27 @@ description: 'Grug-brained development instructions for GitHub Copilot'
 - Use names that make sense
 - Small functions better than big functions
 EOF
+
+    cat > rules/generic.md << 'EOF'
+# Generic Development Rules
+
+*Universal rules that apply to all development.*
+
+## Code Quality
+- Write readable code
+- Use meaningful variable names
+- Keep functions small and focused
+
+## Documentation
+- Document complex logic
+- Keep README files updated
+- Write clear commit messages
+
+## Testing
+- Write tests for new features
+- Test edge cases
+- Maintain test coverage
+EOF
 }
 
 create_version_1_1_0() {
@@ -235,6 +256,35 @@ description: 'Task processing instructions for GitHub Copilot'
 - Document blockers and solutions
 - Review completed work
 EOF
+
+    cat > rules/generic.md << 'EOF'
+# Generic Development Rules v1.1
+
+*Universal rules that apply to all development.*
+
+## Code Quality
+- Write readable code
+- Use meaningful variable names
+- Keep functions small and focused
+- Follow consistent coding style
+
+## Documentation
+- Document complex logic
+- Keep README files updated
+- Write clear commit messages
+- Maintain API documentation
+
+## Testing
+- Write tests for new features
+- Test edge cases
+- Maintain test coverage
+- Use automated testing
+
+## Task Management
+- Break work into manageable pieces
+- Track progress regularly
+- Communicate blockers early
+EOF
 }
 
 create_version_1_2_0() {
@@ -282,6 +332,37 @@ description: 'Grug-brained development instructions for GitHub Copilot'
 - Write code that tells story
 - Use names that make sense
 - Small functions better than big functions
+EOF
+
+    cat > rules/generic.md << 'EOF'
+# Generic Development Rules v1.2
+
+*Universal rules that apply to all development.*
+
+## Code Quality
+- Write readable code
+- Use meaningful variable names
+- Keep functions small and focused
+- Follow consistent coding style
+- FIXED: Always validate input parameters
+
+## Documentation
+- Document complex logic
+- Keep README files updated
+- Write clear commit messages
+- Maintain API documentation
+
+## Testing
+- Write tests for new features
+- Test edge cases
+- Maintain test coverage
+- Use automated testing
+- FIXED: Include integration tests
+
+## Task Management
+- Break work into manageable pieces
+- Track progress regularly
+- Communicate blockers early
 EOF
 }
 
