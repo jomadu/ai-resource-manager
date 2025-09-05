@@ -35,14 +35,30 @@ func NewGitRegistry(config GitRegistryConfig, rulesetCache cache.RegistryRuleset
 }
 
 // isBranchConstraint checks if a constraint refers to a branch name.
+// Uses permissive detection: anything that's not a semantic version or "latest" is treated as a potential branch.
 func (g *GitRegistry) isBranchConstraint(constraint string) bool {
-	// Check if it's in the configured branches
-	for _, branch := range g.config.Branches {
-		if constraint == branch {
-			return true
-		}
+	// Exclude "latest" special keyword
+	if constraint == "latest" {
+		return false
 	}
-	return false
+
+	// Exclude semantic version patterns (contains dots and follows semver format)
+	if strings.Contains(constraint, ".") {
+		// Check if it's a valid semantic version
+		if g.isSemverTag(constraint) || g.isSemverTag("v"+constraint) {
+			return false
+		}
+		// Also exclude patterns with dots that aren't valid semver (these are invalid)
+		return false
+	}
+
+	// Exclude version constraint prefixes
+	if strings.HasPrefix(constraint, "^") || strings.HasPrefix(constraint, "~") {
+		return false
+	}
+
+	// Everything else is treated as a potential branch name
+	return true
 }
 
 // sortTagsBySemver sorts tags by semantic version in descending order.
@@ -176,6 +192,11 @@ func (g *GitRegistry) ResolveVersion(ctx context.Context, constraint string) (*r
 	if g.isBranchConstraint(constraint) {
 		hash, err := g.repo.GetCommitHash(ctx, constraint)
 		if err != nil {
+			// Provide helpful error with available branches
+			branches, branchErr := g.repo.GetBranches(ctx)
+			if branchErr == nil && len(branches) > 0 {
+				return nil, fmt.Errorf("branch %s not found. Available branches: %v", constraint, branches)
+			}
 			return nil, fmt.Errorf("failed to resolve branch %s: %w", constraint, err)
 		}
 		return &resolver.ResolvedVersion{

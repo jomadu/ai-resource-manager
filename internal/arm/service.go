@@ -57,7 +57,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 	version = expandVersionShorthand(version)
 
 	// Validate registry exists in manifest
-	registries, err := a.manifestManager.GetRegistries(ctx)
+	registries, err := a.manifestManager.GetRawRegistries(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get registries: %w", err)
 	}
@@ -226,7 +226,7 @@ func (a *ArmService) Outdated(ctx context.Context) ([]OutdatedRuleset, error) {
 		return nil, fmt.Errorf("failed to get manifest entries: %w", err)
 	}
 
-	registryConfigs, err := a.manifestManager.GetRegistries(ctx)
+	registryConfigs, err := a.manifestManager.GetRawRegistries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get registries: %w", err)
 	}
@@ -445,7 +445,7 @@ func (a *ArmService) installFromLockfile(ctx context.Context, lockEntries map[st
 
 func (a *ArmService) installExactVersion(ctx context.Context, registryName, ruleset string, lockEntry *lockfile.Entry) error {
 	// Get registry config from manifest
-	registries, err := a.manifestManager.GetRegistries(ctx)
+	registries, err := a.manifestManager.GetRawRegistries(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get registries: %w", err)
 	}
