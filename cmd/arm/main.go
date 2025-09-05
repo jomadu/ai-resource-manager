@@ -111,10 +111,10 @@ var outdatedCmd = &cobra.Command{
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
-		table.Header("Registry", "Ruleset", "Current", "Wanted", "Latest")
+		table.Header("Registry", "Ruleset", "Constraint", "Current", "Wanted", "Latest")
 
 		for _, r := range outdated {
-			if err := table.Append(r.Registry, r.Name, r.Current, r.Wanted, r.Latest); err != nil {
+			if err := table.Append(r.Registry, r.Name, r.Constraint, r.Current, r.Wanted, r.Latest); err != nil {
 				return err
 			}
 		}
@@ -134,7 +134,11 @@ var listCmd = &cobra.Command{
 		}
 
 		for _, ruleset := range installed {
-			fmt.Printf("%s/%s@%s\n", ruleset.Registry, ruleset.Name, ruleset.Version)
+			if ruleset.Constraint != "" {
+				fmt.Printf("%s/%s@%s (%s)\n", ruleset.Registry, ruleset.Name, ruleset.Version, ruleset.Constraint)
+			} else {
+				fmt.Printf("%s/%s@%s\n", ruleset.Registry, ruleset.Name, ruleset.Version)
+			}
 		}
 
 		return nil
@@ -243,7 +247,7 @@ func findFirst(s, substr string) int {
 
 func printRulesetInfo(info *arm.RulesetInfo, detailed bool) {
 	if detailed {
-		fmt.Printf("Ruleset: %s/%s\n", info.Registry, info.Name)
+		fmt.Printf("Ruleset: %s/%s@%s (%s)\n", info.Registry, info.Name, info.Resolved, info.Constraint)
 		fmt.Println("include:")
 		for _, pattern := range info.Include {
 			fmt.Printf("  - %s\n", pattern)
@@ -265,7 +269,7 @@ func printRulesetInfo(info *arm.RulesetInfo, detailed bool) {
 		fmt.Printf("Constraint: %s\n", info.Constraint)
 		fmt.Printf("Resolved: %s\n", info.Resolved)
 	} else {
-		fmt.Printf("%s/%s\n", info.Registry, info.Name)
+		fmt.Printf("%s/%s@%s (%s)\n", info.Registry, info.Name, info.Resolved, info.Constraint)
 		fmt.Println("  include:")
 		for _, pattern := range info.Include {
 			fmt.Printf("    - %s\n", pattern)

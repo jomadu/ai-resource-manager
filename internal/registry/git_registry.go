@@ -3,6 +3,10 @@ package registry
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/jomadu/ai-rules-manager/internal/cache"
 	"github.com/jomadu/ai-rules-manager/internal/resolver"
@@ -30,43 +34,123 @@ func NewGitRegistry(config GitRegistryConfig, rulesetCache cache.RegistryRuleset
 	}
 }
 
-func (g *GitRegistry) ListVersions(ctx context.Context) ([]types.VersionRef, error) {
+// isBranchConstraint checks if a constraint refers to a branch name.
+func (g *GitRegistry) isBranchConstraint(constraint string) bool {
+	// Check if it's in the configured branches
+	for _, branch := range g.config.Branches {
+		if constraint == branch {
+			return true
+		}
+	}
+	return false
+}
+
+// sortTagsBySemver sorts tags by semantic version in descending order.
+func (g *GitRegistry) sortTagsBySemver(tags []string) []string {
+	var semverTags []string
+	var otherTags []string
+
+	for _, tag := range tags {
+		if g.isSemverTag(tag) {
+			semverTags = append(semverTags, tag)
+		} else {
+			otherTags = append(otherTags, tag)
+		}
+	}
+
+	// Sort semver tags by version (descending)
+	sort.Slice(semverTags, func(i, j int) bool {
+		return g.isHigherVersion(semverTags[i], semverTags[j])
+	})
+
+	// Combine semver tags first, then other tags
+	result := make([]string, 0, len(tags))
+	result = append(result, semverTags...)
+	result = append(result, otherTags...)
+	return result
+}
+
+// isSemverTag checks if a tag follows semantic versioning.
+func (g *GitRegistry) isSemverTag(tag string) bool {
+	normalized := strings.TrimPrefix(tag, "v")
+	matched, _ := regexp.MatchString(`^\d+\.\d+\.\d+`, normalized)
+	return matched
+}
+
+// isHigherVersion compares two semantic versions.
+func (g *GitRegistry) isHigherVersion(v1, v2 string) bool {
+	major1, minor1, patch1, err1 := g.parseVersion(v1)
+	major2, minor2, patch2, err2 := g.parseVersion(v2)
+	if err1 != nil || err2 != nil {
+		return false
+	}
+
+	if major1 != major2 {
+		return major1 > major2
+	}
+	if minor1 != minor2 {
+		return minor1 > minor2
+	}
+	return patch1 > patch2
+}
+
+// parseVersion parses a semantic version string.
+func (g *GitRegistry) parseVersion(version string) (major, minor, patch int, err error) {
+	version = strings.TrimPrefix(version, "v")
+	re := regexp.MustCompile(`^(\d+)\.(\d+)\.(\d+)`)
+	matches := re.FindStringSubmatch(version)
+	if len(matches) < 4 {
+		return 0, 0, 0, fmt.Errorf("invalid version format")
+	}
+
+	major, _ = strconv.Atoi(matches[1])
+	minor, _ = strconv.Atoi(matches[2])
+	patch, _ = strconv.Atoi(matches[3])
+	return
+}
+
+func (g *GitRegistry) ListVersions(ctx context.Context) ([]types.Version, error) {
 	tags, err := g.repo.GetTags(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	branches, err := g.repo.GetBranches(ctx)
-	if err != nil {
-		return nil, err
+	// Sort tags by semantic version (descending)
+	sortedTags := g.sortTagsBySemver(tags)
+
+	var versions []types.Version
+	// Add tags first (priority ordering)
+	for _, tag := range sortedTags {
+		versions = append(versions, types.Version{Version: tag, Display: tag})
 	}
 
-	var versions []types.VersionRef
-	for _, tag := range tags {
-		versions = append(versions, types.VersionRef{ID: tag, Type: types.Tag})
-	}
-	for _, branch := range branches {
-		versions = append(versions, types.VersionRef{ID: branch, Type: types.Branch})
+	// Add branch commits in configuration order
+	for _, branch := range g.config.Branches {
+		hash, err := g.repo.GetCommitHash(ctx, branch)
+		if err != nil {
+			continue // Skip branches that don't exist
+		}
+		versions = append(versions, types.Version{Version: hash, Display: hash[:8]})
 	}
 
 	return versions, nil
 }
 
-func (g *GitRegistry) GetContent(ctx context.Context, version types.VersionRef, selector types.ContentSelector) ([]types.File, error) {
+func (g *GitRegistry) GetContent(ctx context.Context, version types.Version, selector types.ContentSelector) ([]types.File, error) {
 	// Try cache first
-	files, err := g.cache.GetRulesetVersion(ctx, selector, version.ID)
+	files, err := g.cache.GetRulesetVersion(ctx, selector, version.Version)
 	if err == nil {
 		return files, nil
 	}
 
 	// Get files from git repo
-	files, err = g.repo.GetFiles(ctx, version.ID, selector)
+	files, err = g.repo.GetFiles(ctx, version.Version, selector)
 	if err != nil {
 		return nil, err
 	}
 
 	// Cache the result
-	_ = g.cache.SetRulesetVersion(ctx, selector, version.ID, files)
+	_ = g.cache.SetRulesetVersion(ctx, selector, version.Version, files)
 
 	return files, nil
 }
@@ -81,12 +165,29 @@ func (g *GitRegistry) GetBranches(ctx context.Context) ([]string, error) {
 	return g.repo.GetBranches(ctx)
 }
 
-func (g *GitRegistry) ResolveVersion(ctx context.Context, constraint string) (*types.VersionRef, error) {
+func (g *GitRegistry) ResolveVersion(ctx context.Context, constraint string) (*resolver.ResolvedVersion, error) {
+	// Parse constraint first
 	parsedConstraint, err := g.resolver.ParseConstraint(constraint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid version constraint %s: %w", constraint, err)
 	}
 
+	// Handle branch constraints by resolving to commit hash
+	if g.isBranchConstraint(constraint) {
+		hash, err := g.repo.GetCommitHash(ctx, constraint)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve branch %s: %w", constraint, err)
+		}
+		return &resolver.ResolvedVersion{
+			Constraint: parsedConstraint,
+			Version: types.Version{
+				Version: hash,
+				Display: hash[:8], // Use first 8 chars for display
+			},
+		}, nil
+	}
+
+	// Handle semantic version constraints
 	versions, err := g.ListVersions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list versions: %w", err)
@@ -97,5 +198,8 @@ func (g *GitRegistry) ResolveVersion(ctx context.Context, constraint string) (*t
 		return nil, fmt.Errorf("no matching version found for %s: %w", constraint, err)
 	}
 
-	return resolvedVersion, nil
+	return &resolver.ResolvedVersion{
+		Constraint: parsedConstraint,
+		Version:    *resolvedVersion,
+	}, nil
 }

@@ -13,7 +13,7 @@ import (
 type ConstraintResolver interface {
 	ParseConstraint(constraint string) (Constraint, error)
 	SatisfiesConstraint(version string, constraint Constraint) bool
-	FindBestMatch(constraint Constraint, versions []types.VersionRef) (*types.VersionRef, error)
+	FindBestMatch(constraint Constraint, versions []types.Version) (*types.Version, error)
 }
 
 // GitConstraintResolver implements semantic versioning constraint resolution.
@@ -44,29 +44,29 @@ func (g *GitConstraintResolver) ParseConstraint(constraint string) (Constraint, 
 		return Constraint{Type: Latest}, nil
 	}
 
-	// Check for caret constraint
+	// Check for caret constraint (major compatibility)
 	if strings.HasPrefix(constraint, "^") {
 		version := constraint[1:]
 		major, minor, patch, err := parseVersion(version)
 		if err != nil {
 			return Constraint{}, err
 		}
-		return Constraint{Type: Caret, Version: version, Major: major, Minor: minor, Patch: patch}, nil
+		return Constraint{Type: Major, Version: version, Major: major, Minor: minor, Patch: patch}, nil
 	}
 
-	// Check for tilde constraint
+	// Check for tilde constraint (minor compatibility)
 	if strings.HasPrefix(constraint, "~") {
 		version := constraint[1:]
 		major, minor, patch, err := parseVersion(version)
 		if err != nil {
 			return Constraint{}, err
 		}
-		return Constraint{Type: Tilde, Version: version, Major: major, Minor: minor, Patch: patch}, nil
+		return Constraint{Type: Minor, Version: version, Major: major, Minor: minor, Patch: patch}, nil
 	}
 
-	// Check if it's a semantic version (pin constraint)
+	// Check if it's a semantic version (exact constraint)
 	if major, minor, patch, err := parseVersion(constraint); err == nil {
-		return Constraint{Type: Pin, Version: constraint, Major: major, Minor: minor, Patch: patch}, nil
+		return Constraint{Type: Exact, Version: constraint, Major: major, Minor: minor, Patch: patch}, nil
 	}
 
 	// Check for invalid patterns that contain dots but aren't valid semver
@@ -82,11 +82,11 @@ func (g *GitConstraintResolver) ParseConstraint(constraint string) (Constraint, 
 // Uses semantic versioning rules for pin, caret, and tilde constraints.
 func (g *GitConstraintResolver) SatisfiesConstraint(version string, constraint Constraint) bool {
 	switch constraint.Type {
-	case Pin:
+	case Exact:
 		return normalizeVersion(version) == normalizeVersion(constraint.Version)
 	case BranchHead:
 		return version == constraint.Version
-	case Caret:
+	case Major:
 		major, minor, patch, err := parseVersion(version)
 		if err != nil {
 			return false
@@ -110,7 +110,7 @@ func (g *GitConstraintResolver) SatisfiesConstraint(version string, constraint C
 			return patch >= cPatch
 		}
 		return false
-	case Tilde:
+	case Minor:
 		major, minor, patch, err := parseVersion(version)
 		if err != nil {
 			return false
@@ -132,35 +132,19 @@ func (g *GitConstraintResolver) SatisfiesConstraint(version string, constraint C
 
 // FindBestMatch finds the best matching version from available versions.
 // Returns the highest compatible version for semantic constraints or exact match for branches.
-func (g *GitConstraintResolver) FindBestMatch(constraint Constraint, versions []types.VersionRef) (*types.VersionRef, error) {
-	// For latest constraint, find highest semantic version or first tag
+func (g *GitConstraintResolver) FindBestMatch(constraint Constraint, versions []types.Version) (*types.Version, error) {
+	// For latest constraint, find highest semantic version or first version
 	if constraint.Type == Latest {
 		if len(versions) == 0 {
 			return nil, errors.New("no versions available")
 		}
-		// Prefer tags over branches
-		var tags []*types.VersionRef
-		for i := range versions {
-			if versions[i].Type == types.Tag {
-				tags = append(tags, &versions[i])
-			}
-		}
-		if len(tags) > 0 {
-			best := tags[0]
-			for _, tag := range tags[1:] {
-				if isHigherVersion(tag.ID, best.ID) {
-					best = tag
-				}
-			}
-			return best, nil
-		}
 		return &versions[0], nil
 	}
 
-	var candidates []*types.VersionRef
+	var candidates []*types.Version
 
 	for i := range versions {
-		if g.SatisfiesConstraint(versions[i].ID, constraint) {
+		if g.SatisfiesConstraint(versions[i].Version, constraint) {
 			candidates = append(candidates, &versions[i])
 		}
 	}
@@ -177,7 +161,7 @@ func (g *GitConstraintResolver) FindBestMatch(constraint Constraint, versions []
 	// For semantic versions, find the highest version
 	best := candidates[0]
 	for _, candidate := range candidates[1:] {
-		if isHigherVersion(candidate.ID, best.ID) {
+		if isHigherVersion(candidate.Version, best.Version) {
 			best = candidate
 		}
 	}
