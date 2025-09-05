@@ -5,6 +5,7 @@ go 1.21.0
 toolchain go1.23.2
 
 require (
+	github.com/bmatcuk/doublestar/v4 v4.9.1
 	github.com/gofrs/flock v0.12.1
 	github.com/olekukonko/tablewriter v1.0.9
 	github.com/spf13/cobra v1.8.0
