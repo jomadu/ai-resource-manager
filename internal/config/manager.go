@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 )
 
 const CONFIG_FILE = ".armrc.json"
@@ -13,8 +14,8 @@ const CONFIG_FILE = ".armrc.json"
 // Manager handles .armrc.json configuration file operations.
 type Manager interface {
 	GetSinks(ctx context.Context) (map[string]SinkConfig, error)
-	AddSink(ctx context.Context, name string, dirs, include, exclude []string) error
-	AddSinkWithLayout(ctx context.Context, name string, dirs, include, exclude []string, layout string) error
+	AddSink(ctx context.Context, name string, dirs, include, exclude []string, layout string, force bool) error
+	UpdateSink(ctx context.Context, name, field, value string) error
 	RemoveSink(ctx context.Context, name string) error
 }
 
@@ -34,11 +35,10 @@ func (f *FileManager) GetSinks(ctx context.Context) (map[string]SinkConfig, erro
 	return config.Sinks, nil
 }
 
-func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, exclude []string) error {
-	return f.AddSinkWithLayout(ctx, name, dirs, include, exclude, "hierarchical")
-}
-
-func (f *FileManager) AddSinkWithLayout(ctx context.Context, name string, dirs, include, exclude []string, layout string) error {
+func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, exclude []string, layout string, force bool) error {
+	if layout == "" {
+		layout = "hierarchical"
+	}
 	config, err := f.loadConfig()
 	if err != nil {
 		config = &Config{
@@ -46,8 +46,8 @@ func (f *FileManager) AddSinkWithLayout(ctx context.Context, name string, dirs, 
 		}
 	}
 
-	if _, exists := config.Sinks[name]; exists {
-		return fmt.Errorf("sink %s already exists", name)
+	if _, exists := config.Sinks[name]; exists && !force {
+		return fmt.Errorf("sink %s already exists (use --force to overwrite)", name)
 	}
 
 	newSink := SinkConfig{
@@ -88,6 +88,56 @@ func (f *FileManager) RemoveSink(ctx context.Context, name string) error {
 		"removed_exclude", removedSink.Exclude)
 
 	delete(config.Sinks, name)
+	return f.saveConfig(config)
+}
+
+func (f *FileManager) UpdateSink(ctx context.Context, name, field, value string) error {
+	config, err := f.loadConfig()
+	if err != nil {
+		return err
+	}
+
+	sink, exists := config.Sinks[name]
+	if !exists {
+		return fmt.Errorf("sink %s not found", name)
+	}
+
+	switch field {
+	case "directories":
+		dirs := strings.Split(value, ",")
+		for i, dir := range dirs {
+			dirs[i] = strings.TrimSpace(dir)
+		}
+		sink.Directories = dirs
+	case "include":
+		include := strings.Split(value, ",")
+		for i, pattern := range include {
+			include[i] = strings.TrimSpace(pattern)
+		}
+		sink.Include = include
+	case "exclude":
+		exclude := strings.Split(value, ",")
+		for i, pattern := range exclude {
+			exclude[i] = strings.TrimSpace(pattern)
+		}
+		sink.Exclude = exclude
+	case "layout":
+		if value != "hierarchical" && value != "flat" {
+			return fmt.Errorf("layout must be 'hierarchical' or 'flat'")
+		}
+		sink.Layout = value
+	default:
+		return fmt.Errorf("unknown field '%s' (valid: directories, include, exclude, layout)", field)
+	}
+
+	config.Sinks[name] = sink
+
+	slog.InfoContext(ctx, "Updating sink field",
+		"action", "sink_update",
+		"name", name,
+		"field", field,
+		"value", value)
+
 	return f.saveConfig(config)
 }
 
