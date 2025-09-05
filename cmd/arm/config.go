@@ -82,8 +82,13 @@ Examples:
 		manifestManager := manifest.NewFileManager()
 		switch registryType {
 		case "git":
+			branches, _ := cmd.Flags().GetStringSlice("branches")
+			if len(branches) == 0 {
+				branches = []string{"main", "master"}
+			}
 			gitConfig := registry.GitRegistryConfig{
 				RegistryConfig: registry.RegistryConfig{URL: url, Type: registryType},
+				Branches:       branches,
 			}
 			return manifestManager.AddGitRegistry(context.Background(), name, gitConfig)
 		default:
@@ -213,6 +218,7 @@ func init() {
 	configSinkCmd.AddCommand(sinkRemoveCmd)
 
 	registryAddCmd.Flags().String("type", "git", "Registry type (git, http)")
+	registryAddCmd.Flags().StringSlice("branches", nil, "Git branches to track (default: main,master)")
 	sinkAddCmd.Flags().StringSlice("directories", nil, "Sink directories")
 	sinkAddCmd.Flags().StringSlice("include", nil, "Sink include patterns")
 	sinkAddCmd.Flags().StringSlice("exclude", nil, "Sink exclude patterns")

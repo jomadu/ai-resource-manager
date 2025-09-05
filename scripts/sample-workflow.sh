@@ -60,6 +60,7 @@ rm -rf sandbox/
 mkdir sandbox
 cp ./bin/arm ./sandbox
 cd sandbox
+run_arm cache nuke
 
 show_tree "Initial sandbox structure"
 
