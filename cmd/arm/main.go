@@ -244,10 +244,15 @@ func findFirst(s, substr string) int {
 func printRulesetInfo(info *arm.RulesetInfo, detailed bool) {
 	if detailed {
 		fmt.Printf("Ruleset: %s/%s\n", info.Registry, info.Name)
-		fmt.Printf("Registry: %s (%s)\n", info.RegistryURL, info.RegistryType)
 		fmt.Println("include:")
 		for _, pattern := range info.Include {
 			fmt.Printf("  - %s\n", pattern)
+		}
+		if len(info.Exclude) > 0 {
+			fmt.Println("exclude:")
+			for _, pattern := range info.Exclude {
+				fmt.Printf("  - %s\n", pattern)
+			}
 		}
 		fmt.Println("Installed:")
 		for _, path := range info.InstalledPaths {
@@ -261,10 +266,15 @@ func printRulesetInfo(info *arm.RulesetInfo, detailed bool) {
 		fmt.Printf("Resolved: %s\n", info.Resolved)
 	} else {
 		fmt.Printf("%s/%s\n", info.Registry, info.Name)
-		fmt.Printf("  Registry: %s (%s)\n", info.RegistryURL, info.RegistryType)
 		fmt.Println("  include:")
 		for _, pattern := range info.Include {
 			fmt.Printf("    - %s\n", pattern)
+		}
+		if len(info.Exclude) > 0 {
+			fmt.Println("  exclude:")
+			for _, pattern := range info.Exclude {
+				fmt.Printf("    - %s\n", pattern)
+			}
 		}
 		fmt.Println("  Installed:")
 		for _, path := range info.InstalledPaths {

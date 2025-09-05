@@ -13,22 +13,20 @@ import (
 // It abstracts all git repository operations - users simply create the registry
 // and call methods like GetTags() without worrying about cloning, fetching, etc.
 type GitRegistry struct {
-	cache        cache.RegistryRulesetCache
-	repo         cache.GitRepoCache
-	registryURL  string
-	registryType string
-	resolver     resolver.ConstraintResolver
+	cache    cache.RegistryRulesetCache
+	repo     cache.GitRepoCache
+	config   GitRegistryConfig
+	resolver resolver.ConstraintResolver
 }
 
 // NewGitRegistry creates a new Git-based registry that handles all git operations internally.
 // The registry will automatically clone the repository on first use and fetch updates as needed.
-func NewGitRegistry(rulesetCache cache.RegistryRulesetCache, repoCache cache.GitRepoCache, registryURL, registryType string) *GitRegistry {
+func NewGitRegistry(config GitRegistryConfig, rulesetCache cache.RegistryRulesetCache, repoCache cache.GitRepoCache) *GitRegistry {
 	return &GitRegistry{
-		cache:        rulesetCache,
-		repo:         repoCache,
-		registryURL:  registryURL,
-		registryType: registryType,
-		resolver:     resolver.NewGitConstraintResolver(),
+		cache:    rulesetCache,
+		repo:     repoCache,
+		config:   config,
+		resolver: resolver.NewGitConstraintResolver(),
 	}
 }
 

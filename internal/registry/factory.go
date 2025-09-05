@@ -4,11 +4,10 @@ import (
 	"fmt"
 
 	"github.com/jomadu/ai-rules-manager/internal/cache"
-	"github.com/jomadu/ai-rules-manager/internal/config"
 )
 
 // NewRegistry creates a registry instance based on the registry configuration type.
-func NewRegistry(name string, config config.RegistryConfig) (Registry, error) {
+func NewRegistry(name string, config RegistryConfig) (Registry, error) {
 	switch config.Type {
 	case "git":
 		return newGitRegistry(name, config)
@@ -17,7 +16,12 @@ func NewRegistry(name string, config config.RegistryConfig) (Registry, error) {
 	}
 }
 
-func newGitRegistry(name string, config config.RegistryConfig) (*GitRegistry, error) {
+func newGitRegistry(name string, config RegistryConfig) (*GitRegistry, error) {
+	// Convert base config to git config - for now just use base fields
+	gitConfig := GitRegistryConfig{
+		RegistryConfig: config,
+	}
+
 	registryKeyObj := map[string]string{
 		"url":  config.URL,
 		"type": config.Type,
@@ -33,5 +37,5 @@ func newGitRegistry(name string, config config.RegistryConfig) (*GitRegistry, er
 		return nil, err
 	}
 
-	return NewGitRegistry(rulesetCache, repoCache, config.URL, config.Type), nil
+	return NewGitRegistry(gitConfig, rulesetCache, repoCache), nil
 }

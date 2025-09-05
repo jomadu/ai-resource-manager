@@ -6,6 +6,7 @@ import (
 
 	"github.com/jomadu/ai-rules-manager/internal/config"
 	"github.com/jomadu/ai-rules-manager/internal/manifest"
+	"github.com/jomadu/ai-rules-manager/internal/registry"
 	"github.com/spf13/cobra"
 )
 
@@ -79,7 +80,15 @@ Examples:
 		}
 
 		manifestManager := manifest.NewFileManager()
-		return manifestManager.AddRegistry(context.Background(), name, url, registryType)
+		switch registryType {
+		case "git":
+			gitConfig := registry.GitRegistryConfig{
+				RegistryConfig: registry.RegistryConfig{URL: url, Type: registryType},
+			}
+			return manifestManager.AddGitRegistry(context.Background(), name, gitConfig)
+		default:
+			return fmt.Errorf("registry type %s is not implemented", registryType)
+		}
 	},
 }
 
