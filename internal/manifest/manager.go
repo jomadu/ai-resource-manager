@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/jomadu/ai-rules-manager/internal/registry"
 )
@@ -15,7 +17,8 @@ type Manager interface {
 	GetEntry(ctx context.Context, registry, ruleset string) (*Entry, error)
 	GetEntries(ctx context.Context) (map[string]map[string]Entry, error)
 	GetRawRegistries(ctx context.Context) (map[string]map[string]interface{}, error)
-	AddGitRegistry(ctx context.Context, name string, config registry.GitRegistryConfig) error
+	AddGitRegistry(ctx context.Context, name string, config registry.GitRegistryConfig, force bool) error
+	UpdateGitRegistry(ctx context.Context, name, field, value string) error
 	RemoveRegistry(ctx context.Context, name string) error
 	CreateEntry(ctx context.Context, registry, ruleset string, entry Entry) error
 	UpdateEntry(ctx context.Context, registry, ruleset string, entry Entry) error
@@ -143,7 +146,7 @@ func (f *FileManager) SaveManifest(manifest *Manifest) error {
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) AddGitRegistry(ctx context.Context, name string, config registry.GitRegistryConfig) error {
+func (f *FileManager) AddGitRegistry(ctx context.Context, name string, config registry.GitRegistryConfig, force bool) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		manifest = &Manifest{
@@ -152,8 +155,8 @@ func (f *FileManager) AddGitRegistry(ctx context.Context, name string, config re
 		}
 	}
 
-	if _, exists := manifest.Registries[name]; exists {
-		return errors.New("registry already exists")
+	if _, exists := manifest.Registries[name]; exists && !force {
+		return errors.New("registry already exists (use --force to overwrite)")
 	}
 
 	// Apply default branches if not specified
@@ -200,5 +203,43 @@ func (f *FileManager) RemoveRegistry(ctx context.Context, name string) error {
 		"removed_type", removedRegistry["type"])
 
 	delete(manifest.Registries, name)
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) UpdateGitRegistry(ctx context.Context, name, field, value string) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	regConfig, exists := manifest.Registries[name]
+	if !exists {
+		return errors.New("registry not found")
+	}
+
+	switch field {
+	case "url":
+		regConfig["url"] = value
+	case "type":
+		if value != "git" {
+			return errors.New("type must be 'git'")
+		}
+		regConfig["type"] = value
+	case "branches":
+		branches := strings.Split(value, ",")
+		for i, branch := range branches {
+			branches[i] = strings.TrimSpace(branch)
+		}
+		regConfig["branches"] = branches
+	default:
+		return fmt.Errorf("unknown field '%s' (valid: url, type, branches)", field)
+	}
+
+	slog.InfoContext(ctx, "Updating git registry field",
+		"action", "git_registry_update",
+		"name", name,
+		"field", field,
+		"value", value)
+
 	return f.saveManifest(manifest)
 }

@@ -78,6 +78,7 @@ Examples:
 		if registryType == "" {
 			registryType = "git"
 		}
+		force, _ := cmd.Flags().GetBool("force")
 
 		manifestManager := manifest.NewFileManager()
 		switch registryType {
@@ -90,7 +91,7 @@ Examples:
 				RegistryConfig: registry.RegistryConfig{URL: url, Type: registryType},
 				Branches:       branches,
 			}
-			return manifestManager.AddGitRegistry(context.Background(), name, gitConfig)
+			return manifestManager.AddGitRegistry(context.Background(), name, gitConfig, force)
 		default:
 			return fmt.Errorf("registry type %s is not implemented", registryType)
 		}
@@ -149,9 +150,10 @@ Examples:
 		include, _ := cmd.Flags().GetStringSlice("include")
 		exclude, _ := cmd.Flags().GetStringSlice("exclude")
 		layout, _ := cmd.Flags().GetString("layout")
+		force, _ := cmd.Flags().GetBool("force")
 
 		configManager := config.NewFileManager()
-		return configManager.AddSinkWithLayout(context.Background(), name, directories, include, exclude, layout)
+		return configManager.AddSink(context.Background(), name, directories, include, exclude, layout, force)
 	},
 }
 
@@ -213,16 +215,62 @@ var configListCmd = &cobra.Command{
 	},
 }
 
+var registryUpdateCmd = &cobra.Command{
+	Use:   "update <name> <field> <value>",
+	Short: "Update registry field",
+	Long: `Update a specific field in an existing registry configuration.
+
+Arguments:
+  name   Registry name
+  field  Field to update (url, type, branches)
+  value  New field value (comma-separated for branches)
+
+Examples:
+  arm config registry update ai-rules url https://new-url
+  arm config registry update ai-rules branches main,develop`,
+	Args: cobra.ExactArgs(3),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		name, field, value := args[0], args[1], args[2]
+		manifestManager := manifest.NewFileManager()
+		return manifestManager.UpdateGitRegistry(context.Background(), name, field, value)
+	},
+}
+
+var sinkUpdateCmd = &cobra.Command{
+	Use:   "update <name> <field> <value>",
+	Short: "Update sink field",
+	Long: `Update a specific field in an existing sink configuration.
+
+Arguments:
+  name   Sink name
+  field  Field to update (directories, include, exclude, layout)
+  value  New field value (comma-separated for arrays)
+
+Examples:
+  arm config sink update q directories .amazonq/rules,.amazonq/shared
+  arm config sink update q layout flat`,
+	Args: cobra.ExactArgs(3),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		name, field, value := args[0], args[1], args[2]
+		configManager := config.NewFileManager()
+		return configManager.UpdateSink(context.Background(), name, field, value)
+	},
+}
+
 func init() {
 	configRegistryCmd.AddCommand(registryAddCmd)
 	configRegistryCmd.AddCommand(registryRemoveCmd)
+	configRegistryCmd.AddCommand(registryUpdateCmd)
 	configSinkCmd.AddCommand(sinkAddCmd)
 	configSinkCmd.AddCommand(sinkRemoveCmd)
+	configSinkCmd.AddCommand(sinkUpdateCmd)
 
 	registryAddCmd.Flags().String("type", "git", "Registry type (git, http)")
 	registryAddCmd.Flags().StringSlice("branches", nil, "Git branches to track (default: main,master)")
+	registryAddCmd.Flags().Bool("force", false, "Overwrite existing registry")
 	sinkAddCmd.Flags().StringSlice("directories", nil, "Sink directories")
 	sinkAddCmd.Flags().StringSlice("include", nil, "Sink include patterns")
 	sinkAddCmd.Flags().StringSlice("exclude", nil, "Sink exclude patterns")
 	sinkAddCmd.Flags().String("layout", "hierarchical", "Layout mode (hierarchical, flat)")
+	sinkAddCmd.Flags().Bool("force", false, "Overwrite existing sink")
 }

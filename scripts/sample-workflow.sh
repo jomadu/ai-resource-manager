@@ -72,6 +72,7 @@ run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-
 
 log "Adding sink configurations..."
 run_arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
+run_arm config sink add q-generic --directories .amazonq/rules --include "ai-rules/q-generic"
 run_arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
 run_arm config sink add copilot --directories .github/instructions --include "ai-rules/copilot-*" --layout flat
 
@@ -100,6 +101,7 @@ log "Installing latest version (should resolve to ^2.1.0)..."
 run_arm install ai-rules/amazonq-rules --include "rules/amazonq/*.md"
 run_arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc"
 run_arm install ai-rules/copilot-rules --include "rules/copilot/*.instructions.md"
+run_arm install ai-rules/q-generic --include "rules/**/generic.md"
 
 success "Installation complete"
 

@@ -34,17 +34,17 @@ func setupTest(t *testing.T) (*ArmService, context.Context) {
 		t.Fatalf("Failed to create manifest: %v", err)
 	}
 
-	err = service.configManager.AddSink(ctx, "q", []string{".amazonq/rules"}, []string{"ai-rules/amazonq-*"}, []string{"ai-rules/cursor-*"})
+	err = service.configManager.AddSink(ctx, "q", []string{".amazonq/rules"}, []string{"ai-rules/amazonq-*"}, []string{"ai-rules/cursor-*"}, "hierarchical", false)
 	if err != nil {
 		t.Fatalf("Failed to add q sink: %v", err)
 	}
 
-	err = service.configManager.AddSink(ctx, "cursor", []string{".cursor/rules"}, []string{"ai-rules/cursor-*"}, []string{"ai-rules/amazonq-*"})
+	err = service.configManager.AddSink(ctx, "cursor", []string{".cursor/rules"}, []string{"ai-rules/cursor-*"}, []string{"ai-rules/amazonq-*"}, "hierarchical", false)
 	if err != nil {
 		t.Fatalf("Failed to add cursor sink: %v", err)
 	}
 
-	err = service.configManager.AddSinkWithLayout(ctx, "github", []string{".github/instructions"}, []string{"ai-rules/amazonq-*"}, nil, "flat")
+	err = service.configManager.AddSink(ctx, "github", []string{".github/instructions"}, []string{"ai-rules/amazonq-*"}, nil, "flat", false)
 	if err != nil {
 		t.Fatalf("Failed to add github sink: %v", err)
 	}
@@ -272,7 +272,7 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 	}
 
 	// Test manifest only - recreate sink config
-	err = service.configManager.AddSinkWithLayout(ctx, "q", []string{".amazonq/rules"}, []string{"ai-rules/amazonq-*"}, []string{"ai-rules/cursor-*"}, "hierarchical")
+	err = service.configManager.AddSink(ctx, "q", []string{".amazonq/rules"}, []string{"ai-rules/amazonq-*"}, []string{"ai-rules/cursor-*"}, "hierarchical", false)
 	if err != nil {
 		t.Fatalf("Failed to recreate q sink: %v", err)
 	}
@@ -318,6 +318,46 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 	}
 	if err.Error() != "arm.json not found" {
 		t.Errorf("Expected 'arm.json not found', got: %v", err)
+	}
+}
+
+func TestIntegrationGlobstarPatterns(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	service, ctx := setupTest(t)
+
+	// Install with globstar pattern that should match files at different hierarchy levels
+	err := service.InstallRuleset(ctx, "ai-rules", "amazonq-rules", "^2.1.0", []string{"**/*.md"}, nil)
+	if err != nil {
+		t.Fatalf("Failed to install with globstar pattern: %v", err)
+	}
+
+	// Verify files at different hierarchy levels exist
+	// Root level: README.md
+	assertFileExists(t, ".amazonq/rules/arm/ai-rules/amazonq-rules/v2.1.0/README.md")
+	// Rules directory level: rules/generic.md
+	assertFileExists(t, ".amazonq/rules/arm/ai-rules/amazonq-rules/v2.1.0/rules/generic.md")
+	// Nested level: rules/amazonq/clean-code.md
+	assertFileExists(t, ".amazonq/rules/arm/ai-rules/amazonq-rules/v2.1.0/rules/amazonq/clean-code.md")
+
+	// Install cursor rules with pattern that matches files at specific depth
+	err = service.InstallRuleset(ctx, "ai-rules", "cursor-rules", "^2.1.0", []string{"rules/**/*.mdc"}, nil)
+	if err != nil {
+		t.Fatalf("Failed to install cursor rules with nested pattern: %v", err)
+	}
+
+	// Verify nested cursor files exist
+	assertFileExists(t, ".cursor/rules/arm/ai-rules/cursor-rules/v2.1.0/rules/cursor/clean-code.mdc")
+
+	// Test list to ensure both rulesets are present
+	rulesets, err := service.List(ctx)
+	if err != nil {
+		t.Fatalf("Failed to list rulesets: %v", err)
+	}
+	if len(rulesets) != 2 {
+		t.Errorf("Expected 2 rulesets with globstar patterns, got %d", len(rulesets))
 	}
 }
 
