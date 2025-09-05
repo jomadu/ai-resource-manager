@@ -83,12 +83,9 @@ ARM should resolve branches to specific commit hashes for reproducible, trackabl
   "rulesets": {
     "ai-rules": {
       "amazonq-rules": {
-        "url": "https://github.com/jomadu/ai-rules-manager-sample-git-registry",
-        "type": "git",
         "constraint": "main",
         "resolved": "abc1234adfdafdfda12355434314...",
-        "include": ["rules/amazonq/*.md"],
-        "exclude": []
+        "checksum": "sha256:bbbccdd4412566234..."
       }
     }
   }
@@ -111,13 +108,13 @@ ARM should resolve branches to specific commit hashes for reproducible, trackabl
 **arm list**
 ```bash
 ./arm list
-ai-rules/amazonq-rules@abc1234
+ai-rules/amazonq-rules@abc1234 (main)
 ```
 
 **arm info (no args)**
 ```bash
 ./arm info
-ai-rules/amazonq-rules
+ai-rules/amazonq-rules@abc1234 (main)
   Registry: ()
   include:
     - rules/amazonq/*.md
@@ -131,7 +128,7 @@ ai-rules/amazonq-rules
 **arm info (specific ruleset)**
 ```bash
 ./arm info ai-rules/amazonq-rules
-Ruleset: ai-rules/amazonq-rules
+Ruleset: ai-rules/amazonq-rules@abc1234 (main)
 Registry: https://github.com/jomadu/ai-rules-manager-sample-git-registry (git)
 include:
   - rules/amazonq/*.md
@@ -189,44 +186,9 @@ To install from an available branch, use:
   arm install ai-rules/ruleset@develop
 ```
 
-### Registry Configuration
-
-**Default Git Registry:**
-```bash
-arm config registry add ai-rules https://github.com/example/repo --type git
-# Creates Git registry with default branches: ["main", "master"]
-```
-
-**Custom Git Branches:**
-```bash
-arm config registry add ai-rules https://github.com/example/repo --type git --branches main,develop,staging
-# Creates Git registry with custom branches: ["main", "develop", "staging"]
-```
-
-**Other Registry Types:**
-```bash
-arm config registry add api-rules https://api.example.com --type http
-# Creates HTTP registry (no Git-specific configuration)
-```
-
-**Resulting Configuration:**
-```json
-{
-  "registries": {
-    "ai-rules": {
-      "url": "https://github.com/example/repo",
-      "type": "git",
-      "branches": ["main", "develop", "staging"]
-    }
-  }
-}
-```
-
-**Default branches when no `--branches` flag is provided:** `["main", "master"]`
-
 ## Implementation Notes
 
-- Use short commit hashes (7-8 characters) for display and directory names
+- Use short commit hashes (8 characters) for display and directory names
 - Store full commit hashes in lock file for precision
 - Branch constraints still track latest commits on that branch
 - When constraint is a branch, "latest" shows latest commit on that branch
@@ -234,22 +196,31 @@ arm config registry add api-rules https://api.example.com --type http
 
 ## Implementation Decisions
 
+### Resolution Strategy
+- **Eager resolution**: Resolve branch names to commit hashes immediately during `install`
+- **Always update**: `arm update` on branch constraints fetches latest commit from tracked branch
+- **Repository-wide semver detection**: If any semver tags exist, entire registry uses semver mode
+- **Fail fast**: All network operations fail immediately on connection issues
+
+### Display Format
+- **Consistent constraint display**: Always show `@abc123 (main)` format in all CLI output
+- **8-character commit hashes**: Use for display and directory names
+- **Full commit hashes**: Store in lock file for precision
+
 ### Breaking Changes
 - **No migration support**: This is a breaking change that requires users to reinstall rulesets
-- **Directory cleanup**: Old branch-named directories will be orphaned and must be manually removed
-- **Lock file format**: Existing lock files with branch names will become invalid
+- **Directory cleanup**: Old branch-named directories will be orphaned (no documentation)
+- **Lock file validation**: Fail with generic error "Invalid lock file format. Please reinstall rulesets."
+
+### Error Handling
+- **Git error parsing**: Parse network, authentication, and missing ref errors into friendly messages
+- **No concurrent protection**: Let filesystem/Git handle concurrent access
 
 ### Technical Details
-- **Semver detection**: Strict semver parsing only (1.0.0, v1.0.0 format)
-- **Constraint parsing**: Use existing `BranchHead` constraint type for branch names
-- **Update frequency**: Check for new commits on every ARM operation (no caching)
+- **Semver detection**: Repository-wide, strict semver parsing only (1.0.0, v1.0.0 format)
+- **Session caching**: Cache semver detection results within single ARM command execution
+- **Constraint storage**: Store original user constraint in lock file (e.g., "main")
 - **CLI display**: Show normalized constraint forms in tables (e.g., ">=1.0.0 <2.0.0" instead of "^1.0.0")
-
-### Type-First Configuration
-- **CLI parsing**: Parse `--type` flag first, then route to type-specific methods
-- **Git registries**: Use `AddGitRegistry(name, url, branches)` for Git-specific configuration
-- **Other registries**: Use `AddRegistry(name, url, type)` for generic registries
-- **Factory validation**: Registry factory validates type and extracts appropriate configuration
 
 ### Simplified Data Structures
 - **ResolvedVersion**: Flattened from nested `VersionRef` to simple `Version` string field
