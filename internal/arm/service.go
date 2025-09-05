@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"path/filepath"
 	"regexp"
 	"sort"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/jomadu/ai-rules-manager/internal/config"
 	"github.com/jomadu/ai-rules-manager/internal/installer"
 	"github.com/jomadu/ai-rules-manager/internal/lockfile"
@@ -502,7 +502,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 func (a *ArmService) matchesSink(rulesetKey string, sink *config.SinkConfig) bool {
 	// Check exclude patterns first
 	for _, pattern := range sink.Exclude {
-		if matched, _ := filepath.Match(pattern, rulesetKey); matched {
+		if matched, _ := doublestar.Match(pattern, rulesetKey); matched {
 			return false
 		}
 	}
@@ -514,7 +514,7 @@ func (a *ArmService) matchesSink(rulesetKey string, sink *config.SinkConfig) boo
 
 	// Check include patterns
 	for _, pattern := range sink.Include {
-		if matched, _ := filepath.Match(pattern, rulesetKey); matched {
+		if matched, _ := doublestar.Match(pattern, rulesetKey); matched {
 			return true
 		}
 	}
