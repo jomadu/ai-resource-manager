@@ -101,7 +101,7 @@ log "Installing latest version (should resolve to ^2.1.0)..."
 run_arm install ai-rules/amazonq-rules --include "rules/amazonq/*.md"
 run_arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc"
 run_arm install ai-rules/copilot-rules --include "rules/copilot/*.instructions.md"
-run_arm install ai-rules/q-generic --include "rules/**/generic.md"
+run_arm install ai-rules/q-generic --include "rules/**/*.md"
 
 success "Installation complete"
 
