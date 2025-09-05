@@ -23,8 +23,8 @@ func setupTest(t *testing.T) (*ArmService, context.Context) {
 
 	// Setup manifest with registry
 	manifestFile := manifest.Manifest{
-		Registries: map[string]manifest.RegistryConfig{
-			"ai-rules": {URL: testRegistry, Type: "git"},
+		Registries: map[string]map[string]interface{}{
+			"ai-rules": {"url": testRegistry, "type": "git"},
 		},
 		Rulesets: map[string]map[string]manifest.Entry{},
 	}
@@ -278,8 +278,8 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 	}
 
 	manifestFile := manifest.Manifest{
-		Registries: map[string]manifest.RegistryConfig{
-			"ai-rules": {URL: testRegistry, Type: "git"},
+		Registries: map[string]map[string]interface{}{
+			"ai-rules": {"url": testRegistry, "type": "git"},
 		},
 		Rulesets: map[string]map[string]manifest.Entry{
 			"ai-rules": {

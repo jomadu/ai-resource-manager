@@ -68,10 +68,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 	}
 
 	// Create registry client
-	registryClient, err := registry.NewRegistry(registryName, config.RegistryConfig{
-		URL:  registryConfig.URL,
-		Type: registryConfig.Type,
-	})
+	registryClient, err := registry.NewRegistry(registryName, registryConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
@@ -235,10 +232,7 @@ func (a *ArmService) Outdated(ctx context.Context) ([]OutdatedRuleset, error) {
 	// Pre-create registry clients
 	registryClients := make(map[string]registry.Registry)
 	for registryName, registryConfig := range registryConfigs {
-		if client, err := registry.NewRegistry(registryName, config.RegistryConfig{
-			URL:  registryConfig.URL,
-			Type: registryConfig.Type,
-		}); err == nil {
+		if client, err := registry.NewRegistry(registryName, registryConfig); err == nil {
 			registryClients[registryName] = client
 		}
 	}
@@ -346,13 +340,6 @@ func (a *ArmService) Info(ctx context.Context, registry, ruleset string) (*Rules
 		return nil, fmt.Errorf("failed to get manifest entry: %w", err)
 	}
 
-	// Get registry config
-	registries, err := a.manifestManager.GetRegistries(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get registries: %w", err)
-	}
-	registryConfig := registries[registry]
-
 	// Get sinks and find installation paths
 	sinks, err := a.configManager.GetSinks(ctx)
 	if err != nil {
@@ -381,8 +368,6 @@ func (a *ArmService) Info(ctx context.Context, registry, ruleset string) (*Rules
 	return &RulesetInfo{
 		Registry:       registry,
 		Name:           ruleset,
-		RegistryURL:    registryConfig.URL,
-		RegistryType:   registryConfig.Type,
 		Include:        manifestEntry.Include,
 		Exclude:        manifestEntry.Exclude,
 		InstalledPaths: installedPaths,
@@ -468,10 +453,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 		return fmt.Errorf("failed to get manifest entry: %w", err)
 	}
 
-	registryClient, err := registry.NewRegistry(registryName, config.RegistryConfig{
-		URL:  registryConfig.URL,
-		Type: registryConfig.Type,
-	})
+	registryClient, err := registry.NewRegistry(registryName, registryConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
