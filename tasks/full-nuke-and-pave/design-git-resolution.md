@@ -83,7 +83,6 @@ ARM should resolve branches to specific commit hashes for reproducible, trackabl
   "rulesets": {
     "ai-rules": {
       "amazonq-rules": {
-        "constraint": "main",
         "resolved": "abc1234adfdafdfda12355434314...",
         "checksum": "sha256:bbbccdd4412566234..."
       }
@@ -108,6 +107,7 @@ ARM should resolve branches to specific commit hashes for reproducible, trackabl
 **arm list**
 ```bash
 ./arm list
+ai-rules/amazonq-rules@v1.2.0 (^1.0.0)
 ai-rules/amazonq-rules@abc1234 (main)
 ```
 
@@ -142,48 +142,37 @@ Resolved: abc1234
 
 ## Version Listing Behavior
 
-Git registries determine available versions based on repository content:
+Git registries provide both semver tags and branch commits as available versions, with tags taking priority.
 
-### Semver Tags Present
-If the repository contains any semver tags (with or without `v` prefix), those tags are the **only** versions available from the registry.
+### Mixed Version Sources
+Registries return all available versions in priority order:
+1. **Semver tags** (sorted by semantic version, latest first)
+2. **Branch HEAD commits** (in registry configuration order)
 
-**Example:** Repository has tags `v1.0.0`, `v1.1.0`, `v2.0.0`
-- Available versions: `1.0.0`, `1.1.0`, `2.0.0`
-- Branch constraints like `main` are **not available**
-- Installing `ai-rules/ruleset@main` would fail with helpful error:
+**Example:** Repository has tags `v1.0.0`, `v1.1.0`, `v2.0.0` and configured branches `["main", "develop"]`
+- Available versions: `v2.0.0`, `v1.1.0`, `v1.0.0`, `abc1234` (main), `def5678` (develop)
+- Installing `ai-rules/ruleset` (no version) selects `v2.0.0` (highest priority)
+- Both tag and branch constraints are valid
 
-```bash
-./arm install ai-rules/ruleset@main
-Error: Version 'main' not found for ruleset 'ai-rules/ruleset'
+### Version Resolution Priority
+When no version is specified, ARM selects the first version from the priority-ordered list:
+- **Tags present:** Latest semver tag is selected
+- **No tags:** Latest commit from first configured branch is selected
 
-This registry uses semver tags for versioning. Available versions:
-  1.0.0, 1.1.0, 2.0.0
-
-To install the latest version, use:
-  arm install ai-rules/ruleset@2.0.0
-  # or
-  arm install ai-rules/ruleset  # installs latest (2.0.0)
-```
-
-### No Semver Tags
-If the repository has no semver tags, only commits on branches configured by the registry are available as versions.
-
-**Example:** Repository has no semver tags, registry configured with branches `["main", "develop"]`
-- Available versions: `main`, `develop`
-- Branch constraint must match one of the configured branches
-- Installing `ai-rules/ruleset@feature-branch` would fail with helpful error:
+### Error Messages
+When a version isn't found, ARM shows categorized available versions:
 
 ```bash
 ./arm install ai-rules/ruleset@feature-branch
 Error: Version 'feature-branch' not found for ruleset 'ai-rules/ruleset'
 
-This registry uses branch-based versioning. Available versions:
-  main, develop
+Available versions:
+  Tags: v2.0.0, v1.1.0, v1.0.0
+  Branches: main, develop
 
-To install from an available branch, use:
+To install a specific version:
+  arm install ai-rules/ruleset@v2.0.0
   arm install ai-rules/ruleset@main
-  # or
-  arm install ai-rules/ruleset@develop
 ```
 
 ## Implementation Notes
@@ -199,7 +188,8 @@ To install from an available branch, use:
 ### Resolution Strategy
 - **Eager resolution**: Resolve branch names to commit hashes immediately during `install`
 - **Always update**: `arm update` on branch constraints fetches latest commit from tracked branch
-- **Repository-wide semver detection**: If any semver tags exist, entire registry uses semver mode
+- **Mixed version support**: Both semver tags and branch commits available simultaneously
+- **Priority ordering**: Tags first (semver sorted), then branch commits (config order)
 - **Fail fast**: All network operations fail immediately on connection issues
 
 ### Display Format
@@ -217,10 +207,12 @@ To install from an available branch, use:
 - **No concurrent protection**: Let filesystem/Git handle concurrent access
 
 ### Technical Details
-- **Semver detection**: Repository-wide, strict semver parsing only (1.0.0, v1.0.0 format)
-- **Session caching**: Cache semver detection results within single ARM command execution
-- **Constraint storage**: Store original user constraint in lock file (e.g., "main")
-- **CLI display**: Show normalized constraint forms in tables (e.g., ">=1.0.0 <2.0.0" instead of "^1.0.0")
+- **Version listing**: Return all semver tags plus HEAD commits from configured branches
+- **Priority ordering**: Tags first (semver sorted desc), then branches (config order)
+- **Session caching**: Cache version lists within single ARM command execution
+- **Constraint storage**: Store original user constraint in arm.json only
+- **Lock file format**: Contains only resolved version and checksum
+- **CLI display**: Show original constraint in parentheses (e.g., "@v1.2.0 (^1.0.0)", "@abc1234 (main)")
 
 ### Simplified Data Structures
 - **ResolvedVersion**: Flattened from nested `VersionRef` to simple `Version` string field
