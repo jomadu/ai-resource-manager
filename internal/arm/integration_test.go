@@ -204,8 +204,8 @@ func TestIntegrationSpecificVersion(t *testing.T) {
 		t.Fatalf("Failed to parse lockfile: %v", err)
 	}
 	cursorEntry := lockFile.Rulesets["ai-rules"]["cursor-rules"]
-	if cursorEntry.Resolved != "v1.0.0" {
-		t.Errorf("Expected resolved v1.0.0, got %s", cursorEntry.Resolved)
+	if cursorEntry.Version != "v1.0.0" {
+		t.Errorf("Expected version v1.0.0, got %s", cursorEntry.Version)
 	}
 }
 
@@ -247,7 +247,7 @@ func TestIntegrationLatestConstraint(t *testing.T) {
 	}
 	lockEntry := lockFile.Rulesets["ai-rules"]["amazonq-rules"]
 	// Note: lockfile no longer contains constraint, only resolved version
-	if lockEntry.Resolved == "" {
+	if lockEntry.Version == "" {
 		t.Error("Expected lockfile to have resolved version")
 	}
 }

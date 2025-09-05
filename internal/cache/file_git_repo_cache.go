@@ -109,6 +109,28 @@ func (g *FileGitRepoCache) GetBranches(ctx context.Context) ([]string, error) {
 	return branches, err
 }
 
+// GetCommitHash returns the commit hash for a given ref (branch or tag).
+func (g *FileGitRepoCache) GetCommitHash(ctx context.Context, ref string) (string, error) {
+	registryKey := filepath.Base(g.registryDir)
+	var hash string
+
+	err := WithRegistryLock(registryKey, func() error {
+		if err := g.ensureInitialized(ctx); err != nil {
+			return err
+		}
+		cmd := exec.CommandContext(ctx, "git", "rev-parse", ref)
+		cmd.Dir = g.repoDir
+		output, err := cmd.Output()
+		if err != nil {
+			return err
+		}
+		hash = strings.TrimSpace(string(output))
+		return nil
+	})
+
+	return hash, err
+}
+
 func (g *FileGitRepoCache) GetFiles(ctx context.Context, ref string, selector types.ContentSelector) ([]types.File, error) {
 	registryKey := filepath.Base(g.registryDir)
 	var files []types.File

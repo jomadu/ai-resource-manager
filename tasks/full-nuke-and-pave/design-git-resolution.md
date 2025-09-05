@@ -83,7 +83,8 @@ ARM should resolve branches to specific commit hashes for reproducible, trackabl
   "rulesets": {
     "ai-rules": {
       "amazonq-rules": {
-        "resolved": "abc1234adfdafdfda12355434314...",
+        "version": "abc1234adfdafdfda12355434314...",
+        "display": "abc1234",
         "checksum": "sha256:bbbccdd4412566234..."
       }
     }
@@ -211,7 +212,7 @@ To install a specific version:
 - **Priority ordering**: Tags first (semver sorted desc), then branches (config order)
 - **Session caching**: Cache version lists within single ARM command execution
 - **Constraint storage**: Store original user constraint in arm.json only
-- **Lock file format**: Contains only resolved version and checksum
+- **Lock file format**: Contains resolved version, display version, and checksum
 - **CLI display**: Show original constraint in parentheses (e.g., "@v1.2.0 (^1.0.0)", "@abc1234 (main)")
 
 ### Simplified Data Structures

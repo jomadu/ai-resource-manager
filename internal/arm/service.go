@@ -81,7 +81,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 
 	// Download ruleset files
 	selector := types.ContentSelector{Include: include, Exclude: exclude}
-	files, err := registryClient.GetContent(ctx, *resolvedVersion, selector)
+	files, err := registryClient.GetContent(ctx, resolvedVersion.Version, selector)
 	if err != nil {
 		return fmt.Errorf("failed to get content: %w", err)
 	}
@@ -103,7 +103,8 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 
 	// Update lockfile
 	lockEntry := &lockfile.Entry{
-		Resolved: resolvedVersion.ID,
+		Version:  resolvedVersion.Version.Version,
+		Display:  resolvedVersion.Version.Display,
 		Checksum: checksum,
 	}
 	if err := a.lockFileManager.CreateEntry(ctx, registryName, ruleset, lockEntry); err != nil {
@@ -113,7 +114,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 	}
 
 	// Install files to sink directories
-	slog.InfoContext(ctx, "Installing ruleset", "registry", registryName, "ruleset", ruleset, "version", resolvedVersion.ID)
+	slog.InfoContext(ctx, "Installing ruleset", "registry", registryName, "ruleset", ruleset, "version", resolvedVersion.Version.Display)
 	sinks, err := a.configManager.GetSinks(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get sinks: %w", err)
@@ -124,7 +125,8 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 		if a.matchesSink(rulesetKey, &sink) {
 			installer := installer.NewInstaller(&sink)
 			for _, dir := range sink.Directories {
-				if err := installer.Install(ctx, dir, registryName, ruleset, resolvedVersion.ID, files); err != nil {
+				// Use display version for directory names
+				if err := installer.Install(ctx, dir, registryName, ruleset, resolvedVersion.Version.Display, files); err != nil {
 					slog.ErrorContext(ctx, "Failed to install to directory", "dir", dir, "error", err)
 					return err
 				}
@@ -268,13 +270,14 @@ func (a *ArmService) Outdated(ctx context.Context) ([]OutdatedRuleset, error) {
 				continue
 			}
 
-			if lockEntry.Resolved != latestVersion.ID || lockEntry.Resolved != wantedVersion.ID {
+			if lockEntry.Version != latestVersion.Version.Version || lockEntry.Version != wantedVersion.Version.Version {
 				outdated = append(outdated, OutdatedRuleset{
-					Registry: registryName,
-					Name:     rulesetName,
-					Current:  lockEntry.Resolved,
-					Wanted:   wantedVersion.ID,
-					Latest:   latestVersion.ID,
+					Registry:   registryName,
+					Name:       rulesetName,
+					Constraint: constraint,
+					Current:    lockEntry.Display,
+					Wanted:     wantedVersion.Version.Display,
+					Latest:     latestVersion.Version.Display,
 				})
 			}
 		}
@@ -297,21 +300,24 @@ func (a *ArmService) List(ctx context.Context) ([]InstalledRuleset, error) {
 	var rulesets []InstalledRuleset
 	for registryName, rulesetMap := range lockEntries {
 		for rulesetName, lockEntry := range rulesetMap {
-			// Get include/exclude from manifest
+			// Get include/exclude and constraint from manifest
 			var include, exclude []string
+			var constraint string
 			if manifestRegistry, exists := manifestEntries[registryName]; exists {
 				if manifestEntry, exists := manifestRegistry[rulesetName]; exists {
 					include = manifestEntry.Include
 					exclude = manifestEntry.Exclude
+					constraint = manifestEntry.Version
 				}
 			}
 
 			rulesets = append(rulesets, InstalledRuleset{
-				Registry: registryName,
-				Name:     rulesetName,
-				Version:  lockEntry.Resolved,
-				Include:  include,
-				Exclude:  exclude,
+				Registry:   registryName,
+				Name:       rulesetName,
+				Version:    lockEntry.Display,
+				Constraint: constraint,
+				Include:    include,
+				Exclude:    exclude,
 			})
 		}
 	}
@@ -373,7 +379,7 @@ func (a *ArmService) Info(ctx context.Context, registry, ruleset string) (*Rules
 		InstalledPaths: installedPaths,
 		Sinks:          sinkNames,
 		Constraint:     manifestEntry.Version,
-		Resolved:       lockEntry.Resolved,
+		Resolved:       lockEntry.Display,
 	}, nil
 }
 
@@ -413,7 +419,8 @@ func (a *ArmService) InfoAll(ctx context.Context) ([]*RulesetInfo, error) {
 	}
 
 	var infos []*RulesetInfo
-	for _, ruleset := range installed {
+	for i := range installed {
+		ruleset := &installed[i]
 		info, err := a.Info(ctx, ruleset.Registry, ruleset.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get info for %s/%s: %w", ruleset.Registry, ruleset.Name, err)
@@ -458,16 +465,16 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
 
-	resolvedVersion := &types.VersionRef{ID: lockEntry.Resolved}
+	resolvedVersion := types.Version{Version: lockEntry.Version, Display: lockEntry.Display}
 	selector := types.ContentSelector{Include: manifestEntry.Include, Exclude: manifestEntry.Exclude}
-	files, err := registryClient.GetContent(ctx, *resolvedVersion, selector)
+	files, err := registryClient.GetContent(ctx, resolvedVersion, selector)
 	if err != nil {
 		return fmt.Errorf("failed to get content: %w", err)
 	}
 
 	// Verify checksum for integrity
 	if !lockfile.VerifyChecksum(files, lockEntry.Checksum) {
-		return fmt.Errorf("checksum verification failed for %s/%s@%s", registryName, ruleset, lockEntry.Resolved)
+		return fmt.Errorf("checksum verification failed for %s/%s@%s", registryName, ruleset, lockEntry.Version)
 	}
 
 	sinks, err := a.configManager.GetSinks(ctx)
@@ -480,7 +487,8 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 		if a.matchesSink(rulesetKey, &sink) {
 			installer := installer.NewInstaller(&sink)
 			for _, dir := range sink.Directories {
-				if err := installer.Install(ctx, dir, registryName, ruleset, lockEntry.Resolved, files); err != nil {
+				// Use display version for directory names
+				if err := installer.Install(ctx, dir, registryName, ruleset, lockEntry.Display, files); err != nil {
 					slog.ErrorContext(ctx, "Failed to install exact version to directory", "dir", dir, "error", err)
 					return err
 				}

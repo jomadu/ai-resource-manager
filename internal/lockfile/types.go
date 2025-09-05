@@ -2,7 +2,8 @@ package lockfile
 
 // Entry represents a single ruleset entry in the lock file.
 type Entry struct {
-	Resolved string `json:"resolved"`
+	Version  string `json:"version"`
+	Display  string `json:"display"`
 	Checksum string `json:"checksum"`
 }
 

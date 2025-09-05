@@ -16,7 +16,8 @@ func TestFileManager_GetEntry(t *testing.T) {
 		"rulesets": {
 			"ai-rules": {
 				"amazonq-rules": {
-					"resolved": "2.1.0",
+					"version": "2.1.0",
+					"display": "2.1.0",
 					"checksum": "sha256:abc123def456789"
 				}
 			}
@@ -37,8 +38,8 @@ func TestFileManager_GetEntry(t *testing.T) {
 	if entry.Checksum != "sha256:abc123def456789" {
 		t.Errorf("Expected checksum 'sha256:abc123def456789', got '%s'", entry.Checksum)
 	}
-	if entry.Resolved != "2.1.0" {
-		t.Errorf("Expected resolved '2.1.0', got '%s'", entry.Resolved)
+	if entry.Version != "2.1.0" {
+		t.Errorf("Expected version '2.1.0', got '%s'", entry.Version)
 	}
 }
 
@@ -71,11 +72,13 @@ func TestFileManager_GetEntries(t *testing.T) {
 		"rulesets": {
 			"ai-rules": {
 				"amazonq-rules": {
-					"resolved": "2.1.0",
+					"version": "2.1.0",
+					"display": "2.1.0",
 					"checksum": "sha256:abc123def456789"
 				},
 				"cursor-rules": {
-					"resolved": "2.1.0",
+					"version": "2.1.0",
+					"display": "2.1.0",
 					"checksum": "sha256:def456abc123789"
 				}
 			}
@@ -123,7 +126,8 @@ func TestFileManager_CreateEntry(t *testing.T) {
 	ctx := context.Background()
 
 	entry := &Entry{
-		Resolved: "1.0.0",
+		Version:  "1.0.0",
+		Display:  "1.0.0",
 		Checksum: "sha256:abc123def456789",
 	}
 
@@ -152,7 +156,8 @@ func TestFileManager_UpdateEntry(t *testing.T) {
 		"rulesets": {
 			"ai-rules": {
 				"amazonq-rules": {
-					"resolved": "1.0.0",
+					"version": "1.0.0",
+					"display": "1.0.0",
 					"checksum": "sha256:abc123def456789"
 				}
 			}
@@ -166,7 +171,8 @@ func TestFileManager_UpdateEntry(t *testing.T) {
 	ctx := context.Background()
 
 	updatedEntry := &Entry{
-		Resolved: "1.1.0",
+		Version:  "1.1.0",
+		Display:  "1.1.0",
 		Checksum: "sha256:def456abc123789",
 	}
 
@@ -181,8 +187,8 @@ func TestFileManager_UpdateEntry(t *testing.T) {
 		t.Fatalf("Expected no error retrieving entry, got %v", err)
 	}
 
-	if retrievedEntry.Resolved != "1.1.0" {
-		t.Errorf("Expected resolved '1.1.0', got '%s'", retrievedEntry.Resolved)
+	if retrievedEntry.Version != "1.1.0" {
+		t.Errorf("Expected version '1.1.0', got '%s'", retrievedEntry.Version)
 	}
 	if retrievedEntry.Checksum != "sha256:def456abc123789" {
 		t.Errorf("Expected checksum 'sha256:def456abc123789', got '%s'", retrievedEntry.Checksum)
@@ -198,11 +204,13 @@ func TestFileManager_RemoveEntry(t *testing.T) {
 		"rulesets": {
 			"ai-rules": {
 				"amazonq-rules": {
-					"resolved": "2.1.0",
+					"version": "2.1.0",
+					"display": "2.1.0",
 					"checksum": "sha256:abc123def456789"
 				},
 				"cursor-rules": {
-					"resolved": "2.1.0",
+					"version": "2.1.0",
+					"display": "2.1.0",
 					"checksum": "sha256:def456abc123789"
 				}
 			}
@@ -242,7 +250,8 @@ func TestFileManager_RemoveEntry_LastInRegistry(t *testing.T) {
 		"rulesets": {
 			"ai-rules": {
 				"amazonq-rules": {
-					"resolved": "2.1.0",
+					"version": "2.1.0",
+					"display": "2.1.0",
 					"checksum": "sha256:abc123def456789"
 				}
 			}
