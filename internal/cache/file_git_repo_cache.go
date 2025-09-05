@@ -16,7 +16,6 @@ type FileGitRepoCache struct {
 	registryDir string
 	repoDir     string
 	url         string
-	initialized bool
 }
 
 // NewGitRepoCache creates a new git repository cache.
@@ -38,10 +37,6 @@ func NewGitRepoCache(keyObj interface{}, repoName, url string) (*FileGitRepoCach
 }
 
 func (g *FileGitRepoCache) ensureInitialized(ctx context.Context) error {
-	if g.initialized {
-		return nil
-	}
-
 	if _, err := os.Stat(filepath.Join(g.repoDir, ".git")); os.IsNotExist(err) {
 		// Clone if repo doesn't exist
 		if err := os.MkdirAll(filepath.Dir(g.repoDir), 0o755); err != nil {
@@ -51,17 +46,20 @@ func (g *FileGitRepoCache) ensureInitialized(ctx context.Context) error {
 		if err := cmd.Run(); err != nil {
 			return err
 		}
-	} else {
-		// Fetch if repo exists
-		cmd := exec.CommandContext(ctx, "git", "fetch", "--all", "--tags")
-		cmd.Dir = g.repoDir
-		if err := cmd.Run(); err != nil {
-			return err
-		}
 	}
 
-	g.initialized = true
 	return nil
+}
+
+// ensureUpToDate fetches the latest changes from the remote repository
+func (g *FileGitRepoCache) ensureUpToDate(ctx context.Context) error {
+	if err := g.ensureInitialized(ctx); err != nil {
+		return err
+	}
+
+	cmd := exec.CommandContext(ctx, "git", "fetch", "--all", "--tags", "--prune")
+	cmd.Dir = g.repoDir
+	return cmd.Run()
 }
 
 func (g *FileGitRepoCache) GetTags(ctx context.Context) ([]string, error) {
@@ -69,7 +67,7 @@ func (g *FileGitRepoCache) GetTags(ctx context.Context) ([]string, error) {
 	var tags []string
 
 	err := WithRegistryLock(registryKey, func() error {
-		if err := g.ensureInitialized(ctx); err != nil {
+		if err := g.ensureUpToDate(ctx); err != nil {
 			return err
 		}
 		cmd := exec.CommandContext(ctx, "git", "tag", "-l")
@@ -90,7 +88,7 @@ func (g *FileGitRepoCache) GetBranches(ctx context.Context) ([]string, error) {
 	var branches []string
 
 	err := WithRegistryLock(registryKey, func() error {
-		if err := g.ensureInitialized(ctx); err != nil {
+		if err := g.ensureUpToDate(ctx); err != nil {
 			return err
 		}
 		cmd := exec.CommandContext(ctx, "git", "branch", "-r", "--format=%(refname:short)")
@@ -115,9 +113,10 @@ func (g *FileGitRepoCache) GetCommitHash(ctx context.Context, ref string) (strin
 	var hash string
 
 	err := WithRegistryLock(registryKey, func() error {
-		if err := g.ensureInitialized(ctx); err != nil {
+		if err := g.ensureUpToDate(ctx); err != nil {
 			return err
 		}
+
 		cmd := exec.CommandContext(ctx, "git", "rev-parse", ref)
 		cmd.Dir = g.repoDir
 		output, err := cmd.Output()
@@ -137,7 +136,7 @@ func (g *FileGitRepoCache) GetFiles(ctx context.Context, ref string, selector ty
 	var walkErr error
 
 	err := WithRegistryLock(registryKey, func() error {
-		if err := g.ensureInitialized(ctx); err != nil {
+		if err := g.ensureUpToDate(ctx); err != nil {
 			return err
 		}
 
