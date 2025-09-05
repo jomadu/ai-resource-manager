@@ -22,13 +22,13 @@ func TestGitConstraintResolver_ParseConstraint(t *testing.T) {
 		expected   Constraint
 		shouldFail bool
 	}{
-		{"Pin constraint", "1.0.0", Constraint{Type: Pin, Version: "1.0.0", Major: 1, Minor: 0, Patch: 0}, false},
-		{"Caret constraint", "^1.0.0", Constraint{Type: Caret, Version: "1.0.0", Major: 1, Minor: 0, Patch: 0}, false},
-		{"Tilde constraint", "~1.2.3", Constraint{Type: Tilde, Version: "1.2.3", Major: 1, Minor: 2, Patch: 3}, false},
+		{"Exact constraint", "1.0.0", Constraint{Type: Exact, Version: "1.0.0", Major: 1, Minor: 0, Patch: 0}, false},
+		{"Major constraint", "^1.0.0", Constraint{Type: Major, Version: "1.0.0", Major: 1, Minor: 0, Patch: 0}, false},
+		{"Minor constraint", "~1.2.3", Constraint{Type: Minor, Version: "1.2.3", Major: 1, Minor: 2, Patch: 3}, false},
 		{"Branch constraint", "main", Constraint{Type: BranchHead, Version: "main"}, false},
 		{"Latest constraint explicit", "latest", Constraint{Type: Latest}, false},
-		{"Major version shorthand", "1", Constraint{Type: Caret, Version: "1.0.0", Major: 1, Minor: 0, Patch: 0}, false},
-		{"Minor version shorthand", "1.2", Constraint{Type: Caret, Version: "1.2.0", Major: 1, Minor: 2, Patch: 0}, false},
+		{"Major version shorthand", "1", Constraint{Type: Major, Version: "1.0.0", Major: 1, Minor: 0, Patch: 0}, false},
+		{"Minor version shorthand", "1.2", Constraint{Type: Major, Version: "1.2.0", Major: 1, Minor: 2, Patch: 0}, false},
 		{"Empty constraint", "", Constraint{}, true},
 		{"Invalid constraint", "invalid", Constraint{}, true},
 	}
@@ -61,12 +61,12 @@ func TestGitConstraintResolver_SatisfiesConstraint(t *testing.T) {
 		constraint Constraint
 		expected   bool
 	}{
-		{"Pin exact match", "1.0.0", Constraint{Type: Pin, Version: "1.0.0"}, true},
-		{"Pin no match", "1.0.1", Constraint{Type: Pin, Version: "1.0.0"}, false},
-		{"Caret compatible", "1.0.1", Constraint{Type: Caret, Version: "1.0.0"}, true},
-		{"Caret incompatible", "2.0.0", Constraint{Type: Caret, Version: "1.0.0"}, false},
-		{"Tilde compatible", "1.2.4", Constraint{Type: Tilde, Version: "1.2.3"}, true},
-		{"Tilde incompatible", "1.3.0", Constraint{Type: Tilde, Version: "1.2.3"}, false},
+		{"Exact match", "1.0.0", Constraint{Type: Exact, Version: "1.0.0"}, true},
+		{"Exact no match", "1.0.1", Constraint{Type: Exact, Version: "1.0.0"}, false},
+		{"Major compatible", "1.0.1", Constraint{Type: Major, Version: "1.0.0"}, true},
+		{"Major incompatible", "2.0.0", Constraint{Type: Major, Version: "1.0.0"}, false},
+		{"Minor compatible", "1.2.4", Constraint{Type: Minor, Version: "1.2.3"}, true},
+		{"Minor incompatible", "1.3.0", Constraint{Type: Minor, Version: "1.2.3"}, false},
 		{"Branch match", "main", Constraint{Type: BranchHead, Version: "main"}, true},
 	}
 
@@ -83,12 +83,12 @@ func TestGitConstraintResolver_SatisfiesConstraint(t *testing.T) {
 func TestGitConstraintResolver_FindBestMatch(t *testing.T) {
 	resolver := NewGitConstraintResolver()
 
-	versions := []types.VersionRef{
-		{ID: "1.0.0", Type: types.Tag},
-		{ID: "1.0.1", Type: types.Tag},
-		{ID: "1.1.0", Type: types.Tag},
-		{ID: "2.0.0", Type: types.Tag},
-		{ID: "main", Type: types.Branch},
+	versions := []types.Version{
+		{Version: "1.0.0", Display: "1.0.0"},
+		{Version: "1.0.1", Display: "1.0.1"},
+		{Version: "1.1.0", Display: "1.1.0"},
+		{Version: "2.0.0", Display: "2.0.0"},
+		{Version: "main", Display: "main"},
 	}
 
 	tests := []struct {
@@ -97,12 +97,12 @@ func TestGitConstraintResolver_FindBestMatch(t *testing.T) {
 		expected   string
 		shouldFail bool
 	}{
-		{"Pin constraint", Constraint{Type: Pin, Version: "1.0.1"}, "1.0.1", false},
-		{"Caret constraint", Constraint{Type: Caret, Version: "1.0.0"}, "1.1.0", false},
-		{"Tilde constraint", Constraint{Type: Tilde, Version: "1.0.0"}, "1.0.1", false},
+		{"Exact constraint", Constraint{Type: Exact, Version: "1.0.1"}, "1.0.1", false},
+		{"Major constraint", Constraint{Type: Major, Version: "1.0.0"}, "1.1.0", false},
+		{"Minor constraint", Constraint{Type: Minor, Version: "1.0.0"}, "1.0.1", false},
 		{"Branch constraint", Constraint{Type: BranchHead, Version: "main"}, "main", false},
-		{"Latest constraint", Constraint{Type: Latest}, "2.0.0", false},
-		{"No match", Constraint{Type: Pin, Version: "3.0.0"}, "", true},
+		{"Latest constraint", Constraint{Type: Latest}, "1.0.0", false},
+		{"No match", Constraint{Type: Exact, Version: "3.0.0"}, "", true},
 	}
 
 	for _, tt := range tests {
@@ -116,7 +116,7 @@ func TestGitConstraintResolver_FindBestMatch(t *testing.T) {
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
 				}
-				if result == nil || result.ID != tt.expected {
+				if result == nil || result.Version != tt.expected {
 					t.Errorf("Expected %s, got %v", tt.expected, result)
 				}
 			}

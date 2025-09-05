@@ -2,19 +2,10 @@ package types
 
 import "path/filepath"
 
-// VersionRefType defines the type of version reference.
-type VersionRefType int
-
-const (
-	Tag VersionRefType = iota
-	Branch
-	Commit
-)
-
-// VersionRef represents a version reference in a repository.
-type VersionRef struct {
-	ID   string         `json:"id"`
-	Type VersionRefType `json:"type"`
+// Version represents a resolved version with display formatting.
+type Version struct {
+	Version string `json:"version"` // Full version (e.g., "abc1234567890abcdef", "1.2.0")
+	Display string `json:"display"` // Display version (e.g., "abc1234", "1.2.0")
 }
 
 // ContentSelector defines include/exclude patterns for content filtering.

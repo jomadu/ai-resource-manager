@@ -2,21 +2,23 @@ package arm
 
 // OutdatedRuleset represents a ruleset that has newer versions available.
 type OutdatedRuleset struct {
-	Registry string `json:"registry"`
-	Name     string `json:"name"`
-	Current  string `json:"current"`
-	Wanted   string `json:"wanted"`
-	Latest   string `json:"latest"`
+	Registry   string `json:"registry"`
+	Name       string `json:"name"`
+	Constraint string `json:"constraint"`
+	Current    string `json:"current"`
+	Wanted     string `json:"wanted"`
+	Latest     string `json:"latest"`
 }
 
 // InstalledRuleset represents a currently installed ruleset.
 type InstalledRuleset struct {
-	Registry string   `json:"registry"`
-	Name     string   `json:"name"`
-	Version  string   `json:"version"`
-	Include  []string `json:"include"`
-	Exclude  []string `json:"exclude"`
-	Sinks    []string `json:"sinks"`
+	Registry   string   `json:"registry"`
+	Name       string   `json:"name"`
+	Version    string   `json:"version"`
+	Constraint string   `json:"constraint"`
+	Include    []string `json:"include"`
+	Exclude    []string `json:"exclude"`
+	Sinks      []string `json:"sinks"`
 }
 
 // RulesetInfo provides detailed information about a ruleset.
