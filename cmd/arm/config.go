@@ -181,11 +181,13 @@ var configListCmd = &cobra.Command{
 	Short: "List configuration",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		manifestManager := manifest.NewFileManager()
-		registries, err := manifestManager.GetRegistries(context.Background())
+		registries, err := manifestManager.GetRawRegistries(context.Background())
 		if err == nil {
 			fmt.Println("Registries:")
 			for name, reg := range registries {
-				fmt.Printf("  %s: %s (%s)\n", name, reg.URL, reg.Type)
+				url, _ := reg["url"].(string)
+				regType, _ := reg["type"].(string)
+				fmt.Printf("  %s: %s (%s)\n", name, url, regType)
 			}
 		}
 

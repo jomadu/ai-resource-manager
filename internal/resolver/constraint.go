@@ -25,57 +25,42 @@ func NewGitConstraintResolver() *GitConstraintResolver {
 }
 
 // ParseConstraint parses a version constraint string into a Constraint object.
-// Supports pin (1.0.0), caret (^1.0.0), tilde (~1.2.3), latest, and branch (main) constraints.
-// Also supports npm-style shorthands: "1" -> "^1.0.0", "1.2" -> "^1.2.0"
 func (g *GitConstraintResolver) ParseConstraint(constraint string) (Constraint, error) {
-	// Argument validation
 	if constraint == "" {
 		return Constraint{}, errors.New("empty constraint not allowed")
 	}
-	if constraint == "invalid" {
-		return Constraint{}, errors.New("invalid constraint format")
-	}
 
-	// Expand npm-style shorthands
+	// Expand shorthands first
 	constraint = expandVersionShorthand(constraint)
 
-	// Handle special constraints
+	// Special cases
 	if constraint == "latest" {
 		return Constraint{Type: Latest}, nil
 	}
 
-	// Check for caret constraint (major compatibility)
+	// Prefixed constraints
 	if strings.HasPrefix(constraint, "^") {
-		version := constraint[1:]
-		major, minor, patch, err := parseVersion(version)
-		if err != nil {
-			return Constraint{}, err
-		}
-		return Constraint{Type: Major, Version: version, Major: major, Minor: minor, Patch: patch}, nil
+		return g.parseVersionConstraint(constraint[1:], Major)
 	}
-
-	// Check for tilde constraint (minor compatibility)
 	if strings.HasPrefix(constraint, "~") {
-		version := constraint[1:]
-		major, minor, patch, err := parseVersion(version)
-		if err != nil {
-			return Constraint{}, err
-		}
-		return Constraint{Type: Minor, Version: version, Major: major, Minor: minor, Patch: patch}, nil
+		return g.parseVersionConstraint(constraint[1:], Minor)
 	}
 
-	// Check if it's a semantic version (exact constraint)
+	// Exact version or branch
 	if major, minor, patch, err := parseVersion(constraint); err == nil {
 		return Constraint{Type: Exact, Version: constraint, Major: major, Minor: minor, Patch: patch}, nil
 	}
 
-	// Check for invalid patterns that contain dots but aren't valid semver
-	if strings.Contains(constraint, ".") {
-		return Constraint{}, errors.New("invalid constraint format")
-	}
-
-	// Otherwise, treat as branch
+	// Branch name (anything that's not valid semver)
 	return Constraint{Type: BranchHead, Version: constraint}, nil
+}
+
+func (g *GitConstraintResolver) parseVersionConstraint(version string, constraintType ConstraintType) (Constraint, error) {
+	major, minor, patch, err := parseVersion(version)
+	if err != nil {
+		return Constraint{}, err
+	}
+	return Constraint{Type: constraintType, Version: version, Major: major, Minor: minor, Patch: patch}, nil
 }
 
 // SatisfiesConstraint checks if a version satisfies the given constraint.

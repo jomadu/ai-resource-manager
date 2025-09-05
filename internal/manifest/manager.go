@@ -14,8 +14,7 @@ import (
 type Manager interface {
 	GetEntry(ctx context.Context, registry, ruleset string) (*Entry, error)
 	GetEntries(ctx context.Context) (map[string]map[string]Entry, error)
-	GetRegistries(ctx context.Context) (map[string]registry.RegistryConfig, error)
-	GetGitRegistries(ctx context.Context) (map[string]registry.GitRegistryConfig, error)
+	GetRawRegistries(ctx context.Context) (map[string]map[string]interface{}, error)
 	AddGitRegistry(ctx context.Context, name string, config registry.GitRegistryConfig) error
 	RemoveRegistry(ctx context.Context, name string) error
 	CreateEntry(ctx context.Context, registry, ruleset string, entry Entry) error
@@ -55,49 +54,12 @@ func (f *FileManager) GetEntries(ctx context.Context) (map[string]map[string]Ent
 	return manifest.Rulesets, nil
 }
 
-func (f *FileManager) GetRegistries(ctx context.Context) (map[string]registry.RegistryConfig, error) {
+func (f *FileManager) GetRawRegistries(ctx context.Context) (map[string]map[string]interface{}, error) {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return nil, err
 	}
-
-	registries := make(map[string]registry.RegistryConfig)
-	for name, rawConfig := range manifest.Registries {
-		configBytes, err := json.Marshal(rawConfig)
-		if err != nil {
-			continue
-		}
-		var baseConfig registry.RegistryConfig
-		if err := json.Unmarshal(configBytes, &baseConfig); err != nil {
-			continue
-		}
-		registries[name] = baseConfig
-	}
-	return registries, nil
-}
-
-func (f *FileManager) GetGitRegistries(ctx context.Context) (map[string]registry.GitRegistryConfig, error) {
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return nil, err
-	}
-
-	gitRegistries := make(map[string]registry.GitRegistryConfig)
-	for name, rawConfig := range manifest.Registries {
-		if rawConfig["type"] != "git" {
-			continue
-		}
-		configBytes, err := json.Marshal(rawConfig)
-		if err != nil {
-			continue
-		}
-		var gitConfig registry.GitRegistryConfig
-		if err := json.Unmarshal(configBytes, &gitConfig); err != nil {
-			continue
-		}
-		gitRegistries[name] = gitConfig
-	}
-	return gitRegistries, nil
+	return manifest.Registries, nil
 }
 
 func (f *FileManager) CreateEntry(ctx context.Context, registry, ruleset string, entry Entry) error {
@@ -192,6 +154,11 @@ func (f *FileManager) AddGitRegistry(ctx context.Context, name string, config re
 
 	if _, exists := manifest.Registries[name]; exists {
 		return errors.New("registry already exists")
+	}
+
+	// Apply default branches if not specified
+	if len(config.Branches) == 0 {
+		config.Branches = []string{"main", "master"} // Default branches for "latest" resolution
 	}
 
 	configBytes, err := json.Marshal(config)

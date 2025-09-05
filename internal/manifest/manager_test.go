@@ -172,67 +172,6 @@ func TestFileManager_GetEntries(t *testing.T) {
 	}
 }
 
-func TestFileManager_GetRegistries(t *testing.T) {
-	tests := []struct {
-		name         string
-		manifestData *Manifest
-		want         map[string]registry.RegistryConfig
-		wantErr      bool
-	}{
-		{
-			name: "valid registries",
-			manifestData: &Manifest{
-				Registries: map[string]map[string]interface{}{
-					"ai-rules": {"url": "https://github.com/test/repo", "type": "git"},
-					"company":  {"url": "https://gitlab.com/company/rules", "type": "git"},
-				},
-				Rulesets: map[string]map[string]Entry{},
-			},
-			want: map[string]registry.RegistryConfig{
-				"ai-rules": {URL: "https://github.com/test/repo", Type: "git"},
-				"company":  {URL: "https://gitlab.com/company/rules", Type: "git"},
-			},
-		},
-		{
-			name: "empty registries",
-			manifestData: &Manifest{
-				Registries: map[string]map[string]interface{}{},
-				Rulesets:   map[string]map[string]Entry{},
-			},
-			want: map[string]registry.RegistryConfig{},
-		},
-		{
-			name:    "missing manifest file",
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tempDir := t.TempDir()
-			oldWd, _ := os.Getwd()
-			_ = os.Chdir(tempDir)
-			defer func() { _ = os.Chdir(oldWd) }()
-
-			if tt.manifestData != nil {
-				writeManifest(t, tt.manifestData)
-			}
-
-			fm := NewFileManager()
-			got, err := fm.GetRegistries(context.Background())
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetRegistries() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if !tt.wantErr && !registriesEqual(got, tt.want) {
-				t.Errorf("GetRegistries() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestFileManager_CreateEntry(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -590,19 +529,6 @@ func stringSlicesEqual(a, b []string) bool {
 	}
 	for i, v := range a {
 		if v != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func registriesEqual(a, b map[string]registry.RegistryConfig) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for name, aReg := range a {
-		bReg, exists := b[name]
-		if !exists || aReg.URL != bReg.URL || aReg.Type != bReg.Type {
 			return false
 		}
 	}

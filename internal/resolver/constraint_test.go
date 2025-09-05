@@ -30,7 +30,7 @@ func TestGitConstraintResolver_ParseConstraint(t *testing.T) {
 		{"Major version shorthand", "1", Constraint{Type: Major, Version: "1.0.0", Major: 1, Minor: 0, Patch: 0}, false},
 		{"Minor version shorthand", "1.2", Constraint{Type: Major, Version: "1.2.0", Major: 1, Minor: 2, Patch: 0}, false},
 		{"Empty constraint", "", Constraint{}, true},
-		{"Invalid constraint", "invalid", Constraint{}, true},
+		{"Maintenance branch", "1.0.x", Constraint{Type: BranchHead, Version: "1.0.x"}, false},
 	}
 
 	for _, tt := range tests {
