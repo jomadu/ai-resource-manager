@@ -23,8 +23,6 @@ type InstalledRuleset struct {
 type RulesetInfo struct {
 	Registry       string   `json:"registry"`
 	Name           string   `json:"name"`
-	RegistryURL    string   `json:"registry_url"`
-	RegistryType   string   `json:"registry_type"`
 	Include        []string `json:"include"`
 	Exclude        []string `json:"exclude"`
 	InstalledPaths []string `json:"installed_paths"`
