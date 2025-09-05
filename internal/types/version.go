@@ -1,6 +1,6 @@
 package types
 
-import "path/filepath"
+import "github.com/bmatcuk/doublestar/v4"
 
 // Version represents a resolved version with display formatting.
 type Version struct {
@@ -21,9 +21,9 @@ func (s ContentSelector) Matches(path string) bool {
 	}
 
 	for _, pattern := range s.Include {
-		if matched, _ := filepath.Match(pattern, path); matched {
+		if matched, _ := doublestar.Match(pattern, path); matched {
 			for _, exclude := range s.Exclude {
-				if matched, _ := filepath.Match(exclude, path); matched {
+				if matched, _ := doublestar.Match(exclude, path); matched {
 					return false
 				}
 			}
