@@ -18,6 +18,11 @@ func NewHierarchicalInstaller() *HierarchicalInstaller {
 }
 
 func (h *HierarchicalInstaller) Install(ctx context.Context, dir, registry, ruleset, version string, files []types.File) error {
+	// Remove existing versions before installing new one
+	if err := h.removeExistingVersions(ctx, dir, registry, ruleset); err != nil {
+		return err
+	}
+
 	rulesetDir := filepath.Join(dir, "arm", registry, ruleset, version)
 	if err := os.MkdirAll(rulesetDir, 0o755); err != nil {
 		return err
@@ -110,4 +115,30 @@ func (h *HierarchicalInstaller) ListInstalled(ctx context.Context, dir string) (
 	}
 
 	return installations, nil
+}
+
+// removeExistingVersions removes ALL existing version directories for the same registry/ruleset
+// before installing a new version, ensuring only one version exists at any time.
+func (h *HierarchicalInstaller) removeExistingVersions(ctx context.Context, dir, registry, ruleset string) error {
+	rulesetBaseDir := filepath.Join(dir, "arm", registry, ruleset)
+	versionEntries, err := os.ReadDir(rulesetBaseDir)
+	if err != nil {
+		// Directory doesn't exist yet, nothing to clean up
+		return nil
+	}
+
+	for _, versionEntry := range versionEntries {
+		if !versionEntry.IsDir() {
+			continue
+		}
+
+		// Remove ALL existing version directories
+		oldVersionDir := filepath.Join(rulesetBaseDir, versionEntry.Name())
+		if err := os.RemoveAll(oldVersionDir); err != nil {
+			return err
+		}
+		slog.InfoContext(ctx, "Removed old version directory", "path", oldVersionDir)
+	}
+
+	return nil
 }

@@ -45,6 +45,11 @@ func (f *FlatInstaller) Install(ctx context.Context, dir, registry, ruleset, ver
 		return err
 	}
 
+	// Remove existing versions before installing new one
+	if err := f.removeExistingVersions(ctx, dir, registry, ruleset, index); err != nil {
+		return err
+	}
+
 	for _, file := range files {
 		hash := f.hashFile(registry, ruleset, version, file.Path)
 		fileName := hash + "_" + strings.ReplaceAll(file.Path, "/", "_")
@@ -157,4 +162,22 @@ func (f *FlatInstaller) saveIndex(dir string, index Index) error {
 	}
 
 	return os.WriteFile(indexPath, data, 0o644)
+}
+
+// removeExistingVersions removes ALL existing files for the same registry/ruleset
+// before installing a new version, ensuring only one version exists at any time.
+func (f *FlatInstaller) removeExistingVersions(ctx context.Context, dir, registry, ruleset string, index Index) error {
+	// Find and remove all files for this registry/ruleset
+	for fileName, entry := range index {
+		if entry.Registry == registry && entry.Ruleset == ruleset {
+			filePath := filepath.Join(dir, fileName)
+			if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+			delete(index, fileName)
+			slog.InfoContext(ctx, "Removed old version file", "path", filePath)
+		}
+	}
+
+	return nil
 }
