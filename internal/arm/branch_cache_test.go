@@ -48,8 +48,8 @@ func TestBranchConstraintCaching(t *testing.T) {
 	service := NewArmService()
 	// Ensure we're in the work directory for all operations
 	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
-	os.Chdir(workDir)
+	defer func() { _ = os.Chdir(originalDir) }()
+	_ = os.Chdir(workDir)
 
 	// First install from main branch
 	err := service.InstallRuleset(ctx, "test-registry", "rules", "main", []string{"*.md"}, nil)
@@ -67,7 +67,7 @@ func TestBranchConstraintCaching(t *testing.T) {
 	pushChangeToRepo(t, repoName, "Updated content for cache test")
 
 	// Ensure we're still in work directory
-	os.Chdir(workDir)
+	_ = os.Chdir(workDir)
 
 	// Second install from main branch (should get new content but currently gets cached)
 	err = service.InstallRuleset(ctx, "test-registry", "rules", "main", []string{"*.md"}, nil)
@@ -89,21 +89,21 @@ func TestBranchConstraintCaching(t *testing.T) {
 
 func createTestRepo(t *testing.T, repoName, tempDir string) string {
 	repoDir := filepath.Join(tempDir, "repo")
-	os.MkdirAll(repoDir, 0755)
+	_ = os.MkdirAll(repoDir, 0o755)
 	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
-	os.Chdir(repoDir)
+	defer func() { _ = os.Chdir(originalDir) }()
+	_ = os.Chdir(repoDir)
 
 	// Initialize git repo
 	if err := exec.Command("git", "init").Run(); err != nil {
 		t.Fatalf("Failed to init git repo: %v", err)
 	}
-	exec.Command("git", "config", "user.name", "ARM Test").Run()
-	exec.Command("git", "config", "user.email", "test@arm.com").Run()
+	_ = exec.Command("git", "config", "user.name", "ARM Test").Run()
+	_ = exec.Command("git", "config", "user.email", "test@arm.com").Run()
 
 	// Create initial content
-	os.WriteFile("test-rule.md", []byte("# Test Rule\n\nInitial content for testing.\n"), 0644)
-	exec.Command("git", "add", ".").Run()
+	_ = os.WriteFile("test-rule.md", []byte("# Test Rule\n\nInitial content for testing.\n"), 0o644)
+	_ = exec.Command("git", "add", ".").Run()
 	if err := exec.Command("git", "commit", "-m", "Initial commit").Run(); err != nil {
 		t.Fatalf("Failed to commit initial content: %v", err)
 	}
@@ -141,9 +141,9 @@ func deleteTestRepo(t *testing.T, repoName string) {
 	t.Logf("Warning: Failed to delete test repository: %s (may need manual cleanup)", repoName)
 }
 
-func setupARM(t *testing.T, workDir, repoName, repoURL string) {
-	os.MkdirAll(workDir, 0755)
-	os.Chdir(workDir)
+func setupARM(t *testing.T, workDir, _, repoURL string) {
+	_ = os.MkdirAll(workDir, 0o755)
+	_ = os.Chdir(workDir)
 
 	// Create ARM config
 	configManager := config.NewFileManager()
@@ -186,7 +186,7 @@ func pushChangeToRepo(t *testing.T, repoName, newContent string) {
 	tempDir := t.TempDir()
 	cloneDir := filepath.Join(tempDir, "clone")
 	originalDir, _ := os.Getwd()
-	defer os.Chdir(originalDir)
+	defer func() { _ = os.Chdir(originalDir) }()
 
 	// Clone repo
 	cmd := exec.Command("gh", "repo", "clone", repoName, cloneDir)
@@ -194,10 +194,10 @@ func pushChangeToRepo(t *testing.T, repoName, newContent string) {
 		t.Fatalf("Failed to clone repo: %v", err)
 	}
 
-	os.Chdir(cloneDir)
+	_ = os.Chdir(cloneDir)
 
 	// Update content
-	os.WriteFile("test-rule.md", []byte(fmt.Sprintf("# Test Rule\n\n%s\n", newContent)), 0644)
+	_ = os.WriteFile("test-rule.md", []byte(fmt.Sprintf("# Test Rule\n\n%s\n", newContent)), 0o644)
 	if err := exec.Command("git", "add", ".").Run(); err != nil {
 		t.Fatalf("Failed to add changes: %v", err)
 	}
