@@ -142,7 +142,7 @@ func (g *GitRegistry) ListVersions(ctx context.Context) ([]types.Version, error)
 
 	// Add branch commits in configuration order
 	for _, branch := range g.config.Branches {
-		hash, err := g.repo.GetCommitHash(ctx, branch)
+		hash, err := g.repo.GetBranchHeadCommitHash(ctx, branch)
 		if err != nil {
 			continue // Skip branches that don't exist
 		}
@@ -160,7 +160,7 @@ func (g *GitRegistry) GetContent(ctx context.Context, version types.Version, sel
 	}
 
 	// Get files from git repo
-	files, err = g.repo.GetFiles(ctx, version.Version, selector)
+	files, err = g.repo.GetFilesFromCommit(ctx, version.Version, selector)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func (g *GitRegistry) ResolveVersion(ctx context.Context, constraint string) (*r
 
 	// Handle branch constraints by resolving to commit hash
 	if g.isBranchConstraint(constraint) {
-		hash, err := g.repo.GetCommitHash(ctx, constraint)
+		hash, err := g.repo.GetBranchHeadCommitHash(ctx, constraint)
 		if err != nil {
 			// Provide helpful error with available branches
 			branches, branchErr := g.repo.GetBranches(ctx)
