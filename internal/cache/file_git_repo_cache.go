@@ -36,7 +36,7 @@ func NewGitRepoCache(keyObj interface{}, repoName, url string) (*FileGitRepoCach
 	}, nil
 }
 
-func (g *FileGitRepoCache) ensureInitialized(ctx context.Context) error {
+func (g *FileGitRepoCache) ensureCloned(ctx context.Context) error {
 	if _, err := os.Stat(filepath.Join(g.repoDir, ".git")); os.IsNotExist(err) {
 		// Clone if repo doesn't exist
 		if err := os.MkdirAll(filepath.Dir(g.repoDir), 0o755); err != nil {
@@ -53,7 +53,7 @@ func (g *FileGitRepoCache) ensureInitialized(ctx context.Context) error {
 
 // ensureUpToDate fetches the latest changes from the remote repository
 func (g *FileGitRepoCache) ensureUpToDate(ctx context.Context) error {
-	if err := g.ensureInitialized(ctx); err != nil {
+	if err := g.ensureCloned(ctx); err != nil {
 		return err
 	}
 
@@ -107,8 +107,8 @@ func (g *FileGitRepoCache) GetBranches(ctx context.Context) ([]string, error) {
 	return branches, err
 }
 
-// GetCommitHash returns the commit hash for a given ref (branch or tag).
-func (g *FileGitRepoCache) GetCommitHash(ctx context.Context, ref string) (string, error) {
+// GetBranchHeadCommitHash checkouts the branch, pulls, and returns the head commit hash.
+func (g *FileGitRepoCache) GetBranchHeadCommitHash(ctx context.Context, branch string) (string, error) {
 	registryKey := filepath.Base(g.registryDir)
 	var hash string
 
@@ -117,7 +117,19 @@ func (g *FileGitRepoCache) GetCommitHash(ctx context.Context, ref string) (strin
 			return err
 		}
 
-		cmd := exec.CommandContext(ctx, "git", "rev-parse", ref)
+		cmd := exec.CommandContext(ctx, "git", "checkout", branch)
+		cmd.Dir = g.repoDir
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+
+		cmd = exec.CommandContext(ctx, "git", "pull")
+		cmd.Dir = g.repoDir
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+
+		cmd = exec.CommandContext(ctx, "git", "rev-parse", "HEAD")
 		cmd.Dir = g.repoDir
 		output, err := cmd.Output()
 		if err != nil {
@@ -130,7 +142,36 @@ func (g *FileGitRepoCache) GetCommitHash(ctx context.Context, ref string) (strin
 	return hash, err
 }
 
-func (g *FileGitRepoCache) GetFiles(ctx context.Context, ref string, selector types.ContentSelector) ([]types.File, error) {
+// GetTagCommitHash checkouts the tag and returns the commit hash using rev-parse with forced resolution.
+func (g *FileGitRepoCache) GetTagCommitHash(ctx context.Context, tag string) (string, error) {
+	registryKey := filepath.Base(g.registryDir)
+	var hash string
+
+	err := WithRegistryLock(registryKey, func() error {
+		if err := g.ensureUpToDate(ctx); err != nil {
+			return err
+		}
+
+		cmd := exec.CommandContext(ctx, "git", "checkout", tag)
+		cmd.Dir = g.repoDir
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+
+		cmd = exec.CommandContext(ctx, "git", "rev-parse", tag+"^{}")
+		cmd.Dir = g.repoDir
+		output, err := cmd.Output()
+		if err != nil {
+			return err
+		}
+		hash = strings.TrimSpace(string(output))
+		return nil
+	})
+
+	return hash, err
+}
+
+func (g *FileGitRepoCache) GetFilesFromCommit(ctx context.Context, commit string, selector types.ContentSelector) ([]types.File, error) {
 	registryKey := filepath.Base(g.registryDir)
 	var files []types.File
 	var walkErr error
@@ -140,8 +181,8 @@ func (g *FileGitRepoCache) GetFiles(ctx context.Context, ref string, selector ty
 			return err
 		}
 
-		// Checkout the specified ref
-		cmd := exec.CommandContext(ctx, "git", "checkout", ref)
+		// Checkout the specified commit
+		cmd := exec.CommandContext(ctx, "git", "checkout", commit)
 		cmd.Dir = g.repoDir
 		if err := cmd.Run(); err != nil {
 			return err
