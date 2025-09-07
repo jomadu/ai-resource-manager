@@ -152,6 +152,11 @@ Examples:
 		layout, _ := cmd.Flags().GetString("layout")
 		force, _ := cmd.Flags().GetBool("force")
 
+		// Set default include pattern if none provided
+		if len(include) == 0 {
+			include = []string{"*"}
+		}
+
 		configManager := config.NewFileManager()
 		return configManager.AddSink(context.Background(), name, directories, include, exclude, layout, force)
 	},
