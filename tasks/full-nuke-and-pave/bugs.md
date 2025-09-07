@@ -3,7 +3,7 @@
 - [x] rules not being removed on update (old hash still there)
 - [x] allow overwrite registry (change url, etc.)
 - [x] default include should have star pattern
-- [] git short hash is 7 (not 8)
+- [x] git short hash is 7 (not 8)
 - [] feat: profiles for setup of preffered registries/sinks/installations
 - [] asking for passphrase for ssh key?
 - outdated json output or table (default)
