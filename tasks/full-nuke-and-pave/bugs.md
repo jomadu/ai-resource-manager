@@ -2,7 +2,7 @@
 - [x] rules/**/*.md not capturing no folders?
 - [x] rules not being removed on update (old hash still there)
 - [x] allow overwrite registry (change url, etc.)
-- [] default include should have star pattern
+- [x] default include should have star pattern
 - [] git short hash is 7 (not 8)
 - [] feat: profiles for setup of preffered registries/sinks/installations
 - [] asking for passphrase for ssh key?

@@ -53,6 +53,11 @@ var installCmd = &cobra.Command{
 		include, _ := cmd.Flags().GetStringSlice("include")
 		exclude, _ := cmd.Flags().GetStringSlice("exclude")
 
+		// Set default include pattern if none provided
+		if len(include) == 0 {
+			include = []string{"*"}
+		}
+
 		for _, arg := range args {
 			registry, ruleset, version := parseRulesetArg(arg)
 			if err := armService.InstallRuleset(ctx, registry, ruleset, version, include, exclude); err != nil {
