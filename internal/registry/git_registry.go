@@ -146,7 +146,7 @@ func (g *GitRegistry) ListVersions(ctx context.Context) ([]types.Version, error)
 		if err != nil {
 			continue // Skip branches that don't exist
 		}
-		versions = append(versions, types.Version{Version: hash, Display: hash[:8]})
+		versions = append(versions, types.Version{Version: hash, Display: hash[:7]})
 	}
 
 	return versions, nil
@@ -203,7 +203,7 @@ func (g *GitRegistry) ResolveVersion(ctx context.Context, constraint string) (*r
 			Constraint: parsedConstraint,
 			Version: types.Version{
 				Version: hash,
-				Display: hash[:8], // Use first 8 chars for display
+				Display: hash[:7], // Use first 7 chars for display
 			},
 		}, nil
 	}
