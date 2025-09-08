@@ -7,7 +7,7 @@
 - [] feat: profiles for setup of preffered registries/sinks/installations
 - [] asking for passphrase for ssh key?
 - outdated json output or table (default)
-- [] config registry set {registry} {key} {value}
+- [x] config registry set {registry} {key} {value}
 - [] make clear the naming of rules
 - [] make clear the include flag intent
 - [] adding sink after install
