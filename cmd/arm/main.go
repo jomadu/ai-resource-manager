@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -110,9 +111,21 @@ var outdatedCmd = &cobra.Command{
 			return err
 		}
 
+		outputFormat, _ := cmd.Flags().GetString("output")
+
 		if len(outdated) == 0 {
-			fmt.Println("All rulesets are up to date!")
+			if outputFormat == "json" {
+				fmt.Println("[]")
+			} else {
+				fmt.Println("All rulesets are up to date!")
+			}
 			return nil
+		}
+
+		if outputFormat == "json" {
+			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetIndent("", "  ")
+			return encoder.Encode(outdated)
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
@@ -212,6 +225,7 @@ var versionCmd = &cobra.Command{
 func init() {
 	installCmd.Flags().StringSlice("include", nil, "Include patterns")
 	installCmd.Flags().StringSlice("exclude", nil, "Exclude patterns")
+	outdatedCmd.Flags().StringP("output", "o", "table", "Output format (table or json)")
 }
 
 // parseRulesetArg parses registry/ruleset[@version] format
