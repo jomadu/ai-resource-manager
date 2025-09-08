@@ -123,8 +123,10 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 	}
 
 	rulesetKey := registryName + "/" + ruleset
-	for _, sink := range sinks {
+	var matchingSinkNames []string
+	for sinkName, sink := range sinks {
 		if a.matchesSink(rulesetKey, &sink) {
+			matchingSinkNames = append(matchingSinkNames, sinkName)
 			installer := installer.NewInstaller(&sink)
 			for _, dir := range sink.Directories {
 				// Use display version for directory names
@@ -134,6 +136,12 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 				}
 			}
 		}
+	}
+
+	if len(matchingSinkNames) == 0 {
+		slog.WarnContext(ctx, "Ruleset not targeted by any sinks", "registry", registryName, "ruleset", ruleset)
+	} else {
+		slog.InfoContext(ctx, "Ruleset targeted by sinks", "registry", registryName, "ruleset", ruleset, "sinks", matchingSinkNames)
 	}
 
 	return nil
