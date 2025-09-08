@@ -6,8 +6,8 @@
 - [x] git short hash is 7 (not 8)
 - [] feat: profiles for setup of preffered registries/sinks/installations
 - [] asking for passphrase for ssh key?
-- outdated json output or table (default)
+- [x] outdated json output or table (default)
 - [x] config registry set {registry} {key} {value}
 - [] make clear the naming of rules
 - [] make clear the include flag intent
-- [] adding sink after install
+- [x] adding sink after install
