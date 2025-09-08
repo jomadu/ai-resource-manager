@@ -158,7 +158,16 @@ Examples:
 		}
 
 		configManager := config.NewFileManager()
-		return configManager.AddSink(context.Background(), name, directories, include, exclude, layout, force)
+		err := configManager.AddSink(context.Background(), name, directories, include, exclude, layout, force)
+		if err != nil {
+			return err
+		}
+		// Sync new sink
+		sink, err := configManager.GetSink(context.Background(), name)
+		if err != nil {
+			return err
+		}
+		return armService.SyncSink(context.Background(), name, sink)
 	},
 }
 
@@ -179,7 +188,18 @@ Examples:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
 		configManager := config.NewFileManager()
-		return configManager.RemoveSink(context.Background(), name)
+		// Get sink before removal
+		sink, err := configManager.GetSink(context.Background(), name)
+		if err != nil {
+			return err
+		}
+		// Remove from config
+		err = configManager.RemoveSink(context.Background(), name)
+		if err != nil {
+			return err
+		}
+		// Sync removed sink
+		return armService.SyncRemovedSink(context.Background(), sink)
 	},
 }
 
@@ -258,7 +278,17 @@ Examples:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, field, value := args[0], args[1], args[2]
 		configManager := config.NewFileManager()
-		return configManager.UpdateSink(context.Background(), name, field, value)
+		// Update sink config
+		err := configManager.UpdateSink(context.Background(), name, field, value)
+		if err != nil {
+			return err
+		}
+		// Sync updated sink
+		sink, err := configManager.GetSink(context.Background(), name)
+		if err != nil {
+			return err
+		}
+		return armService.SyncSink(context.Background(), name, sink)
 	},
 }
 

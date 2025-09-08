@@ -14,6 +14,7 @@ const CONFIG_FILE = ".armrc.json"
 // Manager handles .armrc.json configuration file operations.
 type Manager interface {
 	GetSinks(ctx context.Context) (map[string]SinkConfig, error)
+	GetSink(ctx context.Context, name string) (*SinkConfig, error)
 	AddSink(ctx context.Context, name string, dirs, include, exclude []string, layout string, force bool) error
 	UpdateSink(ctx context.Context, name, field, value string) error
 	RemoveSink(ctx context.Context, name string) error
@@ -33,6 +34,18 @@ func (f *FileManager) GetSinks(ctx context.Context) (map[string]SinkConfig, erro
 		return nil, err
 	}
 	return config.Sinks, nil
+}
+
+func (f *FileManager) GetSink(ctx context.Context, name string) (*SinkConfig, error) {
+	config, err := f.loadConfig()
+	if err != nil {
+		return nil, err
+	}
+	sink, exists := config.Sinks[name]
+	if !exists {
+		return nil, fmt.Errorf("sink %s not found", name)
+	}
+	return &sink, nil
 }
 
 func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, exclude []string, layout string, force bool) error {

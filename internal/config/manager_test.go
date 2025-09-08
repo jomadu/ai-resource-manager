@@ -226,6 +226,68 @@ func TestFileManager_RemoveSink(t *testing.T) {
 	}
 }
 
+func TestFileManager_GetSink(t *testing.T) {
+	tests := []struct {
+		name       string
+		configData *Config
+		sinkName   string
+		want       *SinkConfig
+		wantErr    bool
+	}{
+		{
+			name: "get existing sink",
+			configData: &Config{
+				Sinks: map[string]SinkConfig{
+					"q": {
+						Directories: []string{".amazonq/rules"},
+						Include:     []string{"ai-rules/amazonq-*"},
+						Exclude:     []string{"ai-rules/cursor-*"},
+						Layout:      "hierarchical",
+					},
+				},
+			},
+			sinkName: "q",
+			want: &SinkConfig{
+				Directories: []string{".amazonq/rules"},
+				Include:     []string{"ai-rules/amazonq-*"},
+				Exclude:     []string{"ai-rules/cursor-*"},
+				Layout:      "hierarchical",
+			},
+		},
+		{
+			name: "get non-existent sink",
+			configData: &Config{
+				Sinks: map[string]SinkConfig{},
+			},
+			sinkName: "nonexistent",
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempDir := setupTestDir(t, tt.configData)
+			oldWd, _ := os.Getwd()
+			_ = os.Chdir(tempDir)
+			defer func() { _ = os.Chdir(oldWd) }()
+
+			fm := NewFileManager()
+			got, err := fm.GetSink(context.Background(), tt.sinkName)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetSink() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr {
+				if !sinkConfigEqual(got, tt.want) {
+					t.Errorf("GetSink() = %v, want %v", got, tt.want)
+				}
+			}
+		})
+	}
+}
+
 func TestFileManager_ImplementsInterface(t *testing.T) {
 	var _ Manager = (*FileManager)(nil)
 }
@@ -314,4 +376,14 @@ func stringSlicesEqual(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+func sinkConfigEqual(a, b *SinkConfig) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return stringSlicesEqual(a.Directories, b.Directories) &&
+		stringSlicesEqual(a.Include, b.Include) &&
+		stringSlicesEqual(a.Exclude, b.Exclude) &&
+		a.Layout == b.Layout
 }
