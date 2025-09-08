@@ -28,6 +28,8 @@ type Service interface {
 	List(ctx context.Context) ([]InstalledRuleset, error)
 	Info(ctx context.Context, registry, ruleset string) (*RulesetInfo, error)
 	InfoAll(ctx context.Context) ([]*RulesetInfo, error)
+	SyncSink(ctx context.Context, sinkName string, sink *config.SinkConfig) error
+	SyncRemovedSink(ctx context.Context, removedSink *config.SinkConfig) error
 	Version() version.VersionInfo
 }
 
@@ -520,6 +522,99 @@ func (a *ArmService) matchesSink(rulesetKey string, sink *config.SinkConfig) boo
 	}
 
 	return false
+}
+
+func (a *ArmService) SyncSink(ctx context.Context, sinkName string, sink *config.SinkConfig) error {
+	// Get manifest entries to determine what should be installed
+	manifestEntries, err := a.manifestManager.GetEntries(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get manifest entries: %w", err)
+	}
+
+	// Scan sink directories to discover what's actually installed
+	installedRulesets := make(map[string]bool)
+	for _, dir := range sink.Directories {
+		installer := installer.NewInstaller(sink)
+		installations, err := installer.ListInstalled(ctx, dir)
+		if err != nil {
+			continue // Skip directories that can't be scanned
+		}
+		for _, installation := range installations {
+			installedRulesets[installation.Ruleset] = true
+		}
+	}
+
+	// Find rulesets that should be installed for this sink
+	for registryName, rulesets := range manifestEntries {
+		for rulesetName, entry := range rulesets {
+			rulesetKey := registryName + "/" + rulesetName
+			if a.matchesSink(rulesetKey, sink) {
+				if !installedRulesets[rulesetName] {
+					// Install missing ruleset
+					if err := a.InstallRuleset(ctx, registryName, rulesetName, entry.Version, entry.Include, entry.Exclude); err != nil {
+						slog.ErrorContext(ctx, "Failed to sync install ruleset", "registry", registryName, "ruleset", rulesetName, "error", err)
+					}
+				}
+				delete(installedRulesets, rulesetName) // Mark as handled
+			}
+		}
+	}
+
+	// Remove rulesets that no longer match sink patterns
+	for rulesetName := range installedRulesets {
+		// Find registry for this ruleset from lockfile
+		lockEntries, err := a.lockFileManager.GetEntries(ctx)
+		if err != nil {
+			continue
+		}
+		for registryName, rulesets := range lockEntries {
+			if _, exists := rulesets[rulesetName]; exists {
+				rulesetKey := registryName + "/" + rulesetName
+				if !a.matchesSink(rulesetKey, sink) {
+					// Uninstall from this sink only
+					for _, dir := range sink.Directories {
+						installer := installer.NewInstaller(sink)
+						if err := installer.Uninstall(ctx, dir, registryName, rulesetName); err != nil {
+							slog.ErrorContext(ctx, "Failed to sync uninstall ruleset", "registry", registryName, "ruleset", rulesetName, "error", err)
+						}
+					}
+				}
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+func (a *ArmService) SyncRemovedSink(ctx context.Context, removedSink *config.SinkConfig) error {
+	// Scan removed sink directories to find installed rulesets
+	for _, dir := range removedSink.Directories {
+		installer := installer.NewInstaller(removedSink)
+		installations, err := installer.ListInstalled(ctx, dir)
+		if err != nil {
+			continue // Skip directories that can't be scanned
+		}
+
+		// Uninstall all found rulesets from this directory
+		for _, installation := range installations {
+			// Extract registry from installation path or use lockfile lookup
+			lockEntries, err := a.lockFileManager.GetEntries(ctx)
+			if err != nil {
+				continue
+			}
+			for registryName, rulesets := range lockEntries {
+				if _, exists := rulesets[installation.Ruleset]; exists {
+					if err := installer.Uninstall(ctx, dir, registryName, installation.Ruleset); err != nil {
+						slog.ErrorContext(ctx, "Failed to uninstall from removed sink", "registry", registryName, "ruleset", installation.Ruleset, "error", err)
+					}
+					break
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func (a *ArmService) Version() version.VersionInfo {
