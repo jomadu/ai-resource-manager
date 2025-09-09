@@ -56,7 +56,7 @@ var installCmd = &cobra.Command{
 
 		// Set default include pattern if none provided
 		if len(include) == 0 {
-			include = []string{"*"}
+			include = []string{"**/*"}
 		}
 
 		for _, arg := range args {
