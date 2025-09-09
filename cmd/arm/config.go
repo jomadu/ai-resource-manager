@@ -10,10 +10,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	configCmd.AddCommand(configRegistryCmd)
-	configCmd.AddCommand(configSinkCmd)
-	configCmd.AddCommand(configListCmd)
+func newConfigCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "config",
+		Short: "Manage configuration",
+		Long:  "Manage ARM configuration including registries and sinks.",
+	}
+
+	cmd.AddCommand(configRegistryCmd)
+	cmd.AddCommand(configSinkCmd)
+	cmd.AddCommand(configListCmd)
+
+	return cmd
 }
 
 var configRegistryCmd = &cobra.Command{

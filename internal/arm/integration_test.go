@@ -109,7 +109,7 @@ func TestIntegrationList(t *testing.T) {
 	}
 
 	// Test list
-	rulesets, err := service.List(ctx)
+	rulesets, err := service.ListInstalledRulesets(ctx)
 	if err != nil {
 		t.Fatalf("Failed to list rulesets: %v", err)
 	}
@@ -132,7 +132,7 @@ func TestIntegrationInfo(t *testing.T) {
 	}
 
 	// Test info
-	info, err := service.Info(ctx, "ai-rules", "amazonq-rules")
+	info, err := service.GetRulesetInfo(ctx, "ai-rules", "amazonq-rules")
 	if err != nil {
 		t.Fatalf("Failed to get info: %v", err)
 	}
@@ -163,13 +163,13 @@ func TestIntegrationUninstall(t *testing.T) {
 	}
 
 	// Uninstall one
-	err = service.Uninstall(ctx, "ai-rules", "cursor-rules")
+	err = service.UninstallRuleset(ctx, "ai-rules", "cursor-rules")
 	if err != nil {
 		t.Fatalf("Failed to uninstall: %v", err)
 	}
 
 	// Verify only one ruleset remains
-	rulesets, err := service.List(ctx)
+	rulesets, err := service.ListInstalledRulesets(ctx)
 	if err != nil {
 		t.Fatalf("Failed to list after uninstall: %v", err)
 	}
@@ -263,7 +263,7 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 	_ = os.Remove("arm.json")
 	_ = os.Remove(".armrc.json")
 
-	err := service.Install(ctx)
+	err := service.InstallManifest(ctx)
 	if err == nil {
 		t.Fatal("Expected error with no files")
 	}
@@ -293,7 +293,7 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 	data, _ := json.MarshalIndent(manifestFile, "", "  ")
 	_ = os.WriteFile("arm.json", data, 0o644)
 
-	err = service.Install(ctx)
+	err = service.InstallManifest(ctx)
 	if err != nil {
 		t.Fatalf("Failed to install from manifest only: %v", err)
 	}
@@ -302,7 +302,7 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 	assertFileExists(t, "arm-lock.json")
 
 	// Test both files exist - should use lockfile
-	err = service.Install(ctx)
+	err = service.InstallManifest(ctx)
 	if err != nil {
 		t.Fatalf("Failed to install with both files: %v", err)
 	}
@@ -312,7 +312,7 @@ func TestIntegrationNpmLikeBehavior(t *testing.T) {
 	_ = os.Remove("arm.json")
 	_ = os.RemoveAll(".amazonq")
 
-	err = service.Install(ctx)
+	err = service.InstallManifest(ctx)
 	if err == nil {
 		t.Fatal("Expected error with lockfile only")
 	}
@@ -352,7 +352,7 @@ func TestIntegrationGlobstarPatterns(t *testing.T) {
 	assertFileExists(t, ".cursor/rules/arm/ai-rules/cursor-rules/v2.1.0/rules/cursor/clean-code.mdc")
 
 	// Test list to ensure both rulesets are present
-	rulesets, err := service.List(ctx)
+	rulesets, err := service.ListInstalledRulesets(ctx)
 	if err != nil {
 		t.Fatalf("Failed to list rulesets: %v", err)
 	}

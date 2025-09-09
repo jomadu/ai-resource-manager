@@ -12,15 +12,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	cacheCmd.AddCommand(cacheCleanCmd)
-	cacheCmd.AddCommand(cacheNukeCmd)
-}
+func newCacheCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cache",
+		Short: "Manage cache",
+		Long:  "Manage ARM cache including cleanup operations.",
+	}
 
-var cacheCmd = &cobra.Command{
-	Use:   "cache",
-	Short: "Manage cache",
-	Long:  "Manage ARM cache including cleanup operations.",
+	cmd.AddCommand(cacheCleanCmd)
+	cmd.AddCommand(cacheNukeCmd)
+
+	return cmd
 }
 
 var cacheCleanCmd = &cobra.Command{
