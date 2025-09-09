@@ -23,6 +23,11 @@ type Manager interface {
 	CreateEntry(ctx context.Context, registry, ruleset string, entry Entry) error
 	UpdateEntry(ctx context.Context, registry, ruleset string, entry Entry) error
 	RemoveEntry(ctx context.Context, registry, ruleset string) error
+	GetSinks(ctx context.Context) (map[string]SinkConfig, error)
+	GetSink(ctx context.Context, name string) (*SinkConfig, error)
+	AddSink(ctx context.Context, name string, dirs, include, exclude []string, layout string, force bool) error
+	UpdateSink(ctx context.Context, name, field, value string) error
+	RemoveSink(ctx context.Context, name string) error
 }
 
 // FileManager implements file-based manifest management.
@@ -125,6 +130,9 @@ func (f *FileManager) loadManifest() (*Manifest, error) {
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		return nil, err
 	}
+	if manifest.Sinks == nil {
+		manifest.Sinks = make(map[string]SinkConfig)
+	}
 	return &manifest, nil
 }
 
@@ -203,6 +211,134 @@ func (f *FileManager) RemoveRegistry(ctx context.Context, name string) error {
 		"removed_type", removedRegistry["type"])
 
 	delete(manifest.Registries, name)
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) GetSinks(ctx context.Context) (map[string]SinkConfig, error) {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return nil, err
+	}
+	return manifest.Sinks, nil
+}
+
+func (f *FileManager) GetSink(ctx context.Context, name string) (*SinkConfig, error) {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return nil, err
+	}
+	sink, exists := manifest.Sinks[name]
+	if !exists {
+		return nil, fmt.Errorf("sink %s not found", name)
+	}
+	return &sink, nil
+}
+
+func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, exclude []string, layout string, force bool) error {
+	if layout == "" {
+		layout = "hierarchical"
+	}
+	manifest, err := f.loadManifest()
+	if err != nil {
+		manifest = &Manifest{
+			Registries: make(map[string]map[string]interface{}),
+			Rulesets:   make(map[string]map[string]Entry),
+			Sinks:      make(map[string]SinkConfig),
+		}
+	}
+
+	if _, exists := manifest.Sinks[name]; exists && !force {
+		return fmt.Errorf("sink %s already exists (use --force to overwrite)", name)
+	}
+
+	newSink := SinkConfig{
+		Directories: dirs,
+		Include:     include,
+		Exclude:     exclude,
+		Layout:      layout,
+	}
+	manifest.Sinks[name] = newSink
+
+	slog.InfoContext(ctx, "Adding sink configuration",
+		"action", "sink_add",
+		"name", name,
+		"directories", dirs,
+		"include", include,
+		"exclude", exclude,
+		"layout", layout)
+
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) RemoveSink(ctx context.Context, name string) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	removedSink, exists := manifest.Sinks[name]
+	if !exists {
+		return fmt.Errorf("sink %s not found", name)
+	}
+
+	slog.InfoContext(ctx, "Removing sink configuration",
+		"action", "sink_remove",
+		"name", name,
+		"removed_directories", removedSink.Directories,
+		"removed_include", removedSink.Include,
+		"removed_exclude", removedSink.Exclude)
+
+	delete(manifest.Sinks, name)
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) UpdateSink(ctx context.Context, name, field, value string) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	sink, exists := manifest.Sinks[name]
+	if !exists {
+		return fmt.Errorf("sink %s not found", name)
+	}
+
+	switch field {
+	case "directories":
+		dirs := strings.Split(value, ",")
+		for i, dir := range dirs {
+			dirs[i] = strings.TrimSpace(dir)
+		}
+		sink.Directories = dirs
+	case "include":
+		include := strings.Split(value, ",")
+		for i, pattern := range include {
+			include[i] = strings.TrimSpace(pattern)
+		}
+		sink.Include = include
+	case "exclude":
+		exclude := strings.Split(value, ",")
+		for i, pattern := range exclude {
+			exclude[i] = strings.TrimSpace(pattern)
+		}
+		sink.Exclude = exclude
+	case "layout":
+		if value != "hierarchical" && value != "flat" {
+			return fmt.Errorf("layout must be 'hierarchical' or 'flat'")
+		}
+		sink.Layout = value
+	default:
+		return fmt.Errorf("unknown field '%s' (valid: directories, include, exclude, layout)", field)
+	}
+
+	manifest.Sinks[name] = sink
+
+	slog.InfoContext(ctx, "Updating sink field",
+		"action", "sink_update",
+		"name", name,
+		"field", field,
+		"value", value)
+
 	return f.saveManifest(manifest)
 }
 
