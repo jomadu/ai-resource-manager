@@ -39,3 +39,12 @@ type Installation struct {
 	Version string `json:"version"`
 	Path    string `json:"path"`
 }
+
+// InstallRequest groups install parameters to avoid repetitive parameter passing.
+type InstallRequest struct {
+	Registry string
+	Ruleset  string
+	Version  string
+	Include  []string
+	Exclude  []string
+}

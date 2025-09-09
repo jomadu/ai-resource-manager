@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jomadu/ai-rules-manager/internal/arm"
 	"github.com/spf13/cobra"
 )
 
@@ -42,7 +43,14 @@ func runInstall(cmd *cobra.Command, args []string) error {
 
 	// Install each ruleset
 	for _, ruleset := range rulesets {
-		err := armService.InstallRuleset(ctx, ruleset.Registry, ruleset.Name, ruleset.Version, include, exclude)
+		req := &arm.InstallRequest{
+			Registry: ruleset.Registry,
+			Ruleset:  ruleset.Name,
+			Version:  ruleset.Version,
+			Include:  include,
+			Exclude:  exclude,
+		}
+		err := armService.InstallRuleset(ctx, req)
 		if err != nil {
 			return fmt.Errorf("failed to install %s/%s: %w", ruleset.Registry, ruleset.Name, err)
 		}
