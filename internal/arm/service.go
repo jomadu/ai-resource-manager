@@ -661,15 +661,15 @@ func (a *ArmService) Version() version.VersionInfo {
 }
 
 // expandVersionShorthand expands npm-style version shorthands to proper semantic version constraints.
-// "1" -> "^1.0.0", "1.2" -> "^1.2.0"
+// "1" -> "^1.0.0", "1.0" -> "~1.0.0"
 func expandVersionShorthand(constraint string) string {
 	// Match pure major version (e.g., "1")
 	if matched, _ := regexp.MatchString(`^\d+$`, constraint); matched {
 		return "^" + constraint + ".0.0"
 	}
-	// Match major.minor version (e.g., "1.2")
+	// Match major.minor version (e.g., "1.0")
 	if matched, _ := regexp.MatchString(`^\d+\.\d+$`, constraint); matched {
-		return "^" + constraint + ".0"
+		return "~" + constraint + ".0"
 	}
 	return constraint
 }
