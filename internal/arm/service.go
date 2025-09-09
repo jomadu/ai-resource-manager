@@ -19,7 +19,7 @@ import (
 
 // Service provides the main ARM functionality for managing AI rule rulesets.
 type Service interface {
-	InstallRuleset(ctx context.Context, registry, ruleset, version string, include, exclude []string) error
+	InstallRuleset(ctx context.Context, req *InstallRequest) error
 	InstallManifest(ctx context.Context) error
 	UninstallRuleset(ctx context.Context, registry, ruleset string) error
 	UpdateRuleset(ctx context.Context, registry, ruleset string) error
@@ -49,88 +49,104 @@ func NewArmService() *ArmService {
 	}
 }
 
-func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, version string, include, exclude []string) error {
-	// Normalize empty version to "latest"
-	if version == "" {
-		version = "latest"
-	}
+func (a *ArmService) InstallRuleset(ctx context.Context, req *InstallRequest) error {
 
-	// Expand shorthand constraints for storage
-	version = expandVersionShorthand(version)
-
-	// Validate registry exists in manifest
+	// Load registries once and validate
 	registries, err := a.manifestManager.GetRawRegistries(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get registries: %w", err)
 	}
-	registryConfig, exists := registries[registryName]
-	if !exists {
-		slog.ErrorContext(ctx, "Registry not found", "registry", registryName)
-		return fmt.Errorf("registry %s not found", registryName)
+	if req.Registry == "" {
+		return fmt.Errorf("registry is required")
+	}
+	if req.Ruleset == "" {
+		return fmt.Errorf("ruleset is required")
+	}
+	if _, exists := registries[req.Registry]; !exists {
+		return fmt.Errorf("registry %s not configured", req.Registry)
 	}
 
-	// Create registry client
-	registryClient, err := registry.NewRegistry(registryName, registryConfig)
+	// Resolve version
+	registryConfig := registries[req.Registry]
+	registryClient, err := registry.NewRegistry(req.Registry, registryConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
-
-	// Resolve version from registry (resolver expects "latest", not empty string)
-	resolvedVersion, err := registryClient.ResolveVersion(ctx, version)
+	versionStr := req.Version
+	if versionStr == "" {
+		versionStr = "latest"
+	}
+	versionStr = expandVersionShorthand(versionStr)
+	resolvedVersionResult, err := registryClient.ResolveVersion(ctx, versionStr)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to resolve version: %w", err)
+	}
+	resolvedVersion := resolvedVersionResult.Version
+
+	// Download content
+	selector := types.ContentSelector{Include: req.Include, Exclude: req.Exclude}
+	files, err := registryClient.GetContent(ctx, resolvedVersion, selector)
+	if err != nil {
+		return fmt.Errorf("failed to download content: %w", err)
 	}
 
-	// Download ruleset files
-	selector := types.ContentSelector{Include: include, Exclude: exclude}
-	files, err := registryClient.GetContent(ctx, resolvedVersion.Version, selector)
-	if err != nil {
-		return fmt.Errorf("failed to get content: %w", err)
+	if err := a.updateTrackingFiles(ctx, req, resolvedVersion, files); err != nil {
+		return fmt.Errorf("failed to update tracking files: %w", err)
 	}
 
-	// Update manifest
+	return a.installToSinks(ctx, req, resolvedVersion, files)
+}
+
+func (a *ArmService) updateTrackingFiles(ctx context.Context, req *InstallRequest, version types.Version, files []types.File) error {
+	// Store normalized version in manifest
+	manifestVersion := req.Version
+	if manifestVersion == "" {
+		manifestVersion = "latest"
+	}
+	manifestVersion = expandVersionShorthand(manifestVersion)
+
 	manifestEntry := manifest.Entry{
-		Version: version,
-		Include: include,
-		Exclude: exclude,
+		Version: manifestVersion,
+		Include: req.Include,
+		Exclude: req.Exclude,
 	}
-	if err := a.manifestManager.CreateEntry(ctx, registryName, ruleset, manifestEntry); err != nil {
-		if err := a.manifestManager.UpdateEntry(ctx, registryName, ruleset, manifestEntry); err != nil {
+	if err := a.manifestManager.CreateEntry(ctx, req.Registry, req.Ruleset, manifestEntry); err != nil {
+		if err := a.manifestManager.UpdateEntry(ctx, req.Registry, req.Ruleset, manifestEntry); err != nil {
 			return fmt.Errorf("failed to update manifest: %w", err)
 		}
 	}
 
-	// Generate checksum for integrity verification
 	checksum := lockfile.GenerateChecksum(files)
-
-	// Update lockfile
 	lockEntry := &lockfile.Entry{
-		Version:  resolvedVersion.Version.Version,
-		Display:  resolvedVersion.Version.Display,
+		Version:  version.Version,
+		Display:  version.Display,
 		Checksum: checksum,
 	}
-	if err := a.lockFileManager.CreateEntry(ctx, registryName, ruleset, lockEntry); err != nil {
-		if err := a.lockFileManager.UpdateEntry(ctx, registryName, ruleset, lockEntry); err != nil {
+	if err := a.lockFileManager.CreateEntry(ctx, req.Registry, req.Ruleset, lockEntry); err != nil {
+		if err := a.lockFileManager.UpdateEntry(ctx, req.Registry, req.Ruleset, lockEntry); err != nil {
 			return fmt.Errorf("failed to update lockfile: %w", err)
 		}
 	}
 
-	// Install files to sink directories
-	slog.InfoContext(ctx, "Installing ruleset", "registry", registryName, "ruleset", ruleset, "version", resolvedVersion.Version.Display)
+	return nil
+}
+
+func (a *ArmService) installToSinks(ctx context.Context, req *InstallRequest, version types.Version, files []types.File) error {
+	slog.InfoContext(ctx, "Installing ruleset", "registry", req.Registry, "ruleset", req.Ruleset, "version", version.Display)
+
 	sinks, err := a.configManager.GetSinks(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get sinks: %w", err)
 	}
 
-	rulesetKey := registryName + "/" + ruleset
+	rulesetKey := req.Registry + "/" + req.Ruleset
 	var matchingSinkNames []string
 	for sinkName, sink := range sinks {
 		if a.matchesSink(rulesetKey, &sink) {
 			matchingSinkNames = append(matchingSinkNames, sinkName)
 			installer := installer.NewInstaller(&sink)
 			for _, dir := range sink.Directories {
-				// Use display version for directory names
-				if err := installer.Install(ctx, dir, registryName, ruleset, resolvedVersion.Version.Display, files); err != nil {
+				if err := installer.Install(ctx, dir, req.Registry, req.Ruleset, version.Display, files); err != nil {
 					slog.ErrorContext(ctx, "Failed to install to directory", "dir", dir, "error", err)
 					return err
 				}
@@ -139,9 +155,9 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 	}
 
 	if len(matchingSinkNames) == 0 {
-		slog.WarnContext(ctx, "Ruleset not targeted by any sinks", "registry", registryName, "ruleset", ruleset)
+		slog.WarnContext(ctx, "Ruleset not targeted by any sinks", "registry", req.Registry, "ruleset", req.Ruleset)
 	} else {
-		slog.InfoContext(ctx, "Ruleset targeted by sinks", "registry", registryName, "ruleset", ruleset, "sinks", matchingSinkNames)
+		slog.InfoContext(ctx, "Ruleset targeted by sinks", "registry", req.Registry, "ruleset", req.Ruleset, "sinks", matchingSinkNames)
 	}
 
 	return nil
@@ -171,7 +187,13 @@ func (a *ArmService) InstallManifest(ctx context.Context) error {
 	// Case: Manifest exists, no lockfile - resolve from manifest and create lockfile
 	for registryName, rulesets := range manifestEntries {
 		for rulesetName, entry := range rulesets {
-			if err := a.InstallRuleset(ctx, registryName, rulesetName, entry.Version, entry.Include, entry.Exclude); err != nil {
+			if err := a.InstallRuleset(ctx, &InstallRequest{
+				Registry: registryName,
+				Ruleset:  rulesetName,
+				Version:  entry.Version,
+				Include:  entry.Include,
+				Exclude:  entry.Exclude,
+			}); err != nil {
 				slog.ErrorContext(ctx, "Failed to install ruleset", "registry", registryName, "ruleset", rulesetName, "error", err)
 				return err
 			}
@@ -222,7 +244,13 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registry, ruleset string
 	}
 
 	slog.InfoContext(ctx, "Updating ruleset", "registry", registry, "ruleset", ruleset)
-	return a.InstallRuleset(ctx, registry, ruleset, manifestEntry.Version, manifestEntry.Include, manifestEntry.Exclude)
+	return a.InstallRuleset(ctx, &InstallRequest{
+		Registry: registry,
+		Ruleset:  ruleset,
+		Version:  manifestEntry.Version,
+		Include:  manifestEntry.Include,
+		Exclude:  manifestEntry.Exclude,
+	})
 }
 
 func (a *ArmService) GetOutdatedRulesets(ctx context.Context) ([]OutdatedRuleset, error) {
@@ -559,7 +587,13 @@ func (a *ArmService) SyncSink(ctx context.Context, sinkName string, sink *config
 			if a.matchesSink(rulesetKey, sink) {
 				if !installedRulesets[rulesetName] {
 					// Install missing ruleset
-					if err := a.InstallRuleset(ctx, registryName, rulesetName, entry.Version, entry.Include, entry.Exclude); err != nil {
+					if err := a.InstallRuleset(ctx, &InstallRequest{
+						Registry: registryName,
+						Ruleset:  rulesetName,
+						Version:  entry.Version,
+						Include:  entry.Include,
+						Exclude:  entry.Exclude,
+					}); err != nil {
 						slog.ErrorContext(ctx, "Failed to sync install ruleset", "registry", registryName, "ruleset", rulesetName, "error", err)
 					}
 				}
