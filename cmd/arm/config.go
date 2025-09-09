@@ -154,7 +154,7 @@ Examples:
 
 		// Set default include pattern if none provided
 		if len(include) == 0 {
-			include = []string{"*"}
+			include = []string{"**/*"}
 		}
 
 		configManager := config.NewFileManager()
