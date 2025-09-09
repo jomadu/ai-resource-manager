@@ -79,9 +79,6 @@ success "Configuration complete"
 
 log "Showing arm.json manifest:"
 cat arm.json | jq .
-
-log "Showing .armrc.json configuration:"
-cat .armrc.json | jq .
 pause
 
 # === VERSION ===
@@ -182,9 +179,8 @@ pause
 # === INSTALL - Major Version ===
 log "=== INSTALL - Major Version ==="
 log "Reinstalling with major version constraint..."
-rm -rf .cursor .amazonq arm.json arm-lock.json
+rm -rf .cursor .amazonq .github
 
-run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 run_arm install ai-rules/amazonq-rules@1 --include "rules/amazonq/*.md"
 run_arm install ai-rules/cursor-rules@1 --include "rules/cursor/*.mdc"
 run_arm install ai-rules/copilot-rules@1 --include "rules/copilot/*.instructions.md"
@@ -203,9 +199,8 @@ pause
 # === INSTALL - Minor Version ===
 log "=== INSTALL - Minor Version ==="
 log "Reinstalling with minor version constraint..."
-rm -rf .cursor .amazonq arm.json arm-lock.json
+rm -rf .cursor .amazonq .github
 
-run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 run_arm install ai-rules/amazonq-rules@1.0 --include "rules/amazonq/*.md"
 run_arm install ai-rules/cursor-rules@1.0 --include "rules/cursor/*.mdc"
 run_arm install ai-rules/copilot-rules@1.0 --include "rules/copilot/*.instructions.md"
@@ -224,9 +219,8 @@ pause
 # === INSTALL - Branch ===
 log "=== INSTALL - Branch ==="
 log "Reinstalling from main branch..."
-rm -rf .cursor .amazonq arm.json arm-lock.json
+rm -rf .cursor .amazonq .github
 
-run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 run_arm install ai-rules/amazonq-rules@main --include "rules/amazonq/*.md"
 run_arm install ai-rules/cursor-rules@main --include "rules/cursor/*.mdc"
 run_arm install ai-rules/copilot-rules@main --include "rules/copilot/*.instructions.md"
@@ -269,8 +263,7 @@ echo "• Installing from manifest and lockfile"
 echo "• File structure management"
 echo ""
 echo "Check the generated files:"
-echo "• .armrc.json - Configuration"
-echo "• arm.json - Manifest"
+echo "• arm.json - Manifest (includes sinks configuration)"
 echo "• arm-lock.json - Lockfile"
 echo "• .cursor/rules/ - Cursor rules (hierarchical)"
 echo "• .amazonq/rules/ - Amazon Q rules (hierarchical)"

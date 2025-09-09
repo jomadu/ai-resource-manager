@@ -8,7 +8,6 @@ import (
 	"sort"
 
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/jomadu/ai-rules-manager/internal/config"
 	"github.com/jomadu/ai-rules-manager/internal/installer"
 	"github.com/jomadu/ai-rules-manager/internal/lockfile"
 	"github.com/jomadu/ai-rules-manager/internal/manifest"
@@ -28,14 +27,13 @@ type Service interface {
 	ListInstalledRulesets(ctx context.Context) ([]InstalledRuleset, error)
 	GetRulesetInfo(ctx context.Context, registry, ruleset string) (*RulesetInfo, error)
 	GetAllRulesetInfo(ctx context.Context) ([]*RulesetInfo, error)
-	SyncSink(ctx context.Context, sinkName string, sink *config.SinkConfig) error
-	SyncRemovedSink(ctx context.Context, removedSink *config.SinkConfig) error
+	SyncSink(ctx context.Context, sinkName string, sink *manifest.SinkConfig) error
+	SyncRemovedSink(ctx context.Context, removedSink *manifest.SinkConfig) error
 	Version() version.VersionInfo
 }
 
 // ArmService orchestrates all ARM operations.
 type ArmService struct {
-	configManager   config.Manager
 	manifestManager manifest.Manager
 	lockFileManager lockfile.Manager
 }
@@ -43,7 +41,6 @@ type ArmService struct {
 // NewArmService creates a new ARM service instance with all dependencies.
 func NewArmService() *ArmService {
 	return &ArmService{
-		configManager:   config.NewFileManager(),
 		manifestManager: manifest.NewFileManager(),
 		lockFileManager: lockfile.NewFileManager(),
 	}
@@ -134,7 +131,7 @@ func (a *ArmService) updateTrackingFiles(ctx context.Context, req *InstallReques
 func (a *ArmService) installToSinks(ctx context.Context, req *InstallRequest, version types.Version, files []types.File) error {
 	slog.InfoContext(ctx, "Installing ruleset", "registry", req.Registry, "ruleset", req.Ruleset, "version", version.Display)
 
-	sinks, err := a.configManager.GetSinks(ctx)
+	sinks, err := a.manifestManager.GetSinks(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get sinks: %w", err)
 	}
@@ -216,7 +213,7 @@ func (a *ArmService) UninstallRuleset(ctx context.Context, registry, ruleset str
 
 	// Remove installed files from sink directories
 	slog.InfoContext(ctx, "Uninstalling ruleset", "registry", registry, "ruleset", ruleset)
-	sinks, err := a.configManager.GetSinks(ctx)
+	sinks, err := a.manifestManager.GetSinks(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get sinks: %w", err)
 	}
@@ -385,7 +382,7 @@ func (a *ArmService) GetRulesetInfo(ctx context.Context, registry, ruleset strin
 	}
 
 	// Get sinks and find installation paths
-	sinks, err := a.configManager.GetSinks(ctx)
+	sinks, err := a.manifestManager.GetSinks(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sinks: %w", err)
 	}
@@ -515,7 +512,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 		return fmt.Errorf("checksum verification failed for %s/%s@%s", registryName, ruleset, lockEntry.Version)
 	}
 
-	sinks, err := a.configManager.GetSinks(ctx)
+	sinks, err := a.manifestManager.GetSinks(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get sinks: %w", err)
 	}
@@ -537,7 +534,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 	return nil
 }
 
-func (a *ArmService) matchesSink(rulesetKey string, sink *config.SinkConfig) bool {
+func (a *ArmService) matchesSink(rulesetKey string, sink *manifest.SinkConfig) bool {
 	// Check exclude patterns first
 	for _, pattern := range sink.Exclude {
 		if matched, _ := doublestar.Match(pattern, rulesetKey); matched {
@@ -560,7 +557,7 @@ func (a *ArmService) matchesSink(rulesetKey string, sink *config.SinkConfig) boo
 	return false
 }
 
-func (a *ArmService) SyncSink(ctx context.Context, sinkName string, sink *config.SinkConfig) error {
+func (a *ArmService) SyncSink(ctx context.Context, sinkName string, sink *manifest.SinkConfig) error {
 	// Get manifest entries to determine what should be installed
 	manifestEntries, err := a.manifestManager.GetEntries(ctx)
 	if err != nil {
@@ -629,7 +626,7 @@ func (a *ArmService) SyncSink(ctx context.Context, sinkName string, sink *config
 	return nil
 }
 
-func (a *ArmService) SyncRemovedSink(ctx context.Context, removedSink *config.SinkConfig) error {
+func (a *ArmService) SyncRemovedSink(ctx context.Context, removedSink *manifest.SinkConfig) error {
 	// Scan removed sink directories to find installed rulesets
 	for _, dir := range removedSink.Directories {
 		installer := installer.NewInstaller(removedSink)

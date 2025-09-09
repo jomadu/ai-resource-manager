@@ -7,8 +7,17 @@ type Entry struct {
 	Exclude []string `json:"exclude"`
 }
 
+// SinkConfig defines a sink configuration for rule deployment.
+type SinkConfig struct {
+	Directories []string `json:"directories"`
+	Include     []string `json:"include"`
+	Exclude     []string `json:"exclude"`
+	Layout      string   `json:"layout,omitempty"`
+}
+
 // Manifest represents the arm.json manifest file structure.
 type Manifest struct {
 	Registries map[string]map[string]interface{} `json:"registries"`
 	Rulesets   map[string]map[string]Entry       `json:"rulesets"`
+	Sinks      map[string]SinkConfig             `json:"sinks,omitempty"`
 }

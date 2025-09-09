@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jomadu/ai-rules-manager/internal/config"
 	"github.com/jomadu/ai-rules-manager/internal/manifest"
 	"github.com/jomadu/ai-rules-manager/internal/registry"
 	"github.com/spf13/cobra"
@@ -165,13 +164,13 @@ Examples:
 			include = []string{"**/*"}
 		}
 
-		configManager := config.NewFileManager()
-		err := configManager.AddSink(context.Background(), name, directories, include, exclude, layout, force)
+		manifestManager := manifest.NewFileManager()
+		err := manifestManager.AddSink(context.Background(), name, directories, include, exclude, layout, force)
 		if err != nil {
 			return err
 		}
 		// Sync new sink
-		sink, err := configManager.GetSink(context.Background(), name)
+		sink, err := manifestManager.GetSink(context.Background(), name)
 		if err != nil {
 			return err
 		}
@@ -195,14 +194,14 @@ Examples:
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
-		configManager := config.NewFileManager()
+		manifestManager := manifest.NewFileManager()
 		// Get sink before removal
-		sink, err := configManager.GetSink(context.Background(), name)
+		sink, err := manifestManager.GetSink(context.Background(), name)
 		if err != nil {
 			return err
 		}
-		// Remove from config
-		err = configManager.RemoveSink(context.Background(), name)
+		// Remove from manifest
+		err = manifestManager.RemoveSink(context.Background(), name)
 		if err != nil {
 			return err
 		}
@@ -226,8 +225,7 @@ var configListCmd = &cobra.Command{
 			}
 		}
 
-		configManager := config.NewFileManager()
-		sinks, err := configManager.GetSinks(context.Background())
+		sinks, err := manifestManager.GetSinks(context.Background())
 		if err == nil {
 			fmt.Println("Sinks:")
 			for name, sink := range sinks {
@@ -285,14 +283,14 @@ Examples:
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, field, value := args[0], args[1], args[2]
-		configManager := config.NewFileManager()
+		manifestManager := manifest.NewFileManager()
 		// Update sink config
-		err := configManager.UpdateSink(context.Background(), name, field, value)
+		err := manifestManager.UpdateSink(context.Background(), name, field, value)
 		if err != nil {
 			return err
 		}
 		// Sync updated sink
-		sink, err := configManager.GetSink(context.Background(), name)
+		sink, err := manifestManager.GetSink(context.Background(), name)
 		if err != nil {
 			return err
 		}

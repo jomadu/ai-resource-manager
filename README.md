@@ -30,7 +30,7 @@ Rulesets are collections of AI rules packaged as versioned units, identified by 
 
 ### Sinks
 
-Sinks define where installed rules should be placed in your local filesystem and which AI tools should receive them. These are personal configuration settings stored in `.armrc.json` on each developer's machine. Each sink targets specific directories (like `.amazonq/rules` or `.cursor/rules`) and can filter rulesets using include/exclude patterns. Sinks support two layout modes:
+Sinks define where installed rules should be placed in your local filesystem and which AI tools should receive them. These are team-shared configuration settings stored in `arm.json`. Each sink targets specific directories (like `.amazonq/rules` or `.cursor/rules`) and can filter rulesets using include/exclude patterns. Sinks support two layout modes:
 
 - **Hierarchical Layout** (default): Preserves directory structure from rulesets
 - **Flat Layout**: Places all files in a single directory with hash-prefixed names for tools that require flat file structures
@@ -148,14 +148,16 @@ The `arm-index.json` file maps hashed filenames back to their original paths:
 }
 ```
 
-Configure via CLI flags:
+Configure via CLI:
 ```bash
 arm config sink add copilot --directories .github/copilot --layout flat
 ```
 
-Or configure in `.armrc.json`:
+Sinks are stored in `arm.json`:
 ```json
 {
+  "registries": { ... },
+  "rulesets": { ... },
   "sinks": {
     "cursor": {
       "directories": [".cursor/rules"],
@@ -171,8 +173,7 @@ Or configure in `.armrc.json`:
 
 ## Files
 
-- `.armrc.json` - Personal sink configuration (where rules are installed on your machine)
-- `arm.json` - Team-shared project manifest with registries and dependencies
+- `arm.json` - Team-shared project manifest with registries, dependencies, and sinks
 - `arm-lock.json` - Team-shared locked versions for reproducible installs
 - `arm-index.json` - Local flat layout index (maps hashes to original file paths)
 
