@@ -60,12 +60,24 @@ func TestIntegrationInstallLatest(t *testing.T) {
 	service, ctx := setupTest(t)
 
 	// Install latest versions with empty constraint (should find latest)
-	err := service.InstallRuleset(ctx, "ai-rules", "amazonq-rules", "", []string{"rules/amazonq/*.md"}, nil)
+	err := service.InstallRuleset(ctx, &InstallRequest{
+		Registry: "ai-rules",
+		Ruleset:  "amazonq-rules",
+		Version:  "",
+		Include:  []string{"rules/amazonq/*.md"},
+		Exclude:  nil,
+	})
 	if err != nil {
 		t.Fatalf("Failed to install amazonq-rules: %v", err)
 	}
 
-	err = service.InstallRuleset(ctx, "ai-rules", "cursor-rules", "", []string{"rules/cursor/*.mdc"}, nil)
+	err = service.InstallRuleset(ctx, &InstallRequest{
+		Registry: "ai-rules",
+		Ruleset:  "cursor-rules",
+		Version:  "",
+		Include:  []string{"rules/cursor/*.mdc"},
+		Exclude:  nil,
+	})
 	if err != nil {
 		t.Fatalf("Failed to install cursor-rules: %v", err)
 	}
@@ -98,12 +110,24 @@ func TestIntegrationList(t *testing.T) {
 	service, ctx := setupTest(t)
 
 	// Install rulesets first
-	err := service.InstallRuleset(ctx, "ai-rules", "amazonq-rules", "^2.1.0", []string{"rules/amazonq/*.md"}, nil)
+	err := service.InstallRuleset(ctx, &InstallRequest{
+		Registry: "ai-rules",
+		Ruleset:  "amazonq-rules",
+		Version:  "^2.1.0",
+		Include:  []string{"rules/amazonq/*.md"},
+		Exclude:  nil,
+	})
 	if err != nil {
 		t.Fatalf("Failed to install amazonq-rules: %v", err)
 	}
 
-	err = service.InstallRuleset(ctx, "ai-rules", "cursor-rules", "^2.1.0", []string{"rules/cursor/*.mdc"}, nil)
+	err = service.InstallRuleset(ctx, &InstallRequest{
+		Registry: "ai-rules",
+		Ruleset:  "cursor-rules",
+		Version:  "^2.1.0",
+		Include:  []string{"rules/cursor/*.mdc"},
+		Exclude:  nil,
+	})
 	if err != nil {
 		t.Fatalf("Failed to install cursor-rules: %v", err)
 	}
@@ -126,7 +150,13 @@ func TestIntegrationInfo(t *testing.T) {
 	service, ctx := setupTest(t)
 
 	// Install ruleset first
-	err := service.InstallRuleset(ctx, "ai-rules", "amazonq-rules", "^2.1.0", []string{"rules/amazonq/*.md"}, nil)
+	err := service.InstallRuleset(ctx, &InstallRequest{
+		Registry: "ai-rules",
+		Ruleset:  "amazonq-rules",
+		Version:  "^2.1.0",
+		Include:  []string{"rules/amazonq/*.md"},
+		Exclude:  nil,
+	})
 	if err != nil {
 		t.Fatalf("Failed to install amazonq-rules: %v", err)
 	}
@@ -152,12 +182,24 @@ func TestIntegrationUninstall(t *testing.T) {
 	service, ctx := setupTest(t)
 
 	// Install rulesets first
-	err := service.InstallRuleset(ctx, "ai-rules", "amazonq-rules", "^2.1.0", []string{"rules/amazonq/*.md"}, nil)
+	err := service.InstallRuleset(ctx, &InstallRequest{
+		Registry: "ai-rules",
+		Ruleset:  "amazonq-rules",
+		Version:  "^2.1.0",
+		Include:  []string{"rules/amazonq/*.md"},
+		Exclude:  nil,
+	})
 	if err != nil {
 		t.Fatalf("Failed to install amazonq-rules: %v", err)
 	}
 
-	err = service.InstallRuleset(ctx, "ai-rules", "cursor-rules", "^2.1.0", []string{"rules/cursor/*.mdc"}, nil)
+	err = service.InstallRuleset(ctx, &InstallRequest{
+		Registry: "ai-rules",
+		Ruleset:  "cursor-rules",
+		Version:  "^2.1.0",
+		Include:  []string{"rules/cursor/*.mdc"},
+		Exclude:  nil,
+	})
 	if err != nil {
 		t.Fatalf("Failed to install cursor-rules: %v", err)
 	}
@@ -189,7 +231,13 @@ func TestIntegrationSpecificVersion(t *testing.T) {
 	service, ctx := setupTest(t)
 
 	// Install specific version
-	err := service.InstallRuleset(ctx, "ai-rules", "cursor-rules", "1.0.0", []string{"rules/cursor/*.mdc"}, nil)
+	err := service.InstallRuleset(ctx, &InstallRequest{
+		Registry: "ai-rules",
+		Ruleset:  "cursor-rules",
+		Version:  "1.0.0",
+		Include:  []string{"rules/cursor/*.mdc"},
+		Exclude:  nil,
+	})
 	if err != nil {
 		t.Fatalf("Failed to install specific version: %v", err)
 	}
@@ -217,7 +265,13 @@ func TestIntegrationLatestConstraint(t *testing.T) {
 	service, ctx := setupTest(t)
 
 	// Install without version constraint (should normalize to "latest")
-	err := service.InstallRuleset(ctx, "ai-rules", "amazonq-rules", "", []string{"rules/amazonq/*.md"}, nil)
+	err := service.InstallRuleset(ctx, &InstallRequest{
+		Registry: "ai-rules",
+		Ruleset:  "amazonq-rules",
+		Version:  "",
+		Include:  []string{"rules/amazonq/*.md"},
+		Exclude:  nil,
+	})
 	if err != nil {
 		t.Fatalf("Failed to install with empty constraint: %v", err)
 	}
@@ -329,7 +383,13 @@ func TestIntegrationGlobstarPatterns(t *testing.T) {
 	service, ctx := setupTest(t)
 
 	// Install with globstar pattern that should match files at different hierarchy levels
-	err := service.InstallRuleset(ctx, "ai-rules", "amazonq-rules", "^2.1.0", []string{"**/*.md"}, nil)
+	err := service.InstallRuleset(ctx, &InstallRequest{
+		Registry: "ai-rules",
+		Ruleset:  "amazonq-rules",
+		Version:  "^2.1.0",
+		Include:  []string{"**/*.md"},
+		Exclude:  nil,
+	})
 	if err != nil {
 		t.Fatalf("Failed to install with globstar pattern: %v", err)
 	}
@@ -343,7 +403,13 @@ func TestIntegrationGlobstarPatterns(t *testing.T) {
 	assertFileExists(t, ".amazonq/rules/arm/ai-rules/amazonq-rules/v2.1.0/rules/amazonq/clean-code.md")
 
 	// Install cursor rules with pattern that matches files at specific depth
-	err = service.InstallRuleset(ctx, "ai-rules", "cursor-rules", "^2.1.0", []string{"rules/**/*.mdc"}, nil)
+	err = service.InstallRuleset(ctx, &InstallRequest{
+		Registry: "ai-rules",
+		Ruleset:  "cursor-rules",
+		Version:  "^2.1.0",
+		Include:  []string{"rules/**/*.mdc"},
+		Exclude:  nil,
+	})
 	if err != nil {
 		t.Fatalf("Failed to install cursor rules with nested pattern: %v", err)
 	}
