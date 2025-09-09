@@ -79,7 +79,4 @@ success "Configuration complete"
 
 log "Showing arm.json manifest:"
 cat arm.json | jq .
-
-log "Showing .armrc.json configuration:"
-cat .armrc.json | jq .
 pause
