@@ -20,14 +20,14 @@ import (
 // Service provides the main ARM functionality for managing AI rule rulesets.
 type Service interface {
 	InstallRuleset(ctx context.Context, registry, ruleset, version string, include, exclude []string) error
-	Install(ctx context.Context) error
-	Uninstall(ctx context.Context, registry, ruleset string) error
+	InstallManifest(ctx context.Context) error
+	UninstallRuleset(ctx context.Context, registry, ruleset string) error
 	UpdateRuleset(ctx context.Context, registry, ruleset string) error
-	Update(ctx context.Context) error
-	Outdated(ctx context.Context) ([]OutdatedRuleset, error)
-	List(ctx context.Context) ([]InstalledRuleset, error)
-	Info(ctx context.Context, registry, ruleset string) (*RulesetInfo, error)
-	InfoAll(ctx context.Context) ([]*RulesetInfo, error)
+	UpdateAllRulesets(ctx context.Context) error
+	GetOutdatedRulesets(ctx context.Context) ([]OutdatedRuleset, error)
+	ListInstalledRulesets(ctx context.Context) ([]InstalledRuleset, error)
+	GetRulesetInfo(ctx context.Context, registry, ruleset string) (*RulesetInfo, error)
+	GetAllRulesetInfo(ctx context.Context) ([]*RulesetInfo, error)
 	SyncSink(ctx context.Context, sinkName string, sink *config.SinkConfig) error
 	SyncRemovedSink(ctx context.Context, removedSink *config.SinkConfig) error
 	Version() version.VersionInfo
@@ -147,7 +147,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 	return nil
 }
 
-func (a *ArmService) Install(ctx context.Context) error {
+func (a *ArmService) InstallManifest(ctx context.Context) error {
 	manifestEntries, manifestErr := a.manifestManager.GetEntries(ctx)
 	lockEntries, lockErr := a.lockFileManager.GetEntries(ctx)
 
@@ -181,7 +181,7 @@ func (a *ArmService) Install(ctx context.Context) error {
 	return nil
 }
 
-func (a *ArmService) Uninstall(ctx context.Context, registry, ruleset string) error {
+func (a *ArmService) UninstallRuleset(ctx context.Context, registry, ruleset string) error {
 	// Remove from manifest
 	if err := a.manifestManager.RemoveEntry(ctx, registry, ruleset); err != nil {
 		return fmt.Errorf("failed to remove from manifest: %w", err)
@@ -225,7 +225,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registry, ruleset string
 	return a.InstallRuleset(ctx, registry, ruleset, manifestEntry.Version, manifestEntry.Include, manifestEntry.Exclude)
 }
 
-func (a *ArmService) Outdated(ctx context.Context) ([]OutdatedRuleset, error) {
+func (a *ArmService) GetOutdatedRulesets(ctx context.Context) ([]OutdatedRuleset, error) {
 	lockEntries, err := a.lockFileManager.GetEntries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get lockfile entries: %w", err)
@@ -296,7 +296,7 @@ func (a *ArmService) Outdated(ctx context.Context) ([]OutdatedRuleset, error) {
 	return outdated, nil
 }
 
-func (a *ArmService) List(ctx context.Context) ([]InstalledRuleset, error) {
+func (a *ArmService) ListInstalledRulesets(ctx context.Context) ([]InstalledRuleset, error) {
 	lockEntries, err := a.lockFileManager.GetEntries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get lockfile entries: %w", err)
@@ -343,7 +343,7 @@ func (a *ArmService) List(ctx context.Context) ([]InstalledRuleset, error) {
 	return rulesets, nil
 }
 
-func (a *ArmService) Info(ctx context.Context, registry, ruleset string) (*RulesetInfo, error) {
+func (a *ArmService) GetRulesetInfo(ctx context.Context, registry, ruleset string) (*RulesetInfo, error) {
 	// Get lockfile entry
 	lockEntry, err := a.lockFileManager.GetEntry(ctx, registry, ruleset)
 	if err != nil {
@@ -393,7 +393,7 @@ func (a *ArmService) Info(ctx context.Context, registry, ruleset string) (*Rules
 	}, nil
 }
 
-func (a *ArmService) Update(ctx context.Context) error {
+func (a *ArmService) UpdateAllRulesets(ctx context.Context) error {
 	manifestEntries, manifestErr := a.manifestManager.GetEntries(ctx)
 	_, lockErr := a.lockFileManager.GetEntries(ctx)
 
@@ -422,8 +422,8 @@ func (a *ArmService) Update(ctx context.Context) error {
 	return nil
 }
 
-func (a *ArmService) InfoAll(ctx context.Context) ([]*RulesetInfo, error) {
-	installed, err := a.List(ctx)
+func (a *ArmService) GetAllRulesetInfo(ctx context.Context) ([]*RulesetInfo, error) {
+	installed, err := a.ListInstalledRulesets(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list installed rulesets: %w", err)
 	}
@@ -431,7 +431,7 @@ func (a *ArmService) InfoAll(ctx context.Context) ([]*RulesetInfo, error) {
 	var infos []*RulesetInfo
 	for i := range installed {
 		ruleset := &installed[i]
-		info, err := a.Info(ctx, ruleset.Registry, ruleset.Name)
+		info, err := a.GetRulesetInfo(ctx, ruleset.Registry, ruleset.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get info for %s/%s: %w", ruleset.Registry, ruleset.Name, err)
 		}
