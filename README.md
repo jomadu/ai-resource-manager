@@ -24,6 +24,10 @@ ARM treats AI rules like code dependencies - versioned, distributable packages t
 
 Registries are remote sources where rulesets are stored and versioned, similar to npm registries for JavaScript packages. ARM supports Git-based registries that can point to GitHub repositories, GitLab projects, or any Git remote containing rule collections. When you configure a registry like `ai-rules`, you're creating a named connection to a repository that contains multiple rulesets with proper semantic versioning.
 
+### Rulesets
+
+Rulesets are collections of AI rules packaged as versioned units, identified by names like `ai-rules/amazonq-rules` where `ai-rules` is the registry and `amazonq-rules` is the ruleset name. Each ruleset contains rule files (markdown, text, etc.) along with metadata defining version constraints, file patterns, and compatibility. Rulesets can be installed with specific version constraints and will automatically update according to semantic versioning rules.
+
 ### Sinks
 
 Sinks define where installed rules should be placed in your local filesystem and which AI tools should receive them. Each sink targets specific directories (like `.amazonq/rules` or `.cursor/rules`) and can filter rulesets using include/exclude patterns. Sinks support two layout modes:
@@ -32,10 +36,6 @@ Sinks define where installed rules should be placed in your local filesystem and
 - **Flat Layout**: Places all files in a single directory with hash-prefixed names for tools that require flat file structures
 
 This allows you to automatically distribute the right rules to the right AI tools without manual file management.
-
-### Rulesets
-
-Rulesets are collections of AI rules packaged as versioned units, identified by names like `ai-rules/amazonq-rules` where `ai-rules` is the registry and `amazonq-rules` is the ruleset name. Each ruleset contains rule files (markdown, text, etc.) along with metadata defining version constraints, file patterns, and compatibility. Rulesets can be installed with specific version constraints and will automatically update according to semantic versioning rules.
 
 ## Installation
 
