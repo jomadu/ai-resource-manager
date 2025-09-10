@@ -117,6 +117,22 @@ func (h *HierarchicalInstaller) ListInstalled(ctx context.Context, dir string) (
 	return installations, nil
 }
 
+func (h *HierarchicalInstaller) IsInstalled(ctx context.Context, dir, registry, ruleset string) (installed bool, version string, err error) {
+	rulesetPath := filepath.Join(dir, "arm", registry, ruleset)
+	versionEntries, err := os.ReadDir(rulesetPath)
+	if err != nil {
+		return false, "", nil // Directory doesn't exist, not installed
+	}
+
+	for _, versionEntry := range versionEntries {
+		if versionEntry.IsDir() {
+			return true, versionEntry.Name(), nil
+		}
+	}
+
+	return false, "", nil
+}
+
 // removeExistingVersions removes ALL existing version directories for the same registry/ruleset
 // before installing a new version, ensuring only one version exists at any time.
 func (h *HierarchicalInstaller) removeExistingVersions(ctx context.Context, dir, registry, ruleset string) error {
