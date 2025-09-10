@@ -47,6 +47,12 @@ arm version
 arm help
 ```
 
+## Uninstall
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jomadu/ai-rules-manager/main/scripts/uninstall.sh | bash
+```
+
 ## Quick Start
 
 ```bash
