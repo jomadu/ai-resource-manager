@@ -125,6 +125,23 @@ func (f *FlatInstaller) ListInstalled(ctx context.Context, dir string) ([]Instal
 	return installations, nil
 }
 
+func (f *FlatInstaller) IsInstalled(ctx context.Context, dir, registry, ruleset string) (installed bool, version string, err error) {
+	// Load index
+	index, err := f.loadIndex(dir)
+	if err != nil {
+		return false, "", err
+	}
+
+	// Find any file for this registry/ruleset
+	for _, entry := range index {
+		if entry.Registry == registry && entry.Ruleset == ruleset {
+			return true, entry.Version, nil
+		}
+	}
+
+	return false, "", nil
+}
+
 // hashFile creates a SHA256 hash for the file identifier
 func (f *FlatInstaller) hashFile(registry, ruleset, version, filePath string) string {
 	identifier := fmt.Sprintf("%s/%s@%s:%s", registry, ruleset, version, filePath)
