@@ -151,6 +151,10 @@ Registries provide a version controlled source of truth for shared rulesets. Wit
 
 A registry is a remote source containing rulesets, similar to how npm registries contain JavaScript packages. Registries can be implemented in many ways (S3, HTTP, etc.), but ARM currently supports Git-based registries. Examples include the popular awesome-cursorrules repository or your team's private rule collections.
 
+- [PatrickJS/awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules)
+- [snarktank/ai-dev-tasks](https://github.com/snarktank/ai-dev-tasks)
+- [steipete/agent-rules](https://github.com/steipete/agent-rules)
+
 To configure a registry connection, use `arm config registry add <name> <url> --type git` where:
 
 - `<name>` is your chosen alias (e.g., "awesome-cursorrules")
