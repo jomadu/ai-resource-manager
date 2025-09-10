@@ -52,7 +52,7 @@ func (f *FlatInstaller) Install(ctx context.Context, dir, registry, ruleset, ver
 
 	for _, file := range files {
 		hash := f.hashFile(registry, ruleset, version, file.Path)
-		fileName := hash + "_" + strings.ReplaceAll(file.Path, "/", "_")
+		fileName := "arm_" + hash + "_" + strings.ReplaceAll(file.Path, "/", "_")
 		filePath := filepath.Join(dir, fileName)
 
 		if err := os.WriteFile(filePath, file.Content, 0o644); err != nil {
