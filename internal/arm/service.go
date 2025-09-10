@@ -234,16 +234,105 @@ func (a *ArmService) UninstallRuleset(ctx context.Context, registry, ruleset str
 	return nil
 }
 
-func (a *ArmService) UpdateRuleset(ctx context.Context, registry, ruleset string) error {
-	manifestEntry, err := a.manifestManager.GetEntry(ctx, registry, ruleset)
+func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetName string) error {
+	// Get manifest entry for version constraint
+	manifestEntry, err := a.manifestManager.GetEntry(ctx, registryName, rulesetName)
 	if err != nil {
 		return fmt.Errorf("failed to get manifest entry: %w", err)
 	}
 
-	slog.InfoContext(ctx, "Updating ruleset", "registry", registry, "ruleset", ruleset)
+	// Resolve what version we should have
+	registries, err := a.manifestManager.GetRawRegistries(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get registries: %w", err)
+	}
+	registryConfig, exists := registries[registryName]
+	if !exists {
+		return fmt.Errorf("registry %s not configured", registryName)
+	}
+
+	registryClient, err := registry.NewRegistry(registryName, registryConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create registry: %w", err)
+	}
+
+	versionStr := manifestEntry.Version
+	if versionStr == "" {
+		versionStr = "latest"
+	}
+	versionStr = expandVersionShorthand(versionStr)
+
+	resolvedVersionResult, err := registryClient.ResolveVersion(ctx, versionStr)
+	if err != nil {
+		return fmt.Errorf("failed to resolve version: %w", err)
+	}
+
+	// Check what's actually installed in the filesystem
+	sinks, err := a.manifestManager.GetSinks(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get sinks: %w", err)
+	}
+
+	rulesetKey := registryName + "/" + rulesetName
+	var isCurrentlyInstalled bool
+	var installedVersion string
+
+	// Check filesystem to see what's actually installed
+	for _, sink := range sinks {
+		if a.matchesSink(rulesetKey, &sink) {
+			installer := installer.NewInstaller(&sink)
+			for _, dir := range sink.Directories {
+				installed, version, err := installer.IsInstalled(ctx, dir, registryName, rulesetName)
+				if err != nil {
+					continue
+				}
+				if installed {
+					isCurrentlyInstalled = true
+					installedVersion = version
+					break
+				}
+			}
+			if isCurrentlyInstalled {
+				break
+			}
+		}
+	}
+
+	if !isCurrentlyInstalled {
+		// Nothing installed, proceed with install
+		slog.InfoContext(ctx, "Installing ruleset (not currently installed)", "registry", registryName, "ruleset", rulesetName)
+		return a.InstallRuleset(ctx, &InstallRequest{
+			Registry: registryName,
+			Ruleset:  rulesetName,
+			Version:  manifestEntry.Version,
+			Include:  manifestEntry.Include,
+			Exclude:  manifestEntry.Exclude,
+		})
+	}
+
+	// Check if installed version matches what we want
+	if installedVersion == resolvedVersionResult.Version.Display {
+		// Get lockfile entry to verify checksum
+		currentLockEntry, err := a.lockFileManager.GetEntry(ctx, registryName, rulesetName)
+		if err == nil {
+			// Verify checksum to ensure integrity
+			selector := types.ContentSelector{Include: manifestEntry.Include, Exclude: manifestEntry.Exclude}
+			files, err := registryClient.GetContent(ctx, resolvedVersionResult.Version, selector)
+			if err == nil && lockfile.VerifyChecksum(files, currentLockEntry.Checksum) {
+				slog.InfoContext(ctx, "Ruleset already up to date", "registry", registryName, "ruleset", rulesetName, "version", installedVersion)
+				return nil
+			}
+		}
+		// If we can't verify checksum, fall through to reinstall
+		slog.InfoContext(ctx, "Cannot verify integrity, reinstalling", "registry", registryName, "ruleset", rulesetName, "version", installedVersion)
+	} else {
+		slog.InfoContext(ctx, "Updating ruleset", "registry", registryName, "ruleset", rulesetName, "from", installedVersion, "to", resolvedVersionResult.Version.Display)
+	}
+
+	// Version changed or integrity check failed, proceed with update
 	return a.InstallRuleset(ctx, &InstallRequest{
-		Registry: registry,
-		Ruleset:  ruleset,
+		Registry: registryName,
+		Ruleset:  rulesetName,
 		Version:  manifestEntry.Version,
 		Include:  manifestEntry.Include,
 		Exclude:  manifestEntry.Exclude,

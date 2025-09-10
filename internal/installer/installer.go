@@ -17,4 +17,5 @@ type Installer interface {
 	Install(ctx context.Context, dir, registry, ruleset, version string, files []types.File) error
 	Uninstall(ctx context.Context, dir, registry, ruleset string) error
 	ListInstalled(ctx context.Context, dir string) ([]Installation, error)
+	IsInstalled(ctx context.Context, dir, registry, ruleset string) (bool, string, error)
 }
