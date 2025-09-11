@@ -84,6 +84,11 @@ func (f *FlatInstaller) Uninstall(ctx context.Context, dir, registry, ruleset st
 		return err
 	}
 
+	// If index is empty, no previous installation exists
+	if len(index) == 0 {
+		return nil
+	}
+
 	// Find and remove files for this registry/ruleset
 	var removedCount int
 	for fileName, entry := range index {

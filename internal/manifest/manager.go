@@ -277,6 +277,23 @@ func (f *FileManager) RemoveSink(ctx context.Context, name string) error {
 		return fmt.Errorf("sink %s not found", name)
 	}
 
+	// Check if any rulesets are using this sink
+	var usingRulesets []string
+	for registryName, rulesets := range manifest.Rulesets {
+		for rulesetName, entry := range rulesets {
+			for _, sink := range entry.Sinks {
+				if sink == name {
+					usingRulesets = append(usingRulesets, fmt.Sprintf("%s/%s", registryName, rulesetName))
+					break
+				}
+			}
+		}
+	}
+
+	if len(usingRulesets) > 0 {
+		return fmt.Errorf("cannot remove sink %s: it is being used by rulesets %v. Uninstall these rulesets first", name, usingRulesets)
+	}
+
 	slog.InfoContext(ctx, "Removing sink configuration",
 		"action", "sink_remove",
 		"name", name,
@@ -284,20 +301,6 @@ func (f *FileManager) RemoveSink(ctx context.Context, name string) error {
 
 	// Remove sink from configuration
 	delete(manifest.Sinks, name)
-
-	// Remove sink from all ruleset entries
-	for registryName, rulesets := range manifest.Rulesets {
-		for rulesetName, entry := range rulesets {
-			updatedSinks := make([]string, 0, len(entry.Sinks))
-			for _, sink := range entry.Sinks {
-				if sink != name {
-					updatedSinks = append(updatedSinks, sink)
-				}
-			}
-			entry.Sinks = updatedSinks
-			manifest.Rulesets[registryName][rulesetName] = entry
-		}
-	}
 
 	return f.saveManifest(manifest)
 }
