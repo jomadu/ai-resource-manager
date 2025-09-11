@@ -18,6 +18,25 @@ AI coding assistants like Cursor and Amazon Q rely on rules to guide their behav
 
 ARM treats AI rules like code dependencies - versioned, distributable packages that stay in sync across your entire development environment.
 
+## Concepts
+
+### Registries
+
+Registries are remote sources where rulesets are stored and versioned, similar to npm registries for JavaScript packages. These are shared across your team and stored in `arm.json`. ARM supports Git-based registries that can point to GitHub repositories, GitLab projects, or any Git remote containing rule collections. When you configure a registry like `ai-rules`, you're creating a named connection to a repository that contains multiple rulesets with proper semantic versioning.
+
+### Rulesets
+
+Rulesets are collections of AI rules packaged as versioned units, identified by names like `ai-rules/amazonq-rules` where `ai-rules` is the registry and `amazonq-rules` is the ruleset name. These are shared across your team and tracked in `arm.json`. Each ruleset contains rule files (markdown, text, etc.) along with metadata defining version constraints, file patterns, and compatibility. Rulesets can be installed with specific version constraints and will automatically update according to semantic versioning rules.
+
+### Sinks
+
+Sinks define where installed rules should be placed in your local filesystem. These are team-shared configuration settings stored in `arm.json`. Each sink targets a single directory (like `.amazonq/rules` or `.cursor/rules`) for rule installation. Rulesets are explicitly assigned to sinks during installation using the `--sinks` flag. Sinks support two layout modes:
+
+- **Hierarchical Layout** (default): Preserves directory structure from rulesets
+- **Flat Layout**: Places all files in a single directory with hash-prefixed names for tools that require flat file structures
+
+This provides precise control over which AI tools receive which rulesets without automatic distribution.
+
 ## Installation
 
 ### Quick Install
@@ -38,51 +57,11 @@ curl -fsSL https://raw.githubusercontent.com/jomadu/ai-rules-manager/main/script
 2. Extract and move the binary to your PATH
 3. Run `arm help` to verify installation
 
-### Verify Installation
-
-After installation, verify ARM is working:
-
-```bash
-arm version
-arm help
-```
-
-## Uninstall
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/jomadu/ai-rules-manager/main/scripts/uninstall.sh | bash
-```
-
 ## Quick Start
 
+Configure registry:
 ```bash
-# Create a new project directory
-mkdir my-ai-project && cd my-ai-project
-
-# Configure the registry
-arm config registry add awesome-cursorrules https://github.com/PatrickJS/awesome-cursorrules --type git
-
-# Add Cursor sink
-arm config sink add cursor --directories .cursor/rules --include "awesome-cursorrules/python"
-
-# Install Python rules (defaults to latest - biases towards tags, falls back to main/master)
-arm install awesome-cursorrules/python --include "rules-new/python.mdc"
-
-# View your configuration
-arm config list
-# Registries:
-#   awesome-cursorrules: https://github.com/PatrickJS/awesome-cursorrules (git)
-#
-# Sinks:
-#   cursor:
-#     directories: [.cursor/rules]
-#     include: [awesome-cursorrules/python]
-#     exclude: []
-#     layout: hierarchical
-
-# View installed rulesets
-arm list
-# awesome-cursorrules/python@c78546c (latest)
+arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
 ```
 
 Configure sinks for different AI tools:
@@ -97,103 +76,28 @@ Install rulesets with explicit sink targeting:
 arm install ai-rules/rules --sinks q,cursor
 ```
 
-AI rules are text files that provide instructions, guidelines, and context to AI coding assistants. These files help AI tools understand your project's coding standards, architectural patterns, and specific requirements.
+## Key Commands
 
-Different AI tools use different rule formats and locations:
-
-**Cursor**: Uses `.cursorrules` files in project root or global "Rules for AI" settings. Rules are written in natural language and apply to Chat and Cmd+K features.
-
-**GitHub Copilot**: Uses `.github/copilot-instructions.md` or files in `.github/instructions/` directory. Instructions are markdown files with specific formatting for customizing Copilot's behavior.
-
-**Amazon Q**: Uses `.amazonq/rules/` directory with markdown files. Rules guide Q's code generation and chat responses within the IDE.
-
-**Common Rule Types**:
-
-- **Coding Standards**: Formatting, naming conventions, code organization
-- **Architecture Guidelines**: Design patterns, project structure, technology choices
-- **Domain Knowledge**: Business logic, API usage, framework-specific practices
-- **Quality Requirements**: Testing approaches, security considerations, performance guidelines
-
-ARM manages these rules as versioned packages, ensuring consistency across projects and teams while respecting each tool's specific format requirements.
-
-### Rulesets
-
-A ruleset is a collection of related AI rules, identified by names like `awesome-cursorrules/python` where `awesome-cursorrules` is the registry name and `python` is the ruleset name. Each ruleset contains rule files (markdown, text, etc.) with semantic versioning for predictable updates.
-
-Rulesets are sourced from registries (remote repositories) and installed to sinks (local directories) where your AI tools can find them.
-
-To install a ruleset, use `arm install <ruleset>[@version]` where:
-
-- `<ruleset>` is the registry/ruleset name (e.g., "awesome-cursorrules/python")
-- `[@version]` (optional) specifies the version constraint (defaults to "@latest" if omitted, e.g., "@main", "@1.2.0", "@^1.0.0")
-- `--include <pattern>` (optional) filters which files to install using file patterns (defaults to `"**/*"`)
-
-Ruleset installations are tracked in `arm.json` in your project root. This project-specific configuration file should be checked into version control, ensuring all contributors use the same rule versions and can reproduce the exact AI behavior.
-
-**Key Commands:**
-
-- `arm install <ruleset>[@version]` - Install a ruleset
-- `arm update [ruleset]` - Update rulesets to latest compatible versions
-- `arm uninstall <ruleset>` - Remove a ruleset
+- `arm config registry` - Manage registries
+- `arm config sink` - Manage sinks
+- `arm install <ruleset>[@version] --sinks <sinks>` - Install rulesets with explicit sink targeting
+- `arm update [ruleset]` - Update to latest compatible versions
+- `arm uninstall <ruleset>` - Remove rulesets
 - `arm list` - Show installed rulesets
-- `arm info [ruleset]` - Show detailed ruleset information
+- `arm outdated` - Check for updates
+- `arm info [ruleset]` - Show detailed information
+- `arm cache clean` - Remove old cached versions
 
-### Registries
+## Version Constraints
 
-Registries provide a version controlled source of truth for shared rulesets. Without them, teams would copy rules manually, losing connection to updates and creating inconsistent rule versions across projects.
+- `arm install ai-rules/rules@2.1.0 --sinks cursor` - Exact version (=2.1.0)
+- `arm install ai-rules/rules@2.1 --sinks cursor,q` - Minor updates (~2.1.0)
+- `arm install ai-rules/rules@2 --sinks q` - Major updates (^2.0.0)
+- `arm install ai-rules/rules@main --sinks cursor` - Track branch
 
-A registry is a remote source containing rulesets, similar to how npm registries contain JavaScript packages. Registries can be implemented in many ways (S3, HTTP, etc.), but ARM currently supports Git-based registries. Examples include the popular awesome-cursorrules repository or your team's private rule collections.
+## Layout Modes
 
-- [PatrickJS/awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules)
-- [snarktank/ai-dev-tasks](https://github.com/snarktank/ai-dev-tasks)
-- [steipete/agent-rules](https://github.com/steipete/agent-rules)
-
-To configure a registry connection, use `arm config registry add <name> <url> --type git` where:
-
-- `<name>` is your chosen alias (e.g., "awesome-cursorrules")
-- `<url>` is the Git repository URL (e.g., "https://github.com/PatrickJS/awesome-cursorrules")
-- `--type git` specifies this is a Git-based registry
-
-Registry configurations are stored in `arm.json` in your project root. This project-specific configuration file should be checked into version control, ensuring consistent rule sources across all contributors to the project.
-
-**Key Commands:**
-
-- `arm config registry add <name> <url> --type git` - Add a new registry
-- `arm config registry list` - List configured registries
-- `arm config registry remove <name>` - Remove a registry
-
-### Sinks
-
-A sink defines where installed rulesets should be placed in your local filesystem and in what layout, targeting specific directories where AI tools look for rules.
-
-To configure a sink, use `arm config sink add <name> --directories <dir>` where:
-
-- `<name>` is your chosen alias (e.g., "cursor")
-- `<dir>` is the target directory (e.g., ".cursor/rules")
-- `--layout <flat|hierarchical>` (optional) layout mode, hierarchical (default) preserves directory structure, flat places files in a single directory with hash-prefixed names
-- `--include <pattern>` (optional) filters which rulesets to sink using file patterns (defaults to `"**/*"`)
-
-Sink configurations are stored in `arm.json` in your project root. This project-specific configuration file should be checked into version control, ensuring all contributors use the same AI tool setup.
-
-**Key Commands:**
-
-- `arm config sink add <name> --directories <dir>` - Add a new sink
-- `arm config sink add <name> --directories <dir> --layout flat` - Add sink with flat layout
-- `arm config sink add <name> --directories <dir> --include <pattern>` - Add sink with include patterns
-- `arm config sink list` - List configured sinks
-- `arm config sink remove <name>` - Remove a sink
-
-#### Layout Modes
-
-**Choose Your Layout:**
-
-| AI Tool        | Recommended Layout | Reason                                             |
-| -------------- | ------------------ | -------------------------------------------------- |
-| Cursor         | Hierarchical       | Supports nested directory structures               |
-| GitHub Copilot | Flat               | Expects files in `.github/instructions/` directory |
-| Amazon Q       | Hierarchical       | Works with `.amazonq/rules/` directory structure   |
-
-**Hierarchical Layout (Default)**
+### Hierarchical Layout (Default)
 
 Preserves the original directory structure from rulesets. Files are organized as `sink-dir/arm/registry/ruleset/version/original-path`:
 
@@ -208,14 +112,14 @@ Preserves the original directory structure from rulesets. Files are organized as
                     └── clean-code.md
 ```
 
-**Flat Layout**
+### Flat Layout
 
 Places all files in a single directory with hash-prefixed names. Each filename starts with an 8-character hash (derived from registry/ruleset@version:filepath) followed by the original path with slashes replaced by underscores:
 
 ```
 .github/copilot/
-├── arm_183791a9_rules_clean-code.md
-├── arm_3554667c_rules_grug-brained-dev.md
+├── 183791a9_rules_clean-code.md
+├── 3554667c_rules_grug-brained-dev.md
 └── arm-index.json
 ```
 
@@ -223,13 +127,13 @@ The `arm-index.json` file maps hashed filenames back to their original paths:
 
 ```json
 {
-  "arm_183791a9_rules_clean-code.md": {
+  "183791a9_rules_clean-code.md": {
     "registry": "ai-rules",
     "ruleset": "rules",
     "version": "1.0.0",
     "filePath": "rules/clean-code.md"
   },
-  "arm_3554667c_rules_grug-brained-dev.md": {
+  "3554667c_rules_grug-brained-dev.md": {
     "registry": "ai-rules",
     "ruleset": "rules",
     "version": "1.0.0",
@@ -239,13 +143,11 @@ The `arm-index.json` file maps hashed filenames back to their original paths:
 ```
 
 Configure via CLI:
-
 ```bash
 arm config sink add copilot .github/copilot --layout flat
 ```
 
 Sinks are stored in `arm.json`:
-
 ```json
 {
   "registries": { ... },
@@ -271,3 +173,11 @@ Sinks are stored in `arm.json`:
   }
 }
 ```
+
+## Files
+
+- `arm.json` - Team-shared project manifest with registries, dependencies, and sinks
+- `arm-lock.json` - Team-shared locked versions for reproducible installs
+- `arm-index.json` - Local flat layout index (maps hashes to original file paths)
+
+ARM follows npm-like patterns for predictable dependency management across AI development environments.
