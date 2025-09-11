@@ -48,223 +48,179 @@ pause() {
     echo ""
 }
 
-# Build ARM
-log "Building ARM..."
-cd ..
-make build
-success "ARM built successfully"
+# === SETUP SANDBOX ===
+log "=== SETUP SANDBOX ==="
 
-# Setup sandbox
-log "Setting up sandbox environment..."
-rm -rf sandbox/
-mkdir sandbox
-cp ./bin/arm ./sandbox
-cd sandbox
-run_arm cache nuke
+# Get script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+log "Running setup-sandbox script..."
+"$SCRIPT_DIR/setup-sandbox.sh"
+
+log "Entering sandbox..."
+cd "$PROJECT_ROOT/sandbox"
 
 show_tree "Initial sandbox structure"
-
-# === SETUP ===
-log "=== SETUP PHASE ==="
-
-log "Adding registry configuration..."
-run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
-
-log "Adding sink configurations..."
-run_arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
-run_arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
-run_arm config sink add copilot --directories .github/instructions --include "ai-rules/copilot-*" --layout flat
-
-success "Configuration complete"
-
-log "Showing arm.json manifest:"
-cat arm.json | jq .
 pause
 
-# === VERSION ===
-log "=== VERSION COMMAND ==="
-run_arm version
-pause
+# === BASIC COMMANDS ===
+log "=== BASIC COMMANDS ==="
 
-# === HELP ===
-log "=== HELP COMMAND ==="
+log "Running arm help..."
 run_arm help
 pause
 
-# === INSTALL - Latest Version ===
-log "=== INSTALL - Latest Version ==="
-log "Installing latest version (should resolve to ^2.1.0)..."
-run_arm install ai-rules/amazonq-rules --include "rules/amazonq/*.md"
-run_arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc"
-run_arm install ai-rules/copilot-rules --include "rules/copilot/*.instructions.md"
-
-success "Installation complete"
-
-log "Generated arm.json:"
-cat arm.json | jq .
-
-log "Generated arm-lock.json:"
-cat arm-lock.json | jq .
-
-show_tree "Project structure after latest install"
+log "Running arm version..."
+run_arm version
 pause
 
-# === LIST ===
-log "=== LIST COMMAND ==="
+# === REGISTRY SETUP ===
+log "=== REGISTRY SETUP ==="
+
+log "Setting up git registry..."
+run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
+
+log "Showing configuration..."
+run_arm config list
+pause
+
+# === SINK SETUP ===
+log "=== SINK SETUP ==="
+
+log "Setting up cursor sink (hierarchical)..."
+run_arm config sink add cursor .cursor/rules
+
+log "Setting up Amazon Q sink (hierarchical)..."
+run_arm config sink add q .amazonq/rules
+
+log "Setting up copilot sink (flat)..."
+run_arm config sink add copilot .github/copilot --layout flat
+
+log "Showing configuration..."
+run_arm config list
+pause
+
+# === INSTALL RULESETS ===
+log "=== INSTALL RULESETS ==="
+
+log "Installing cursor rules to cursor sink..."
+run_arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc" --sinks cursor
+
+log "Installing Amazon Q rules to q sink..."
+run_arm install ai-rules/amazonq-rules --include "rules/amazonq/*.md" --sinks q
+
+log "Installing copilot rules to copilot sink..."
+run_arm install ai-rules/copilot-rules --include "rules/copilot/*.instructions.md" --sinks copilot
+
+show_tree "Project structure after installs"
+pause
+
+# === LIST AND INFO ===
+log "=== LIST AND INFO ==="
+
+log "Running arm list..."
 run_arm list
 pause
 
-# === INFO - Single Ruleset ===
-log "=== INFO - Single Ruleset ==="
-run_arm info ai-rules/amazonq-rules
-pause
-
-# === INFO - All Rulesets ===
-log "=== INFO - All Rulesets ==="
+log "Running arm info (all rulesets)..."
 run_arm info
 pause
 
-# === UNINSTALL ===
-log "=== UNINSTALL ==="
-log "Uninstalling cursor rules..."
+log "Running arm info on cursor ruleset..."
+run_arm info ai-rules/cursor-rules
+pause
+
+# === UNINSTALL ALL ===
+log "=== UNINSTALL ALL ==="
+
+log "Uninstalling all rulesets..."
 run_arm uninstall ai-rules/cursor-rules
+run_arm uninstall ai-rules/amazonq-rules
+run_arm uninstall ai-rules/copilot-rules
 
-success "Uninstall complete"
-
-log "Updated arm.json:"
-cat arm.json | jq .
-
-log "Updated arm-lock.json:"
-cat arm-lock.json | jq .
-
-show_tree "Project structure after uninstall"
+log "Showing empty list..."
+run_arm list
 pause
 
-# === INSTALL - Specific Version ===
-log "=== INSTALL - Specific Version ==="
-log "Installing specific version 1.0.0..."
-run_arm install ai-rules/cursor-rules@1.0.0 --include "rules/cursor/*.mdc"
-run_arm install ai-rules/copilot-rules@1.0.0 --include "rules/copilot/*.instructions.md"
+# === INSTALL FROM MAIN BRANCH ===
+log "=== INSTALL FROM MAIN BRANCH ==="
 
-success "Version-specific installation complete"
+log "Installing cursor ruleset from main branch..."
+run_arm install ai-rules/cursor-rules@main --include "rules/cursor/*.mdc" --sinks cursor
 
-log "Updated arm.json:"
-cat arm.json | jq .
-
-log "Updated arm-lock.json:"
-cat arm-lock.json | jq .
-
-show_tree "Project structure after version-specific install"
+log "Showing info for main branch install..."
+run_arm info ai-rules/cursor-rules
 pause
 
-# === OUTDATED ===
-log "=== OUTDATED COMMAND ==="
+# === OUTDATED CHECK ===
+log "=== OUTDATED CHECK ==="
+
+log "Checking for outdated rulesets..."
 run_arm outdated
 pause
 
-# === UPDATE ===
-log "=== UPDATE COMMAND ==="
-log "Updating cursor and copilot rules to latest compatible version..."
-run_arm update ai-rules/cursor-rules
-run_arm update ai-rules/copilot-rules
+# === VERSION CONSTRAINT DEMOS ===
+log "=== VERSION CONSTRAINT DEMOS ==="
 
-success "Update complete"
+log "Installing cursor ruleset with major version 1 (should resolve to 1.1.0)..."
+run_arm install ai-rules/cursor-rules@1 --include "rules/cursor/*.mdc" --sinks cursor
 
-log "Updated arm-lock.json after update:"
-cat arm-lock.json | jq .
-
-show_tree "Project structure after update"
+log "Showing info (should show 1.1.0)..."
+run_arm info ai-rules/cursor-rules
 pause
 
-# === INSTALL - Major Version ===
-log "=== INSTALL - Major Version ==="
-log "Reinstalling with major version constraint..."
-rm -rf .cursor .amazonq .github
+log "Installing cursor ruleset with minor version 1.0 (should resolve to 1.0.1)..."
+run_arm install ai-rules/cursor-rules@1.0 --include "rules/cursor/*.mdc" --sinks cursor
 
-run_arm install ai-rules/amazonq-rules@1 --include "rules/amazonq/*.md"
-run_arm install ai-rules/cursor-rules@1 --include "rules/cursor/*.mdc"
-run_arm install ai-rules/copilot-rules@1 --include "rules/copilot/*.instructions.md"
-
-success "Major version installation complete"
-
-log "arm.json with major version constraints:"
-cat arm.json | jq .
-
-log "arm-lock.json with resolved versions:"
-cat arm-lock.json | jq .
-
-show_tree "Project structure with major version constraints"
+log "Showing info (should show 1.0.1)..."
+run_arm info ai-rules/cursor-rules
 pause
 
-# === INSTALL - Minor Version ===
-log "=== INSTALL - Minor Version ==="
-log "Reinstalling with minor version constraint..."
-rm -rf .cursor .amazonq .github
+log "Installing cursor ruleset with patch version 1.0.0 (should resolve to 1.0.0)..."
+run_arm install ai-rules/cursor-rules@1.0.0 --include "rules/cursor/*.mdc" --sinks cursor
 
-run_arm install ai-rules/amazonq-rules@1.0 --include "rules/amazonq/*.md"
-run_arm install ai-rules/cursor-rules@1.0 --include "rules/cursor/*.mdc"
-run_arm install ai-rules/copilot-rules@1.0 --include "rules/copilot/*.instructions.md"
-
-success "Minor version installation complete"
-
-log "arm.json with minor version constraints:"
-cat arm.json | jq .
-
-log "arm-lock.json with resolved versions:"
-cat arm-lock.json | jq .
-
-show_tree "Project structure with minor version constraints"
+log "Showing info (should show 1.0.0)..."
+run_arm info ai-rules/cursor-rules
 pause
 
-# === INSTALL - Branch ===
-log "=== INSTALL - Branch ==="
-log "Reinstalling from main branch..."
-rm -rf .cursor .amazonq .github
+# === SINK REMOVAL PROTECTION ===
+log "=== SINK REMOVAL PROTECTION ==="
 
-run_arm install ai-rules/amazonq-rules@main --include "rules/amazonq/*.md"
-run_arm install ai-rules/cursor-rules@main --include "rules/cursor/*.mdc"
-run_arm install ai-rules/copilot-rules@main --include "rules/copilot/*.instructions.md"
-
-success "Branch installation complete"
-
-log "arm.json with branch constraints:"
-cat arm.json | jq .
-
-log "arm-lock.json with commit hashes:"
-cat arm-lock.json | jq .
-
-show_tree "Project structure with branch tracking"
+log "Attempting to remove cursor sink (should fail because ruleset is installed)..."
+if run_arm config sink remove cursor 2>&1; then
+    error "Sink removal should have failed!"
+else
+    success "Sink removal correctly blocked due to active ruleset"
+fi
 pause
 
-# === INSTALL FROM MANIFEST ===
-log "=== INSTALL FROM MANIFEST ==="
-log "Removing installed files and reinstalling from manifest..."
-rm -rf .cursor .amazonq .github
+# === CLEANUP ===
+log "=== CLEANUP ==="
 
-run_arm install
+log "Removing cursor ruleset..."
+run_arm uninstall ai-rules/cursor-rules
 
-success "Install from manifest complete"
+log "Now removing cursor sink (should succeed)..."
+run_arm config sink remove cursor
 
-show_tree "Project structure after manifest install"
+success "Cleanup complete"
 pause
 
 # === SUMMARY ===
 log "=== WORKFLOW COMPLETE ==="
-success "Sample workflow completed successfully!"
+success "New workflow completed successfully!"
 echo ""
 echo "This workflow demonstrated:"
-echo "• Registry and sink configuration"
-echo "• Installing with different version constraints"
+echo "• Sandbox setup and binary building"
+echo "• Basic help and version commands"
+echo "• Registry configuration"
+echo "• Sink configuration (hierarchical and flat layouts)"
+echo "• Installing rulesets to specific sinks"
 echo "• Listing and getting info about rulesets"
 echo "• Uninstalling rulesets"
+echo "• Installing from branches"
 echo "• Checking for outdated rulesets"
-echo "• Updating rulesets"
-echo "• Installing from manifest and lockfile"
-echo "• File structure management"
-echo ""
-echo "Check the generated files:"
-echo "• arm.json - Manifest (includes sinks configuration)"
-echo "• arm-lock.json - Lockfile"
-echo "• .cursor/rules/ - Cursor rules (hierarchical)"
-echo "• .amazonq/rules/ - Amazon Q rules (hierarchical)"
-echo "• .github/instructions/ - GitHub Copilot instructions (flat layout)"
+echo "• Version constraint resolution (major, minor, patch)"
+echo "• Sink removal protection"
+echo "• Clean teardown"

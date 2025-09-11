@@ -25,58 +25,62 @@ warn() {
     echo -e "${YELLOW}⚠${NC} $1"
 }
 
-run_arm() {
-    echo -e "${BLUE}$ ./arm $*${NC}"
-    ./arm "$@"
+usage() {
+    echo "Usage: $0"
+    echo ""
+    echo "Sets up a clean sandbox environment for ARM testing."
+    echo ""
+    echo "This script:"
+    echo "  1. Removes existing sandbox directory"
+    echo "  2. Clears ARM cache directory"
+    echo "  3. Builds ARM binary"
+    echo "  4. Creates new sandbox with ARM binary"
+    echo ""
+    echo "Run from the project root directory."
 }
 
-show_tree() {
-    local title="$1"
-    echo ""
-    echo -e "${YELLOW}=== $title ===${NC}"
-    if command -v tree &> /dev/null; then
-        tree -a -I '.git' . || ls -la
-    else
-        find . -type f -not -path './.git/*' | sort
+main() {
+    # Check for help
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        usage
+        exit 0
     fi
+
+    # Change to project root directory
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+    cd "$PROJECT_ROOT"
+
+    # Check if we're in the right directory
+    if [[ ! -f "Makefile" ]]; then
+        error "Makefile not found in project root directory."
+        exit 1
+    fi
+
+    log "=== SETUP SANDBOX ==="
+
+    log "Nuking sandbox directory..."
+    rm -rf sandbox/
+
+    log "Nuking ~/.arm/cache directory..."
+    rm -rf ~/.arm/cache
+
+    log "Building ARM binary from project root..."
+    make build
+    success "ARM built successfully"
+
+    log "Creating sandbox and copying binary..."
+    mkdir sandbox
+    cp ./bin/arm ./sandbox
+
+    success "Sandbox setup complete!"
     echo ""
+    echo "Next steps:"
+    echo "  cd sandbox"
+    echo "  ./arm help"
+    echo ""
+    echo "Or run a workflow script from the project root:"
+    echo "  ./scripts/new-workflow.sh"
 }
 
-pause() {
-    echo ""
-    read -p "Press Enter to continue..."
-    echo ""
-}
-
-# Build ARM
-log "Building ARM..."
-cd ..
-make build
-success "ARM built successfully"
-
-# Setup sandbox
-log "Setting up sandbox environment..."
-rm -rf sandbox/
-mkdir sandbox
-cp ./bin/arm ./sandbox
-cd sandbox
-run_arm cache nuke
-
-show_tree "Initial sandbox structure"
-
-# === SETUP ===
-log "=== SETUP PHASE ==="
-
-log "Adding registry configuration..."
-run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
-
-log "Adding sink configurations..."
-run_arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
-run_arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
-run_arm config sink add copilot --directories .github/instructions --include "ai-rules/copilot-*" --layout flat
-
-success "Configuration complete"
-
-log "Showing arm.json manifest:"
-cat arm.json | jq .
-pause
+main "$@"
