@@ -44,7 +44,7 @@ var configSinkCmd = &cobra.Command{
 	Short: "Manage sink configuration",
 	Long: `Manage sink configuration for ARM.
 
-Sinks define where installed rules should be placed in your local filesystem and which AI tools should receive them. Each sink targets specific directories and can filter rulesets using include/exclude patterns.
+Sinks define where installed rules should be placed in your local filesystem. Each sink targets a single directory for rule installation. Rulesets are explicitly assigned to sinks during installation.
 
 Sinks support two layout modes:
 - Hierarchical Layout (default): Preserves directory structure from rulesets
@@ -53,11 +53,12 @@ Sinks support two layout modes:
 Available commands:
   add     Add a new sink
   remove  Remove an existing sink
+  update  Update sink configuration
 
 Examples:
-  arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
-  arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
-  arm config sink add github --directories .github/instructions --layout flat`,
+  arm config sink add cursor .cursor/rules --layout hierarchical
+  arm config sink add q .amazonq/rules --layout hierarchical
+  arm config sink add github .github/instructions --layout flat`,
 }
 
 var registryAddCmd = &cobra.Command{
@@ -127,54 +128,40 @@ Examples:
 }
 
 var sinkAddCmd = &cobra.Command{
-	Use:   "add <name>",
+	Use:   "add <name> <directory>",
 	Short: "Add a new sink",
 	Long: `Add a sink to the configuration.
 
-Sinks define where installed rules should be placed in your local filesystem and which AI tools should receive them. Each sink targets specific directories and can filter rulesets using include/exclude patterns.
+Sinks define where installed rules should be placed in your local filesystem. Each sink targets a single directory for rule installation.
 
 Arguments:
-  name  Sink name (used to reference the sink)
+  name       Sink name (used to reference the sink)
+  directory  Target directory for rule installation
 
 Flags:
-  --directories   Target directories for rule installation (required)
-  --include       Include patterns to filter rulesets
-  --exclude       Exclude patterns to filter rulesets
-  --layout        Layout mode: hierarchical (default) or flat
+  --layout   Layout mode: hierarchical (default) or flat
 
 Layout Modes:
 - Hierarchical: Preserves directory structure from rulesets
 - Flat: Places all files in single directory with hash-prefixed names
 
 Examples:
-  arm config sink add q --directories .amazonq/rules --include "ai-rules/amazonq-*"
-  arm config sink add cursor --directories .cursor/rules --include "ai-rules/cursor-*"
-  arm config sink add github --directories .github/instructions --include "ai-rules/*" --layout flat`,
-	Args: cobra.ExactArgs(1),
+  arm config sink add cursor .cursor/rules --layout hierarchical
+  arm config sink add q .amazonq/rules --layout hierarchical
+  arm config sink add github .github/instructions --layout flat`,
+	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
-		directories, _ := cmd.Flags().GetStringSlice("directories")
-		include, _ := cmd.Flags().GetStringSlice("include")
-		exclude, _ := cmd.Flags().GetStringSlice("exclude")
+		directory := args[1]
 		layout, _ := cmd.Flags().GetString("layout")
 		force, _ := cmd.Flags().GetBool("force")
 
-		// Set default include pattern if none provided
-		if len(include) == 0 {
-			include = []string{"**/*"}
-		}
-
 		manifestManager := manifest.NewFileManager()
-		err := manifestManager.AddSink(context.Background(), name, directories, include, exclude, layout, force)
+		err := manifestManager.AddSink(context.Background(), name, directory, layout, force)
 		if err != nil {
 			return err
 		}
-		// Sync new sink
-		sink, err := manifestManager.GetSink(context.Background(), name)
-		if err != nil {
-			return err
-		}
-		return armService.SyncSink(context.Background(), name, sink)
+		return nil
 	},
 }
 
@@ -183,7 +170,7 @@ var sinkRemoveCmd = &cobra.Command{
 	Short: "Remove an existing sink",
 	Long: `Remove a sink from the configuration.
 
-This will remove the sink configuration but will not delete any files that were previously installed to the sink's directories. To clean up installed files, manually delete them or reinstall rulesets after reconfiguring sinks.
+This will remove the sink configuration and automatically clean it from all ruleset configurations. Files will be removed from the sink's directory.
 
 Arguments:
   name  Sink name to remove
@@ -200,12 +187,12 @@ Examples:
 		if err != nil {
 			return err
 		}
-		// Remove from manifest
+		// Remove from manifest and clean from all rulesets
 		err = manifestManager.RemoveSink(context.Background(), name)
 		if err != nil {
 			return err
 		}
-		// Sync removed sink
+		// Clean files from sink directory
 		return armService.SyncRemovedSink(context.Background(), sink)
 	},
 }
@@ -230,9 +217,7 @@ var configListCmd = &cobra.Command{
 			fmt.Println("Sinks:")
 			for name, sink := range sinks {
 				fmt.Printf("  %s:\n", name)
-				fmt.Printf("    directories: %v\n", sink.Directories)
-				fmt.Printf("    include: %v\n", sink.Include)
-				fmt.Printf("    exclude: %v\n", sink.Exclude)
+				fmt.Printf("    directory: %s\n", sink.Directory)
 				layout := sink.Layout
 				if layout == "" {
 					layout = "hierarchical"
@@ -274,11 +259,11 @@ var sinkUpdateCmd = &cobra.Command{
 
 Arguments:
   name   Sink name
-  field  Field to update (directories, include, exclude, layout)
-  value  New field value (comma-separated for arrays)
+  field  Field to update (directory, layout)
+  value  New field value
 
 Examples:
-  arm config sink update q directories .amazonq/rules,.amazonq/shared
+  arm config sink update q directory .amazonq/rules
   arm config sink update q layout flat`,
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -289,12 +274,7 @@ Examples:
 		if err != nil {
 			return err
 		}
-		// Sync updated sink
-		sink, err := manifestManager.GetSink(context.Background(), name)
-		if err != nil {
-			return err
-		}
-		return armService.SyncSink(context.Background(), name, sink)
+		return nil
 	},
 }
 
@@ -309,9 +289,6 @@ func init() {
 	registryAddCmd.Flags().String("type", "git", "Registry type (git, http)")
 	registryAddCmd.Flags().StringSlice("branches", nil, "Git branches to track (default: main,master)")
 	registryAddCmd.Flags().Bool("force", false, "Overwrite existing registry")
-	sinkAddCmd.Flags().StringSlice("directories", nil, "Sink directories")
-	sinkAddCmd.Flags().StringSlice("include", nil, "Sink include patterns")
-	sinkAddCmd.Flags().StringSlice("exclude", nil, "Sink exclude patterns")
 	sinkAddCmd.Flags().String("layout", "hierarchical", "Layout mode (hierarchical, flat)")
 	sinkAddCmd.Flags().Bool("force", false, "Overwrite existing sink")
 }

@@ -20,12 +20,12 @@ type Manager interface {
 	AddGitRegistry(ctx context.Context, name string, config registry.GitRegistryConfig, force bool) error
 	UpdateGitRegistry(ctx context.Context, name, field, value string) error
 	RemoveRegistry(ctx context.Context, name string) error
-	CreateEntry(ctx context.Context, registry, ruleset string, entry Entry) error
-	UpdateEntry(ctx context.Context, registry, ruleset string, entry Entry) error
+	CreateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error
+	UpdateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error
 	RemoveEntry(ctx context.Context, registry, ruleset string) error
 	GetSinks(ctx context.Context) (map[string]SinkConfig, error)
 	GetSink(ctx context.Context, name string) (*SinkConfig, error)
-	AddSink(ctx context.Context, name string, dirs, include, exclude []string, layout string, force bool) error
+	AddSink(ctx context.Context, name, directory, layout string, force bool) error
 	UpdateSink(ctx context.Context, name, field, value string) error
 	RemoveSink(ctx context.Context, name string) error
 }
@@ -70,7 +70,7 @@ func (f *FileManager) GetRawRegistries(ctx context.Context) (map[string]map[stri
 	return manifest.Registries, nil
 }
 
-func (f *FileManager) CreateEntry(ctx context.Context, registry, ruleset string, entry Entry) error {
+func (f *FileManager) CreateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		manifest = &Manifest{
@@ -84,11 +84,11 @@ func (f *FileManager) CreateEntry(ctx context.Context, registry, ruleset string,
 	if _, exists := manifest.Rulesets[registry][ruleset]; exists {
 		return errors.New("entry already exists")
 	}
-	manifest.Rulesets[registry][ruleset] = entry
+	manifest.Rulesets[registry][ruleset] = *entry
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) UpdateEntry(ctx context.Context, registry, ruleset string, entry Entry) error {
+func (f *FileManager) UpdateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -99,7 +99,7 @@ func (f *FileManager) UpdateEntry(ctx context.Context, registry, ruleset string,
 	if _, exists := manifest.Rulesets[registry][ruleset]; !exists {
 		return errors.New("entry not found")
 	}
-	manifest.Rulesets[registry][ruleset] = entry
+	manifest.Rulesets[registry][ruleset] = *entry
 	return f.saveManifest(manifest)
 }
 
@@ -234,7 +234,7 @@ func (f *FileManager) GetSink(ctx context.Context, name string) (*SinkConfig, er
 	return &sink, nil
 }
 
-func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, exclude []string, layout string, force bool) error {
+func (f *FileManager) AddSink(ctx context.Context, name, directory, layout string, force bool) error {
 	if layout == "" {
 		layout = "hierarchical"
 	}
@@ -252,19 +252,15 @@ func (f *FileManager) AddSink(ctx context.Context, name string, dirs, include, e
 	}
 
 	newSink := SinkConfig{
-		Directories: dirs,
-		Include:     include,
-		Exclude:     exclude,
-		Layout:      layout,
+		Directory: directory,
+		Layout:    layout,
 	}
 	manifest.Sinks[name] = newSink
 
 	slog.InfoContext(ctx, "Adding sink configuration",
 		"action", "sink_add",
 		"name", name,
-		"directories", dirs,
-		"include", include,
-		"exclude", exclude,
+		"directory", directory,
 		"layout", layout)
 
 	return f.saveManifest(manifest)
@@ -284,11 +280,25 @@ func (f *FileManager) RemoveSink(ctx context.Context, name string) error {
 	slog.InfoContext(ctx, "Removing sink configuration",
 		"action", "sink_remove",
 		"name", name,
-		"removed_directories", removedSink.Directories,
-		"removed_include", removedSink.Include,
-		"removed_exclude", removedSink.Exclude)
+		"removed_directory", removedSink.Directory)
 
+	// Remove sink from configuration
 	delete(manifest.Sinks, name)
+
+	// Remove sink from all ruleset entries
+	for registryName, rulesets := range manifest.Rulesets {
+		for rulesetName, entry := range rulesets {
+			updatedSinks := make([]string, 0, len(entry.Sinks))
+			for _, sink := range entry.Sinks {
+				if sink != name {
+					updatedSinks = append(updatedSinks, sink)
+				}
+			}
+			entry.Sinks = updatedSinks
+			manifest.Rulesets[registryName][rulesetName] = entry
+		}
+	}
+
 	return f.saveManifest(manifest)
 }
 
@@ -304,31 +314,15 @@ func (f *FileManager) UpdateSink(ctx context.Context, name, field, value string)
 	}
 
 	switch field {
-	case "directories":
-		dirs := strings.Split(value, ",")
-		for i, dir := range dirs {
-			dirs[i] = strings.TrimSpace(dir)
-		}
-		sink.Directories = dirs
-	case "include":
-		include := strings.Split(value, ",")
-		for i, pattern := range include {
-			include[i] = strings.TrimSpace(pattern)
-		}
-		sink.Include = include
-	case "exclude":
-		exclude := strings.Split(value, ",")
-		for i, pattern := range exclude {
-			exclude[i] = strings.TrimSpace(pattern)
-		}
-		sink.Exclude = exclude
+	case "directory":
+		sink.Directory = strings.TrimSpace(value)
 	case "layout":
 		if value != "hierarchical" && value != "flat" {
 			return fmt.Errorf("layout must be 'hierarchical' or 'flat'")
 		}
 		sink.Layout = value
 	default:
-		return fmt.Errorf("unknown field '%s' (valid: directories, include, exclude, layout)", field)
+		return fmt.Errorf("unknown field '%s' (valid: directory, layout)", field)
 	}
 
 	manifest.Sinks[name] = sink

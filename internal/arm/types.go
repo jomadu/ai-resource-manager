@@ -47,4 +47,5 @@ type InstallRequest struct {
 	Version  string
 	Include  []string
 	Exclude  []string
+	Sinks    []string
 }

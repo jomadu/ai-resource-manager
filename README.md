@@ -30,12 +30,12 @@ Rulesets are collections of AI rules packaged as versioned units, identified by 
 
 ### Sinks
 
-Sinks define where installed rules should be placed in your local filesystem and which AI tools should receive them. These are team-shared configuration settings stored in `arm.json`. Each sink targets specific directories (like `.amazonq/rules` or `.cursor/rules`) and can filter rulesets using include/exclude patterns. Sinks support two layout modes:
+Sinks define where installed rules should be placed in your local filesystem. These are team-shared configuration settings stored in `arm.json`. Each sink targets a single directory (like `.amazonq/rules` or `.cursor/rules`) for rule installation. Rulesets are explicitly assigned to sinks during installation using the `--sinks` flag. Sinks support two layout modes:
 
 - **Hierarchical Layout** (default): Preserves directory structure from rulesets
 - **Flat Layout**: Places all files in a single directory with hash-prefixed names for tools that require flat file structures
 
-This allows you to automatically distribute the right rules to the right AI tools without manual file management.
+This provides precise control over which AI tools receive which rulesets without automatic distribution.
 
 ## Installation
 
@@ -66,27 +66,21 @@ arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-samp
 
 Configure sinks for different AI tools:
 ```bash
-arm config sink add q --directories .amazonq/rules
+arm config sink add q .amazonq/rules
+arm config sink add cursor .cursor/rules
+arm config sink add copilot .github/copilot --layout flat
 ```
 
+Install rulesets with explicit sink targeting:
 ```bash
-arm config sink add cursor --directories .cursor/rules
-```
-
-```bash
-arm config sink add copilot --directories .github/copilot --layout flat
-```
-
-Install rulesets:
-```bash
-arm install ai-rules/rules
+arm install ai-rules/rules --sinks q,cursor
 ```
 
 ## Key Commands
 
 - `arm config registry` - Manage registries
 - `arm config sink` - Manage sinks
-- `arm install <ruleset>[@version]` - Install rulesets with semantic versioning
+- `arm install <ruleset>[@version] --sinks <sinks>` - Install rulesets with explicit sink targeting
 - `arm update [ruleset]` - Update to latest compatible versions
 - `arm uninstall <ruleset>` - Remove rulesets
 - `arm list` - Show installed rulesets
@@ -96,10 +90,10 @@ arm install ai-rules/rules
 
 ## Version Constraints
 
-- `arm install ai-rules/rules@2.1.0` - Exact version (=2.1.0)
-- `arm install ai-rules/rules@2.1` - Minor updates (~2.1.0)
-- `arm install ai-rules/rules@2` - Major updates (^2.0.0)
-- `arm install ai-rules/rules@main` - Track branch
+- `arm install ai-rules/rules@2.1.0 --sinks cursor` - Exact version (=2.1.0)
+- `arm install ai-rules/rules@2.1 --sinks cursor,q` - Minor updates (~2.1.0)
+- `arm install ai-rules/rules@2 --sinks q` - Major updates (^2.0.0)
+- `arm install ai-rules/rules@main --sinks cursor` - Track branch
 
 ## Layout Modes
 
@@ -150,21 +144,30 @@ The `arm-index.json` file maps hashed filenames back to their original paths:
 
 Configure via CLI:
 ```bash
-arm config sink add copilot --directories .github/copilot --layout flat
+arm config sink add copilot .github/copilot --layout flat
 ```
 
 Sinks are stored in `arm.json`:
 ```json
 {
   "registries": { ... },
-  "rulesets": { ... },
+  "rulesets": {
+    "ai-rules": {
+      "rules": {
+        "version": "latest",
+        "include": ["**/*"],
+        "exclude": [],
+        "sinks": ["cursor", "q"]
+      }
+    }
+  },
   "sinks": {
     "cursor": {
-      "directories": [".cursor/rules"],
+      "directory": ".cursor/rules",
       "layout": "hierarchical"
     },
     "copilot": {
-      "directories": [".github/copilot"],
+      "directory": ".github/copilot",
       "layout": "flat"
     }
   }
