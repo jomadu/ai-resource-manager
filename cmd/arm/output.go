@@ -63,10 +63,14 @@ func FormatInstalledRulesets(rulesets []arm.InstalledRuleset) {
 	for i := range rulesets {
 		ruleset := &rulesets[i]
 		if ruleset.Constraint != "" {
-			fmt.Printf("%s/%s@%s (%s)\n", ruleset.Registry, ruleset.Name, ruleset.Version, ruleset.Constraint)
+			fmt.Printf("%s/%s@%s (%s)", ruleset.Registry, ruleset.Name, ruleset.Version, ruleset.Constraint)
 		} else {
-			fmt.Printf("%s/%s@%s\n", ruleset.Registry, ruleset.Name, ruleset.Version)
+			fmt.Printf("%s/%s@%s", ruleset.Registry, ruleset.Name, ruleset.Version)
 		}
+		if len(ruleset.Sinks) > 0 {
+			fmt.Printf(" (sinks: %v)", ruleset.Sinks)
+		}
+		fmt.Println()
 	}
 }
 

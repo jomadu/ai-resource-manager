@@ -18,6 +18,7 @@ func newInstallCmd() *cobra.Command {
 
 	cmd.Flags().StringSlice("include", nil, "Include patterns")
 	cmd.Flags().StringSlice("exclude", nil, "Exclude patterns")
+	cmd.Flags().StringSlice("sinks", nil, "Target sinks")
 
 	return cmd
 }
@@ -39,7 +40,13 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	// Get flags
 	include, _ := cmd.Flags().GetStringSlice("include")
 	exclude, _ := cmd.Flags().GetStringSlice("exclude")
+	sinks, _ := cmd.Flags().GetStringSlice("sinks")
 	include = GetDefaultIncludePatterns(include)
+
+	// Require sinks for new installations
+	if len(sinks) == 0 {
+		return fmt.Errorf("--sinks is required for installing rulesets")
+	}
 
 	// Install each ruleset
 	for _, ruleset := range rulesets {
@@ -49,6 +56,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 			Version:  ruleset.Version,
 			Include:  include,
 			Exclude:  exclude,
+			Sinks:    sinks,
 		}
 		err := armService.InstallRuleset(ctx, req)
 		if err != nil {
