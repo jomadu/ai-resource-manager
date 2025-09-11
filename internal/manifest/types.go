@@ -5,14 +5,13 @@ type Entry struct {
 	Version string   `json:"version"`
 	Include []string `json:"include"`
 	Exclude []string `json:"exclude"`
+	Sinks   []string `json:"sinks"`
 }
 
 // SinkConfig defines a sink configuration for rule deployment.
 type SinkConfig struct {
-	Directories []string `json:"directories"`
-	Include     []string `json:"include"`
-	Exclude     []string `json:"exclude"`
-	Layout      string   `json:"layout,omitempty"`
+	Directory string `json:"directory"`
+	Layout    string `json:"layout,omitempty"`
 }
 
 // Manifest represents the arm.json manifest file structure.

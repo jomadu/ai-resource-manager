@@ -85,30 +85,17 @@ arm list
 # awesome-cursorrules/python@c78546c (latest)
 ```
 
-## Concepts
-
-ARM has four core concepts:
-
-1. **Rules** - Text files that guide AI tool behavior
-2. **Rulesets** - Collections of rules that can be installed
-3. **Registries** - Remote sources of versioned rulesets
-4. **Sinks** - Local destinations for AI tool directories
-
-```mermaid
-flowchart LR
-    A[Registry] -->|contains| B[Rulesets]
-    B -->|installed to| C[Sinks]
-    C -->|delivers| D[Rules]
-    D -->|guide| E[AI Tools]
+Configure sinks for different AI tools:
+```bash
+arm config sink add q .amazonq/rules
+arm config sink add cursor .cursor/rules
+arm config sink add copilot .github/copilot --layout flat
 ```
 
-## Files
-
-- `arm.json` - Project-specific configuration with registries, dependencies, and sinks
-- `arm-lock.json` - Project-specific locked versions for reproducible installs
-- `arm-index.json` - Local flat layout index (maps hashes to original file paths)
-
-### Rules
+Install rulesets with explicit sink targeting:
+```bash
+arm install ai-rules/rules --sinks q,cursor
+```
 
 AI rules are text files that provide instructions, guidelines, and context to AI coding assistants. These files help AI tools understand your project's coding standards, architectural patterns, and specific requirements.
 
@@ -254,7 +241,7 @@ The `arm-index.json` file maps hashed filenames back to their original paths:
 Configure via CLI:
 
 ```bash
-arm config sink add copilot --directories .github/copilot --layout flat
+arm config sink add copilot .github/copilot --layout flat
 ```
 
 Sinks are stored in `arm.json`:
@@ -262,14 +249,23 @@ Sinks are stored in `arm.json`:
 ```json
 {
   "registries": { ... },
-  "rulesets": { ... },
+  "rulesets": {
+    "ai-rules": {
+      "rules": {
+        "version": "latest",
+        "include": ["**/*"],
+        "exclude": [],
+        "sinks": ["cursor", "q"]
+      }
+    }
+  },
   "sinks": {
     "cursor": {
-      "directories": [".cursor/rules"],
+      "directory": ".cursor/rules",
       "layout": "hierarchical"
     },
     "copilot": {
-      "directories": [".github/copilot"],
+      "directory": ".github/copilot",
       "layout": "flat"
     }
   }
