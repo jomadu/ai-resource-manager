@@ -2,7 +2,7 @@
 /bin
 /arm
 *.exe
-arm-*
+/dist
 
 # Test coverage
 coverage.out
