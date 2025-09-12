@@ -54,7 +54,7 @@ rules:
 
 ### Rule Composition
 - Rulesets are self-contained and don't depend on other rulesets
-- Rules within a ruleset reference each other through file paths in compiled output
+- Rules within a ruleset reference each other through relative file paths in compiled output
 - Rule relationships are expressed in the body text and compiled markdown
 
 ### Conflict Resolution Hierarchy
@@ -261,21 +261,17 @@ globs: ["**/*.py"]
 alwaysApply: true
 ---
 
-**Parent Ruleset:** ai-rules/python-rules/2.1.0/python-best-practices
-**Rule Enforcement:** MUST
-**Ruleset Priority:** 50
-**Rule Priority:** 100
-**Rule Scope:**
+**Ruleset:** ai-rules/python-rules/2.1.0/python-best-practices
+**Enforcement:** MUST
+**Priority Within Ruleset:** 100
+**Scope:**
 - files: ["**/*.py"]
-**Sibling Rules:**
-1. MUST:
-   1. ./pep8-naming.mdc (Priority 90)
-2. SHOULD:
-   1. ./docstrings-public.mdc (Priority 80)
-   2. ./list-comprehensions.mdc (Priority 70)
-3. MAY:
-   1. ./f-strings.mdc (Priority 60)
-   2. ./context-managers.mdc (Priority 50)
+**Other Rules in Ruleset:**
+1. ./pep8-naming.mdc (enforcement MUST, Priority 90)
+2. ./docstrings-public.mdc (enforcement SHOULD, Priority 80)
+3. ./list-comprehensions.mdc (enforcement SHOULD, Priority 70)
+4. ./f-strings.mdc (enforcement MAY, Priority 60)
+5. ./context-managers.mdc (enforcement MAY, Priority 50)
 
 # Type Hints Required
 
@@ -289,21 +285,17 @@ and enables better IDE support and static analysis.
 **File**: `.amazonq/rules/arm/ai-rules/python-rules/2.1.0/python-best-practices/type-hints-required.md`
 
 ```markdown
-**Parent Ruleset:** ai-rules/python-rules/2.1.0/python-best-practices
-**Rule Enforcement:** MUST
-**Ruleset Priority:** 50
-**Rule Priority:** 100
-**Rule Scope:**
+**Ruleset:** ai-rules/python-rules/2.1.0/python-best-practices
+**Enforcement:** MUST
+**Priority Within Ruleset:** 100
+**Scope:**
 - files: ["**/*.py"]
-**Sibling Rules:**
-1. MUST:
-   1. ./pep8-naming.md (Priority 90)
-2. SHOULD:
-   1. ./docstrings-public.md (Priority 80)
-   2. ./list-comprehensions.md (Priority 70)
-3. MAY:
-   1. ./f-strings.md (Priority 60)
-   2. ./context-managers.md (Priority 50)
+**Other Rules in Ruleset:**
+1. ./pep8-naming.md (enforcement MUST, Priority 90)
+2. ./docstrings-public.md (enforcement SHOULD, Priority 80)
+3. ./list-comprehensions.md (enforcement SHOULD, Priority 70)
+4. ./f-strings.md (enforcement MAY, Priority 60)
+5. ./context-managers.md (enforcement MAY, Priority 50)
 
 # Type Hints Required (MUST)
 
