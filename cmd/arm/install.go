@@ -19,6 +19,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringSlice("include", nil, "Include patterns")
 	cmd.Flags().StringSlice("exclude", nil, "Exclude patterns")
 	cmd.Flags().StringSlice("sinks", nil, "Target sinks")
+	cmd.Flags().Int("priority", 100, "Ruleset installation priority (1-1000+)")
 
 	return cmd
 }
@@ -41,7 +42,13 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	include, _ := cmd.Flags().GetStringSlice("include")
 	exclude, _ := cmd.Flags().GetStringSlice("exclude")
 	sinks, _ := cmd.Flags().GetStringSlice("sinks")
+	priority, _ := cmd.Flags().GetInt("priority")
 	include = GetDefaultIncludePatterns(include)
+
+	// Validate priority
+	if priority < 1 {
+		return fmt.Errorf("priority must be a positive integer (got %d)", priority)
+	}
 
 	// Require sinks for new installations
 	if len(sinks) == 0 {
@@ -54,6 +61,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 			Registry: ruleset.Registry,
 			Ruleset:  ruleset.Name,
 			Version:  ruleset.Version,
+			Priority: priority,
 			Include:  include,
 			Exclude:  exclude,
 			Sinks:    sinks,
