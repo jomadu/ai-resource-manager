@@ -118,13 +118,25 @@ func (f *FlatInstaller) ListInstalled(ctx context.Context, dir string) ([]Instal
 		return nil, err
 	}
 
-	var installations []Installation
+	// Group files by ruleset/version
+	installationMap := make(map[string]*Installation)
 	for fileName, entry := range index {
-		installations = append(installations, Installation{
-			Ruleset: entry.Ruleset,
-			Version: entry.Version,
-			Path:    filepath.Join(dir, fileName),
-		})
+		key := entry.Ruleset + "@" + entry.Version
+		if installation, exists := installationMap[key]; exists {
+			installation.FilePaths = append(installation.FilePaths, filepath.Join(dir, fileName))
+		} else {
+			installationMap[key] = &Installation{
+				Ruleset:   entry.Ruleset,
+				Version:   entry.Version,
+				Path:      dir,
+				FilePaths: []string{filepath.Join(dir, fileName)},
+			}
+		}
+	}
+
+	var installations []Installation
+	for _, installation := range installationMap {
+		installations = append(installations, *installation)
 	}
 
 	return installations, nil
