@@ -29,45 +29,45 @@ func (p *YAMLParser) IsURF(file *types.File) bool {
 }
 
 // Parse parses and validates a URF file
-func (p *YAMLParser) Parse(file *types.File) (*URFFile, error) {
-	var urf URFFile
-	if err := yaml.Unmarshal(file.Content, &urf); err != nil {
+func (p *YAMLParser) Parse(file *types.File) (*Ruleset, error) {
+	var ruleset Ruleset
+	if err := yaml.Unmarshal(file.Content, &ruleset); err != nil {
 		return nil, fmt.Errorf("failed to parse URF file %s: %w", file.Path, err)
 	}
 
 	// Validate structure
-	if err := p.validate(&urf, file.Path); err != nil {
+	if err := p.validate(&ruleset, file.Path); err != nil {
 		return nil, err
 	}
 
-	return &urf, nil
+	return &ruleset, nil
 }
 
 // validate validates a URF file structure
-func (p *YAMLParser) validate(urf *URFFile, filePath string) error {
-	if urf.Version == "" {
+func (p *YAMLParser) validate(ruleset *Ruleset, filePath string) error {
+	if ruleset.Version == "" {
 		return fmt.Errorf("invalid URF format in %s: missing required field 'version'", filePath)
 	}
 
-	if urf.Metadata.ID == "" {
+	if ruleset.Metadata.ID == "" {
 		return fmt.Errorf("invalid URF format in %s: missing required field 'metadata.id'", filePath)
 	}
 
-	if urf.Metadata.Name == "" {
+	if ruleset.Metadata.Name == "" {
 		return fmt.Errorf("invalid URF format in %s: missing required field 'metadata.name'", filePath)
 	}
 
-	if urf.Metadata.Version == "" {
+	if ruleset.Metadata.Version == "" {
 		return fmt.Errorf("invalid URF format in %s: missing required field 'metadata.version'", filePath)
 	}
 
-	if len(urf.Rules) == 0 {
+	if len(ruleset.Rules) == 0 {
 		return fmt.Errorf("invalid URF format in %s: missing required field 'rules'", filePath)
 	}
 
 	// Validate rule ID uniqueness
 	ruleIDs := make(map[string]bool)
-	for _, rule := range urf.Rules {
+	for _, rule := range ruleset.Rules {
 		if rule.ID == "" {
 			return fmt.Errorf("invalid URF format in %s: rule missing required field 'id'", filePath)
 		}

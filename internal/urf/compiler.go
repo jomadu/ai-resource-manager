@@ -1,28 +1,46 @@
 package urf
 
-import "fmt"
+import (
+	"github.com/jomadu/ai-rules-manager/internal/types"
+)
 
-// DefaultCompilerFactory implements CompilerFactory
-type DefaultCompilerFactory struct{}
-
-// NewCompilerFactory creates a new compiler factory
-func NewCompilerFactory() CompilerFactory {
-	return &DefaultCompilerFactory{}
+// DefaultCompiler compiles URF using a rule generator
+type DefaultCompiler struct {
+	ruleGen     RuleGenerator
+	filenameGen FilenameGenerator
 }
 
-// GetCompiler returns a compiler for the specified target
-func (f *DefaultCompilerFactory) GetCompiler(target CompileTarget) (Compiler, error) {
-	switch target {
-	case TargetCursor:
-		return NewCursorCompiler(), nil
-	case TargetAmazonQ:
-		return NewAmazonQCompiler(), nil
-	default:
-		return nil, fmt.Errorf("unsupported compile target: %s", target)
+// NewCompiler creates a new compiler for the specified target
+func NewCompiler(target CompileTarget) (Compiler, error) {
+	ruleFactory := NewRuleGeneratorFactory()
+	ruleGen, err := ruleFactory.NewRuleGenerator(target)
+	if err != nil {
+		return nil, err
 	}
+
+	filenameFactory := NewFilenameGeneratorFactory()
+	filenameGen, err := filenameFactory.NewFilenameGenerator(target)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DefaultCompiler{
+		ruleGen:     ruleGen,
+		filenameGen: filenameGen,
+	}, nil
 }
 
-// SupportedTargets returns list of supported compilation targets
-func (f *DefaultCompilerFactory) SupportedTargets() []CompileTarget {
-	return []CompileTarget{TargetCursor, TargetAmazonQ}
+// Compile compiles URF to the target format
+func (c *DefaultCompiler) Compile(namespace string, ruleset *Ruleset) ([]*types.File, error) {
+	var files []*types.File
+	for _, rule := range ruleset.Rules {
+		filename := c.filenameGen.GenerateFilename(ruleset.Metadata.ID, rule.ID)
+		content := c.ruleGen.GenerateRule(namespace, ruleset, &rule)
+		files = append(files, &types.File{
+			Path:    filename,
+			Content: []byte(content),
+			Size:    int64(len(content)),
+		})
+	}
+	return files, nil
 }

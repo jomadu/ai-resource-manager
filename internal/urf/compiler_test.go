@@ -1,76 +1,122 @@
 package urf
 
 import (
+	"strings"
 	"testing"
 )
 
-func TestDefaultCompilerFactory_GetCompiler(t *testing.T) {
-	factory := NewCompilerFactory()
+func TestDefaultCompiler_Compile(t *testing.T) {
+	compiler, err := NewCompiler(TargetCursor)
+	if err != nil {
+		t.Fatalf("Failed to create compiler: %v", err)
+	}
 
-	tests := []struct {
-		name        string
-		target      CompileTarget
-		expectError bool
-	}{
-		{
-			name:        "cursor compiler",
-			target:      TargetCursor,
-			expectError: false,
+	ruleset := &Ruleset{
+		Metadata: Metadata{
+			ID:      "test-ruleset",
+			Name:    "Test Ruleset",
+			Version: "1.0.0",
 		},
-		{
-			name:        "amazonq compiler",
-			target:      TargetAmazonQ,
-			expectError: false,
-		},
-		{
-			name:        "unsupported target",
-			target:      CompileTarget("unsupported"),
-			expectError: true,
+		Rules: []Rule{
+			{
+				ID:          "rule1",
+				Name:        "Test Rule 1",
+				Description: "First rule",
+				Enforcement: "must",
+				Body:        "Rule 1 content",
+			},
+			{
+				ID:          "rule2",
+				Name:        "Test Rule 2",
+				Description: "Second rule",
+				Enforcement: "should",
+				Body:        "Rule 2 content",
+			},
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			compiler, err := factory.GetCompiler(tt.target)
+	namespace := "ai-rules/test@1.0.0"
+	files, err := compiler.Compile(namespace, ruleset)
+	if err != nil {
+		t.Fatalf("Compilation failed: %v", err)
+	}
 
-			if tt.expectError {
-				if err == nil {
-					t.Error("Expected error but got none")
-				}
-				if compiler != nil {
-					t.Error("Expected nil compiler on error")
-				}
-				return
-			}
+	// Should generate one file per rule
+	if len(files) != 2 {
+		t.Fatalf("Expected 2 files, got %d", len(files))
+	}
 
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-			if compiler == nil {
-				t.Error("Expected compiler but got nil")
-			}
-		})
+	// Check first file
+	file1 := files[0]
+	if file1.Path != "test-ruleset_rule1.mdc" {
+		t.Errorf("Expected filename test-ruleset_rule1.mdc, got %s", file1.Path)
+	}
+
+	content1 := string(file1.Content)
+	if !strings.Contains(content1, "namespace: "+namespace) {
+		t.Error("Expected namespace in first file content")
+	}
+	if !strings.Contains(content1, "Rule 1 content") {
+		t.Error("Expected rule 1 body in first file content")
+	}
+	if !strings.Contains(content1, "alwaysApply: true") {
+		t.Error("Expected alwaysApply: true for 'must' enforcement")
+	}
+
+	// Check second file
+	file2 := files[1]
+	if file2.Path != "test-ruleset_rule2.mdc" {
+		t.Errorf("Expected filename test-ruleset_rule2.mdc, got %s", file2.Path)
+	}
+
+	content2 := string(file2.Content)
+	if !strings.Contains(content2, "Rule 2 content") {
+		t.Error("Expected rule 2 body in second file content")
+	}
+	if strings.Contains(content2, "alwaysApply: true") {
+		t.Error("Should not have alwaysApply: true for 'should' enforcement")
 	}
 }
 
-func TestDefaultCompilerFactory_SupportedTargets(t *testing.T) {
-	factory := NewCompilerFactory()
-	targets := factory.SupportedTargets()
+func TestNewCompiler_UnsupportedTarget(t *testing.T) {
+	_, err := NewCompiler("unsupported")
+	if err == nil {
+		t.Error("Expected error for unsupported target")
+	}
+}
 
-	expectedTargets := []CompileTarget{TargetCursor, TargetAmazonQ}
-
-	if len(targets) != len(expectedTargets) {
-		t.Errorf("Expected %d targets, got %d", len(expectedTargets), len(targets))
+func TestDefaultCompiler_AmazonQTarget(t *testing.T) {
+	compiler, err := NewCompiler(TargetAmazonQ)
+	if err != nil {
+		t.Fatalf("Failed to create Amazon Q compiler: %v", err)
 	}
 
-	targetMap := make(map[CompileTarget]bool)
-	for _, target := range targets {
-		targetMap[target] = true
+	ruleset := &Ruleset{
+		Metadata: Metadata{
+			ID:      "test-ruleset",
+			Name:    "Test Ruleset",
+			Version: "1.0.0",
+		},
+		Rules: []Rule{
+			{
+				ID:   "rule1",
+				Name: "Test Rule",
+				Body: "Rule content",
+			},
+		},
 	}
 
-	for _, expected := range expectedTargets {
-		if !targetMap[expected] {
-			t.Errorf("Missing expected target: %s", expected)
-		}
+	files, err := compiler.Compile("test-namespace", ruleset)
+	if err != nil {
+		t.Fatalf("Compilation failed: %v", err)
+	}
+
+	if len(files) != 1 {
+		t.Fatalf("Expected 1 file, got %d", len(files))
+	}
+
+	// Amazon Q should use .md extension
+	if files[0].Path != "test-ruleset_rule1.md" {
+		t.Errorf("Expected .md extension for Amazon Q, got %s", files[0].Path)
 	}
 }
