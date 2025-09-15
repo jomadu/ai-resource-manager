@@ -105,10 +105,17 @@ func (h *HierarchicalInstaller) ListInstalled(ctx context.Context, dir string) (
 					continue
 				}
 
+				versionPath := filepath.Join(rulesetPath, versionEntry.Name())
+				filePaths, err := h.collectFilePaths(versionPath)
+				if err != nil {
+					continue
+				}
+
 				installations = append(installations, Installation{
-					Ruleset: rulesetEntry.Name(),
-					Version: versionEntry.Name(),
-					Path:    filepath.Join(rulesetPath, versionEntry.Name()),
+					Ruleset:   rulesetEntry.Name(),
+					Version:   versionEntry.Name(),
+					Path:      versionPath,
+					FilePaths: filePaths,
 				})
 			}
 		}
@@ -157,4 +164,19 @@ func (h *HierarchicalInstaller) removeExistingVersions(ctx context.Context, dir,
 	}
 
 	return nil
+}
+
+// collectFilePaths recursively collects all file paths within a directory
+func (h *HierarchicalInstaller) collectFilePaths(dir string) ([]string, error) {
+	var filePaths []string
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			filePaths = append(filePaths, path)
+		}
+		return nil
+	})
+	return filePaths, err
 }
