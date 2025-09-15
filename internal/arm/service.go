@@ -23,7 +23,7 @@ type Service interface {
 	UpdateRuleset(ctx context.Context, registry, ruleset string) error
 	UpdateAllRulesets(ctx context.Context) error
 	GetOutdatedRulesets(ctx context.Context) ([]OutdatedRuleset, error)
-	ListInstalledRulesets(ctx context.Context) ([]InstalledRuleset, error)
+	ListInstalledRulesets(ctx context.Context) ([]*RulesetInfo, error)
 	GetRulesetInfo(ctx context.Context, registry, ruleset string) (*RulesetInfo, error)
 	GetAllRulesetInfo(ctx context.Context) ([]*RulesetInfo, error)
 
@@ -420,13 +420,14 @@ func (a *ArmService) GetOutdatedRulesets(ctx context.Context) ([]OutdatedRuleset
 			}
 
 			if lockEntry.Version != latestVersion.Version.Version || lockEntry.Version != wantedVersion.Version.Version {
+				rulesetInfo, err := a.GetRulesetInfo(ctx, registryName, rulesetName)
+				if err != nil {
+					continue
+				}
 				outdated = append(outdated, OutdatedRuleset{
-					Registry:   registryName,
-					Name:       rulesetName,
-					Constraint: constraint,
-					Current:    lockEntry.Display,
-					Wanted:     wantedVersion.Version.Display,
-					Latest:     latestVersion.Version.Display,
+					RulesetInfo: rulesetInfo,
+					Wanted:      wantedVersion.Version.Display,
+					Latest:      latestVersion.Version.Display,
 				})
 			}
 		}
@@ -435,41 +436,20 @@ func (a *ArmService) GetOutdatedRulesets(ctx context.Context) ([]OutdatedRuleset
 	return outdated, nil
 }
 
-func (a *ArmService) ListInstalledRulesets(ctx context.Context) ([]InstalledRuleset, error) {
+func (a *ArmService) ListInstalledRulesets(ctx context.Context) ([]*RulesetInfo, error) {
 	lockEntries, err := a.lockFileManager.GetEntries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get lockfile entries: %w", err)
 	}
 
-	manifestEntries, err := a.manifestManager.GetEntries(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get manifest entries: %w", err)
-	}
-
-	var rulesets []InstalledRuleset
+	var rulesets []*RulesetInfo
 	for registryName, rulesetMap := range lockEntries {
-		for rulesetName, lockEntry := range rulesetMap {
-			// Get include/exclude, constraint, and sinks from manifest
-			var include, exclude, sinks []string
-			var constraint string
-			if manifestRegistry, exists := manifestEntries[registryName]; exists {
-				if manifestEntry, exists := manifestRegistry[rulesetName]; exists {
-					include = manifestEntry.Include
-					exclude = manifestEntry.Exclude
-					constraint = manifestEntry.Version
-					sinks = manifestEntry.Sinks
-				}
+		for rulesetName := range rulesetMap {
+			rulesetInfo, err := a.GetRulesetInfo(ctx, registryName, rulesetName)
+			if err != nil {
+				continue
 			}
-
-			rulesets = append(rulesets, InstalledRuleset{
-				Registry:   registryName,
-				Name:       rulesetName,
-				Version:    lockEntry.Display,
-				Constraint: constraint,
-				Include:    include,
-				Exclude:    exclude,
-				Sinks:      sinks,
-			})
+			rulesets = append(rulesets, rulesetInfo)
 		}
 	}
 
@@ -485,25 +465,20 @@ func (a *ArmService) ListInstalledRulesets(ctx context.Context) ([]InstalledRule
 }
 
 func (a *ArmService) GetRulesetInfo(ctx context.Context, registry, ruleset string) (*RulesetInfo, error) {
-	// Get lockfile entry
-	lockEntry, err := a.lockFileManager.GetEntry(ctx, registry, ruleset)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get lockfile entry: %w", err)
-	}
-
 	// Get manifest entry
 	manifestEntry, err := a.manifestManager.GetEntry(ctx, registry, ruleset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get manifest entry: %w", err)
 	}
 
-	// Get sinks and find installation paths
+	// Get sinks and find installation paths and version
 	sinks, err := a.manifestManager.GetSinks(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sinks: %w", err)
 	}
 
 	var installedPaths []string
+	var resolvedVersion string
 	// Use sinks from manifest entry
 	for _, sinkName := range manifestEntry.Sinks {
 		if sink, exists := sinks[sinkName]; exists {
@@ -513,8 +488,11 @@ func (a *ArmService) GetRulesetInfo(ctx context.Context, registry, ruleset strin
 				continue
 			}
 			for _, installation := range installations {
-				if installation.Ruleset == ruleset {
+				if installation.Registry == registry && installation.Ruleset == ruleset {
 					installedPaths = append(installedPaths, installation.Path)
+					if resolvedVersion == "" {
+						resolvedVersion = installation.Version
+					}
 					break
 				}
 			}
@@ -522,14 +500,18 @@ func (a *ArmService) GetRulesetInfo(ctx context.Context, registry, ruleset strin
 	}
 
 	return &RulesetInfo{
-		Registry:       registry,
-		Name:           ruleset,
-		Include:        manifestEntry.Include,
-		Exclude:        manifestEntry.Exclude,
-		InstalledPaths: installedPaths,
-		Sinks:          manifestEntry.Sinks,
-		Constraint:     manifestEntry.Version,
-		Resolved:       lockEntry.Display,
+		Registry: registry,
+		Name:     ruleset,
+		Manifest: ManifestInfo{
+			Constraint: manifestEntry.Version,
+			Include:    manifestEntry.Include,
+			Exclude:    manifestEntry.Exclude,
+			Sinks:      manifestEntry.Sinks,
+		},
+		Installation: InstallationInfo{
+			Version:        resolvedVersion,
+			InstalledPaths: installedPaths,
+		},
 	}, nil
 }
 
@@ -563,22 +545,7 @@ func (a *ArmService) UpdateAllRulesets(ctx context.Context) error {
 }
 
 func (a *ArmService) GetAllRulesetInfo(ctx context.Context) ([]*RulesetInfo, error) {
-	installed, err := a.ListInstalledRulesets(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list installed rulesets: %w", err)
-	}
-
-	var infos []*RulesetInfo
-	for i := range installed {
-		ruleset := &installed[i]
-		info, err := a.GetRulesetInfo(ctx, ruleset.Registry, ruleset.Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get info for %s/%s: %w", ruleset.Registry, ruleset.Name, err)
-		}
-		infos = append(infos, info)
-	}
-
-	return infos, nil
+	return a.ListInstalledRulesets(ctx)
 }
 
 func (a *ArmService) installFromLockfile(ctx context.Context, lockEntries map[string]map[string]lockfile.Entry) error {
@@ -657,18 +624,8 @@ func (a *ArmService) SyncRemovedSink(ctx context.Context, removedSink *manifest.
 
 	// Uninstall all found rulesets from this directory
 	for _, installation := range installations {
-		// Extract registry from installation path or use lockfile lookup
-		lockEntries, err := a.lockFileManager.GetEntries(ctx)
-		if err != nil {
-			continue
-		}
-		for registryName, rulesets := range lockEntries {
-			if _, exists := rulesets[installation.Ruleset]; exists {
-				if err := installer.Uninstall(ctx, removedSink.Directory, registryName, installation.Ruleset); err != nil {
-					slog.ErrorContext(ctx, "Failed to uninstall from removed sink", "registry", registryName, "ruleset", installation.Ruleset, "error", err)
-				}
-				break
-			}
+		if err := installer.Uninstall(ctx, removedSink.Directory, installation.Registry, installation.Ruleset); err != nil {
+			slog.ErrorContext(ctx, "Failed to uninstall from removed sink", "registry", installation.Registry, "ruleset", installation.Ruleset, "error", err)
 		}
 	}
 
