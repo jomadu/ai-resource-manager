@@ -70,14 +70,14 @@ func (h *HierarchicalInstaller) Uninstall(ctx context.Context, dir, registry, ru
 	return nil
 }
 
-func (h *HierarchicalInstaller) ListInstalled(ctx context.Context, dir string) ([]Installation, error) {
+func (h *HierarchicalInstaller) ListInstalled(ctx context.Context, dir string) ([]Ruleset, error) {
 	armDir := filepath.Join(dir, "arm")
 	registryEntries, err := os.ReadDir(armDir)
 	if err != nil {
 		return nil, err
 	}
 
-	var installations []Installation
+	var installations []Ruleset
 	for _, registryEntry := range registryEntries {
 		if !registryEntry.IsDir() {
 			continue
@@ -111,7 +111,8 @@ func (h *HierarchicalInstaller) ListInstalled(ctx context.Context, dir string) (
 					continue
 				}
 
-				installations = append(installations, Installation{
+				installations = append(installations, Ruleset{
+					Registry:  registryEntry.Name(),
 					Ruleset:   rulesetEntry.Name(),
 					Version:   versionEntry.Name(),
 					Path:      versionPath,

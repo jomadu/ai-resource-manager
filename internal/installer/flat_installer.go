@@ -111,7 +111,7 @@ func (f *FlatInstaller) Uninstall(ctx context.Context, dir, registry, ruleset st
 	return nil
 }
 
-func (f *FlatInstaller) ListInstalled(ctx context.Context, dir string) ([]Installation, error) {
+func (f *FlatInstaller) ListInstalled(ctx context.Context, dir string) ([]Ruleset, error) {
 	// Load index
 	index, err := f.loadIndex(dir)
 	if err != nil {
@@ -119,13 +119,14 @@ func (f *FlatInstaller) ListInstalled(ctx context.Context, dir string) ([]Instal
 	}
 
 	// Group files by ruleset/version
-	installationMap := make(map[string]*Installation)
+	installationMap := make(map[string]*Ruleset)
 	for fileName, entry := range index {
 		key := entry.Ruleset + "@" + entry.Version
 		if installation, exists := installationMap[key]; exists {
 			installation.FilePaths = append(installation.FilePaths, filepath.Join(dir, fileName))
 		} else {
-			installationMap[key] = &Installation{
+			installationMap[key] = &Ruleset{
+				Registry:  entry.Registry,
 				Ruleset:   entry.Ruleset,
 				Version:   entry.Version,
 				Path:      dir,
@@ -134,7 +135,7 @@ func (f *FlatInstaller) ListInstalled(ctx context.Context, dir string) ([]Instal
 		}
 	}
 
-	var installations []Installation
+	var installations []Ruleset
 	for _, installation := range installationMap {
 		installations = append(installations, *installation)
 	}
