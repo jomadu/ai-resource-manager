@@ -32,6 +32,7 @@ func FormatRulesetInfo(info *arm.RulesetInfo, detailed bool) {
 		for _, sink := range info.Manifest.Sinks {
 			fmt.Printf("  - %s\n", sink)
 		}
+		fmt.Printf("Priority: %d\n", info.Manifest.Priority)
 		fmt.Printf("Constraint: %s\n", info.Manifest.Constraint)
 		fmt.Printf("Resolved: %s\n", info.Installation.Version)
 	} else {
@@ -54,17 +55,39 @@ func FormatRulesetInfo(info *arm.RulesetInfo, detailed bool) {
 		for _, sink := range info.Manifest.Sinks {
 			fmt.Printf("    - %s\n", sink)
 		}
-		fmt.Printf("  Constraint: %s | Resolved: %s\n", info.Manifest.Constraint, info.Installation.Version)
+		fmt.Printf("  Priority: %d | Constraint: %s | Resolved: %s\n", info.Manifest.Priority, info.Manifest.Constraint, info.Installation.Version)
 	}
 }
 
 // FormatInstalledRulesets formats the list of installed rulesets
-func FormatInstalledRulesets(rulesets []*arm.RulesetInfo) {
+func FormatInstalledRulesets(rulesets []*arm.RulesetInfo, showPriority, sortPriority bool) {
+	// Sort by priority if requested
+	if sortPriority {
+		// Sort by priority (highest first), then by name for stable ordering
+		for i := 0; i < len(rulesets)-1; i++ {
+			for j := i + 1; j < len(rulesets); j++ {
+				if rulesets[i].Manifest.Priority < rulesets[j].Manifest.Priority {
+					rulesets[i], rulesets[j] = rulesets[j], rulesets[i]
+				} else if rulesets[i].Manifest.Priority == rulesets[j].Manifest.Priority {
+					// Same priority, sort alphabetically
+					iName := rulesets[i].Registry + "/" + rulesets[i].Name
+					jName := rulesets[j].Registry + "/" + rulesets[j].Name
+					if iName > jName {
+						rulesets[i], rulesets[j] = rulesets[j], rulesets[i]
+					}
+				}
+			}
+		}
+	}
+
 	for _, ruleset := range rulesets {
 		if ruleset.Manifest.Constraint != "" {
 			fmt.Printf("%s/%s@%s (%s)", ruleset.Registry, ruleset.Name, ruleset.Installation.Version, ruleset.Manifest.Constraint)
 		} else {
 			fmt.Printf("%s/%s@%s", ruleset.Registry, ruleset.Name, ruleset.Installation.Version)
+		}
+		if showPriority {
+			fmt.Printf(" (priority: %d)", ruleset.Manifest.Priority)
 		}
 		if len(ruleset.Manifest.Sinks) > 0 {
 			fmt.Printf(" (sinks: %v)", ruleset.Manifest.Sinks)

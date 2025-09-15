@@ -2,10 +2,11 @@ package manifest
 
 // Entry represents a single ruleset entry in the manifest.
 type Entry struct {
-	Version string   `json:"version"`
-	Include []string `json:"include"`
-	Exclude []string `json:"exclude"`
-	Sinks   []string `json:"sinks"`
+	Version  string   `json:"version"`
+	Priority int      `json:"priority"`
+	Include  []string `json:"include"`
+	Exclude  []string `json:"exclude"`
+	Sinks    []string `json:"sinks"`
 }
 
 // SinkConfig defines a sink configuration for rule deployment.

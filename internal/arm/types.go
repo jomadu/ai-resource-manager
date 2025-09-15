@@ -10,6 +10,7 @@ type OutdatedRuleset struct {
 // ManifestInfo contains information from the manifest file.
 type ManifestInfo struct {
 	Constraint string   `json:"constraint"`
+	Priority   int      `json:"priority"`
 	Include    []string `json:"include"`
 	Exclude    []string `json:"exclude"`
 	Sinks      []string `json:"sinks"`
@@ -34,6 +35,7 @@ type InstallRequest struct {
 	Registry string
 	Ruleset  string
 	Version  string
+	Priority int
 	Include  []string
 	Exclude  []string
 	Sinks    []string
