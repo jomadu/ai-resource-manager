@@ -2,8 +2,8 @@ package urf
 
 import "github.com/jomadu/ai-rules-manager/internal/types"
 
-// URFFile represents a Universal Rule Format file
-type URFFile struct {
+// Ruleset represents a Universal Rule Format file
+type Ruleset struct {
 	Version  string   `yaml:"version"`
 	Metadata Metadata `yaml:"metadata"`
 	Rules    []Rule   `yaml:"rules"`
@@ -36,12 +36,12 @@ type Scope struct {
 // Parser interface for URF file parsing
 type Parser interface {
 	IsURF(file *types.File) bool
-	Parse(file *types.File) (*URFFile, error)
+	Parse(file *types.File) (*Ruleset, error)
 }
 
 // Compiler interface for compiling URF to tool-specific formats
 type Compiler interface {
-	Compile(urf *URFFile) ([]*types.File, error)
+	Compile(namespace string, ruleset *Ruleset) ([]*types.File, error)
 }
 
 // CompilerFactory interface for creating compilers
@@ -57,3 +57,46 @@ const (
 	TargetCursor  CompileTarget = "cursor"
 	TargetAmazonQ CompileTarget = "amazonq"
 )
+
+// DefaultCompilerFactory creates compilers
+type DefaultCompilerFactory struct{}
+
+// GetCompiler creates a compiler for the specified target
+func (f *DefaultCompilerFactory) GetCompiler(target CompileTarget) (Compiler, error) {
+	return NewCompiler(target)
+}
+
+// SupportedTargets returns supported compilation targets
+func (f *DefaultCompilerFactory) SupportedTargets() []CompileTarget {
+	return []CompileTarget{TargetCursor, TargetAmazonQ}
+}
+
+// NewDefaultCompilerFactory creates a new compiler factory
+func NewDefaultCompilerFactory() CompilerFactory {
+	return &DefaultCompilerFactory{}
+}
+
+// RuleGenerator interface for generating tool-specific rule files
+type RuleGenerator interface {
+	GenerateRule(namespace string, ruleset *Ruleset, rule *Rule) string
+}
+
+// RuleGeneratorFactory interface for creating rule generators
+type RuleGeneratorFactory interface {
+	NewRuleGenerator(target CompileTarget) (RuleGenerator, error)
+}
+
+// FilenameGenerator interface for generating filenames
+type FilenameGenerator interface {
+	GenerateFilename(rulesetID, ruleID string) string
+}
+
+// FilenameGeneratorFactory interface for creating filename generators
+type FilenameGeneratorFactory interface {
+	NewFilenameGenerator(target CompileTarget) (FilenameGenerator, error)
+}
+
+// RuleMetadataGenerator interface for generating metadata blocks
+type RuleMetadataGenerator interface {
+	GenerateRuleMetadata(namespace string, ruleset *Ruleset, rule *Rule) string
+}
