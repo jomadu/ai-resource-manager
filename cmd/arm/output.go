@@ -13,62 +13,61 @@ import (
 // FormatRulesetInfo formats ruleset information for display
 func FormatRulesetInfo(info *arm.RulesetInfo, detailed bool) {
 	if detailed {
-		fmt.Printf("Ruleset: %s/%s@%s (%s)\n", info.Registry, info.Name, info.Resolved, info.Constraint)
+		fmt.Printf("Ruleset: %s/%s@%s (%s)\n", info.Registry, info.Name, info.Installation.Version, info.Manifest.Constraint)
 		fmt.Println("include:")
-		for _, pattern := range info.Include {
+		for _, pattern := range info.Manifest.Include {
 			fmt.Printf("  - %s\n", pattern)
 		}
-		if len(info.Exclude) > 0 {
+		if len(info.Manifest.Exclude) > 0 {
 			fmt.Println("exclude:")
-			for _, pattern := range info.Exclude {
+			for _, pattern := range info.Manifest.Exclude {
 				fmt.Printf("  - %s\n", pattern)
 			}
 		}
 		fmt.Println("Installed:")
-		for _, path := range info.InstalledPaths {
+		for _, path := range info.Installation.InstalledPaths {
 			fmt.Printf("  - %s\n", path)
 		}
 		fmt.Println("Sinks:")
-		for _, sink := range info.Sinks {
+		for _, sink := range info.Manifest.Sinks {
 			fmt.Printf("  - %s\n", sink)
 		}
-		fmt.Printf("Constraint: %s\n", info.Constraint)
-		fmt.Printf("Resolved: %s\n", info.Resolved)
+		fmt.Printf("Constraint: %s\n", info.Manifest.Constraint)
+		fmt.Printf("Resolved: %s\n", info.Installation.Version)
 	} else {
-		fmt.Printf("%s/%s@%s (%s)\n", info.Registry, info.Name, info.Resolved, info.Constraint)
+		fmt.Printf("%s/%s@%s (%s)\n", info.Registry, info.Name, info.Installation.Version, info.Manifest.Constraint)
 		fmt.Println("  include:")
-		for _, pattern := range info.Include {
+		for _, pattern := range info.Manifest.Include {
 			fmt.Printf("    - %s\n", pattern)
 		}
-		if len(info.Exclude) > 0 {
+		if len(info.Manifest.Exclude) > 0 {
 			fmt.Println("  exclude:")
-			for _, pattern := range info.Exclude {
+			for _, pattern := range info.Manifest.Exclude {
 				fmt.Printf("    - %s\n", pattern)
 			}
 		}
 		fmt.Println("  Installed:")
-		for _, path := range info.InstalledPaths {
+		for _, path := range info.Installation.InstalledPaths {
 			fmt.Printf("    - %s\n", path)
 		}
 		fmt.Println("  Sinks:")
-		for _, sink := range info.Sinks {
+		for _, sink := range info.Manifest.Sinks {
 			fmt.Printf("    - %s\n", sink)
 		}
-		fmt.Printf("  Constraint: %s | Resolved: %s\n", info.Constraint, info.Resolved)
+		fmt.Printf("  Constraint: %s | Resolved: %s\n", info.Manifest.Constraint, info.Installation.Version)
 	}
 }
 
 // FormatInstalledRulesets formats the list of installed rulesets
-func FormatInstalledRulesets(rulesets []arm.InstalledRuleset) {
-	for i := range rulesets {
-		ruleset := &rulesets[i]
-		if ruleset.Constraint != "" {
-			fmt.Printf("%s/%s@%s (%s)", ruleset.Registry, ruleset.Name, ruleset.Version, ruleset.Constraint)
+func FormatInstalledRulesets(rulesets []*arm.RulesetInfo) {
+	for _, ruleset := range rulesets {
+		if ruleset.Manifest.Constraint != "" {
+			fmt.Printf("%s/%s@%s (%s)", ruleset.Registry, ruleset.Name, ruleset.Installation.Version, ruleset.Manifest.Constraint)
 		} else {
-			fmt.Printf("%s/%s@%s", ruleset.Registry, ruleset.Name, ruleset.Version)
+			fmt.Printf("%s/%s@%s", ruleset.Registry, ruleset.Name, ruleset.Installation.Version)
 		}
-		if len(ruleset.Sinks) > 0 {
-			fmt.Printf(" (sinks: %v)", ruleset.Sinks)
+		if len(ruleset.Manifest.Sinks) > 0 {
+			fmt.Printf(" (sinks: %v)", ruleset.Manifest.Sinks)
 		}
 		fmt.Println()
 	}
@@ -98,7 +97,7 @@ func FormatOutdatedTable(outdated []arm.OutdatedRuleset) error {
 	table.Header("Registry", "Ruleset", "Constraint", "Current", "Wanted", "Latest")
 
 	for _, r := range outdated {
-		if err := table.Append(r.Registry, r.Name, r.Constraint, r.Current, r.Wanted, r.Latest); err != nil {
+		if err := table.Append(r.RulesetInfo.Registry, r.RulesetInfo.Name, r.RulesetInfo.Manifest.Constraint, r.RulesetInfo.Installation.Version, r.Wanted, r.Latest); err != nil {
 			return fmt.Errorf("failed to add table row: %w", err)
 		}
 	}
