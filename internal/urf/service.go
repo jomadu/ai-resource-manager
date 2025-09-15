@@ -16,41 +16,41 @@ type Service struct {
 func NewService() *Service {
 	return &Service{
 		parser:          NewParser(),
-		compilerFactory: NewCompilerFactory(),
+		compilerFactory: NewDefaultCompilerFactory(),
 	}
 }
 
 // ProcessFiles processes files for URF content
-func (s *Service) ProcessFiles(files []*types.File) ([]*URFFile, error) {
-	var parsedFiles []*URFFile
+func (s *Service) ProcessFiles(files []*types.File) ([]*Ruleset, error) {
+	var parsedFiles []*Ruleset
 	for _, file := range files {
 		if !s.parser.IsURF(file) {
 			continue
 		}
 
-		urf, err := s.parser.Parse(file)
+		ruleset, err := s.parser.Parse(file)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse URF file %s: %w", file.Path, err)
 		}
 
-		parsedFiles = append(parsedFiles, urf)
+		parsedFiles = append(parsedFiles, ruleset)
 	}
 
 	return parsedFiles, nil
 }
 
 // CompileFiles compiles URF files to target format
-func (s *Service) CompileFiles(urfFiles []*URFFile, target CompileTarget) ([]*types.File, error) {
+func (s *Service) CompileFiles(rulesets []*Ruleset, target CompileTarget, namespace string) ([]*types.File, error) {
 	compiler, err := s.compilerFactory.GetCompiler(target)
 	if err != nil {
 		return nil, err
 	}
 
 	var allFiles []*types.File
-	for _, urf := range urfFiles {
-		files, err := compiler.Compile(urf)
+	for _, ruleset := range rulesets {
+		files, err := compiler.Compile(namespace, ruleset)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compile URF %s: %w", urf.Metadata.ID, err)
+			return nil, fmt.Errorf("failed to compile URF %s: %w", ruleset.Metadata.ID, err)
 		}
 		allFiles = append(allFiles, files...)
 	}

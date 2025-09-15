@@ -5,31 +5,26 @@ import (
 	"strings"
 )
 
-// MetadataGenerator interface for generating metadata blocks
-type MetadataGenerator interface {
-	GenerateMetadata(urf *URFFile, rule *Rule, namespace string) string
+// DefaultRuleMetadataGenerator implements shared metadata generation
+type DefaultRuleMetadataGenerator struct{}
+
+// NewRuleMetadataGenerator creates a new metadata generator
+func NewRuleMetadataGenerator() RuleMetadataGenerator {
+	return &DefaultRuleMetadataGenerator{}
 }
 
-// DefaultMetadataGenerator implements shared metadata generation
-type DefaultMetadataGenerator struct{}
-
-// NewMetadataGenerator creates a new metadata generator
-func NewMetadataGenerator() MetadataGenerator {
-	return &DefaultMetadataGenerator{}
-}
-
-// GenerateMetadata generates the shared metadata block
-func (g *DefaultMetadataGenerator) GenerateMetadata(urf *URFFile, rule *Rule, namespace string) string {
+// GenerateRuleMetadata generates the shared metadata block
+func (g *DefaultRuleMetadataGenerator) GenerateRuleMetadata(namespace string, ruleset *Ruleset, rule *Rule) string {
 	var content strings.Builder
 
 	content.WriteString("---\n")
 	content.WriteString(fmt.Sprintf("namespace: %s\n", namespace))
 	content.WriteString("ruleset:\n")
-	content.WriteString(fmt.Sprintf("  id: %s\n", urf.Metadata.ID))
-	content.WriteString(fmt.Sprintf("  name: %s\n", urf.Metadata.Name))
-	content.WriteString(fmt.Sprintf("  version: %s\n", urf.Metadata.Version))
+	content.WriteString(fmt.Sprintf("  id: %s\n", ruleset.Metadata.ID))
+	content.WriteString(fmt.Sprintf("  name: %s\n", ruleset.Metadata.Name))
+	content.WriteString(fmt.Sprintf("  version: %s\n", ruleset.Metadata.Version))
 	content.WriteString("  rules:\n")
-	for _, r := range urf.Rules {
+	for _, r := range ruleset.Rules {
 		content.WriteString(fmt.Sprintf("    - %s\n", r.ID))
 	}
 	content.WriteString("rule:\n")
