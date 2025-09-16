@@ -39,42 +39,20 @@ type Parser interface {
 	Parse(file *types.File) (*Ruleset, error)
 }
 
-// Compiler interface for compiling URF to tool-specific formats
+// Compiler interface for compiling URF files to tool-specific formats
 type Compiler interface {
-	Compile(namespace string, ruleset *Ruleset) ([]*types.File, error)
-}
-
-// CompilerFactory interface for creating compilers
-type CompilerFactory interface {
-	GetCompiler(target CompileTarget) (Compiler, error)
-	SupportedTargets() []CompileTarget
+	Compile(namespace string, file *types.File) ([]*types.File, error)
 }
 
 // CompileTarget represents different AI tool formats
 type CompileTarget string
 
 const (
-	TargetCursor  CompileTarget = "cursor"
-	TargetAmazonQ CompileTarget = "amazonq"
+	TargetCursor   CompileTarget = "cursor"
+	TargetMarkdown CompileTarget = "markdown"
+	TargetAmazonQ  CompileTarget = "amazonq"
+	TargetCopilot  CompileTarget = "copilot"
 )
-
-// DefaultCompilerFactory creates compilers
-type DefaultCompilerFactory struct{}
-
-// GetCompiler creates a compiler for the specified target
-func (f *DefaultCompilerFactory) GetCompiler(target CompileTarget) (Compiler, error) {
-	return NewCompiler(target)
-}
-
-// SupportedTargets returns supported compilation targets
-func (f *DefaultCompilerFactory) SupportedTargets() []CompileTarget {
-	return []CompileTarget{TargetCursor, TargetAmazonQ}
-}
-
-// NewDefaultCompilerFactory creates a new compiler factory
-func NewDefaultCompilerFactory() CompilerFactory {
-	return &DefaultCompilerFactory{}
-}
 
 // RuleGenerator interface for generating tool-specific rule files
 type RuleGenerator interface {

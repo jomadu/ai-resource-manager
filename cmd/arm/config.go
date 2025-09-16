@@ -18,6 +18,7 @@ func newConfigCmd() *cobra.Command {
 
 	cmd.AddCommand(configRegistryCmd)
 	cmd.AddCommand(configSinkCmd)
+	cmd.AddCommand(configRulesetCmd)
 	cmd.AddCommand(configListCmd)
 
 	return cmd
@@ -59,6 +60,22 @@ Examples:
   arm config sink add cursor .cursor/rules --layout hierarchical
   arm config sink add q .amazonq/rules --layout hierarchical
   arm config sink add github .github/instructions --layout flat`,
+}
+
+var configRulesetCmd = &cobra.Command{
+	Use:   "ruleset",
+	Short: "Manage ruleset configuration",
+	Long: `Manage ruleset configuration for ARM.
+
+Rulesets are collections of AI rules that can be configured with priorities, version constraints, and sink assignments.
+
+Available commands:
+  update  Update ruleset configuration (triggers reinstall)
+
+Examples:
+  arm config ruleset update ai-rules/ruleset priority 150
+  arm config ruleset update ai-rules/ruleset version 1.1.0
+  arm config ruleset update ai-rules/ruleset sinks cursor,q`,
 }
 
 var registryAddCmd = &cobra.Command{
@@ -139,29 +156,30 @@ Arguments:
   directory  Target directory for rule installation
 
 Flags:
-  --layout   Layout mode: hierarchical (default) or flat
+  --type        Sink type with defaults (cursor, copilot, amazonq) - REQUIRED unless --compile-to is specified
+  --layout      Layout mode: hierarchical or flat (overrides type default)
+  --compile-to  Target format for compilation (cursor, amazonq, markdown, copilot) - REQUIRED unless --type is specified
 
-Layout Modes:
-- Hierarchical: Preserves directory structure from rulesets
-- Flat: Places all files in single directory with hash-prefixed names
+Type Defaults:
+- cursor: hierarchical layout, cursor compile target
+- copilot: flat layout, copilot compile target
+- amazonq: hierarchical layout, amazonq compile target
 
 Examples:
-  arm config sink add cursor .cursor/rules --layout hierarchical
-  arm config sink add q .amazonq/rules --layout hierarchical
-  arm config sink add github .github/instructions --layout flat`,
+  arm config sink add cursor .cursor/rules --type cursor
+  arm config sink add copilot .github/copilot --type copilot
+  arm config sink add q .amazonq/rules --type amazonq
+  arm config sink add custom .custom/rules --layout flat --compile-to markdown`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
 		directory := args[1]
 		layout, _ := cmd.Flags().GetString("layout")
+		compileToStr, _ := cmd.Flags().GetString("compile-to")
+		typeStr, _ := cmd.Flags().GetString("type")
 		force, _ := cmd.Flags().GetBool("force")
 
-		manifestManager := manifest.NewFileManager()
-		err := manifestManager.AddSink(context.Background(), name, directory, layout, force)
-		if err != nil {
-			return err
-		}
-		return nil
+		return armService.AddSink(context.Background(), name, directory, typeStr, layout, compileToStr, force)
 	},
 }
 
@@ -223,6 +241,7 @@ var configListCmd = &cobra.Command{
 					layout = "hierarchical"
 				}
 				fmt.Printf("    layout: %s\n", layout)
+				fmt.Printf("    compileTarget: %s\n", sink.CompileTarget)
 			}
 		} else {
 			fmt.Println("Sinks: (none configured)")
@@ -259,12 +278,13 @@ var sinkUpdateCmd = &cobra.Command{
 
 Arguments:
   name   Sink name
-  field  Field to update (directory, layout)
+  field  Field to update (directory, layout, compileTarget)
   value  New field value
 
 Examples:
   arm config sink update q directory .amazonq/rules
-  arm config sink update q layout flat`,
+  arm config sink update q layout flat
+  arm config sink update q compileTarget amazonq`,
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, field, value := args[0], args[1], args[2]
@@ -278,6 +298,38 @@ Examples:
 	},
 }
 
+var rulesetUpdateCmd = &cobra.Command{
+	Use:   "update <name> <field> <value>",
+	Short: "Update ruleset configuration",
+	Long: `Update a specific field in an existing ruleset configuration. This triggers a reinstall of the ruleset.
+
+Arguments:
+  name   Ruleset name (registry/ruleset)
+  field  Field to update (priority, version, sinks, include, exclude)
+  value  New field value
+
+Examples:
+  arm config ruleset update ai-rules/ruleset priority 150
+  arm config ruleset update ai-rules/ruleset version 1.1.0
+  arm config ruleset update ai-rules/ruleset sinks cursor,q
+  arm config ruleset update ai-rules/ruleset include "**/*.py,**/*.js"
+  arm config ruleset update ai-rules/ruleset exclude "**/test/**,**/node_modules/**"`,
+	Args: cobra.ExactArgs(3),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		name, field, value := args[0], args[1], args[2]
+
+		// Parse ruleset name
+		rulesets, err := ParseRulesetArgs([]string{name})
+		if err != nil {
+			return fmt.Errorf("failed to parse ruleset name: %w", err)
+		}
+		ruleset := rulesets[0]
+
+		// Use service to update ruleset config
+		return armService.UpdateRulesetConfig(context.Background(), ruleset.Registry, ruleset.Name, field, value)
+	},
+}
+
 func init() {
 	configRegistryCmd.AddCommand(registryAddCmd)
 	configRegistryCmd.AddCommand(registryRemoveCmd)
@@ -285,10 +337,13 @@ func init() {
 	configSinkCmd.AddCommand(sinkAddCmd)
 	configSinkCmd.AddCommand(sinkRemoveCmd)
 	configSinkCmd.AddCommand(sinkUpdateCmd)
+	configRulesetCmd.AddCommand(rulesetUpdateCmd)
 
 	registryAddCmd.Flags().String("type", "git", "Registry type (git, http)")
 	registryAddCmd.Flags().StringSlice("branches", nil, "Git branches to track (default: main,master)")
 	registryAddCmd.Flags().Bool("force", false, "Overwrite existing registry")
-	sinkAddCmd.Flags().String("layout", "hierarchical", "Layout mode (hierarchical, flat)")
+	sinkAddCmd.Flags().String("type", "", "Sink type with defaults (cursor, copilot, amazonq)")
+	sinkAddCmd.Flags().String("layout", "", "Layout mode (hierarchical, flat)")
+	sinkAddCmd.Flags().String("compile-to", "", "Target format for compilation (cursor, amazonq, markdown, copilot)")
 	sinkAddCmd.Flags().Bool("force", false, "Overwrite existing sink")
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/jomadu/ai-rules-manager/internal/registry"
+	"github.com/jomadu/ai-rules-manager/internal/urf"
 )
 
 // Manager handles arm.json manifest file operations.
@@ -25,7 +26,7 @@ type Manager interface {
 	RemoveEntry(ctx context.Context, registry, ruleset string) error
 	GetSinks(ctx context.Context) (map[string]SinkConfig, error)
 	GetSink(ctx context.Context, name string) (*SinkConfig, error)
-	AddSink(ctx context.Context, name, directory, layout string, force bool) error
+	AddSink(ctx context.Context, name, directory, layout string, compileTarget urf.CompileTarget, force bool) error
 	UpdateSink(ctx context.Context, name, field, value string) error
 	RemoveSink(ctx context.Context, name string) error
 }
@@ -45,11 +46,11 @@ func (f *FileManager) GetEntry(ctx context.Context, registry, ruleset string) (*
 	}
 	registryMap, exists := entries[registry]
 	if !exists {
-		return nil, errors.New("registry not found")
+		return nil, fmt.Errorf("ruleset %s/%s not found in manifest (registry %s has no rulesets)", registry, ruleset, registry)
 	}
 	entry, exists := registryMap[ruleset]
 	if !exists {
-		return nil, errors.New("ruleset not found")
+		return nil, fmt.Errorf("ruleset %s/%s not found in manifest (not installed or already uninstalled)", registry, ruleset)
 	}
 	return &entry, nil
 }
@@ -234,7 +235,7 @@ func (f *FileManager) GetSink(ctx context.Context, name string) (*SinkConfig, er
 	return &sink, nil
 }
 
-func (f *FileManager) AddSink(ctx context.Context, name, directory, layout string, force bool) error {
+func (f *FileManager) AddSink(ctx context.Context, name, directory, layout string, compileTarget urf.CompileTarget, force bool) error {
 	if layout == "" {
 		layout = "hierarchical"
 	}
@@ -252,8 +253,9 @@ func (f *FileManager) AddSink(ctx context.Context, name, directory, layout strin
 	}
 
 	newSink := SinkConfig{
-		Directory: directory,
-		Layout:    layout,
+		Directory:     directory,
+		Layout:        layout,
+		CompileTarget: compileTarget,
 	}
 	manifest.Sinks[name] = newSink
 
@@ -261,7 +263,8 @@ func (f *FileManager) AddSink(ctx context.Context, name, directory, layout strin
 		"action", "sink_add",
 		"name", name,
 		"directory", directory,
-		"layout", layout)
+		"layout", layout,
+		"compileTarget", string(compileTarget))
 
 	return f.saveManifest(manifest)
 }
@@ -324,8 +327,10 @@ func (f *FileManager) UpdateSink(ctx context.Context, name, field, value string)
 			return fmt.Errorf("layout must be 'hierarchical' or 'flat'")
 		}
 		sink.Layout = value
+	case "compileTarget":
+		sink.CompileTarget = urf.CompileTarget(strings.TrimSpace(value))
 	default:
-		return fmt.Errorf("unknown field '%s' (valid: directory, layout)", field)
+		return fmt.Errorf("unknown field '%s' (valid: directory, layout, compileTarget)", field)
 	}
 
 	manifest.Sinks[name] = sink

@@ -4,160 +4,132 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/jomadu/ai-rules-manager/internal/index"
 	"github.com/jomadu/ai-rules-manager/internal/types"
+	"github.com/jomadu/ai-rules-manager/internal/urf"
 )
 
 // FlatInstaller implements flat file installation where all files are placed directly in the target directory
 // with hashed names and a lookup index to preserve namespace information.
-type FlatInstaller struct{}
-
-// IndexEntry represents a file entry in the flat installer index
-type IndexEntry struct {
-	Registry string `json:"registry"`
-	Ruleset  string `json:"ruleset"`
-	Version  string `json:"version"`
-	FilePath string `json:"filePath"`
+type FlatInstaller struct {
+	baseDir      string
+	indexManager *index.IndexManager
+	compiler     urf.Compiler
 }
-
-// Index represents the flat installer lookup index
-type Index map[string]IndexEntry
 
 // NewFlatInstaller creates a new flat installer.
-func NewFlatInstaller() *FlatInstaller {
-	return &FlatInstaller{}
+func NewFlatInstaller(baseDir string, target urf.CompileTarget) *FlatInstaller {
+	compiler, _ := urf.NewCompiler(target)
+	return &FlatInstaller{
+		baseDir:      baseDir,
+		indexManager: index.NewIndexManager(baseDir, "flat", target),
+		compiler:     compiler,
+	}
 }
 
-func (f *FlatInstaller) Install(ctx context.Context, dir, registry, ruleset, version string, files []types.File) error {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+func (f *FlatInstaller) Install(ctx context.Context, registry, ruleset, version string, priority int, files []types.File) error {
+	if err := os.MkdirAll(f.baseDir, 0o755); err != nil {
 		return err
 	}
 
-	// Load existing index
-	index, err := f.loadIndex(dir)
+	// Remove existing versions
+	if err := f.Uninstall(ctx, registry, ruleset); err != nil {
+		return err
+	}
+
+	// Process URF files
+	processedFiles, err := processURFFiles(files, registry, ruleset, version, f.compiler)
 	if err != nil {
 		return err
 	}
 
-	// Remove existing versions before installing new one
-	if err := f.removeExistingVersions(ctx, dir, registry, ruleset, index); err != nil {
-		return err
-	}
-
-	for _, file := range files {
+	var filePaths []string
+	for _, file := range processedFiles {
 		hash := f.hashFile(registry, ruleset, version, file.Path)
 		fileName := "arm_" + hash + "_" + strings.ReplaceAll(file.Path, "/", "_")
-		filePath := filepath.Join(dir, fileName)
+		filePath := filepath.Join(f.baseDir, fileName)
 
 		if err := os.WriteFile(filePath, file.Content, 0o644); err != nil {
 			return err
 		}
 
-		// Update index
-		index[fileName] = IndexEntry{
-			Registry: registry,
-			Ruleset:  ruleset,
-			Version:  version,
-			FilePath: file.Path,
-		}
+		filePaths = append(filePaths, fileName)
 	}
 
-	// Save updated index
-	if err := f.saveIndex(dir, index); err != nil {
+	// Update index manager
+	if err := f.indexManager.Create(ctx, registry, ruleset, version, priority, filePaths); err != nil {
 		return err
 	}
 
-	slog.InfoContext(ctx, "Installed files (flat)", "count", len(files), "path", dir)
+	slog.InfoContext(ctx, "Installed files (flat)", "count", len(processedFiles), "path", f.baseDir)
 	return nil
 }
 
-func (f *FlatInstaller) Uninstall(ctx context.Context, dir, registry, ruleset string) error {
-	// Load index
-	index, err := f.loadIndex(dir)
+func (f *FlatInstaller) Uninstall(ctx context.Context, registry, ruleset string) error {
+	info, err := f.indexManager.Read(ctx, registry, ruleset)
 	if err != nil {
-		return err
+		return nil // Not installed
 	}
 
-	// If index is empty, no previous installation exists
-	if len(index) == 0 {
-		return nil
-	}
-
-	// Find and remove files for this registry/ruleset
+	// Remove files
 	var removedCount int
-	for fileName, entry := range index {
-		if entry.Registry == registry && entry.Ruleset == ruleset {
-			filePath := filepath.Join(dir, fileName)
-			if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
-				return err
-			}
-			delete(index, fileName)
-			removedCount++
+	for _, filePath := range info.FilePaths {
+		fullPath := filepath.Join(f.baseDir, filePath)
+		if err := os.Remove(fullPath); err != nil && !os.IsNotExist(err) {
+			return err
 		}
+		removedCount++
 	}
 
-	// Save updated index
-	if err := f.saveIndex(dir, index); err != nil {
+	// Remove from index
+	if err := f.indexManager.Delete(ctx, registry, ruleset); err != nil {
 		return err
 	}
 
-	slog.InfoContext(ctx, "Uninstalled files (flat)", "count", removedCount, "path", dir)
+	slog.InfoContext(ctx, "Uninstalled files (flat)", "count", removedCount, "path", f.baseDir)
 	return nil
 }
 
-func (f *FlatInstaller) ListInstalled(ctx context.Context, dir string) ([]Ruleset, error) {
-	// Load index
-	index, err := f.loadIndex(dir)
+func (f *FlatInstaller) ListInstalled(ctx context.Context) ([]Ruleset, error) {
+	rulesets, err := f.indexManager.List(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// Group files by ruleset/version
-	installationMap := make(map[string]*Ruleset)
-	for fileName, entry := range index {
-		key := entry.Ruleset + "@" + entry.Version
-		if installation, exists := installationMap[key]; exists {
-			installation.FilePaths = append(installation.FilePaths, filepath.Join(dir, fileName))
-		} else {
-			installationMap[key] = &Ruleset{
-				Registry:  entry.Registry,
-				Ruleset:   entry.Ruleset,
-				Version:   entry.Version,
-				Path:      dir,
-				FilePaths: []string{filepath.Join(dir, fileName)},
-			}
-		}
-	}
-
 	var installations []Ruleset
-	for _, installation := range installationMap {
-		installations = append(installations, *installation)
+	for registry, rulesetMap := range rulesets {
+		for name, info := range rulesetMap {
+			var filePaths []string
+			for _, filePath := range info.FilePaths {
+				fullPath := filepath.Join(f.baseDir, filePath)
+				filePaths = append(filePaths, fullPath)
+			}
+			installations = append(installations, Ruleset{
+				Registry:  registry,
+				Ruleset:   name,
+				Version:   info.Version,
+				Priority:  info.Priority,
+				Path:      f.baseDir,
+				FilePaths: filePaths,
+			})
+		}
 	}
 
 	return installations, nil
 }
 
-func (f *FlatInstaller) IsInstalled(ctx context.Context, dir, registry, ruleset string) (installed bool, version string, err error) {
-	// Load index
-	index, err := f.loadIndex(dir)
+func (f *FlatInstaller) IsInstalled(ctx context.Context, registry, ruleset string) (installed bool, version string, err error) {
+	info, err := f.indexManager.Read(ctx, registry, ruleset)
 	if err != nil {
-		return false, "", err
+		return false, "", nil
 	}
-
-	// Find any file for this registry/ruleset
-	for _, entry := range index {
-		if entry.Registry == registry && entry.Ruleset == ruleset {
-			return true, entry.Version, nil
-		}
-	}
-
-	return false, "", nil
+	return true, info.Version, nil
 }
 
 // hashFile creates a SHA256 hash for the file identifier
@@ -165,54 +137,4 @@ func (f *FlatInstaller) hashFile(registry, ruleset, version, filePath string) st
 	identifier := fmt.Sprintf("%s/%s@%s:%s", registry, ruleset, version, filePath)
 	hash := sha256.Sum256([]byte(identifier))
 	return hex.EncodeToString(hash[:])[:8]
-}
-
-// loadIndex loads the index file from the directory
-func (f *FlatInstaller) loadIndex(dir string) (Index, error) {
-	indexPath := filepath.Join(dir, "arm-index.json")
-	index := make(Index)
-
-	data, err := os.ReadFile(indexPath)
-	if os.IsNotExist(err) {
-		return index, nil // Return empty index if file doesn't exist
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	if err := json.Unmarshal(data, &index); err != nil {
-		return nil, err
-	}
-
-	return index, nil
-}
-
-// saveIndex saves the index file to the directory
-func (f *FlatInstaller) saveIndex(dir string, index Index) error {
-	indexPath := filepath.Join(dir, "arm-index.json")
-
-	data, err := json.MarshalIndent(index, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(indexPath, data, 0o644)
-}
-
-// removeExistingVersions removes ALL existing files for the same registry/ruleset
-// before installing a new version, ensuring only one version exists at any time.
-func (f *FlatInstaller) removeExistingVersions(ctx context.Context, dir, registry, ruleset string, index Index) error {
-	// Find and remove all files for this registry/ruleset
-	for fileName, entry := range index {
-		if entry.Registry == registry && entry.Ruleset == ruleset {
-			filePath := filepath.Join(dir, fileName)
-			if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
-				return err
-			}
-			delete(index, fileName)
-			slog.InfoContext(ctx, "Removed old version file", "path", filePath)
-		}
-	}
-
-	return nil
 }

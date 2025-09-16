@@ -12,8 +12,12 @@ func (f *DefaultRuleGeneratorFactory) NewRuleGenerator(target CompileTarget) (Ru
 		return &CursorRuleGenerator{
 			metadataGen: NewRuleMetadataGenerator(),
 		}, nil
-	case TargetAmazonQ:
-		return &AmazonQRuleGenerator{
+	case TargetMarkdown, TargetAmazonQ:
+		return &MarkdownRuleGenerator{
+			metadataGen: NewRuleMetadataGenerator(),
+		}, nil
+	case TargetCopilot:
+		return &CopilotRuleGenerator{
 			metadataGen: NewRuleMetadataGenerator(),
 		}, nil
 	default:

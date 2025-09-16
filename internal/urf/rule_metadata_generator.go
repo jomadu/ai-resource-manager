@@ -34,9 +34,14 @@ func (g *DefaultRuleMetadataGenerator) GenerateRuleMetadata(namespace string, ru
 	content.WriteString(fmt.Sprintf("  priority: %d\n", rule.Priority))
 	if len(rule.Scope) > 0 && len(rule.Scope[0].Files) > 0 {
 		content.WriteString("  scope:\n")
-		for _, file := range rule.Scope[0].Files {
-			content.WriteString(fmt.Sprintf("    - files: %q\n", file))
+		content.WriteString("    - files: [")
+		for i, file := range rule.Scope[0].Files {
+			if i > 0 {
+				content.WriteString(", ")
+			}
+			content.WriteString(fmt.Sprintf("%q", file))
 		}
+		content.WriteString("]\n")
 	}
 	content.WriteString("---\n\n")
 

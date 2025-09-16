@@ -10,8 +10,10 @@ func (f *DefaultFilenameGeneratorFactory) NewFilenameGenerator(target CompileTar
 	switch target {
 	case TargetCursor:
 		return &CursorFilenameGenerator{}, nil
-	case TargetAmazonQ:
-		return &AmazonQFilenameGenerator{}, nil
+	case TargetMarkdown, TargetAmazonQ:
+		return &MarkdownFilenameGenerator{}, nil
+	case TargetCopilot:
+		return &CopilotFilenameGenerator{}, nil
 	default:
 		return nil, fmt.Errorf("unsupported compile target: %s", target)
 	}
