@@ -5,31 +5,49 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/jomadu/ai-rules-manager/internal/index"
 	"github.com/jomadu/ai-rules-manager/internal/types"
+	"github.com/jomadu/ai-rules-manager/internal/urf"
 )
 
 // HierarchicalInstaller implements hierarchical file installation preserving directory structure.
-type HierarchicalInstaller struct{}
-
-// NewHierarchicalInstaller creates a new hierarchical installer.
-func NewHierarchicalInstaller() *HierarchicalInstaller {
-	return &HierarchicalInstaller{}
+type HierarchicalInstaller struct {
+	baseDir      string
+	indexManager *index.IndexManager
+	compiler     urf.Compiler
 }
 
-func (h *HierarchicalInstaller) Install(ctx context.Context, dir, registry, ruleset, version string, files []types.File) error {
-	// Remove existing versions before installing new one
-	if err := h.removeExistingVersions(ctx, dir, registry, ruleset); err != nil {
+// NewHierarchicalInstaller creates a new hierarchical installer.
+func NewHierarchicalInstaller(baseDir string, target urf.CompileTarget) *HierarchicalInstaller {
+	compiler, _ := urf.NewCompiler(target)
+	return &HierarchicalInstaller{
+		baseDir:      baseDir,
+		indexManager: index.NewIndexManager(baseDir, "hierarchical", target),
+		compiler:     compiler,
+	}
+}
+
+func (h *HierarchicalInstaller) Install(ctx context.Context, registry, ruleset, version string, priority int, files []types.File) error {
+	// Remove existing versions
+	if err := h.Uninstall(ctx, registry, ruleset); err != nil {
 		return err
 	}
 
-	rulesetDir := filepath.Join(dir, "arm", registry, ruleset, version)
+	rulesetDir := filepath.Join(h.baseDir, "arm", registry, ruleset, version)
 	if err := os.MkdirAll(rulesetDir, 0o755); err != nil {
 		return err
 	}
-	slog.InfoContext(ctx, "Created directory", "path", rulesetDir)
 
-	for _, file := range files {
+	// Process URF files
+	processedFiles, err := processURFFiles(files, registry, ruleset, version, h.compiler)
+	if err != nil {
+		return err
+	}
+
+	var filePaths []string
+	for _, file := range processedFiles {
 		filePath := filepath.Join(rulesetDir, file.Path)
 		if err := os.MkdirAll(filepath.Dir(filePath), 0o755); err != nil {
 			return err
@@ -37,28 +55,41 @@ func (h *HierarchicalInstaller) Install(ctx context.Context, dir, registry, rule
 		if err := os.WriteFile(filePath, file.Content, 0o644); err != nil {
 			return err
 		}
+		relativePath := filepath.Join("arm", registry, ruleset, version, file.Path)
+		filePaths = append(filePaths, relativePath)
 	}
 
-	slog.InfoContext(ctx, "Installed files (hierarchical)", "count", len(files), "path", rulesetDir)
+	// Update index manager
+	if err := h.indexManager.Create(ctx, registry, ruleset, version, priority, filePaths); err != nil {
+		return err
+	}
+
+	slog.InfoContext(ctx, "Installed files (hierarchical)", "count", len(processedFiles), "path", rulesetDir)
 	return nil
 }
 
-func (h *HierarchicalInstaller) Uninstall(ctx context.Context, dir, registry, ruleset string) error {
-	rulesetDir := filepath.Join(dir, "arm", registry, ruleset)
+func (h *HierarchicalInstaller) Uninstall(ctx context.Context, registry, ruleset string) error {
+	// Remove from index first
+	if err := h.indexManager.Delete(ctx, registry, ruleset); err != nil {
+		// Continue even if not in index
+		_ = err // Explicitly ignore error
+	}
+
+	rulesetDir := filepath.Join(h.baseDir, "arm", registry, ruleset)
 	if err := os.RemoveAll(rulesetDir); err != nil {
 		return err
 	}
 	slog.InfoContext(ctx, "Removed directory", "path", rulesetDir)
 
 	// Clean up empty parent directories
-	registryDir := filepath.Join(dir, "arm", registry)
+	registryDir := filepath.Join(h.baseDir, "arm", registry)
 	if isEmpty(registryDir) {
 		if err := os.Remove(registryDir); err != nil {
 			return err
 		}
 		slog.InfoContext(ctx, "Removed empty registry directory", "path", registryDir)
 
-		armDir := filepath.Join(dir, "arm")
+		armDir := filepath.Join(h.baseDir, "arm")
 		if isEmpty(armDir) {
 			if err := os.Remove(armDir); err != nil {
 				return err
@@ -70,114 +101,39 @@ func (h *HierarchicalInstaller) Uninstall(ctx context.Context, dir, registry, ru
 	return nil
 }
 
-func (h *HierarchicalInstaller) ListInstalled(ctx context.Context, dir string) ([]Ruleset, error) {
-	armDir := filepath.Join(dir, "arm")
-	registryEntries, err := os.ReadDir(armDir)
+func (h *HierarchicalInstaller) ListInstalled(ctx context.Context) ([]Ruleset, error) {
+	rulesets, err := h.indexManager.List(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	var installations []Ruleset
-	for _, registryEntry := range registryEntries {
-		if !registryEntry.IsDir() {
-			continue
-		}
-
-		registryPath := filepath.Join(armDir, registryEntry.Name())
-		rulesetEntries, err := os.ReadDir(registryPath)
-		if err != nil {
-			continue
-		}
-
-		for _, rulesetEntry := range rulesetEntries {
-			if !rulesetEntry.IsDir() {
-				continue
+	for registry, rulesetMap := range rulesets {
+		for name, info := range rulesetMap {
+			var filePaths []string
+			for _, filePath := range info.FilePaths {
+				fullPath := filepath.Join(h.baseDir, strings.TrimPrefix(filePath, "./"))
+				filePaths = append(filePaths, fullPath)
 			}
-
-			rulesetPath := filepath.Join(registryPath, rulesetEntry.Name())
-			versionEntries, err := os.ReadDir(rulesetPath)
-			if err != nil {
-				continue
-			}
-
-			for _, versionEntry := range versionEntries {
-				if !versionEntry.IsDir() {
-					continue
-				}
-
-				versionPath := filepath.Join(rulesetPath, versionEntry.Name())
-				filePaths, err := h.collectFilePaths(versionPath)
-				if err != nil {
-					continue
-				}
-
-				installations = append(installations, Ruleset{
-					Registry:  registryEntry.Name(),
-					Ruleset:   rulesetEntry.Name(),
-					Version:   versionEntry.Name(),
-					Path:      versionPath,
-					FilePaths: filePaths,
-				})
-			}
+			versionPath := filepath.Join(h.baseDir, "arm", registry, name, info.Version)
+			installations = append(installations, Ruleset{
+				Registry:  registry,
+				Ruleset:   name,
+				Version:   info.Version,
+				Priority:  info.Priority,
+				Path:      versionPath,
+				FilePaths: filePaths,
+			})
 		}
 	}
 
 	return installations, nil
 }
 
-func (h *HierarchicalInstaller) IsInstalled(ctx context.Context, dir, registry, ruleset string) (installed bool, version string, err error) {
-	rulesetPath := filepath.Join(dir, "arm", registry, ruleset)
-	versionEntries, err := os.ReadDir(rulesetPath)
+func (h *HierarchicalInstaller) IsInstalled(ctx context.Context, registry, ruleset string) (installed bool, version string, err error) {
+	info, err := h.indexManager.Read(ctx, registry, ruleset)
 	if err != nil {
-		return false, "", nil // Directory doesn't exist, not installed
+		return false, "", nil
 	}
-
-	for _, versionEntry := range versionEntries {
-		if versionEntry.IsDir() {
-			return true, versionEntry.Name(), nil
-		}
-	}
-
-	return false, "", nil
-}
-
-// removeExistingVersions removes ALL existing version directories for the same registry/ruleset
-// before installing a new version, ensuring only one version exists at any time.
-func (h *HierarchicalInstaller) removeExistingVersions(ctx context.Context, dir, registry, ruleset string) error {
-	rulesetBaseDir := filepath.Join(dir, "arm", registry, ruleset)
-	versionEntries, err := os.ReadDir(rulesetBaseDir)
-	if err != nil {
-		// Directory doesn't exist yet, nothing to clean up
-		return nil
-	}
-
-	for _, versionEntry := range versionEntries {
-		if !versionEntry.IsDir() {
-			continue
-		}
-
-		// Remove ALL existing version directories
-		oldVersionDir := filepath.Join(rulesetBaseDir, versionEntry.Name())
-		if err := os.RemoveAll(oldVersionDir); err != nil {
-			return err
-		}
-		slog.InfoContext(ctx, "Removed old version directory", "path", oldVersionDir)
-	}
-
-	return nil
-}
-
-// collectFilePaths recursively collects all file paths within a directory
-func (h *HierarchicalInstaller) collectFilePaths(dir string) ([]string, error) {
-	var filePaths []string
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			filePaths = append(filePaths, path)
-		}
-		return nil
-	})
-	return filePaths, err
+	return true, info.Version, nil
 }

@@ -89,13 +89,13 @@ pause
 log "=== SINK SETUP ==="
 
 log "Setting up cursor sink (hierarchical)..."
-run_arm config sink add cursor .cursor/rules
+run_arm config sink add cursor .cursor/rules --type cursor
 
 log "Setting up Amazon Q sink (hierarchical)..."
-run_arm config sink add q .amazonq/rules
+run_arm config sink add q .amazonq/rules --type amazonq
 
 log "Setting up copilot sink (flat)..."
-run_arm config sink add copilot .github/copilot --layout flat
+run_arm config sink add copilot .github/copilot --type copilot
 
 log "Showing configuration..."
 run_arm config list
@@ -112,6 +112,9 @@ run_arm install ai-rules/amazonq-rules --include "rules/amazonq/*.md" --sinks q
 
 log "Installing copilot rules to copilot sink..."
 run_arm install ai-rules/copilot-rules --include "rules/copilot/*.instructions.md" --sinks copilot
+
+log "Installing URF grug-brained-dev ruleset to all sinks..."
+run_arm install ai-rules/grug-brained-dev --include "rulesets/grug-brained-dev.yml" --sinks cursor,q,copilot --priority 150
 
 show_tree "Project structure after installs"
 pause
@@ -138,6 +141,7 @@ log "Uninstalling all rulesets..."
 run_arm uninstall ai-rules/cursor-rules
 run_arm uninstall ai-rules/amazonq-rules
 run_arm uninstall ai-rules/copilot-rules
+run_arm uninstall ai-rules/grug-brained-dev
 
 log "Showing empty list..."
 run_arm list
@@ -158,6 +162,30 @@ log "=== OUTDATED CHECK ==="
 
 log "Checking for outdated rulesets..."
 run_arm outdated
+pause
+
+# === RULESET CONFIG UPDATES ===
+log "=== RULESET CONFIG UPDATES ==="
+
+log "Changing cursor-rules priority to 200..."
+run_arm config ruleset update ai-rules/cursor-rules priority 200
+
+log "Showing updated priority..."
+run_arm info ai-rules/cursor-rules
+pause
+
+log "Changing cursor-rules version constraint to 1.0..."
+run_arm config ruleset update ai-rules/cursor-rules version 1.0
+
+log "Showing updated version constraint..."
+run_arm info ai-rules/cursor-rules
+pause
+
+log "Adding q sink to cursor-rules..."
+run_arm config ruleset update ai-rules/cursor-rules sinks cursor,q
+
+log "Showing updated sinks..."
+run_arm info ai-rules/cursor-rules
 pause
 
 # === VERSION CONSTRAINT DEMOS ===
@@ -221,6 +249,7 @@ echo "• Listing and getting info about rulesets"
 echo "• Uninstalling rulesets"
 echo "• Installing from branches"
 echo "• Checking for outdated rulesets"
+echo "• Ruleset configuration updates (priority, version, sinks)"
 echo "• Version constraint resolution (major, minor, patch)"
 echo "• Sink removal protection"
 echo "• Clean teardown"

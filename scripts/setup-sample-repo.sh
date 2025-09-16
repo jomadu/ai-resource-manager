@@ -57,9 +57,28 @@ Test repository for ARM (AI Rules Manager) with grug-brained-dev rules.
 
 ## Repository Structure
 
+### Legacy Format (v1.x)
 - `rules/cursor/grug-brained-dev.mdc` - Cursor rules for grug-brained development
 - `rules/amazonq/grug-brained-dev.md` - Amazon Q rules for grug-brained development
 - `rules/copilot/grug-brained-dev.instructions.md` - GitHub Copilot instructions for grug-brained development
+
+### URF Format (v2.x+)
+- `rulesets/grug-brained-dev.yml` - Universal Rule Format specification with grug-brained principles
+
+## Version History
+
+- **v1.0.0** - Initial release with basic grug rules
+- **v1.1.0** - Added task management rules
+- **v1.0.1** - Bug fixes in grug rules
+- **v2.0.0** - **BREAKING**: Introduced URF format with structured rules
+- **v2.1.0** - Added clean code rules
+
+## URF Format Benefits
+
+- **Structured Rules**: Consistent metadata and priority system
+- **Multi-tool Support**: Single source compiles to cursor, amazonq, copilot formats
+- **Priority Management**: Rules have explicit priority and enforcement levels
+- **Scope Definition**: Rules specify which files they apply to
 EOF
 
     cat > rules/cursor/grug-brained-dev.mdc << 'EOF'
@@ -119,26 +138,7 @@ description: 'Grug-brained development instructions for GitHub Copilot'
 - Small functions better than big functions
 EOF
 
-    cat > rules/generic.md << 'EOF'
-# Generic Development Rules
 
-*Universal rules that apply to all development.*
-
-## Code Quality
-- Write readable code
-- Use meaningful variable names
-- Keep functions small and focused
-
-## Documentation
-- Document complex logic
-- Keep README files updated
-- Write clear commit messages
-
-## Testing
-- Write tests for new features
-- Test edge cases
-- Maintain test coverage
-EOF
 }
 
 create_version_1_1_0() {
@@ -257,34 +257,7 @@ description: 'Task processing instructions for GitHub Copilot'
 - Review completed work
 EOF
 
-    cat > rules/generic.md << 'EOF'
-# Generic Development Rules v1.1
 
-*Universal rules that apply to all development.*
-
-## Code Quality
-- Write readable code
-- Use meaningful variable names
-- Keep functions small and focused
-- Follow consistent coding style
-
-## Documentation
-- Document complex logic
-- Keep README files updated
-- Write clear commit messages
-- Maintain API documentation
-
-## Testing
-- Write tests for new features
-- Test edge cases
-- Maintain test coverage
-- Use automated testing
-
-## Task Management
-- Break work into manageable pieces
-- Track progress regularly
-- Communicate blockers early
-EOF
 }
 
 create_version_1_2_0() {
@@ -334,39 +307,97 @@ description: 'Grug-brained development instructions for GitHub Copilot'
 - Small functions better than big functions
 EOF
 
-    cat > rules/generic.md << 'EOF'
-# Generic Development Rules v1.2
 
-*Universal rules that apply to all development.*
-
-## Code Quality
-- Write readable code
-- Use meaningful variable names
-- Keep functions small and focused
-- Follow consistent coding style
-- FIXED: Always validate input parameters
-
-## Documentation
-- Document complex logic
-- Keep README files updated
-- Write clear commit messages
-- Maintain API documentation
-
-## Testing
-- Write tests for new features
-- Test edge cases
-- Maintain test coverage
-- Use automated testing
-- FIXED: Include integration tests
-
-## Task Management
-- Break work into manageable pieces
-- Track progress regularly
-- Communicate blockers early
-EOF
 }
 
 create_version_2_0_0() {
+    # Add URF format file
+    mkdir -p rulesets
+    cat > rulesets/grug-brained-dev.yml << 'EOF'
+version: "1.0"
+metadata:
+  id: "ai-rules-sample"
+  name: "AI Rules Sample Ruleset"
+  version: "2.0.0"
+  description: "Sample URF ruleset for ARM testing with grug-brained development principles"
+rules:
+  - id: "grug-simplicity"
+    name: "Grug Simplicity Rule"
+    description: "Keep code simple for grug brain to understand"
+    priority: 100
+    enforcement: "must"
+    scope:
+      - files: ["**/*.js", "**/*.ts", "**/*.py", "**/*.go"]
+    body: |
+      Grug no like complex code. Simple code good, complex code bad.
+
+      ## Rules
+      - If grug no understand, too complex
+      - Use simple names that make sense
+      - Small functions better than big functions
+      - One thing per function
+
+      ## Examples
+      ```javascript
+      // Good - grug understand
+      function addNumbers(a, b) {
+        return a + b;
+      }
+
+      // Bad - grug confused
+      const performArithmeticOperation = (operandA, operandB, operationType) => {
+        return operationType === 'addition' ? operandA + operandB : null;
+      }
+      ```
+  - id: "grug-testing"
+    name: "Grug Testing Rule"
+    description: "Test everything before ship to avoid angry users"
+    priority: 90
+    enforcement: "should"
+    scope:
+      - files: ["**/*.test.js", "**/*.spec.ts", "**/*_test.py"]
+    body: |
+      Grug test before ship. Broken code make grug sad.
+
+      ## Rules
+      - Test save grug from angry users
+      - Write test for new code
+      - Test edge cases too
+      - Run tests before commit
+
+      ## Test Types
+      - Unit tests for small parts
+      - Integration tests for big parts
+      - End-to-end tests for whole thing
+  - id: "grug-documentation"
+    name: "Grug Documentation Rule"
+    description: "Document why, not what - code should explain what"
+    priority: 70
+    enforcement: "may"
+    scope:
+      - files: ["**/*.md", "**/*.rst", "**/*.txt"]
+    body: |
+      Grug write docs when needed. Code should tell story.
+
+      ## Rules
+      - Comments explain why, not what
+      - README tell how to use
+      - Document complex business logic
+      - Keep docs up to date
+
+      ## Good Comments
+      ```javascript
+      // Retry 3 times because API sometimes flaky
+      for (let i = 0; i < 3; i++) {
+        try {
+          return await apiCall();
+        } catch (error) {
+          if (i === 2) throw error;
+        }
+      }
+      ```
+EOF
+
     # Breaking changes to task rules
     cat > rules/cursor/generate-tasks.mdc << 'EOF'
 # Generate Tasks Rules v2 (Cursor)
