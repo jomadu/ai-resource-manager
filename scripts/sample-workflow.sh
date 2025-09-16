@@ -2,6 +2,22 @@
 
 set -e
 
+# Parse command line arguments
+INTERACTIVE=true
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --non-interactive|-n)
+            INTERACTIVE=false
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [--non-interactive|-n]"
+            exit 1
+            ;;
+    esac
+done
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -43,9 +59,11 @@ show_tree() {
 }
 
 pause() {
-    echo ""
-    read -p "Press Enter to continue..."
-    echo ""
+    if [ "$INTERACTIVE" = true ]; then
+        echo ""
+        read -p "Press Enter to continue..."
+        echo ""
+    fi
 }
 
 # === SETUP SANDBOX ===
