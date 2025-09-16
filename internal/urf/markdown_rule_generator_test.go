@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestAmazonQRuleGenerator_GenerateRule(t *testing.T) {
-	generator := &AmazonQRuleGenerator{
+func TestMarkdownRuleGenerator_GenerateRule(t *testing.T) {
+	generator := &MarkdownRuleGenerator{
 		metadataGen: NewRuleMetadataGenerator(),
 	}
 
@@ -36,12 +36,12 @@ func TestAmazonQRuleGenerator_GenerateRule(t *testing.T) {
 
 	result := generator.GenerateRule(namespace, ruleset, rule)
 
-	// Amazon Q should NOT have tool-specific frontmatter
+	// Markdown should NOT have tool-specific frontmatter
 	if strings.Contains(result, "description:") && strings.Index(result, "description:") < strings.Index(result, "namespace:") {
-		t.Error("Amazon Q should not have tool-specific frontmatter before URF metadata")
+		t.Error("Markdown should not have tool-specific frontmatter before URF metadata")
 	}
 	if strings.Contains(result, "globs:") && strings.Index(result, "globs:") < strings.Index(result, "namespace:") {
-		t.Error("Amazon Q should not have globs frontmatter before URF metadata")
+		t.Error("Markdown should not have globs frontmatter before URF metadata")
 	}
 
 	// Check URF metadata block

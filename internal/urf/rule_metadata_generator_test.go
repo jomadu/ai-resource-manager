@@ -72,12 +72,9 @@ func TestDefaultRuleMetadataGenerator_GenerateRuleMetadata(t *testing.T) {
 		t.Error("Expected priority in metadata")
 	}
 
-	// Check scope
-	if !strings.Contains(result, `files: "**/*.js"`) {
-		t.Error("Expected first scope file in metadata")
-	}
-	if !strings.Contains(result, `files: "**/*.ts"`) {
-		t.Error("Expected second scope file in metadata")
+	// Check scope (should be in array format)
+	if !strings.Contains(result, `files: ["**/*.js", "**/*.ts"]`) {
+		t.Error("Expected scope files in array format")
 	}
 
 	// Should end with frontmatter delimiter and newlines

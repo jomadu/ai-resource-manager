@@ -13,8 +13,8 @@ func TestCursorFilenameGenerator_GenerateFilename(t *testing.T) {
 	}
 }
 
-func TestAmazonQFilenameGenerator_GenerateFilename(t *testing.T) {
-	generator := &AmazonQFilenameGenerator{}
+func TestMarkdownFilenameGenerator_GenerateFilename(t *testing.T) {
+	generator := &MarkdownFilenameGenerator{}
 
 	result := generator.GenerateFilename("test-ruleset", "rule-1")
 	expected := "test-ruleset_rule-1.md"
@@ -41,8 +41,8 @@ func TestFilenameGeneratorFactory_NewFilenameGenerator(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error for Amazon Q target, got %v", err)
 	}
-	if _, ok := amazonqGen.(*AmazonQFilenameGenerator); !ok {
-		t.Error("Expected AmazonQFilenameGenerator for Amazon Q target")
+	if _, ok := amazonqGen.(*MarkdownFilenameGenerator); !ok {
+		t.Error("Expected MarkdownFilenameGenerator for Amazon Q target")
 	}
 
 	// Test unsupported target

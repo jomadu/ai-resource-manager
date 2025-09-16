@@ -14,8 +14,8 @@ func isEmpty(dir string) bool {
 
 // Installer manages physical file deployment to sink directories.
 type Installer interface {
-	Install(ctx context.Context, dir, registry, ruleset, version string, files []types.File) error
-	Uninstall(ctx context.Context, dir, registry, ruleset string) error
-	ListInstalled(ctx context.Context, dir string) ([]Ruleset, error)
-	IsInstalled(ctx context.Context, dir, registry, ruleset string) (bool, string, error)
+	Install(ctx context.Context, registry, ruleset, version string, priority int, files []types.File) error
+	Uninstall(ctx context.Context, registry, ruleset string) error
+	ListInstalled(ctx context.Context) ([]Ruleset, error)
+	IsInstalled(ctx context.Context, registry, ruleset string) (bool, string, error)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func TestFlatInstallerHashFile(t *testing.T) {
-	installer := NewFlatInstaller()
+	installer := NewFlatInstaller("/tmp", "markdown")
 
 	tests := []struct {
 		name     string
@@ -52,7 +52,7 @@ func TestFlatInstallerHashFile(t *testing.T) {
 }
 
 func TestFlatInstallerHashFileDeterministic(t *testing.T) {
-	installer := NewFlatInstaller()
+	installer := NewFlatInstaller("/tmp", "markdown")
 
 	hash1 := installer.hashFile("registry", "ruleset", "1.0.0", "file.md")
 	hash2 := installer.hashFile("registry", "ruleset", "1.0.0", "file.md")
@@ -63,7 +63,7 @@ func TestFlatInstallerHashFileDeterministic(t *testing.T) {
 }
 
 func TestFlatInstallerHashFileUnique(t *testing.T) {
-	installer := NewFlatInstaller()
+	installer := NewFlatInstaller("/tmp", "markdown")
 
 	hash1 := installer.hashFile("registry1", "ruleset", "1.0.0", "file.md")
 	hash2 := installer.hashFile("registry2", "ruleset", "1.0.0", "file.md")
@@ -75,7 +75,7 @@ func TestFlatInstallerHashFileUnique(t *testing.T) {
 
 func TestFlatInstaller_ListInstalled(t *testing.T) {
 	tmpDir := t.TempDir()
-	installer := NewFlatInstaller()
+	installer := NewFlatInstaller(tmpDir, "markdown")
 	ctx := context.Background()
 
 	// Install test files
@@ -84,13 +84,13 @@ func TestFlatInstaller_ListInstalled(t *testing.T) {
 		{Path: "rule2.md", Content: []byte("rule2")},
 	}
 
-	err := installer.Install(ctx, tmpDir, "registry1", "ruleset1", "1.0.0", files)
+	err := installer.Install(ctx, "registry1", "ruleset1", "1.0.0", 100, files)
 	if err != nil {
 		t.Fatalf("Install failed: %v", err)
 	}
 
 	// Test ListInstalled
-	installations, err := installer.ListInstalled(ctx, tmpDir)
+	installations, err := installer.ListInstalled(ctx)
 	if err != nil {
 		t.Fatalf("ListInstalled failed: %v", err)
 	}

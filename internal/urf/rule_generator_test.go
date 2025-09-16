@@ -19,8 +19,8 @@ func TestRuleGeneratorFactory_NewRuleGenerator(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error for Amazon Q target, got %v", err)
 	}
-	if _, ok := amazonqGen.(*AmazonQRuleGenerator); !ok {
-		t.Error("Expected AmazonQRuleGenerator for Amazon Q target")
+	if _, ok := amazonqGen.(*MarkdownRuleGenerator); !ok {
+		t.Error("Expected MarkdownRuleGenerator for Amazon Q target")
 	}
 
 	// Test unsupported target
@@ -50,8 +50,8 @@ func TestRuleGeneratorFactory_CreatesWithMetadataGenerator(t *testing.T) {
 	}
 
 	// Verify the generator has a metadata generator
-	amazonqRuleGen := amazonqGen.(*AmazonQRuleGenerator)
+	amazonqRuleGen := amazonqGen.(*MarkdownRuleGenerator)
 	if amazonqRuleGen.metadataGen == nil {
-		t.Error("Expected AmazonQRuleGenerator to have metadata generator")
+		t.Error("Expected MarkdownRuleGenerator to have metadata generator")
 	}
 }

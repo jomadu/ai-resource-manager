@@ -5,6 +5,7 @@ type Ruleset struct {
 	Registry  string   `json:"registry"`
 	Ruleset   string   `json:"ruleset"`
 	Version   string   `json:"version"`
+	Priority  int      `json:"priority"`
 	Path      string   `json:"path"`
 	FilePaths []string `json:"filePaths"`
 }

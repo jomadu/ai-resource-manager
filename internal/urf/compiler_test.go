@@ -3,6 +3,9 @@ package urf
 import (
 	"strings"
 	"testing"
+
+	"github.com/jomadu/ai-rules-manager/internal/types"
+	"gopkg.in/yaml.v3"
 )
 
 func TestDefaultCompiler_Compile(t *testing.T) {
@@ -12,6 +15,7 @@ func TestDefaultCompiler_Compile(t *testing.T) {
 	}
 
 	ruleset := &Ruleset{
+		Version: "1.0",
 		Metadata: Metadata{
 			ID:      "test-ruleset",
 			Name:    "Test Ruleset",
@@ -36,7 +40,19 @@ func TestDefaultCompiler_Compile(t *testing.T) {
 	}
 
 	namespace := "ai-rules/test@1.0.0"
-	files, err := compiler.Compile(namespace, ruleset)
+	// Convert ruleset to URF file format
+	urfContent, err := yaml.Marshal(ruleset)
+	if err != nil {
+		t.Fatalf("Failed to marshal ruleset: %v", err)
+	}
+
+	urfFile := &types.File{
+		Path:    "test-ruleset.yml",
+		Content: urfContent,
+		Size:    int64(len(urfContent)),
+	}
+
+	files, err := compiler.Compile(namespace, urfFile)
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}
@@ -92,6 +108,7 @@ func TestDefaultCompiler_AmazonQTarget(t *testing.T) {
 	}
 
 	ruleset := &Ruleset{
+		Version: "1.0",
 		Metadata: Metadata{
 			ID:      "test-ruleset",
 			Name:    "Test Ruleset",
@@ -106,7 +123,19 @@ func TestDefaultCompiler_AmazonQTarget(t *testing.T) {
 		},
 	}
 
-	files, err := compiler.Compile("test-namespace", ruleset)
+	// Convert ruleset to URF file format
+	urfContent, err := yaml.Marshal(ruleset)
+	if err != nil {
+		t.Fatalf("Failed to marshal ruleset: %v", err)
+	}
+
+	urfFile := &types.File{
+		Path:    "test-ruleset.yml",
+		Content: urfContent,
+		Size:    int64(len(urfContent)),
+	}
+
+	files, err := compiler.Compile("test-namespace", urfFile)
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}

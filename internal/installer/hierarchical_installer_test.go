@@ -10,7 +10,7 @@ import (
 
 func TestHierarchicalInstaller_ListInstalled(t *testing.T) {
 	tmpDir := t.TempDir()
-	installer := NewHierarchicalInstaller()
+	installer := NewHierarchicalInstaller(tmpDir, "markdown")
 	ctx := context.Background()
 
 	// Install test files
@@ -19,13 +19,13 @@ func TestHierarchicalInstaller_ListInstalled(t *testing.T) {
 		{Path: "subdir/rule2.md", Content: []byte("rule2")},
 	}
 
-	err := installer.Install(ctx, tmpDir, "registry1", "ruleset1", "1.0.0", files)
+	err := installer.Install(ctx, "registry1", "ruleset1", "1.0.0", 100, files)
 	if err != nil {
 		t.Fatalf("Install failed: %v", err)
 	}
 
 	// Test ListInstalled
-	installations, err := installer.ListInstalled(ctx, tmpDir)
+	installations, err := installer.ListInstalled(ctx)
 	if err != nil {
 		t.Fatalf("ListInstalled failed: %v", err)
 	}

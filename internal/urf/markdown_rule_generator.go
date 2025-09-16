@@ -5,13 +5,13 @@ import (
 	"strings"
 )
 
-// AmazonQRuleGenerator generates Amazon Q-compatible rule files
-type AmazonQRuleGenerator struct {
+// MarkdownRuleGenerator generates markdown rule files
+type MarkdownRuleGenerator struct {
 	metadataGen RuleMetadataGenerator
 }
 
-// GenerateRule generates an Amazon Q rule file
-func (g *AmazonQRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, rule *Rule) string {
+// GenerateRule generates a markdown rule file
+func (g *MarkdownRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, rule *Rule) string {
 	var content strings.Builder
 
 	// URF metadata block (Amazon Q doesn't use tool-specific frontmatter)

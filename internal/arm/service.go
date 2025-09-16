@@ -6,12 +6,14 @@ import (
 	"log/slog"
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/jomadu/ai-rules-manager/internal/installer"
 	"github.com/jomadu/ai-rules-manager/internal/lockfile"
 	"github.com/jomadu/ai-rules-manager/internal/manifest"
 	"github.com/jomadu/ai-rules-manager/internal/registry"
 	"github.com/jomadu/ai-rules-manager/internal/types"
+	"github.com/jomadu/ai-rules-manager/internal/urf"
 	"github.com/jomadu/ai-rules-manager/internal/version"
 )
 
@@ -27,6 +29,8 @@ type Service interface {
 	GetRulesetInfo(ctx context.Context, registry, ruleset string) (*RulesetInfo, error)
 	GetAllRulesetInfo(ctx context.Context) ([]*RulesetInfo, error)
 
+	UpdateRulesetConfig(ctx context.Context, registry, ruleset, field, value string) error
+	AddSink(ctx context.Context, name, directory, sinkType, layout, compileTarget string, force bool) error
 	SyncRemovedSink(ctx context.Context, removedSink *manifest.SinkConfig) error
 	Version() version.VersionInfo
 }
@@ -102,10 +106,11 @@ func (a *ArmService) updateTrackingFiles(ctx context.Context, req *InstallReques
 	manifestVersion = expandVersionShorthand(manifestVersion)
 
 	manifestEntry := manifest.Entry{
-		Version: manifestVersion,
-		Include: req.Include,
-		Exclude: req.Exclude,
-		Sinks:   req.Sinks,
+		Version:  manifestVersion,
+		Priority: req.Priority,
+		Include:  req.Include,
+		Exclude:  req.Exclude,
+		Sinks:    req.Sinks,
 	}
 	if err := a.manifestManager.CreateEntry(ctx, req.Registry, req.Ruleset, &manifestEntry); err != nil {
 		if err := a.manifestManager.UpdateEntry(ctx, req.Registry, req.Ruleset, &manifestEntry); err != nil {
@@ -145,7 +150,7 @@ func (a *ArmService) cleanPreviousInstallation(ctx context.Context, registry, ru
 	for _, sinkName := range manifestEntry.Sinks {
 		if sink, exists := sinks[sinkName]; exists {
 			installer := installer.NewInstaller(&sink)
-			if err := installer.Uninstall(ctx, sink.Directory, registry, ruleset); err != nil {
+			if err := installer.Uninstall(ctx, registry, ruleset); err != nil {
 				slog.WarnContext(ctx, "Failed to clean previous installation", "sink", sinkName, "error", err)
 			}
 		}
@@ -178,7 +183,7 @@ func (a *ArmService) installToSinks(ctx context.Context, req *InstallRequest, ve
 	for _, sinkName := range req.Sinks {
 		sink := sinks[sinkName]
 		installer := installer.NewInstaller(&sink)
-		if err := installer.Install(ctx, sink.Directory, req.Registry, req.Ruleset, version.Display, files); err != nil {
+		if err := installer.Install(ctx, req.Registry, req.Ruleset, version.Display, req.Priority, files); err != nil {
 			slog.ErrorContext(ctx, "Failed to install to sink", "sink", sinkName, "directory", sink.Directory, "error", err)
 			return err
 		}
@@ -246,7 +251,7 @@ func (a *ArmService) UninstallRuleset(ctx context.Context, registry, ruleset str
 	for _, sinkName := range manifestEntry.Sinks {
 		if sink, exists := sinks[sinkName]; exists {
 			installer := installer.NewInstaller(&sink)
-			if err := installer.Uninstall(ctx, sink.Directory, registry, ruleset); err != nil {
+			if err := installer.Uninstall(ctx, registry, ruleset); err != nil {
 				slog.ErrorContext(ctx, "Failed to uninstall from sink", "sink", sinkName, "directory", sink.Directory, "error", err)
 				return err
 			}
@@ -311,7 +316,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 	// Check filesystem to see what's actually installed
 	for _, sink := range sinks {
 		installer := installer.NewInstaller(&sink)
-		installed, version, err := installer.IsInstalled(ctx, sink.Directory, registryName, rulesetName)
+		installed, version, err := installer.IsInstalled(ctx, registryName, rulesetName)
 		if err != nil {
 			continue
 		}
@@ -483,7 +488,7 @@ func (a *ArmService) GetRulesetInfo(ctx context.Context, registry, ruleset strin
 	for _, sinkName := range manifestEntry.Sinks {
 		if sink, exists := sinks[sinkName]; exists {
 			installer := installer.NewInstaller(&sink)
-			installations, err := installer.ListInstalled(ctx, sink.Directory)
+			installations, err := installer.ListInstalled(ctx)
 			if err != nil {
 				continue
 			}
@@ -504,6 +509,7 @@ func (a *ArmService) GetRulesetInfo(ctx context.Context, registry, ruleset strin
 		Name:     ruleset,
 		Manifest: ManifestInfo{
 			Constraint: manifestEntry.Version,
+			Priority:   manifestEntry.Priority,
 			Include:    manifestEntry.Include,
 			Exclude:    manifestEntry.Exclude,
 			Sinks:      manifestEntry.Sinks,
@@ -604,7 +610,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 		if sink, exists := sinks[sinkName]; exists {
 			installer := installer.NewInstaller(&sink)
 			// Use display version for directory names
-			if err := installer.Install(ctx, sink.Directory, registryName, ruleset, lockEntry.Display, files); err != nil {
+			if err := installer.Install(ctx, registryName, ruleset, lockEntry.Display, manifestEntry.Priority, files); err != nil {
 				slog.ErrorContext(ctx, "Failed to install exact version to sink", "sink", sinkName, "directory", sink.Directory, "error", err)
 				return err
 			}
@@ -617,19 +623,116 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 func (a *ArmService) SyncRemovedSink(ctx context.Context, removedSink *manifest.SinkConfig) error {
 	// Scan removed sink directory to find installed rulesets
 	installer := installer.NewInstaller(removedSink)
-	installations, err := installer.ListInstalled(ctx, removedSink.Directory)
+	installations, err := installer.ListInstalled(ctx)
 	if err != nil {
 		return nil // Skip directory that can't be scanned
 	}
 
 	// Uninstall all found rulesets from this directory
 	for _, installation := range installations {
-		if err := installer.Uninstall(ctx, removedSink.Directory, installation.Registry, installation.Ruleset); err != nil {
+		if err := installer.Uninstall(ctx, installation.Registry, installation.Ruleset); err != nil {
 			slog.ErrorContext(ctx, "Failed to uninstall from removed sink", "registry", installation.Registry, "ruleset", installation.Ruleset, "error", err)
 		}
 	}
 
 	return nil
+}
+
+func (a *ArmService) AddSink(ctx context.Context, name, directory, sinkType, layout, compileTarget string, force bool) error {
+	// Apply type-based defaults if sinkType is specified
+	if sinkType != "" {
+		switch sinkType {
+		case "cursor":
+			if layout == "" {
+				layout = "hierarchical"
+			}
+			if compileTarget == "" {
+				compileTarget = "cursor"
+			}
+		case "copilot":
+			if layout == "" {
+				layout = "flat"
+			}
+			if compileTarget == "" {
+				compileTarget = "copilot"
+			}
+		case "amazonq":
+			if layout == "" {
+				layout = "hierarchical"
+			}
+			if compileTarget == "" {
+				compileTarget = "amazonq"
+			}
+		default:
+			return fmt.Errorf("type must be one of: cursor, copilot, amazonq")
+		}
+	}
+
+	// Require either sinkType or compileTarget
+	if sinkType == "" && compileTarget == "" {
+		return fmt.Errorf("either --type or --compile-to is required")
+	}
+
+	// Validate compileTarget
+	if compileTarget != "" && compileTarget != "cursor" && compileTarget != "amazonq" && compileTarget != "markdown" && compileTarget != "copilot" {
+		return fmt.Errorf("compile-to must be one of: cursor, amazonq, markdown, copilot")
+	}
+
+	// Use manifest manager to add sink
+	return a.manifestManager.AddSink(ctx, name, directory, layout, urf.CompileTarget(compileTarget), force)
+}
+
+func (a *ArmService) UpdateRulesetConfig(ctx context.Context, registry, ruleset, field, value string) error {
+	// Get current manifest entry
+	entry, err := a.manifestManager.GetEntry(ctx, registry, ruleset)
+	if err != nil {
+		return fmt.Errorf("failed to get ruleset entry: %w", err)
+	}
+
+	// Update the specified field
+	switch field {
+	case "priority":
+		priority := 0
+		if _, err := fmt.Sscanf(value, "%d", &priority); err != nil {
+			return fmt.Errorf("priority must be a number: %w", err)
+		}
+		entry.Priority = priority
+	case "version":
+		entry.Version = value
+	case "sinks":
+		entry.Sinks = strings.Split(value, ",")
+		for i, sink := range entry.Sinks {
+			entry.Sinks[i] = strings.TrimSpace(sink)
+		}
+	case "include":
+		entry.Include = strings.Split(value, ",")
+		for i, pattern := range entry.Include {
+			entry.Include[i] = strings.TrimSpace(pattern)
+		}
+	case "exclude":
+		entry.Exclude = strings.Split(value, ",")
+		for i, pattern := range entry.Exclude {
+			entry.Exclude[i] = strings.TrimSpace(pattern)
+		}
+	default:
+		return fmt.Errorf("unknown field '%s' (valid: priority, version, sinks, include, exclude)", field)
+	}
+
+	// Update manifest
+	if err := a.manifestManager.UpdateEntry(ctx, registry, ruleset, entry); err != nil {
+		return fmt.Errorf("failed to update manifest: %w", err)
+	}
+
+	// Trigger reinstall
+	return a.InstallRuleset(ctx, &InstallRequest{
+		Registry: registry,
+		Ruleset:  ruleset,
+		Version:  entry.Version,
+		Priority: entry.Priority,
+		Include:  entry.Include,
+		Exclude:  entry.Exclude,
+		Sinks:    entry.Sinks,
+	})
 }
 
 func (a *ArmService) Version() version.VersionInfo {
