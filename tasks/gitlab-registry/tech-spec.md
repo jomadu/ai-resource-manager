@@ -119,16 +119,22 @@ func newGitLabRegistry(name string, rawConfig map[string]interface{}) (*GitLabRe
 const (
     // Project-level endpoints
     ProjectPackageListTemplate     = "/api/%s/projects/%s/packages"
+    ProjectPackageFilesTemplate    = "/api/%s/projects/%s/packages/%d/package_files"
     ProjectPackageDownloadTemplate = "/api/%s/projects/%s/packages/generic/%s/%s/%s"
 
     // Group-level endpoints
     GroupPackageListTemplate     = "/api/%s/groups/%s/packages"
+    GroupPackageFilesTemplate    = "/api/%s/groups/%s/-/packages/%d/package_files"
     GroupPackageDownloadTemplate = "/api/%s/groups/%s/-/packages/generic/%s/%s/%s"
 )
 
 // Client methods build URLs with API version
 func (c *GitLabClient) buildProjectPackageListURL(projectID string) string {
     return fmt.Sprintf(c.baseURL+ProjectPackageListTemplate, c.apiVersion, projectID)
+}
+
+func (c *GitLabClient) buildProjectPackageFilesURL(projectID string, packageID int) string {
+    return fmt.Sprintf(c.baseURL+ProjectPackageFilesTemplate, c.apiVersion, projectID, packageID)
 }
 ```
 
@@ -165,6 +171,63 @@ func (c *GitLabClient) ListProjectPackages(ctx context.Context, projectID string
 func (c *GitLabClient) ListGroupPackages(ctx context.Context, groupID string) ([]GitLabPackage, error)
 func (c *GitLabClient) DownloadProjectPackage(ctx context.Context, projectID, packageName, version string, selector types.ContentSelector) ([]types.File, error)
 func (c *GitLabClient) DownloadGroupPackage(ctx context.Context, groupID, packageName, version string, selector types.ContentSelector) ([]types.File, error)
+```
+
+#### Package Download Workflow
+
+GitLab Generic Package Registry requires downloading individual files rather than entire packages. The client implements a two-step process:
+
+1. **List Package Files**: Use the package files API to get all files in a package
+2. **Download Each File**: Download individual files using the generic package download endpoint
+
+```go
+// Package files endpoint for listing all files in a package
+const (
+    ProjectPackageFilesTemplate = "/api/%s/projects/%s/packages/%d/package_files"
+    GroupPackageFilesTemplate   = "/api/%s/groups/%s/-/packages/%d/package_files"
+)
+
+// Download workflow implementation
+func (c *GitLabClient) downloadPackageFiles(ctx context.Context, pkg GitLabPackage, selector types.ContentSelector) ([]types.File, error) {
+    var files []types.File
+
+    // Filter package files based on selector
+    for _, pkgFile := range pkg.Files {
+        if selector.Matches(pkgFile.FileName) {
+            // Download individual file using generic package endpoint
+            fileContent, err := c.downloadSingleFile(ctx, pkg, pkgFile.FileName)
+            if err != nil {
+                return nil, fmt.Errorf("failed to download %s: %w", pkgFile.FileName, err)
+            }
+
+            files = append(files, types.File{
+                Path:    pkgFile.FileName, // Preserves directory structure (e.g., "rules/amazonq/a-q-rule.md")
+                Content: fileContent,
+            })
+        }
+    }
+
+    return files, nil
+}
+
+func (c *GitLabClient) downloadSingleFile(ctx context.Context, pkg GitLabPackage, fileName string) ([]byte, error) {
+    // Use generic package download endpoint: /api/v4/projects/:id/packages/generic/:package_name/:package_version/:file_name
+    url := fmt.Sprintf("%s/api/%s/projects/%s/packages/generic/%s/%s/%s",
+        c.baseURL, c.apiVersion, pkg.ProjectID, pkg.Name, pkg.Version, fileName)
+
+    req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+    if err != nil {
+        return nil, err
+    }
+
+    resp, err := c.makeRequest(ctx, req)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    return io.ReadAll(resp.Body)
+}
 ```
 
 ### Configuration Integration
@@ -208,10 +271,12 @@ func (c *GitLabClient) DownloadGroupPackage(ctx context.Context, groupID, packag
 ```
 
 #### Key Differences from Git Registry
-- **No include/exclude patterns**: GitLab packages are semantic units
+- **Package-level targeting**: Install packages by name, then use include/exclude patterns for file selection
 - **No branches**: GitLab uses semantic versioning only
 - **Simplified configuration**: Project ID or Group ID instead of complex Git settings
 - **Registry scope**: Project registries for single-project packages, Group registries for multi-project packages
+- **Hierarchical file support**: Preserves directory structure from packages (e.g., `rules/amazonq/file.md`)
+- **Mixed format support**: Handles URF files (`.yml`/`.yaml`), tool-specific files (`.mdc`, `.md`), and nested directories
 
 #### CLI Commands
 ```bash
@@ -224,12 +289,13 @@ arm config registry add my-gitlab https://gitlab.com --type gitlab --project-id 
 # Add GitLab group registry
 arm config registry add my-gitlab-group https://gitlab.com/group --type gitlab --group-id 456
 
-# Install from GitLab registry (no include patterns needed)
-arm install my-gitlab/cursor-rules --sinks cursor
+# Install from GitLab registry with file selection
+arm install my-gitlab/cursor-rules --include "*.mdc" --sinks cursor
+arm install my-gitlab/mixed-rules --include "rules/amazonq/*.md" --sinks amazonq
 ```
 
 ### Key Differences from Git Registry
-- **No include/exclude patterns**: GitLab packages are semantic units
+- **Package-level targeting**: Install packages by name, then use include/exclude patterns for file selection
 - **No branches**: GitLab uses semantic versioning only
 - **Simplified configuration**: Project ID or Group ID instead of complex Git settings
 - **Registry scope**: Project registries for single-project packages, Group registries for multi-project packages
