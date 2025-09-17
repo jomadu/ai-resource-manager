@@ -3,12 +3,10 @@ package registry
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/jomadu/ai-rules-manager/internal/cache"
+	"github.com/jomadu/ai-rules-manager/internal/registry/common"
 	"github.com/jomadu/ai-rules-manager/internal/resolver"
 	"github.com/jomadu/ai-rules-manager/internal/types"
 )
@@ -21,6 +19,7 @@ type GitRegistry struct {
 	repo     cache.GitRepoCache
 	config   GitRegistryConfig
 	resolver resolver.ConstraintResolver
+	semver   *common.SemverHelper
 }
 
 // NewGitRegistry creates a new Git-based registry that handles all git operations internally.
@@ -31,6 +30,7 @@ func NewGitRegistry(config GitRegistryConfig, rulesetCache cache.RegistryRuleset
 		repo:     repoCache,
 		config:   config,
 		resolver: resolver.NewGitConstraintResolver(),
+		semver:   common.NewSemverHelper(),
 	}
 }
 
@@ -45,7 +45,7 @@ func (g *GitRegistry) isBranchConstraint(constraint string) bool {
 	// Exclude semantic version patterns (contains dots and follows semver format)
 	if strings.Contains(constraint, ".") {
 		// Check if it's a valid semantic version
-		if g.isSemverTag(constraint) || g.isSemverTag("v"+constraint) {
+		if g.semver.IsSemverVersion(constraint) || g.semver.IsSemverVersion("v"+constraint) {
 			return false
 		}
 		// Also exclude patterns with dots that aren't valid semver (these are invalid)
@@ -61,70 +61,6 @@ func (g *GitRegistry) isBranchConstraint(constraint string) bool {
 	return true
 }
 
-// sortTagsBySemver sorts tags by semantic version in descending order.
-func (g *GitRegistry) sortTagsBySemver(tags []string) []string {
-	var semverTags []string
-	var otherTags []string
-
-	for _, tag := range tags {
-		if g.isSemverTag(tag) {
-			semverTags = append(semverTags, tag)
-		} else {
-			otherTags = append(otherTags, tag)
-		}
-	}
-
-	// Sort semver tags by version (descending)
-	sort.Slice(semverTags, func(i, j int) bool {
-		return g.isHigherVersion(semverTags[i], semverTags[j])
-	})
-
-	// Combine semver tags first, then other tags
-	result := make([]string, 0, len(tags))
-	result = append(result, semverTags...)
-	result = append(result, otherTags...)
-	return result
-}
-
-// isSemverTag checks if a tag follows semantic versioning.
-func (g *GitRegistry) isSemverTag(tag string) bool {
-	normalized := strings.TrimPrefix(tag, "v")
-	matched, _ := regexp.MatchString(`^\d+\.\d+\.\d+`, normalized)
-	return matched
-}
-
-// isHigherVersion compares two semantic versions.
-func (g *GitRegistry) isHigherVersion(v1, v2 string) bool {
-	major1, minor1, patch1, err1 := g.parseVersion(v1)
-	major2, minor2, patch2, err2 := g.parseVersion(v2)
-	if err1 != nil || err2 != nil {
-		return false
-	}
-
-	if major1 != major2 {
-		return major1 > major2
-	}
-	if minor1 != minor2 {
-		return minor1 > minor2
-	}
-	return patch1 > patch2
-}
-
-// parseVersion parses a semantic version string.
-func (g *GitRegistry) parseVersion(version string) (major, minor, patch int, err error) {
-	version = strings.TrimPrefix(version, "v")
-	re := regexp.MustCompile(`^(\d+)\.(\d+)\.(\d+)`)
-	matches := re.FindStringSubmatch(version)
-	if len(matches) < 4 {
-		return 0, 0, 0, fmt.Errorf("invalid version format")
-	}
-
-	major, _ = strconv.Atoi(matches[1])
-	minor, _ = strconv.Atoi(matches[2])
-	patch, _ = strconv.Atoi(matches[3])
-	return
-}
-
 func (g *GitRegistry) ListVersions(ctx context.Context) ([]types.Version, error) {
 	tags, err := g.repo.GetTags(ctx)
 	if err != nil {
@@ -132,7 +68,7 @@ func (g *GitRegistry) ListVersions(ctx context.Context) ([]types.Version, error)
 	}
 
 	// Sort tags by semantic version (descending)
-	sortedTags := g.sortTagsBySemver(tags)
+	sortedTags := g.semver.SortVersionsBySemver(tags)
 
 	var versions []types.Version
 	// Add tags first (priority ordering)
