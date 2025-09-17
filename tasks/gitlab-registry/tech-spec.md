@@ -180,6 +180,13 @@ GitLab Generic Package Registry requires downloading individual files rather tha
 1. **List Package Files**: Use the package files API to get all files in a package
 2. **Download Each File**: Download individual files using the generic package download endpoint
 
+#### Package Structure Optimization
+
+GitLab packages are structured to optimize for URF files:
+- URF files (*.yml, *.yaml) are placed at package root for easy targeting
+- Pre-compiled rules are organized under `build/{tool}/` directories
+- Command-level defaults should target URF files for GitLab registries
+
 ```go
 // Package files endpoint for listing all files in a package
 const (
@@ -271,11 +278,13 @@ func (c *GitLabClient) downloadSingleFile(ctx context.Context, pkg GitLabPackage
 ```
 
 #### Key Differences from Git Registry
-- **Package-level targeting**: Install packages by name, then use include/exclude patterns for file selection
+- **Package-level targeting**: Install from standardized `ai-rules` packages
 - **No branches**: GitLab uses semantic versioning only
 - **Simplified configuration**: Project ID or Group ID instead of complex Git settings
 - **Registry scope**: Project registries for single-project packages, Group registries for multi-project packages
-- **Hierarchical file support**: Preserves directory structure from packages (e.g., `rules/amazonq/file.md`)
+- **URF-optimized structure**: URF files at root level for easy command-level targeting
+- **Pre-compiled rule support**: Packages can contain both URF source and compiled rules
+- **Hierarchical file support**: Maintains directory structure from packages: Preserves directory structure from packages (e.g., `rules/amazonq/file.md`)
 - **Mixed format support**: Handles URF files (`.yml`/`.yaml`), tool-specific files (`.mdc`, `.md`), and nested directories
 
 #### CLI Commands

@@ -9,6 +9,7 @@ require (
 	github.com/gofrs/flock v0.12.1
 	github.com/olekukonko/tablewriter v1.0.9
 	github.com/spf13/cobra v1.8.0
+	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
