@@ -130,12 +130,12 @@ func TestGetDefaultIncludePatterns(t *testing.T) {
 		{
 			name:    "empty include",
 			include: []string{},
-			want:    []string{"**/*"},
+			want:    []string{"*.yml", "*.yaml"},
 		},
 		{
 			name:    "nil include",
 			include: nil,
-			want:    []string{"**/*"},
+			want:    []string{"*.yml", "*.yaml"},
 		},
 		{
 			name:    "existing patterns",

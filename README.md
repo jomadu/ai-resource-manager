@@ -56,9 +56,14 @@ curl -fsSL https://raw.githubusercontent.com/jomadu/ai-rules-manager/main/script
 
 ## Quick Start
 
-Add registry:
+Add Git registry:
 ```bash
 arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
+```
+
+Add GitLab registry:
+```bash
+arm config registry add my-gitlab https://gitlab.example.com --type gitlab --project-id 123 --api-version v4
 ```
 
 Configure sinks:
@@ -152,10 +157,32 @@ For detailed information about URF syntax, compilation process, and best practic
 
 ### Registries
 
-Registries are remote sources where rulesets are stored and versioned, similar to npm registries. ARM supports Git-based registries pointing to GitHub repositories, GitLab projects, or any Git remote.
+Registries are remote sources where rulesets are stored and versioned, similar to npm registries. ARM supports:
+
+- **Git registries**: GitHub repositories, GitLab projects, or any Git remote
+- **GitLab Package registries**: GitLab's Generic Package Registry for versioned rule packages
+
+#### Registry Structure
+
+**Recommended structure:**
+```
+clean-code.yml              # URF ruleset definitions
+security.yml
+performance.yml
+build/                      # Pre-compiled rules
+├── cursor/
+│   ├── clean-code.mdc
+│   └── security.mdc
+└── amazonq/
+    ├── clean-code.md
+    └── security.md
+```
+
+This structure works for both Git repositories and GitLab packages, with URF files at the root level and pre-compiled rules organized under `build/` by AI tool. ARM defaults to installing URF files (`*.yml, *.yaml`) when no `--include` patterns are specified, making URF the primary workflow while keeping pre-compiled rules available via explicit patterns like `--include "build/cursor/**"`.
 
 **Key Commands:**
-- `arm config registry add <name> <url> --type git` - Add registry
+- `arm config registry add <name> <url> --type git` - Add Git registry
+- `arm config registry add <name> <url> --type gitlab --project-id <id>` - Add GitLab registry
 - `arm config registry list` - List registries
 - `arm config registry remove <name>` - Remove registry
 

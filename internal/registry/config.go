@@ -11,3 +11,11 @@ type GitRegistryConfig struct {
 	RegistryConfig
 	Branches []string `json:"branches"`
 }
+
+// GitLabRegistryConfig defines gitlab-specific registry configuration.
+type GitLabRegistryConfig struct {
+	RegistryConfig
+	ProjectID  string `json:"project_id,omitempty"`
+	GroupID    string `json:"group_id,omitempty"`
+	APIVersion string `json:"api_version"`
+}
