@@ -34,4 +34,5 @@ func init() {
 	rootCmd.AddCommand(newConfigCmd())
 	rootCmd.AddCommand(newCacheCmd())
 	rootCmd.AddCommand(newVersionCmd())
+	rootCmd.AddCommand(newConvertCmd())
 }
