@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jomadu/ai-rules-manager/internal/archive"
 	"github.com/jomadu/ai-rules-manager/internal/cache"
 	"github.com/jomadu/ai-rules-manager/internal/rcfile"
 	"github.com/jomadu/ai-rules-manager/internal/registry/common"
@@ -26,6 +27,7 @@ type GitLabRegistry struct {
 	registryName string
 	semver       *common.SemverHelper
 	rcService    *rcfile.Service
+	extractor    *archive.Extractor
 }
 
 // GitLabClient handles HTTP communication with GitLab API
@@ -78,6 +80,7 @@ func NewGitLabRegistry(registryName string, config *GitLabRegistryConfig, rulese
 		registryName: registryName,
 		semver:       common.NewSemverHelper(),
 		rcService:    rcfile.NewService(),
+		extractor:    archive.NewExtractor(),
 	}
 }
 
@@ -181,13 +184,13 @@ func (g *GitLabRegistry) GetContent(ctx context.Context, ruleset string, version
 		return nil, err
 	}
 
-	var downloadedFiles []types.File
-	// Download files from the specific ruleset package
+	// Download all files from package
+	var rawFiles []types.File
 	switch {
 	case g.config.ProjectID != "":
-		downloadedFiles, err = g.client.DownloadProjectPackage(ctx, g.config.ProjectID, ruleset, version.Version, selector)
+		rawFiles, err = g.client.DownloadProjectPackage(ctx, g.config.ProjectID, ruleset, version.Version)
 	case g.config.GroupID != "":
-		downloadedFiles, err = g.client.DownloadGroupPackage(ctx, g.config.GroupID, ruleset, version.Version, selector)
+		rawFiles, err = g.client.DownloadGroupPackage(ctx, g.config.GroupID, ruleset, version.Version)
 	default:
 		return nil, fmt.Errorf("either project_id or group_id must be specified")
 	}
@@ -196,10 +199,24 @@ func (g *GitLabRegistry) GetContent(ctx context.Context, ruleset string, version
 		return nil, err
 	}
 
-	// Cache the result
-	_ = g.cache.SetRulesetVersion(ctx, selector, version.Version, downloadedFiles)
+	// Extract and merge archives with loose files
+	mergedFiles, err := g.extractor.ExtractAndMerge(rawFiles)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract and merge content: %w", err)
+	}
 
-	return downloadedFiles, nil
+	// Apply selector patterns to merged content
+	var filteredFiles []types.File
+	for _, file := range mergedFiles {
+		if selector.Matches(file.Path) {
+			filteredFiles = append(filteredFiles, file)
+		}
+	}
+
+	// Cache the result
+	_ = g.cache.SetRulesetVersion(ctx, selector, version.Version, filteredFiles)
+
+	return filteredFiles, nil
 }
 
 // GitLab Client methods
@@ -214,7 +231,7 @@ func (c *GitLabClient) ListGroupPackages(ctx context.Context, groupID string) ([
 	return c.listPackages(ctx, url)
 }
 
-func (c *GitLabClient) DownloadProjectPackage(ctx context.Context, projectID, packageName, version string, selector types.ContentSelector) ([]types.File, error) {
+func (c *GitLabClient) DownloadProjectPackage(ctx context.Context, projectID, packageName, version string) ([]types.File, error) {
 	// First get package info to get package ID
 	packages, err := c.ListProjectPackages(ctx, projectID)
 	if err != nil {
@@ -240,28 +257,26 @@ func (c *GitLabClient) DownloadProjectPackage(ctx context.Context, projectID, pa
 		return nil, err
 	}
 
-	// Download matching files
+	// Download all files
 	var files []types.File
 	for _, pkgFile := range packageFiles {
-		if selector.Matches(pkgFile.FileName) {
-			downloadURL := c.buildProjectPackageDownloadURL(projectID, packageName, version, pkgFile.FileName)
-			content, err := c.downloadFile(ctx, downloadURL)
-			if err != nil {
-				return nil, fmt.Errorf("failed to download %s: %w", pkgFile.FileName, err)
-			}
-
-			files = append(files, types.File{
-				Path:    pkgFile.FileName,
-				Content: content,
-				Size:    pkgFile.Size,
-			})
+		downloadURL := c.buildProjectPackageDownloadURL(projectID, packageName, version, pkgFile.FileName)
+		content, err := c.downloadFile(ctx, downloadURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to download %s: %w", pkgFile.FileName, err)
 		}
+
+		files = append(files, types.File{
+			Path:    pkgFile.FileName,
+			Content: content,
+			Size:    pkgFile.Size,
+		})
 	}
 
 	return files, nil
 }
 
-func (c *GitLabClient) DownloadGroupPackage(ctx context.Context, groupID, packageName, version string, selector types.ContentSelector) ([]types.File, error) {
+func (c *GitLabClient) DownloadGroupPackage(ctx context.Context, groupID, packageName, version string) ([]types.File, error) {
 	// First get package info to get package ID
 	packages, err := c.ListGroupPackages(ctx, groupID)
 	if err != nil {
@@ -287,22 +302,20 @@ func (c *GitLabClient) DownloadGroupPackage(ctx context.Context, groupID, packag
 		return nil, err
 	}
 
-	// Download matching files
+	// Download all files
 	var files []types.File
 	for _, pkgFile := range packageFiles {
-		if selector.Matches(pkgFile.FileName) {
-			downloadURL := c.buildGroupPackageDownloadURL(groupID, packageName, version, pkgFile.FileName)
-			content, err := c.downloadFile(ctx, downloadURL)
-			if err != nil {
-				return nil, fmt.Errorf("failed to download %s: %w", pkgFile.FileName, err)
-			}
-
-			files = append(files, types.File{
-				Path:    pkgFile.FileName,
-				Content: content,
-				Size:    pkgFile.Size,
-			})
+		downloadURL := c.buildGroupPackageDownloadURL(groupID, packageName, version, pkgFile.FileName)
+		content, err := c.downloadFile(ctx, downloadURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to download %s: %w", pkgFile.FileName, err)
 		}
+
+		files = append(files, types.File{
+			Path:    pkgFile.FileName,
+			Content: content,
+			Size:    pkgFile.Size,
+		})
 	}
 
 	return files, nil
