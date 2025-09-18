@@ -103,7 +103,8 @@ func (g *GitLabRegistry) getAuthKey() string {
 	return fmt.Sprintf("%s/group/%s", host, g.config.GroupID)
 }
 
-func (g *GitLabRegistry) ListVersions(ctx context.Context) ([]types.Version, error) {
+func (g *GitLabRegistry) ListVersions(ctx context.Context, ruleset string) ([]types.Version, error) {
+	// Use ruleset as package name for GitLab Package Registry
 	if err := g.loadToken(); err != nil {
 		return nil, err
 	}
@@ -124,10 +125,10 @@ func (g *GitLabRegistry) ListVersions(ctx context.Context) ([]types.Version, err
 		return nil, err
 	}
 
-	// Extract unique versions from ai-rules packages and sort by semantic version
+	// Extract unique versions from the specific ruleset package
 	versionMap := make(map[string]bool)
 	for _, pkg := range packages {
-		if pkg.PackageType == "generic" && pkg.Name == "ai-rules" {
+		if pkg.PackageType == "generic" && pkg.Name == ruleset {
 			versionMap[pkg.Version] = true
 		}
 	}
@@ -147,13 +148,13 @@ func (g *GitLabRegistry) ListVersions(ctx context.Context) ([]types.Version, err
 	return versions, nil
 }
 
-func (g *GitLabRegistry) ResolveVersion(ctx context.Context, constraint string) (*resolver.ResolvedVersion, error) {
+func (g *GitLabRegistry) ResolveVersion(ctx context.Context, ruleset, constraint string) (*resolver.ResolvedVersion, error) {
 	parsedConstraint, err := g.resolver.ParseConstraint(constraint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid version constraint %s: %w", constraint, err)
 	}
 
-	versions, err := g.ListVersions(ctx)
+	versions, err := g.ListVersions(ctx, ruleset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list versions: %w", err)
 	}
@@ -169,7 +170,7 @@ func (g *GitLabRegistry) ResolveVersion(ctx context.Context, constraint string) 
 	}, nil
 }
 
-func (g *GitLabRegistry) GetContent(ctx context.Context, version types.Version, selector types.ContentSelector) ([]types.File, error) {
+func (g *GitLabRegistry) GetContent(ctx context.Context, ruleset string, version types.Version, selector types.ContentSelector) ([]types.File, error) {
 	// Try cache first
 	files, err := g.cache.GetRulesetVersion(ctx, selector, version.Version)
 	if err == nil {
@@ -181,11 +182,12 @@ func (g *GitLabRegistry) GetContent(ctx context.Context, version types.Version, 
 	}
 
 	var downloadedFiles []types.File
+	// Download files from the specific ruleset package
 	switch {
 	case g.config.ProjectID != "":
-		downloadedFiles, err = g.client.DownloadProjectPackage(ctx, g.config.ProjectID, "ai-rules", version.Version, selector)
+		downloadedFiles, err = g.client.DownloadProjectPackage(ctx, g.config.ProjectID, ruleset, version.Version, selector)
 	case g.config.GroupID != "":
-		downloadedFiles, err = g.client.DownloadGroupPackage(ctx, g.config.GroupID, "ai-rules", version.Version, selector)
+		downloadedFiles, err = g.client.DownloadGroupPackage(ctx, g.config.GroupID, ruleset, version.Version, selector)
 	default:
 		return nil, fmt.Errorf("either project_id or group_id must be specified")
 	}
@@ -308,27 +310,41 @@ func (c *GitLabClient) DownloadGroupPackage(ctx context.Context, groupID, packag
 
 // URL builders
 func (c *GitLabClient) buildProjectPackageListURL(projectID string) string {
-	return fmt.Sprintf(c.baseURL+ProjectPackageListTemplate, c.apiVersion, url.QueryEscape(projectID))
+	baseURL := c.ensureProtocol(c.baseURL)
+	return fmt.Sprintf(baseURL+ProjectPackageListTemplate, c.apiVersion, url.QueryEscape(projectID))
 }
 
 func (c *GitLabClient) buildProjectPackageFilesURL(projectID string, packageID int) string {
-	return fmt.Sprintf(c.baseURL+ProjectPackageFilesTemplate, c.apiVersion, url.QueryEscape(projectID), packageID)
+	baseURL := c.ensureProtocol(c.baseURL)
+	return fmt.Sprintf(baseURL+ProjectPackageFilesTemplate, c.apiVersion, url.QueryEscape(projectID), packageID)
 }
 
 func (c *GitLabClient) buildProjectPackageDownloadURL(projectID, packageName, version, fileName string) string {
-	return fmt.Sprintf(c.baseURL+ProjectPackageDownloadTemplate, c.apiVersion, url.QueryEscape(projectID), url.QueryEscape(packageName), url.QueryEscape(version), url.QueryEscape(fileName))
+	baseURL := c.ensureProtocol(c.baseURL)
+	return fmt.Sprintf(baseURL+ProjectPackageDownloadTemplate, c.apiVersion, url.QueryEscape(projectID), url.QueryEscape(packageName), url.QueryEscape(version), url.QueryEscape(fileName))
 }
 
 func (c *GitLabClient) buildGroupPackageListURL(groupID string) string {
-	return fmt.Sprintf(c.baseURL+GroupPackageListTemplate, c.apiVersion, url.QueryEscape(groupID))
+	baseURL := c.ensureProtocol(c.baseURL)
+	return fmt.Sprintf(baseURL+GroupPackageListTemplate, c.apiVersion, url.QueryEscape(groupID))
 }
 
 func (c *GitLabClient) buildGroupPackageFilesURL(groupID string, packageID int) string {
-	return fmt.Sprintf(c.baseURL+GroupPackageFilesTemplate, c.apiVersion, url.QueryEscape(groupID), packageID)
+	baseURL := c.ensureProtocol(c.baseURL)
+	return fmt.Sprintf(baseURL+GroupPackageFilesTemplate, c.apiVersion, url.QueryEscape(groupID), packageID)
 }
 
 func (c *GitLabClient) buildGroupPackageDownloadURL(groupID, packageName, version, fileName string) string {
-	return fmt.Sprintf(c.baseURL+GroupPackageDownloadTemplate, c.apiVersion, url.QueryEscape(groupID), url.QueryEscape(packageName), url.QueryEscape(version), url.QueryEscape(fileName))
+	baseURL := c.ensureProtocol(c.baseURL)
+	return fmt.Sprintf(baseURL+GroupPackageDownloadTemplate, c.apiVersion, url.QueryEscape(groupID), url.QueryEscape(packageName), url.QueryEscape(version), url.QueryEscape(fileName))
+}
+
+// ensureProtocol adds https:// if no protocol is present
+func (c *GitLabClient) ensureProtocol(baseURL string) string {
+	if !strings.HasPrefix(baseURL, "http://") && !strings.HasPrefix(baseURL, "https://") {
+		return "https://" + baseURL
+	}
+	return baseURL
 }
 
 // HTTP helpers

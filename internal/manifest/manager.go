@@ -19,6 +19,7 @@ type Manager interface {
 	GetEntries(ctx context.Context) (map[string]map[string]Entry, error)
 	GetRawRegistries(ctx context.Context) (map[string]map[string]interface{}, error)
 	AddGitRegistry(ctx context.Context, name string, config registry.GitRegistryConfig, force bool) error
+	AddGitLabRegistry(ctx context.Context, name string, config *registry.GitLabRegistryConfig, force bool) error
 	UpdateGitRegistry(ctx context.Context, name, field, value string) error
 	RemoveRegistry(ctx context.Context, name string) error
 	CreateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error
@@ -190,6 +191,42 @@ func (f *FileManager) AddGitRegistry(ctx context.Context, name string, config re
 		"url", config.URL,
 		"type", config.Type,
 		"branches", config.Branches)
+
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) AddGitLabRegistry(ctx context.Context, name string, config *registry.GitLabRegistryConfig, force bool) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		manifest = &Manifest{
+			Registries: make(map[string]map[string]interface{}),
+			Rulesets:   make(map[string]map[string]Entry),
+		}
+	}
+
+	if _, exists := manifest.Registries[name]; exists && !force {
+		return errors.New("registry already exists (use --force to overwrite)")
+	}
+
+	configBytes, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+	var rawConfig map[string]interface{}
+	if err := json.Unmarshal(configBytes, &rawConfig); err != nil {
+		return err
+	}
+
+	manifest.Registries[name] = rawConfig
+
+	slog.InfoContext(ctx, "Adding GitLab registry configuration",
+		"action", "gitlab_registry_add",
+		"name", name,
+		"url", config.URL,
+		"type", config.Type,
+		"project_id", config.ProjectID,
+		"group_id", config.GroupID,
+		"api_version", config.APIVersion)
 
 	return f.saveManifest(manifest)
 }
