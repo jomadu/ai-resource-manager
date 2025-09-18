@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jomadu/ai-rules-manager/internal/archive"
 	"github.com/jomadu/ai-rules-manager/internal/cache"
 	"github.com/jomadu/ai-rules-manager/internal/registry/common"
 	"github.com/jomadu/ai-rules-manager/internal/resolver"
@@ -15,22 +16,24 @@ import (
 // It abstracts all git repository operations - users simply create the registry
 // and call methods like GetTags() without worrying about cloning, fetching, etc.
 type GitRegistry struct {
-	cache    cache.RegistryRulesetCache
-	repo     cache.GitRepoCache
-	config   GitRegistryConfig
-	resolver resolver.ConstraintResolver
-	semver   *common.SemverHelper
+	cache     cache.RegistryRulesetCache
+	repo      cache.GitRepoCache
+	config    GitRegistryConfig
+	resolver  resolver.ConstraintResolver
+	semver    *common.SemverHelper
+	extractor *archive.Extractor
 }
 
 // NewGitRegistry creates a new Git-based registry that handles all git operations internally.
 // The registry will automatically clone the repository on first use and fetch updates as needed.
 func NewGitRegistry(config GitRegistryConfig, rulesetCache cache.RegistryRulesetCache, repoCache cache.GitRepoCache) *GitRegistry {
 	return &GitRegistry{
-		cache:    rulesetCache,
-		repo:     repoCache,
-		config:   config,
-		resolver: resolver.NewGitConstraintResolver(),
-		semver:   common.NewSemverHelper(),
+		cache:     rulesetCache,
+		repo:      repoCache,
+		config:    config,
+		resolver:  resolver.NewGitConstraintResolver(),
+		semver:    common.NewSemverHelper(),
+		extractor: archive.NewExtractor(),
 	}
 }
 
@@ -97,16 +100,31 @@ func (g *GitRegistry) GetContent(ctx context.Context, ruleset string, version ty
 		return files, nil
 	}
 
-	// Get files from git repo
-	files, err = g.repo.GetFilesFromCommit(ctx, version.Version, selector)
+	// Get all files from git repo (no selector filtering yet)
+	allSelector := types.ContentSelector{} // Empty selector matches all files
+	rawFiles, err := g.repo.GetFilesFromCommit(ctx, version.Version, allSelector)
 	if err != nil {
 		return nil, err
 	}
 
-	// Cache the result
-	_ = g.cache.SetRulesetVersion(ctx, selector, version.Version, files)
+	// Extract and merge archives with loose files
+	mergedFiles, err := g.extractor.ExtractAndMerge(rawFiles)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract and merge content: %w", err)
+	}
 
-	return files, nil
+	// Apply selector patterns to merged content
+	var filteredFiles []types.File
+	for _, file := range mergedFiles {
+		if selector.Matches(file.Path) {
+			filteredFiles = append(filteredFiles, file)
+		}
+	}
+
+	// Cache the result
+	_ = g.cache.SetRulesetVersion(ctx, selector, version.Version, filteredFiles)
+
+	return filteredFiles, nil
 }
 
 // GetTags returns all available tags from the registry.
