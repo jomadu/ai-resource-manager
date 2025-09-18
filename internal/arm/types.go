@@ -2,7 +2,7 @@ package arm
 
 // OutdatedRuleset represents a ruleset that has newer versions available.
 type OutdatedRuleset struct {
-	RulesetInfo *RulesetInfo `json:"ruleset_info"`
+	RulesetInfo *RulesetInfo `json:"rulesetInfo"`
 	Wanted      string       `json:"wanted"`
 	Latest      string       `json:"latest"`
 }
@@ -19,7 +19,7 @@ type ManifestInfo struct {
 // InstallationInfo contains information about the actual installation.
 type InstallationInfo struct {
 	Version        string   `json:"version"`
-	InstalledPaths []string `json:"installed_paths"`
+	InstalledPaths []string `json:"installedPaths"`
 }
 
 // RulesetInfo provides detailed information about a ruleset.

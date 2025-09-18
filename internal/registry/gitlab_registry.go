@@ -53,14 +53,14 @@ type GitLabPackage struct {
 	ID          int                 `json:"id"`
 	Name        string              `json:"name"`
 	Version     string              `json:"version"`
-	PackageType string              `json:"package_type"`
-	CreatedAt   time.Time           `json:"created_at"`
-	Files       []GitLabPackageFile `json:"package_files"`
+	PackageType string              `json:"packageType"`
+	CreatedAt   time.Time           `json:"createdAt"`
+	Files       []GitLabPackageFile `json:"packageFiles"`
 }
 
 type GitLabPackageFile struct {
 	ID       int    `json:"id"`
-	FileName string `json:"file_name"`
+	FileName string `json:"fileName"`
 	Size     int64  `json:"size"`
 }
 
