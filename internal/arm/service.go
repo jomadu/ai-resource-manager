@@ -77,7 +77,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, req *InstallRequest) er
 		versionStr = "latest"
 	}
 	versionStr = expandVersionShorthand(versionStr)
-	resolvedVersionResult, err := registryClient.ResolveVersion(ctx, versionStr)
+	resolvedVersionResult, err := registryClient.ResolveVersion(ctx, req.Ruleset, versionStr)
 	if err != nil {
 		return fmt.Errorf("failed to resolve version: %w", err)
 	}
@@ -85,7 +85,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, req *InstallRequest) er
 
 	// Download content
 	selector := types.ContentSelector{Include: req.Include, Exclude: req.Exclude}
-	files, err := registryClient.GetContent(ctx, resolvedVersion, selector)
+	files, err := registryClient.GetContent(ctx, req.Ruleset, resolvedVersion, selector)
 	if err != nil {
 		return fmt.Errorf("failed to download content: %w", err)
 	}
@@ -299,7 +299,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 	}
 	versionStr = expandVersionShorthand(versionStr)
 
-	resolvedVersionResult, err := registryClient.ResolveVersion(ctx, versionStr)
+	resolvedVersionResult, err := registryClient.ResolveVersion(ctx, rulesetName, versionStr)
 	if err != nil {
 		return fmt.Errorf("failed to resolve version: %w", err)
 	}
@@ -346,7 +346,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 		if err == nil {
 			// Verify checksum to ensure integrity
 			selector := types.ContentSelector{Include: manifestEntry.Include, Exclude: manifestEntry.Exclude}
-			files, err := registryClient.GetContent(ctx, resolvedVersionResult.Version, selector)
+			files, err := registryClient.GetContent(ctx, rulesetName, resolvedVersionResult.Version, selector)
 			if err == nil && lockfile.VerifyChecksum(files, currentLockEntry.Checksum) {
 				slog.InfoContext(ctx, "Ruleset already up to date", "registry", registryName, "ruleset", rulesetName, "version", installedVersion)
 				return nil
@@ -414,12 +414,12 @@ func (a *ArmService) GetOutdatedRulesets(ctx context.Context) ([]OutdatedRuleset
 			}
 
 			// Get latest version using proper resolution (prefers latest tag, falls back to default branch)
-			latestVersion, err := registryClient.ResolveVersion(ctx, "latest")
+			latestVersion, err := registryClient.ResolveVersion(ctx, rulesetName, "latest")
 			if err != nil {
 				continue
 			}
 
-			wantedVersion, err := registryClient.ResolveVersion(ctx, constraint)
+			wantedVersion, err := registryClient.ResolveVersion(ctx, rulesetName, constraint)
 			if err != nil {
 				continue
 			}
@@ -590,7 +590,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 
 	resolvedVersion := types.Version{Version: lockEntry.Version, Display: lockEntry.Display}
 	selector := types.ContentSelector{Include: manifestEntry.Include, Exclude: manifestEntry.Exclude}
-	files, err := registryClient.GetContent(ctx, resolvedVersion, selector)
+	files, err := registryClient.GetContent(ctx, ruleset, resolvedVersion, selector)
 	if err != nil {
 		return fmt.Errorf("failed to get content: %w", err)
 	}

@@ -9,7 +9,7 @@ import (
 
 // Registry provides version-controlled access to ruleset repositories.
 type Registry interface {
-	ListVersions(ctx context.Context) ([]types.Version, error)
-	ResolveVersion(ctx context.Context, constraint string) (*resolver.ResolvedVersion, error)
-	GetContent(ctx context.Context, version types.Version, selector types.ContentSelector) ([]types.File, error)
+	ListVersions(ctx context.Context, ruleset string) ([]types.Version, error)
+	ResolveVersion(ctx context.Context, ruleset string, constraint string) (*resolver.ResolvedVersion, error)
+	GetContent(ctx context.Context, ruleset string, version types.Version, selector types.ContentSelector) ([]types.File, error)
 }
