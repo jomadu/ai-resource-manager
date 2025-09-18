@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/jomadu/ai-rules-manager/internal/types"
@@ -114,6 +115,12 @@ func (e *Extractor) extractTarGz(file types.File) ([]types.File, error) {
 			continue
 		}
 
+		// Sanitize path to prevent directory traversal
+		cleanName := filepath.Clean(header.Name)
+		if cleanName == "." || filepath.IsAbs(header.Name) || strings.Contains(cleanName, "..") {
+			continue
+		}
+
 		// Read file content
 		content, err := io.ReadAll(tarReader)
 		if err != nil {
@@ -121,7 +128,7 @@ func (e *Extractor) extractTarGz(file types.File) ([]types.File, error) {
 		}
 
 		extractedFiles = append(extractedFiles, types.File{
-			Path:    header.Name,
+			Path:    cleanName,
 			Content: content,
 			Size:    header.Size,
 		})
@@ -161,6 +168,12 @@ func (e *Extractor) extractZip(file types.File) ([]types.File, error) {
 			continue
 		}
 
+		// Sanitize path to prevent directory traversal
+		cleanName := filepath.Clean(zipFile.Name)
+		if cleanName == "." || filepath.IsAbs(zipFile.Name) || strings.Contains(cleanName, "..") {
+			continue
+		}
+
 		// Open file in zip
 		rc, err := zipFile.Open()
 		if err != nil {
@@ -177,7 +190,7 @@ func (e *Extractor) extractZip(file types.File) ([]types.File, error) {
 		}
 
 		extractedFiles = append(extractedFiles, types.File{
-			Path:    zipFile.Name,
+			Path:    cleanName,
 			Content: content,
 			Size:    int64(zipFile.UncompressedSize64),
 		})
