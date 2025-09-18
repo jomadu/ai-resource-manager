@@ -117,6 +117,23 @@ Examples:
 				Branches:       branches,
 			}
 			return manifestManager.AddGitRegistry(context.Background(), name, gitConfig, force)
+		case "gitlab":
+			projectID, _ := cmd.Flags().GetString("project-id")
+			groupID, _ := cmd.Flags().GetString("group-id")
+			apiVersion, _ := cmd.Flags().GetString("api-version")
+			if apiVersion == "" {
+				apiVersion = "v4"
+			}
+			if projectID == "" && groupID == "" {
+				return fmt.Errorf("either --project-id or --group-id must be specified for GitLab registries")
+			}
+			gitlabConfig := registry.GitLabRegistryConfig{
+				RegistryConfig: registry.RegistryConfig{URL: url, Type: registryType},
+				ProjectID:      projectID,
+				GroupID:        groupID,
+				APIVersion:     apiVersion,
+			}
+			return manifestManager.AddGitLabRegistry(context.Background(), name, &gitlabConfig, force)
 		default:
 			return fmt.Errorf("registry type %s is not implemented", registryType)
 		}
@@ -339,8 +356,11 @@ func init() {
 	configSinkCmd.AddCommand(sinkUpdateCmd)
 	configRulesetCmd.AddCommand(rulesetUpdateCmd)
 
-	registryAddCmd.Flags().String("type", "git", "Registry type (git, http)")
+	registryAddCmd.Flags().String("type", "git", "Registry type (git, gitlab, http)")
 	registryAddCmd.Flags().StringSlice("branches", nil, "Git branches to track (default: main,master)")
+	registryAddCmd.Flags().String("project-id", "", "GitLab project ID (for gitlab type)")
+	registryAddCmd.Flags().String("group-id", "", "GitLab group ID (for gitlab type)")
+	registryAddCmd.Flags().String("api-version", "v4", "GitLab API version (default: v4)")
 	registryAddCmd.Flags().Bool("force", false, "Overwrite existing registry")
 	sinkAddCmd.Flags().String("type", "", "Sink type with defaults (cursor, copilot, amazonq)")
 	sinkAddCmd.Flags().String("layout", "", "Layout mode (hierarchical, flat)")

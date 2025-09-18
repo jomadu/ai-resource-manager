@@ -60,7 +60,7 @@ func TestGitLabRegistry_ListVersions(t *testing.T) {
 	defer func() { _ = os.Chdir(oldWd) }()
 	_ = os.Chdir(tmpDir)
 
-	versions, err := registry.ListVersions(context.Background())
+	versions, err := registry.ListVersions(context.Background(), "ai-rules")
 	if err != nil {
 		t.Fatalf("ListVersions() error = %v", err)
 	}
@@ -138,7 +138,7 @@ func TestGitLabRegistry_GetContent(t *testing.T) {
 	version := types.Version{Version: "1.0.0", Display: "1.0.0"}
 	selector := types.ContentSelector{Include: []string{"*.yml", "*.yaml"}} // URF files
 
-	files, err := registry.GetContent(context.Background(), version, selector)
+	files, err := registry.GetContent(context.Background(), "ai-rules", version, selector)
 	if err != nil {
 		t.Fatalf("GetContent() error = %v", err)
 	}
