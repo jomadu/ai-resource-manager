@@ -15,7 +15,7 @@ type GitRegistryConfig struct {
 // GitLabRegistryConfig defines gitlab-specific registry configuration.
 type GitLabRegistryConfig struct {
 	RegistryConfig
-	ProjectID  string `json:"project_id,omitempty"`
-	GroupID    string `json:"group_id,omitempty"`
-	APIVersion string `json:"api_version"`
+	ProjectID  string `json:"projectId,omitempty"`
+	GroupID    string `json:"groupId,omitempty"`
+	APIVersion string `json:"apiVersion"`
 }

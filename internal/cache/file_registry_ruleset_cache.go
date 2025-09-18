@@ -165,27 +165,27 @@ func (f *FileRegistryRulesetCache) InvalidateVersion(ctx context.Context, rulese
 
 // RegistryIndex tracks metadata for cached registry data.
 type RegistryIndex struct {
-	RegistryMetadata interface{}                  `json:"registry_metadata"`
-	CreatedOn        time.Time                    `json:"created_on"`
-	LastUpdatedOn    time.Time                    `json:"last_updated_on"`
-	LastAccessedOn   time.Time                    `json:"last_accessed_on"`
+	RegistryMetadata interface{}                  `json:"registryMetadata"`
+	CreatedOn        time.Time                    `json:"createdOn"`
+	LastUpdatedOn    time.Time                    `json:"lastUpdatedOn"`
+	LastAccessedOn   time.Time                    `json:"lastAccessedOn"`
 	Rulesets         map[string]RulesetIndexEntry `json:"rulesets"`
 }
 
 // RulesetIndexEntry tracks metadata for a cached ruleset.
 type RulesetIndexEntry struct {
-	RulesetMetadata interface{}                  `json:"ruleset_metadata"`
-	CreatedOn       time.Time                    `json:"created_on"`
-	LastUpdatedOn   time.Time                    `json:"last_updated_on"`
-	LastAccessedOn  time.Time                    `json:"last_accessed_on"`
+	RulesetMetadata interface{}                  `json:"rulesetMetadata"`
+	CreatedOn       time.Time                    `json:"createdOn"`
+	LastUpdatedOn   time.Time                    `json:"lastUpdatedOn"`
+	LastAccessedOn  time.Time                    `json:"lastAccessedOn"`
 	Versions        map[string]VersionIndexEntry `json:"versions"`
 }
 
 // VersionIndexEntry tracks metadata for a cached version.
 type VersionIndexEntry struct {
-	CreatedOn      time.Time `json:"created_on"`
-	LastUpdatedOn  time.Time `json:"last_updated_on"`
-	LastAccessedOn time.Time `json:"last_accessed_on"`
+	CreatedOn      time.Time `json:"createdOn"`
+	LastUpdatedOn  time.Time `json:"lastUpdatedOn"`
+	LastAccessedOn time.Time `json:"lastAccessedOn"`
 }
 
 // loadIndex loads the registry index from disk, creating a new one if it doesn't exist.
