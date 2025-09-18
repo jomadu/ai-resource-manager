@@ -83,9 +83,9 @@ arm config sink add copilot .github/copilot --type copilot
 arm config sink add q .amazonq/rules --type amazonq
 ```
 
-Install traditional ruleset:
+Install ruleset:
 ```bash
-arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc" --sinks cursor
+arm install ai-rules/rules --include "**/*.cursorrules" --sinks cursor
 ```
 
 Install URF ruleset to single sink:
@@ -179,6 +179,11 @@ build/                      # Pre-compiled rules
 ```
 
 This structure works for both Git repositories and GitLab packages, with URF files at the root level and pre-compiled rules organized under `build/` by AI tool. ARM defaults to installing URF files (`*.yml, *.yaml`) when no `--include` patterns are specified, making URF the primary workflow while keeping pre-compiled rules available via explicit patterns like `--include "build/cursor/**"`.
+
+**Examples:**
+- [PatrickJS/awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules) - Community collection of Cursor rules
+- [snarktank/ai-dev-tasks](https://github.com/snarktank/ai-dev-tasks) - AI development task templates
+- [steipete/agent-rules](https://github.com/steipete/agent-rules) - Agent configuration rules
 
 **Key Commands:**
 - `arm config registry add <name> <url> --type git` - Add Git registry
