@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jomadu/ai-rules-manager/internal/manifest"
-	"github.com/jomadu/ai-rules-manager/internal/registry"
 	"github.com/spf13/cobra"
 )
 
@@ -103,20 +101,14 @@ Examples:
 		if registryType == "" {
 			registryType = "git"
 		}
-		force, _ := cmd.Flags().GetBool("force")
-
-		manifestManager := manifest.NewFileManager()
+		options := make(map[string]interface{})
 		switch registryType {
 		case "git":
 			branches, _ := cmd.Flags().GetStringSlice("branches")
 			if len(branches) == 0 {
 				branches = []string{"main", "master"}
 			}
-			gitConfig := registry.GitRegistryConfig{
-				RegistryConfig: registry.RegistryConfig{URL: url, Type: registryType},
-				Branches:       branches,
-			}
-			return manifestManager.AddGitRegistry(context.Background(), name, gitConfig, force)
+			options["branches"] = branches
 		case "gitlab":
 			projectID, _ := cmd.Flags().GetString("project-id")
 			groupID, _ := cmd.Flags().GetString("group-id")
@@ -127,16 +119,13 @@ Examples:
 			if projectID == "" && groupID == "" {
 				return fmt.Errorf("either --project-id or --group-id must be specified for GitLab registries")
 			}
-			gitlabConfig := registry.GitLabRegistryConfig{
-				RegistryConfig: registry.RegistryConfig{URL: url, Type: registryType},
-				ProjectID:      projectID,
-				GroupID:        groupID,
-				APIVersion:     apiVersion,
-			}
-			return manifestManager.AddGitLabRegistry(context.Background(), name, &gitlabConfig, force)
+			options["project_id"] = projectID
+			options["group_id"] = groupID
+			options["api_version"] = apiVersion
 		default:
 			return fmt.Errorf("registry type %s is not implemented", registryType)
 		}
+		return armService.AddRegistry(context.Background(), name, url, registryType, options)
 	},
 }
 
@@ -156,8 +145,7 @@ Examples:
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
-		manifestManager := manifest.NewFileManager()
-		return manifestManager.RemoveRegistry(context.Background(), name)
+		return armService.RemoveRegistry(context.Background(), name)
 	},
 }
 
@@ -216,19 +204,7 @@ Examples:
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
-		manifestManager := manifest.NewFileManager()
-		// Get sink before removal
-		sink, err := manifestManager.GetSink(context.Background(), name)
-		if err != nil {
-			return err
-		}
-		// Remove from manifest and clean from all rulesets
-		err = manifestManager.RemoveSink(context.Background(), name)
-		if err != nil {
-			return err
-		}
-		// Clean files from sink directory
-		return armService.SyncRemovedSink(context.Background(), sink)
+		return armService.RemoveSink(context.Background(), name)
 	},
 }
 
@@ -236,34 +212,7 @@ var configListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List configuration",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		manifestManager := manifest.NewFileManager()
-		registries, err := manifestManager.GetRawRegistries(context.Background())
-		if err == nil {
-			fmt.Println("Registries:")
-			for name, reg := range registries {
-				url, _ := reg["url"].(string)
-				regType, _ := reg["type"].(string)
-				fmt.Printf("  %s: %s (%s)\n", name, url, regType)
-			}
-		}
-
-		sinks, err := manifestManager.GetSinks(context.Background())
-		if err == nil {
-			fmt.Println("Sinks:")
-			for name, sink := range sinks {
-				fmt.Printf("  %s:\n", name)
-				fmt.Printf("    directory: %s\n", sink.Directory)
-				layout := sink.GetLayout()
-				if layout == "" {
-					layout = "hierarchical"
-				}
-				fmt.Printf("    layout: %s\n", layout)
-				fmt.Printf("    compileTarget: %s\n", sink.CompileTarget)
-			}
-		} else {
-			fmt.Println("Sinks: (none configured)")
-		}
-		return nil
+		return armService.ShowConfig(context.Background())
 	},
 }
 
@@ -283,8 +232,7 @@ Examples:
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, field, value := args[0], args[1], args[2]
-		manifestManager := manifest.NewFileManager()
-		return manifestManager.UpdateGitRegistry(context.Background(), name, field, value)
+		return armService.UpdateRegistry(context.Background(), name, field, value)
 	},
 }
 
@@ -305,13 +253,7 @@ Examples:
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, field, value := args[0], args[1], args[2]
-		manifestManager := manifest.NewFileManager()
-		// Update sink config
-		err := manifestManager.UpdateSink(context.Background(), name, field, value)
-		if err != nil {
-			return err
-		}
-		return nil
+		return armService.UpdateSink(context.Background(), name, field, value)
 	},
 }
 

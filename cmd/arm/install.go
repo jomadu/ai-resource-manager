@@ -43,7 +43,7 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	exclude, _ := cmd.Flags().GetStringSlice("exclude")
 	sinks, _ := cmd.Flags().GetStringSlice("sinks")
 	priority, _ := cmd.Flags().GetInt("priority")
-	include = GetDefaultIncludePatterns(include)
+	include = GetDefaultIncludePatterns(include) //TODO: should rely on the struct default
 
 	// Validate priority
 	if priority < 1 {

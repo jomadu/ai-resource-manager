@@ -24,15 +24,15 @@ version: "1.0"
 metadata:
   id: "grug-brained-dev"
   name: "Grug-Brained Developer Rules"
-  version: "1.0.0"
-  description: "Simple, obvious coding practices"
+  version: "1.0.0"  # optional
+  description: "Simple, obvious coding practices"  # optional
 rules:
   - id: "simple-code"
     name: "Keep Code Simple"
-    description: "Write code that grug brain can understand"
-    priority: 100
-    enforcement: "must"
-    scope:
+    description: "Write code that grug brain can understand"  # optional
+    priority: 100  # optional
+    enforcement: "must"  # optional
+    scope:  # optional
       - files: ["**/*.py", "**/*.js"]
     body: |
       Write simple, obvious code that grug brain can understand.
@@ -55,9 +55,7 @@ rules:
       ```
   - id: "meaningful-names"
     name: "Use Meaningful Names"
-    description: "Variables and functions should reveal their purpose"
-    priority: 90
-    enforcement: "should"
+    # Minimal rule - only required fields
     body: |
       Choose names that clearly express what the code does.
       Avoid abbreviations and single-letter variables.
@@ -66,23 +64,23 @@ rules:
 ## Field Reference
 
 ### Metadata Section
-- **`id`**: Unique identifier for the ruleset
-- **`name`**: Human-readable ruleset name
-- **`version`**: Semantic version (e.g., "1.0.0")
-- **`description`**: Brief description of the ruleset's purpose
+- **`id`** (required): Unique identifier for the ruleset
+- **`name`** (required): Human-readable ruleset name
+- **`version`** (optional): Semantic version (e.g., "1.0.0")
+- **`description`** (optional): Brief description of the ruleset's purpose
 
 ### Rule Fields
-- **`id`**: Unique identifier within the ruleset
-- **`name`**: Human-readable rule name
-- **`description`**: Brief explanation of the rule's purpose
-- **`priority`**: Numeric priority (higher = more important)
-- **`enforcement`**: Rule strictness level
+- **`id`** (required): Unique identifier within the ruleset
+- **`name`** (required): Human-readable rule name
+- **`description`** (optional): Brief explanation of the rule's purpose
+- **`priority`** (optional): Numeric priority (higher = more important)
+- **`enforcement`** (optional): Rule strictness level
   - `"must"`: Critical rules that should always be followed
   - `"should"`: Important best practices
   - `"may"`: Optional suggestions
-- **`scope`**: Array of scope objects defining where the rule applies (optional)
+- **`scope`** (optional): Array of scope objects defining where the rule applies
   - Each scope object currently supports: `files: ["pattern1", "pattern2"]`
-- **`body`**: Rule content in markdown format
+- **`body`** (required): Rule content in markdown format
 
 ## Compilation Process
 
@@ -102,6 +100,20 @@ ARM automatically compiles URF files to the appropriate format for each AI tool:
 - **GitHub Copilot**: `.instructions.md` files with embedded metadata
 
 All compiled formats include the original rule content plus ARM metadata for priority resolution and conflict management.
+
+### Compiler Defaults
+
+When optional fields are omitted, compilers apply tool-specific defaults:
+
+**Scope handling:**
+- **Cursor**: Defaults to `globs: ["**/*"]` when scope is empty
+- **Copilot**: Defaults to `applyTo: "**"` when scope is empty
+- **Amazon Q**: Scope only appears in metadata (no tool-specific frontmatter)
+
+**Enforcement handling:**
+- **Cursor**: Only sets `alwaysApply: true` when enforcement is "must"
+- **Copilot/Amazon Q**: Enforcement only appears in metadata and rule titles
+- **All tools**: Omit enforcement from rule titles when not specified
 
 ## Priority Resolution
 

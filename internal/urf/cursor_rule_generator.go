@@ -29,6 +29,8 @@ func (g *CursorRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, r
 			content.WriteString(fmt.Sprintf("%q", file))
 		}
 		content.WriteString("]\n")
+	} else {
+		content.WriteString("globs: [\"**/*\"]\n")
 	}
 
 	if rule.Enforcement == "must" {
@@ -40,8 +42,12 @@ func (g *CursorRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, r
 	content.WriteString(g.metadataGen.GenerateRuleMetadata(namespace, ruleset, rule))
 
 	// Rule title and body
-	enforcement := strings.ToUpper(rule.Enforcement)
-	content.WriteString(fmt.Sprintf("# %s (%s)\n\n", rule.Name, enforcement))
+	if rule.Enforcement != "" {
+		enforcement := strings.ToUpper(rule.Enforcement)
+		content.WriteString(fmt.Sprintf("# %s (%s)\n\n", rule.Name, enforcement))
+	} else {
+		content.WriteString(fmt.Sprintf("# %s\n\n", rule.Name))
+	}
 	content.WriteString(rule.Body)
 
 	return content.String()

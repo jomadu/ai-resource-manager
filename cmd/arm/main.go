@@ -4,13 +4,18 @@ import (
 	"os"
 
 	"github.com/jomadu/ai-rules-manager/internal/arm"
+	"github.com/jomadu/ai-rules-manager/internal/ui"
 	"github.com/spf13/cobra"
 )
 
-var armService arm.Service
+var (
+	armService arm.Service
+	uiInstance *ui.UI
+)
 
 func main() {
-	armService = arm.NewArmService()
+	uiInstance = ui.New(false) // TODO: Add debug flag support
+	armService = arm.NewArmService(uiInstance)
 
 	if err := rootCmd.Execute(); err != nil {
 		WriteError(err)

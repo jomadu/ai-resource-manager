@@ -13,18 +13,18 @@ type Ruleset struct {
 type Metadata struct {
 	ID          string `yaml:"id"`
 	Name        string `yaml:"name"`
-	Version     string `yaml:"version"`
-	Description string `yaml:"description"`
+	Version     string `yaml:"version,omitempty"`
+	Description string `yaml:"description,omitempty"`
 }
 
 // Rule represents a single rule within a URF file
 type Rule struct {
 	ID          string  `yaml:"id"`
 	Name        string  `yaml:"name"`
-	Description string  `yaml:"description"`
-	Priority    int     `yaml:"priority"`
-	Enforcement string  `yaml:"enforcement"`
-	Scope       []Scope `yaml:"scope"`
+	Description string  `yaml:"description,omitempty"`
+	Priority    int     `yaml:"priority,omitempty"`
+	Enforcement string  `yaml:"enforcement,omitempty"`
+	Scope       []Scope `yaml:"scope,omitempty"`
 	Body        string  `yaml:"body"`
 }
 

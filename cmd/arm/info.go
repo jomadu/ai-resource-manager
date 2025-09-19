@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -19,39 +18,9 @@ func newInfoCmd() *cobra.Command {
 func runInfo(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
-	// If no arguments, show info for all installed rulesets
-	if len(args) == 0 {
-		infos, err := armService.GetAllRulesetInfo(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to get ruleset information: %w", err)
-		}
+	// Convert args to ruleset strings for service
+	var rulesetStrings []string
+	rulesetStrings = append(rulesetStrings, args...)
 
-		for _, info := range infos {
-			FormatRulesetInfo(info, false)
-			fmt.Println()
-		}
-		return nil
-	}
-
-	// Parse arguments
-	rulesets, err := ParseRulesetArgs(args)
-	if err != nil {
-		return fmt.Errorf("failed to parse arguments: %w", err)
-	}
-
-	// Show info for each specified ruleset
-	for i, ruleset := range rulesets {
-		info, err := armService.GetRulesetInfo(ctx, ruleset.Registry, ruleset.Name)
-		if err != nil {
-			return fmt.Errorf("failed to get info for %s/%s: %w", ruleset.Registry, ruleset.Name, err)
-		}
-
-		detailed := len(rulesets) == 1
-		FormatRulesetInfo(info, detailed)
-		if i < len(rulesets)-1 {
-			fmt.Println()
-		}
-	}
-
-	return nil
+	return armService.ShowRulesetInfo(ctx, rulesetStrings)
 }

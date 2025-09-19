@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"strings"
 
@@ -214,13 +213,6 @@ func (f *FileManager) AddGitRegistry(ctx context.Context, name string, config re
 
 	manifest.Registries[name] = rawConfig
 
-	slog.InfoContext(ctx, "Adding git registry configuration",
-		"action", "git_registry_add",
-		"name", name,
-		"url", config.URL,
-		"type", config.Type,
-		"branches", config.GetBranches())
-
 	return f.saveManifest(manifest)
 }
 
@@ -256,15 +248,6 @@ func (f *FileManager) AddGitLabRegistry(ctx context.Context, name string, config
 
 	manifest.Registries[name] = rawConfig
 
-	slog.InfoContext(ctx, "Adding GitLab registry configuration",
-		"action", "gitlab_registry_add",
-		"name", name,
-		"url", config.URL,
-		"type", config.Type,
-		"project_id", config.ProjectID,
-		"group_id", config.GroupID,
-		"api_version", config.GetAPIVersion())
-
 	return f.saveManifest(manifest)
 }
 
@@ -274,16 +257,10 @@ func (f *FileManager) RemoveRegistry(ctx context.Context, name string) error {
 		return err
 	}
 
-	removedRegistry, exists := manifest.Registries[name]
+	_, exists := manifest.Registries[name]
 	if !exists {
 		return errors.New("registry not found")
 	}
-
-	slog.InfoContext(ctx, "Removing registry configuration",
-		"action", "registry_remove",
-		"name", name,
-		"removed_url", removedRegistry["url"],
-		"removed_type", removedRegistry["type"])
 
 	delete(manifest.Registries, name)
 	return f.saveManifest(manifest)
@@ -340,13 +317,6 @@ func (f *FileManager) AddSink(ctx context.Context, name, directory, layout strin
 	}
 	manifest.Sinks[name] = newSink
 
-	slog.InfoContext(ctx, "Adding sink configuration",
-		"action", "sink_add",
-		"name", name,
-		"directory", directory,
-		"layout", layout,
-		"compileTarget", string(compileTarget))
-
 	return f.saveManifest(manifest)
 }
 
@@ -356,7 +326,7 @@ func (f *FileManager) RemoveSink(ctx context.Context, name string) error {
 		return err
 	}
 
-	removedSink, exists := manifest.Sinks[name]
+	_, exists := manifest.Sinks[name]
 	if !exists {
 		return fmt.Errorf("sink %s not found", name)
 	}
@@ -377,11 +347,6 @@ func (f *FileManager) RemoveSink(ctx context.Context, name string) error {
 	if len(usingRulesets) > 0 {
 		return fmt.Errorf("cannot remove sink %s: it is being used by rulesets %v. Uninstall these rulesets first", name, usingRulesets)
 	}
-
-	slog.InfoContext(ctx, "Removing sink configuration",
-		"action", "sink_remove",
-		"name", name,
-		"removed_directory", removedSink.Directory)
 
 	// Remove sink from configuration
 	delete(manifest.Sinks, name)
@@ -416,12 +381,6 @@ func (f *FileManager) UpdateSink(ctx context.Context, name, field, value string)
 
 	manifest.Sinks[name] = sink
 
-	slog.InfoContext(ctx, "Updating sink field",
-		"action", "sink_update",
-		"name", name,
-		"field", field,
-		"value", value)
-
 	return f.saveManifest(manifest)
 }
 
@@ -453,12 +412,6 @@ func (f *FileManager) UpdateGitRegistry(ctx context.Context, name, field, value 
 	default:
 		return fmt.Errorf("unknown field '%s' (valid: url, type, branches)", field)
 	}
-
-	slog.InfoContext(ctx, "Updating git registry field",
-		"action", "git_registry_update",
-		"name", name,
-		"field", field,
-		"value", value)
 
 	return f.saveManifest(manifest)
 }

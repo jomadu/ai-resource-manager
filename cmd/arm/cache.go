@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/jomadu/ai-rules-manager/internal/cache"
 	"github.com/spf13/cobra"
 )
 
@@ -38,13 +36,7 @@ var cacheCleanCmd = &cobra.Command{
 			return fmt.Errorf("invalid max-age format: %w", err)
 		}
 
-		cacheManager := cache.NewManager()
-		if err := cacheManager.CleanupOldVersions(ctx, maxAge); err != nil {
-			return fmt.Errorf("failed to clean cache: %w", err)
-		}
-
-		fmt.Printf("Cache cleaned: removed versions older than %s\n", maxAgeStr)
-		return nil
+		return armService.CleanCacheWithAge(ctx, maxAge)
 	},
 }
 
@@ -53,13 +45,8 @@ var cacheNukeCmd = &cobra.Command{
 	Short: "Remove entire cache directory",
 	Long:  "Remove the entire ~/.arm/cache directory and all cached data.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cacheDir := cache.GetCacheDir()
-		if err := os.RemoveAll(cacheDir); err != nil {
-			return fmt.Errorf("failed to remove cache directory: %w", err)
-		}
-
-		fmt.Println("Cache directory removed successfully")
-		return nil
+		ctx := context.Background()
+		return armService.NukeCache(ctx)
 	},
 }
 

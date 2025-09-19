@@ -2,7 +2,6 @@ package installer
 
 import (
 	"context"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,7 +63,6 @@ func (h *HierarchicalInstaller) Install(ctx context.Context, registry, ruleset, 
 		return err
 	}
 
-	slog.InfoContext(ctx, "Installed files (hierarchical)", "count", len(processedFiles), "path", rulesetDir)
 	return nil
 }
 
@@ -79,7 +77,6 @@ func (h *HierarchicalInstaller) Uninstall(ctx context.Context, registry, ruleset
 	if err := os.RemoveAll(rulesetDir); err != nil {
 		return err
 	}
-	slog.InfoContext(ctx, "Removed directory", "path", rulesetDir)
 
 	// Clean up empty parent directories
 	registryDir := filepath.Join(h.baseDir, "arm", registry)
@@ -87,14 +84,12 @@ func (h *HierarchicalInstaller) Uninstall(ctx context.Context, registry, ruleset
 		if err := os.Remove(registryDir); err != nil {
 			return err
 		}
-		slog.InfoContext(ctx, "Removed empty registry directory", "path", registryDir)
 
 		armDir := filepath.Join(h.baseDir, "arm")
 		if isEmpty(armDir) {
 			if err := os.Remove(armDir); err != nil {
 				return err
 			}
-			slog.InfoContext(ctx, "Removed empty arm directory", "path", armDir)
 		}
 	}
 
