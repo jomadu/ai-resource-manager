@@ -6,7 +6,7 @@ import (
 
 // NewInstaller creates the appropriate installer based on sink layout configuration.
 func NewInstaller(sink *manifest.SinkConfig) Installer {
-	switch sink.Layout {
+	switch sink.GetLayout() {
 	case "flat":
 		return NewFlatInstaller(sink.Directory, sink.CompileTarget)
 	case "hierarchical", "":
