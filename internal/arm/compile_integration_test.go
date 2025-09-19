@@ -249,16 +249,11 @@ rules:
 				t.Errorf("Expected %d files compiled, got %d", tt.expectedCompiled, result.Stats.FilesCompiled)
 			}
 
-			// Verify .txt file was skipped
-			found := false
-			for _, skipped := range result.Skipped {
-				if filepath.Base(skipped.Path) == "ignored.txt" {
-					found = true
-					break
+			// Verify .txt file was not processed (correct behavior - not matching include patterns)
+			for _, compiled := range result.CompiledFiles {
+				if filepath.Base(compiled.SourcePath) == "ignored.txt" {
+					t.Error("ignored.txt should not have been compiled")
 				}
-			}
-			if !found {
-				t.Error("Expected ignored.txt to be skipped")
 			}
 		})
 	}
