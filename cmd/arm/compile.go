@@ -108,8 +108,20 @@ func runCompile(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("compilation failed: %w", err)
 	}
 
-	// Display results
-	return displayCompileResults(result, verbose, dryRun)
+	// Display results using output formatter
+	formatter := NewCompileOutputFormatter(verbose, dryRun)
+
+	if validateOnly {
+		formatter.DisplayValidationResults(result)
+		return nil
+	}
+
+	if dryRun {
+		formatter.DisplayDryRunPlan(result)
+		return nil
+	}
+
+	return formatter.DisplayResults(result)
 }
 
 // parseTargets parses comma-separated target string and validates each target
@@ -144,84 +156,4 @@ func parseTargets(targetStr string) ([]urf.CompileTarget, error) {
 	}
 
 	return targets, nil
-}
-
-// displayCompileResults formats and displays compilation results
-func displayCompileResults(result *arm.CompileResult, verbose, dryRun bool) error {
-	if result == nil {
-		return fmt.Errorf("no compilation result to display")
-	}
-
-	// Determine exit code based on errors
-	exitCode := 0
-	if result.Stats.Errors > 0 {
-		if result.Stats.FilesCompiled == 0 {
-			exitCode = 2 // All failures
-		} else {
-			exitCode = 1 // Some failures
-		}
-	}
-
-	// Display summary statistics
-	fmt.Printf("Compilation Summary:\n")
-	fmt.Printf("  Files processed: %d\n", result.Stats.FilesProcessed)
-	fmt.Printf("  Files compiled:  %d\n", result.Stats.FilesCompiled)
-	if result.Stats.FilesSkipped > 0 {
-		fmt.Printf("  Files skipped:   %d\n", result.Stats.FilesSkipped)
-	}
-	if result.Stats.Errors > 0 {
-		fmt.Printf("  Errors:          %d\n", result.Stats.Errors)
-	}
-	if result.Stats.RulesGenerated > 0 {
-		fmt.Printf("  Rules generated: %d\n", result.Stats.RulesGenerated)
-	}
-
-	// Show per-target statistics if multiple targets
-	if len(result.Stats.TargetStats) > 1 {
-		fmt.Printf("\nPer-target compilation:\n")
-		for target, count := range result.Stats.TargetStats {
-			fmt.Printf("  %s: %d files\n", target, count)
-		}
-	}
-
-	// Show compiled files in verbose mode or for dry-run
-	if verbose || dryRun {
-		if len(result.CompiledFiles) > 0 {
-			fmt.Printf("\nCompiled files:\n")
-			for _, file := range result.CompiledFiles {
-				if dryRun {
-					fmt.Printf("  [DRY RUN] %s -> %s (%s)\n", file.SourcePath, file.TargetPath, file.Target)
-				} else {
-					fmt.Printf("  %s -> %s (%s)\n", file.SourcePath, file.TargetPath, file.Target)
-				}
-			}
-		}
-	}
-
-	// Show skipped files if any
-	if len(result.Skipped) > 0 && verbose {
-		fmt.Printf("\nSkipped files:\n")
-		for _, skipped := range result.Skipped {
-			fmt.Printf("  %s (%s)\n", skipped.Path, skipped.Reason)
-		}
-	}
-
-	// Show errors if any
-	if len(result.Errors) > 0 {
-		fmt.Printf("\nErrors:\n")
-		for _, err := range result.Errors {
-			if err.Target != "" {
-				fmt.Printf("  %s [%s]: %s\n", err.FilePath, err.Target, err.Error)
-			} else {
-				fmt.Printf("  %s: %s\n", err.FilePath, err.Error)
-			}
-		}
-	}
-
-	// Return appropriate exit code by using os.Exit indirectly
-	if exitCode != 0 {
-		return fmt.Errorf("compilation completed with %d errors", result.Stats.Errors)
-	}
-
-	return nil
 }
