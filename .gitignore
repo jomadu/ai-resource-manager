@@ -35,3 +35,11 @@ node_modules
 
 sandbox/
 test-sandbox/
+
+# Project documentation and task files
+docs/compile-command-design.md
+tasks/prd-compile-command.md
+tasks/tasks-prd-compile-command.md
+create-prd.md
+generate-tasks.md
+process-task-list.md
