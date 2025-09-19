@@ -221,7 +221,7 @@ func (a *ArmService) InstallManifest(ctx context.Context) error {
 				Registry: registryName,
 				Ruleset:  rulesetName,
 				Version:  entry.Version,
-				Include:  entry.Include,
+				Include:  entry.GetIncludePatterns(),
 				Exclude:  entry.Exclude,
 				Sinks:    entry.Sinks,
 			}); err != nil {
@@ -334,7 +334,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 			Registry: registryName,
 			Ruleset:  rulesetName,
 			Version:  manifestEntry.Version,
-			Include:  manifestEntry.Include,
+			Include:  manifestEntry.GetIncludePatterns(),
 			Exclude:  manifestEntry.Exclude,
 		})
 	}
@@ -345,7 +345,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 		currentLockEntry, err := a.lockFileManager.GetEntry(ctx, registryName, rulesetName)
 		if err == nil {
 			// Verify checksum to ensure integrity
-			selector := types.ContentSelector{Include: manifestEntry.Include, Exclude: manifestEntry.Exclude}
+			selector := types.ContentSelector{Include: manifestEntry.GetIncludePatterns(), Exclude: manifestEntry.Exclude}
 			files, err := registryClient.GetContent(ctx, rulesetName, resolvedVersionResult.Version, selector)
 			if err == nil && lockfile.VerifyChecksum(files, currentLockEntry.Checksum) {
 				slog.InfoContext(ctx, "Ruleset already up to date", "registry", registryName, "ruleset", rulesetName, "version", installedVersion)
@@ -363,7 +363,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 		Registry: registryName,
 		Ruleset:  rulesetName,
 		Version:  manifestEntry.Version,
-		Include:  manifestEntry.Include,
+		Include:  manifestEntry.GetIncludePatterns(),
 		Exclude:  manifestEntry.Exclude,
 		Sinks:    manifestEntry.Sinks,
 	})
@@ -589,7 +589,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 	}
 
 	resolvedVersion := types.Version{Version: lockEntry.Version, Display: lockEntry.Display}
-	selector := types.ContentSelector{Include: manifestEntry.Include, Exclude: manifestEntry.Exclude}
+	selector := types.ContentSelector{Include: manifestEntry.GetIncludePatterns(), Exclude: manifestEntry.Exclude}
 	files, err := registryClient.GetContent(ctx, ruleset, resolvedVersion, selector)
 	if err != nil {
 		return fmt.Errorf("failed to get content: %w", err)
@@ -729,7 +729,7 @@ func (a *ArmService) UpdateRulesetConfig(ctx context.Context, registry, ruleset,
 		Ruleset:  ruleset,
 		Version:  entry.Version,
 		Priority: entry.Priority,
-		Include:  entry.Include,
+		Include:  entry.GetIncludePatterns(),
 		Exclude:  entry.Exclude,
 		Sinks:    entry.Sinks,
 	})

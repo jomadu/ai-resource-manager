@@ -68,7 +68,7 @@ type GitLabPackageFile struct {
 func NewGitLabRegistry(registryName string, config *GitLabRegistryConfig, rulesetCache cache.RegistryRulesetCache) *GitLabRegistry {
 	client := &GitLabClient{
 		baseURL:    config.URL,
-		apiVersion: config.APIVersion,
+		apiVersion: config.GetAPIVersion(),
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}
 

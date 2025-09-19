@@ -15,15 +15,15 @@ const (
 
 // Constraint represents a version constraint.
 type Constraint struct {
-	Type    ConstraintType `json:"type"`
-	Version string         `json:"version"`
-	Major   int            `json:"major"`
-	Minor   int            `json:"minor"`
-	Patch   int            `json:"patch"`
+	Type    ConstraintType
+	Version string
+	Major   int
+	Minor   int
+	Patch   int
 }
 
 // ResolvedVersion combines constraint and resolved version information.
 type ResolvedVersion struct {
-	Constraint Constraint    `json:"constraint"` // Original constraint struct
-	Version    types.Version `json:"version"`    // Resolved version with display
+	Constraint Constraint    // Original constraint struct
+	Version    types.Version // Resolved version with display
 }
