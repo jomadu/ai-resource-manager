@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -67,7 +66,6 @@ func (f *FlatInstaller) Install(ctx context.Context, registry, ruleset, version 
 		return err
 	}
 
-	slog.InfoContext(ctx, "Installed files (flat)", "count", len(processedFiles), "path", f.baseDir)
 	return nil
 }
 
@@ -92,7 +90,6 @@ func (f *FlatInstaller) Uninstall(ctx context.Context, registry, ruleset string)
 		return err
 	}
 
-	slog.InfoContext(ctx, "Uninstalled files (flat)", "count", removedCount, "path", f.baseDir)
 	return nil
 }
 

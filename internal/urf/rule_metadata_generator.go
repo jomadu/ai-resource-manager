@@ -22,7 +22,9 @@ func (g *DefaultRuleMetadataGenerator) GenerateRuleMetadata(namespace string, ru
 	content.WriteString("ruleset:\n")
 	content.WriteString(fmt.Sprintf("  id: %s\n", ruleset.Metadata.ID))
 	content.WriteString(fmt.Sprintf("  name: %s\n", ruleset.Metadata.Name))
-	content.WriteString(fmt.Sprintf("  version: %s\n", ruleset.Metadata.Version))
+	if ruleset.Metadata.Version != "" {
+		content.WriteString(fmt.Sprintf("  version: %s\n", ruleset.Metadata.Version))
+	}
 	content.WriteString("  rules:\n")
 	for _, r := range ruleset.Rules {
 		content.WriteString(fmt.Sprintf("    - %s\n", r.ID))
@@ -30,8 +32,12 @@ func (g *DefaultRuleMetadataGenerator) GenerateRuleMetadata(namespace string, ru
 	content.WriteString("rule:\n")
 	content.WriteString(fmt.Sprintf("  id: %s\n", rule.ID))
 	content.WriteString(fmt.Sprintf("  name: %s\n", rule.Name))
-	content.WriteString(fmt.Sprintf("  enforcement: %s\n", strings.ToUpper(rule.Enforcement)))
-	content.WriteString(fmt.Sprintf("  priority: %d\n", rule.Priority))
+	if rule.Enforcement != "" {
+		content.WriteString(fmt.Sprintf("  enforcement: %s\n", strings.ToUpper(rule.Enforcement)))
+	}
+	if rule.Priority != 0 {
+		content.WriteString(fmt.Sprintf("  priority: %d\n", rule.Priority))
+	}
 	if len(rule.Scope) > 0 && len(rule.Scope[0].Files) > 0 {
 		content.WriteString("  scope:\n")
 		content.WriteString("    - files: [")

@@ -1,34 +1,12 @@
 package arm
 
-// OutdatedRuleset represents a ruleset that has newer versions available.
-type OutdatedRuleset struct {
-	RulesetInfo *RulesetInfo `json:"rulesetInfo"`
-	Wanted      string       `json:"wanted"`
-	Latest      string       `json:"latest"`
-}
+import "github.com/jomadu/ai-rules-manager/internal/ui"
 
-// ManifestInfo contains information from the manifest file.
-type ManifestInfo struct {
-	Constraint string   `json:"constraint"`
-	Priority   int      `json:"priority"`
-	Include    []string `json:"include"`
-	Exclude    []string `json:"exclude"`
-	Sinks      []string `json:"sinks"`
-}
-
-// InstallationInfo contains information about the actual installation.
-type InstallationInfo struct {
-	Version        string   `json:"version"`
-	InstalledPaths []string `json:"installedPaths"`
-}
-
-// RulesetInfo provides detailed information about a ruleset.
-type RulesetInfo struct {
-	Registry     string           `json:"registry"`
-	Name         string           `json:"name"`
-	Manifest     ManifestInfo     `json:"manifest"`
-	Installation InstallationInfo `json:"installation"`
-}
+// Type aliases to avoid duplication
+type OutdatedRuleset = ui.OutdatedRuleset
+type ManifestInfo = ui.ManifestInfo
+type InstallationInfo = ui.InstallationInfo
+type RulesetInfo = ui.RulesetInfo
 
 // InstallRequest groups install parameters to avoid repetitive parameter passing.
 type InstallRequest struct {
