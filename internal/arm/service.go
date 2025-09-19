@@ -32,6 +32,7 @@ type Service interface {
 	UpdateRulesetConfig(ctx context.Context, registry, ruleset, field, value string) error
 	AddSink(ctx context.Context, name, directory, sinkType, layout, compileTarget string, force bool) error
 	SyncRemovedSink(ctx context.Context, removedSink *manifest.SinkConfig) error
+	CompileFiles(ctx context.Context, req *CompileRequest) (*CompileResult, error)
 	Version() version.VersionInfo
 }
 
@@ -735,6 +736,51 @@ func (a *ArmService) UpdateRulesetConfig(ctx context.Context, registry, ruleset,
 	})
 }
 
+func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) (*CompileResult, error) {
+	// Input validation
+	if req == nil {
+		return nil, fmt.Errorf("compile request is required")
+	}
+	if len(req.Files) == 0 {
+		return nil, fmt.Errorf("no files specified for compilation")
+	}
+	if len(req.Targets) == 0 {
+		return nil, fmt.Errorf("no compilation targets specified")
+	}
+	if req.OutputDir == "" {
+		return nil, fmt.Errorf("output directory is required")
+	}
+
+	// Validate targets
+	for _, target := range req.Targets {
+		if !isValidCompileTarget(target) {
+			return nil, fmt.Errorf("unsupported compile target: %s", target)
+		}
+	}
+
+	// Initialize result
+	result := &CompileResult{
+		CompiledFiles: make([]CompiledFile, 0),
+		Skipped:       make([]SkippedFile, 0),
+		Errors:        make([]CompileError, 0),
+		Stats: CompileStats{
+			TargetStats: make(map[string]int),
+		},
+	}
+
+	// TODO: Implement file discovery
+	// TODO: Implement URF compilation for each target
+	// TODO: Implement output writing
+	// TODO: Generate statistics
+
+	slog.InfoContext(ctx, "Compile operation completed",
+		"files_processed", result.Stats.FilesProcessed,
+		"files_compiled", result.Stats.FilesCompiled,
+		"errors", result.Stats.Errors)
+
+	return result, nil
+}
+
 func (a *ArmService) Version() version.VersionInfo {
 	return version.GetVersionInfo()
 }
@@ -751,4 +797,14 @@ func expandVersionShorthand(constraint string) string {
 		return "~" + constraint + ".0"
 	}
 	return constraint
+}
+
+// isValidCompileTarget checks if the compile target is supported
+func isValidCompileTarget(target urf.CompileTarget) bool {
+	switch target {
+	case urf.TargetCursor, urf.TargetAmazonQ, urf.TargetMarkdown, urf.TargetCopilot:
+		return true
+	default:
+		return false
+	}
 }
