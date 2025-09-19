@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/jomadu/ai-rules-manager/internal/arm"
 	"github.com/jomadu/ai-rules-manager/internal/urf"
 	"github.com/spf13/cobra"
 )
@@ -57,10 +59,15 @@ func runCompile(cmd *cobra.Command, args []string) error {
 	// Parse and validate flags
 	targetStr, _ := cmd.Flags().GetString("target")
 	outputDir, _ := cmd.Flags().GetString("output")
-	dryRun, _ := cmd.Flags().GetBool("dry-run")
-	validateOnly, _ := cmd.Flags().GetBool("validate-only")
+	namespace, _ := cmd.Flags().GetString("namespace")
 	force, _ := cmd.Flags().GetBool("force")
+	recursive, _ := cmd.Flags().GetBool("recursive")
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	verbose, _ := cmd.Flags().GetBool("verbose")
+	validateOnly, _ := cmd.Flags().GetBool("validate-only")
+	failFast, _ := cmd.Flags().GetBool("fail-fast")
 	include, _ := cmd.Flags().GetStringSlice("include")
+	exclude, _ := cmd.Flags().GetStringSlice("exclude")
 
 	// Parse and validate targets (comma-separated)
 	targets, err := parseTargets(targetStr)
@@ -69,18 +76,40 @@ func runCompile(cmd *cobra.Command, args []string) error {
 	}
 
 	// Apply default include patterns for YAML files
-	_ = GetDefaultIncludePatterns(include)
+	include = GetDefaultIncludePatterns(include)
 
 	// Validate conflicting flags
 	if validateOnly && (dryRun || force) {
 		return fmt.Errorf("--validate-only cannot be used with --dry-run or --force")
 	}
 
-	// TODO: Create CompileRequest and call service
-	// TODO: Display results
+	// Create service and compile request
+	service := arm.NewArmService()
 
-	fmt.Printf("Parsed targets: %v, output: %s, files: %v\n", targets, outputDir, args)
-	return nil
+	request := &arm.CompileRequest{
+		Files:        args,
+		Targets:      targets,
+		OutputDir:    outputDir,
+		Namespace:    namespace,
+		Force:        force,
+		Recursive:    recursive,
+		DryRun:       dryRun,
+		Verbose:      verbose,
+		ValidateOnly: validateOnly,
+		FailFast:     failFast,
+		Include:      include,
+		Exclude:      exclude,
+	}
+
+	// Execute compilation
+	ctx := context.Background()
+	result, err := service.CompileFiles(ctx, request)
+	if err != nil {
+		return fmt.Errorf("compilation failed: %w", err)
+	}
+
+	// Display results
+	return displayCompileResults(result, verbose, dryRun)
 }
 
 // parseTargets parses comma-separated target string and validates each target
@@ -105,12 +134,8 @@ func parseTargets(targetStr string) ([]urf.CompileTarget, error) {
 		}
 		seen[target] = true
 
-		// Validate target
+		// Add target (validation will happen when creating compiler)
 		compileTarget := urf.CompileTarget(target)
-		if !isValidTarget(compileTarget) {
-			return nil, fmt.Errorf("unsupported target: %s (supported: cursor, amazonq, markdown, copilot)", target)
-		}
-
 		targets = append(targets, compileTarget)
 	}
 
@@ -121,12 +146,82 @@ func parseTargets(targetStr string) ([]urf.CompileTarget, error) {
 	return targets, nil
 }
 
-// isValidTarget checks if the target is supported
-func isValidTarget(target urf.CompileTarget) bool {
-	switch target {
-	case urf.TargetCursor, urf.TargetAmazonQ, urf.TargetMarkdown, urf.TargetCopilot:
-		return true
-	default:
-		return false
+// displayCompileResults formats and displays compilation results
+func displayCompileResults(result *arm.CompileResult, verbose, dryRun bool) error {
+	if result == nil {
+		return fmt.Errorf("no compilation result to display")
 	}
+
+	// Determine exit code based on errors
+	exitCode := 0
+	if result.Stats.Errors > 0 {
+		if result.Stats.FilesCompiled == 0 {
+			exitCode = 2 // All failures
+		} else {
+			exitCode = 1 // Some failures
+		}
+	}
+
+	// Display summary statistics
+	fmt.Printf("Compilation Summary:\n")
+	fmt.Printf("  Files processed: %d\n", result.Stats.FilesProcessed)
+	fmt.Printf("  Files compiled:  %d\n", result.Stats.FilesCompiled)
+	if result.Stats.FilesSkipped > 0 {
+		fmt.Printf("  Files skipped:   %d\n", result.Stats.FilesSkipped)
+	}
+	if result.Stats.Errors > 0 {
+		fmt.Printf("  Errors:          %d\n", result.Stats.Errors)
+	}
+	if result.Stats.RulesGenerated > 0 {
+		fmt.Printf("  Rules generated: %d\n", result.Stats.RulesGenerated)
+	}
+
+	// Show per-target statistics if multiple targets
+	if len(result.Stats.TargetStats) > 1 {
+		fmt.Printf("\nPer-target compilation:\n")
+		for target, count := range result.Stats.TargetStats {
+			fmt.Printf("  %s: %d files\n", target, count)
+		}
+	}
+
+	// Show compiled files in verbose mode or for dry-run
+	if verbose || dryRun {
+		if len(result.CompiledFiles) > 0 {
+			fmt.Printf("\nCompiled files:\n")
+			for _, file := range result.CompiledFiles {
+				if dryRun {
+					fmt.Printf("  [DRY RUN] %s -> %s (%s)\n", file.SourcePath, file.TargetPath, file.Target)
+				} else {
+					fmt.Printf("  %s -> %s (%s)\n", file.SourcePath, file.TargetPath, file.Target)
+				}
+			}
+		}
+	}
+
+	// Show skipped files if any
+	if len(result.Skipped) > 0 && verbose {
+		fmt.Printf("\nSkipped files:\n")
+		for _, skipped := range result.Skipped {
+			fmt.Printf("  %s (%s)\n", skipped.Path, skipped.Reason)
+		}
+	}
+
+	// Show errors if any
+	if len(result.Errors) > 0 {
+		fmt.Printf("\nErrors:\n")
+		for _, err := range result.Errors {
+			if err.Target != "" {
+				fmt.Printf("  %s [%s]: %s\n", err.FilePath, err.Target, err.Error)
+			} else {
+				fmt.Printf("  %s: %s\n", err.FilePath, err.Error)
+			}
+		}
+	}
+
+	// Return appropriate exit code by using os.Exit indirectly
+	if exitCode != 0 {
+		return fmt.Errorf("compilation completed with %d errors", result.Stats.Errors)
+	}
+
+	return nil
 }
