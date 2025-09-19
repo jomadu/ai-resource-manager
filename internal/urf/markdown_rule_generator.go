@@ -18,8 +18,12 @@ func (g *MarkdownRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset,
 	content.WriteString(g.metadataGen.GenerateRuleMetadata(namespace, ruleset, rule))
 
 	// Rule title and body
-	enforcement := strings.ToUpper(rule.Enforcement)
-	content.WriteString(fmt.Sprintf("# %s (%s)\n\n", rule.Name, enforcement))
+	if rule.Enforcement != "" {
+		enforcement := strings.ToUpper(rule.Enforcement)
+		content.WriteString(fmt.Sprintf("# %s (%s)\n\n", rule.Name, enforcement))
+	} else {
+		content.WriteString(fmt.Sprintf("# %s\n\n", rule.Name))
+	}
 	content.WriteString(rule.Body)
 
 	return content.String()

@@ -13,7 +13,5 @@ func newVersionCmd() *cobra.Command {
 }
 
 func runVersion(cmd *cobra.Command, args []string) error {
-	version := armService.Version()
-	FormatVersionInfo(version)
-	return nil
+	return armService.ShowVersion()
 }
