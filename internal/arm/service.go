@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -751,13 +753,6 @@ func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) (*Co
 		return nil, fmt.Errorf("output directory is required")
 	}
 
-	// Validate targets
-	for _, target := range req.Targets {
-		if !isValidCompileTarget(target) {
-			return nil, fmt.Errorf("unsupported compile target: %s", target)
-		}
-	}
-
 	// Initialize result
 	result := &CompileResult{
 		CompiledFiles: make([]CompiledFile, 0),
@@ -768,10 +763,58 @@ func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) (*Co
 		},
 	}
 
-	// TODO: Implement file discovery
-	// TODO: Implement URF compilation for each target
-	// TODO: Implement output writing
-	// TODO: Generate statistics
+	// Discover and load files
+	files, err := a.discoverFiles(req.Files, req.Recursive, req.Include, req.Exclude)
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover files: %w", err)
+	}
+
+	result.Stats.FilesProcessed = len(files)
+
+	// Filter for valid URF files and handle validate-only mode
+	parser := urf.NewParser()
+	var urfFiles []types.File
+	for _, file := range files {
+		if parser.IsURF(&file) {
+			if req.ValidateOnly {
+				// Just validate, don't compile
+				_, err := parser.Parse(&file)
+				if err != nil {
+					result.Errors = append(result.Errors, CompileError{
+						FilePath: file.Path,
+						Error:    fmt.Sprintf("URF validation failed: %v", err),
+					})
+					result.Stats.Errors++
+					if req.FailFast {
+						break
+					}
+				}
+			} else {
+				urfFiles = append(urfFiles, file)
+			}
+		} else {
+			result.Skipped = append(result.Skipped, SkippedFile{
+				Path:   file.Path,
+				Reason: "not a valid URF file",
+			})
+			result.Stats.FilesSkipped++
+		}
+	}
+
+	if req.ValidateOnly {
+		slog.InfoContext(ctx, "URF validation completed",
+			"files_processed", result.Stats.FilesProcessed,
+			"errors", result.Stats.Errors)
+		return result, nil
+	}
+
+	// Compile for each target
+	for _, target := range req.Targets {
+		targetErr := a.compileForTarget(ctx, urfFiles, target, req, result)
+		if targetErr != nil && req.FailFast {
+			return nil, targetErr
+		}
+	}
 
 	slog.InfoContext(ctx, "Compile operation completed",
 		"files_processed", result.Stats.FilesProcessed,
@@ -783,6 +826,257 @@ func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) (*Co
 
 func (a *ArmService) Version() version.VersionInfo {
 	return version.GetVersionInfo()
+}
+
+// discoverFiles finds and loads files from the given patterns
+func (a *ArmService) discoverFiles(patterns []string, recursive bool, include, exclude []string) ([]types.File, error) {
+	var allFiles []types.File
+	seen := make(map[string]bool)
+
+	// Create content selector for filtering
+	selector := types.ContentSelector{
+		Include: include,
+		Exclude: exclude,
+	}
+
+	for _, pattern := range patterns {
+		files, err := a.discoverFromPattern(pattern, recursive, selector)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add files, avoiding duplicates
+		for _, file := range files {
+			if !seen[file.Path] {
+				allFiles = append(allFiles, file)
+				seen[file.Path] = true
+			}
+		}
+	}
+
+	return allFiles, nil
+}
+
+// discoverFromPattern discovers files from a single pattern
+func (a *ArmService) discoverFromPattern(pattern string, recursive bool, selector types.ContentSelector) ([]types.File, error) {
+	// Check if pattern is a directory
+	if info, err := os.Stat(pattern); err == nil && info.IsDir() {
+		return a.discoverFromDirectory(pattern, recursive, selector)
+	}
+
+	// Check if pattern is a single file
+	if info, err := os.Stat(pattern); err == nil && !info.IsDir() {
+		if selector.Matches(pattern) {
+			content, err := os.ReadFile(pattern)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read file %s: %w", pattern, err)
+			}
+			return []types.File{{
+				Path:    pattern,
+				Content: content,
+				Size:    int64(len(content)),
+			}}, nil
+		}
+		return nil, nil
+	}
+
+	// Handle glob pattern
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("invalid glob pattern %q: %w", pattern, err)
+	}
+
+	var files []types.File
+	for _, match := range matches {
+		if info, err := os.Stat(match); err == nil {
+			if info.IsDir() {
+				dirFiles, err := a.discoverFromDirectory(match, recursive, selector)
+				if err != nil {
+					return nil, err
+				}
+				files = append(files, dirFiles...)
+			} else if selector.Matches(match) {
+				content, err := os.ReadFile(match)
+				if err != nil {
+					return nil, fmt.Errorf("failed to read file %s: %w", match, err)
+				}
+				files = append(files, types.File{
+					Path:    match,
+					Content: content,
+					Size:    int64(len(content)),
+				})
+			}
+		}
+	}
+
+	return files, nil
+}
+
+// discoverFromDirectory discovers files from a directory
+func (a *ArmService) discoverFromDirectory(dirPath string, recursive bool, selector types.ContentSelector) ([]types.File, error) {
+	var files []types.File
+
+	if !recursive {
+		// Top-level only
+		entries, err := os.ReadDir(dirPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read directory %s: %w", dirPath, err)
+		}
+
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue // Skip subdirectories
+			}
+
+			filePath := filepath.Join(dirPath, entry.Name())
+			if selector.Matches(filePath) {
+				content, err := os.ReadFile(filePath)
+				if err != nil {
+					return nil, fmt.Errorf("failed to read file %s: %w", filePath, err)
+				}
+				files = append(files, types.File{
+					Path:    filePath,
+					Content: content,
+					Size:    int64(len(content)),
+				})
+			}
+		}
+	} else {
+		// Recursive traversal
+		err := filepath.WalkDir(dirPath, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if d.IsDir() {
+				return nil // Continue traversal
+			}
+
+			if selector.Matches(path) {
+				content, err := os.ReadFile(path)
+				if err != nil {
+					return fmt.Errorf("failed to read file %s: %w", path, err)
+				}
+				files = append(files, types.File{
+					Path:    path,
+					Content: content,
+					Size:    int64(len(content)),
+				})
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to walk directory %s: %w", dirPath, err)
+		}
+	}
+
+	return files, nil
+}
+
+// compileForTarget compiles URF files for a specific target
+func (a *ArmService) compileForTarget(ctx context.Context, files []types.File, target urf.CompileTarget, req *CompileRequest, result *CompileResult) error {
+	// Create compiler for this target
+	compiler, err := urf.NewCompiler(target)
+	if err != nil {
+		return fmt.Errorf("failed to create compiler for target %s: %w", target, err)
+	}
+
+	// Create target directory if multi-target
+	targetDir := req.OutputDir
+	if len(req.Targets) > 1 {
+		targetDir = filepath.Join(req.OutputDir, string(target))
+		if !req.DryRun {
+			if err := os.MkdirAll(targetDir, 0o755); err != nil {
+				return fmt.Errorf("failed to create target directory %s: %w", targetDir, err)
+			}
+		}
+	}
+
+	// Generate namespace
+	namespace := req.Namespace
+	if namespace == "" {
+		namespace = "compile@local"
+	}
+
+	// Process each URF file
+	for _, file := range files {
+		// Compile URF file
+		compiledFiles, err := compiler.Compile(namespace, &file)
+		if err != nil {
+			result.Errors = append(result.Errors, CompileError{
+				FilePath: file.Path,
+				Target:   string(target),
+				Error:    err.Error(),
+			})
+			result.Stats.Errors++
+			continue
+		}
+
+		// Write compiled files
+		for _, compiledFile := range compiledFiles {
+			outputPath := filepath.Join(targetDir, compiledFile.Path)
+
+			if req.DryRun {
+				slog.InfoContext(ctx, "Would compile file",
+					"source", file.Path,
+					"output", outputPath,
+					"target", target)
+			} else {
+				// Check if file exists and handle force flag
+				if _, err := os.Stat(outputPath); err == nil && !req.Force {
+					result.Skipped = append(result.Skipped, SkippedFile{
+						Path:   outputPath,
+						Reason: "file exists (use --force to overwrite)",
+					})
+					result.Stats.FilesSkipped++
+					continue
+				}
+
+				// Ensure directory exists
+				if err := os.MkdirAll(filepath.Dir(outputPath), 0o755); err != nil {
+					result.Errors = append(result.Errors, CompileError{
+						FilePath: file.Path,
+						Target:   string(target),
+						Error:    fmt.Sprintf("failed to create output directory: %v", err),
+					})
+					result.Stats.Errors++
+					continue
+				}
+
+				// Write file
+				if err := os.WriteFile(outputPath, compiledFile.Content, 0o644); err != nil {
+					result.Errors = append(result.Errors, CompileError{
+						FilePath: file.Path,
+						Target:   string(target),
+						Error:    fmt.Sprintf("failed to write output file: %v", err),
+					})
+					result.Stats.Errors++
+					continue
+				}
+
+				if req.Verbose {
+					slog.InfoContext(ctx, "Compiled file",
+						"source", file.Path,
+						"output", outputPath,
+						"target", target)
+				}
+			}
+
+			// Count successful compilation
+			result.CompiledFiles = append(result.CompiledFiles, CompiledFile{
+				SourcePath: file.Path,
+				TargetPath: outputPath,
+				Target:     target,
+				RuleCount:  1, // TODO: Count actual rules
+			})
+			result.Stats.FilesCompiled++
+			result.Stats.TargetStats[string(target)]++
+		}
+	}
+
+	return nil
 }
 
 // expandVersionShorthand expands npm-style version shorthands to proper semantic version constraints.
@@ -797,14 +1091,4 @@ func expandVersionShorthand(constraint string) string {
 		return "~" + constraint + ".0"
 	}
 	return constraint
-}
-
-// isValidCompileTarget checks if the compile target is supported
-func isValidCompileTarget(target urf.CompileTarget) bool {
-	switch target {
-	case urf.TargetCursor, urf.TargetAmazonQ, urf.TargetMarkdown, urf.TargetCopilot:
-		return true
-	default:
-		return false
-	}
 }

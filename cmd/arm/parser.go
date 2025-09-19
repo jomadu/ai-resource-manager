@@ -63,7 +63,7 @@ func ParseRulesetArgs(args []string) ([]RulesetRef, error) {
 // GetDefaultIncludePatterns returns default include patterns if none provided
 func GetDefaultIncludePatterns(include []string) []string {
 	if len(include) == 0 {
-		return []string{"*.yml", "*.yaml"}
+		return []string{"**/*.yml", "**/*.yaml"}
 	}
 	return include
 }
