@@ -33,5 +33,6 @@ func init() {
 	rootCmd.AddCommand(newInfoCmd())
 	rootCmd.AddCommand(newConfigCmd())
 	rootCmd.AddCommand(newCacheCmd())
+	rootCmd.AddCommand(newCompileCmd())
 	rootCmd.AddCommand(newVersionCmd())
 }
