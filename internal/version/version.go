@@ -21,8 +21,8 @@ func GetVersionInfo() VersionInfo {
 
 // VersionInfo provides version information about the ARM tool itself.
 type VersionInfo struct {
-	Arch      string `json:"arch"`
-	Version   string `json:"version"`
-	Commit    string `json:"commit"`
-	Timestamp string `json:"timestamp"`
+	Arch      string
+	Version   string
+	Commit    string
+	Timestamp string
 }

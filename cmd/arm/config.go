@@ -253,7 +253,7 @@ var configListCmd = &cobra.Command{
 			for name, sink := range sinks {
 				fmt.Printf("  %s:\n", name)
 				fmt.Printf("    directory: %s\n", sink.Directory)
-				layout := sink.Layout
+				layout := sink.GetLayout()
 				if layout == "" {
 					layout = "hierarchical"
 				}

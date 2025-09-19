@@ -75,10 +75,18 @@ func (f *FileManager) GetRawRegistries(ctx context.Context) (map[string]map[stri
 func (f *FileManager) CreateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
-		manifest = &Manifest{
-			Registries: make(map[string]map[string]interface{}),
-			Rulesets:   make(map[string]map[string]Entry),
-		}
+		// Create minimal manifest if file doesn't exist
+		manifest = &Manifest{}
+	}
+	// Ensure maps are initialized
+	if manifest.Registries == nil {
+		manifest.Registries = make(map[string]map[string]interface{})
+	}
+	if manifest.Rulesets == nil {
+		manifest.Rulesets = make(map[string]map[string]Entry)
+	}
+	if manifest.Sinks == nil {
+		manifest.Sinks = make(map[string]SinkConfig)
 	}
 	if manifest.Rulesets[registry] == nil {
 		manifest.Rulesets[registry] = make(map[string]Entry)
@@ -132,6 +140,13 @@ func (f *FileManager) loadManifest() (*Manifest, error) {
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		return nil, err
 	}
+	// Initialize maps only if they're nil to support minimal configurations
+	if manifest.Registries == nil {
+		manifest.Registries = make(map[string]map[string]interface{})
+	}
+	if manifest.Rulesets == nil {
+		manifest.Rulesets = make(map[string]map[string]Entry)
+	}
 	if manifest.Sinks == nil {
 		manifest.Sinks = make(map[string]SinkConfig)
 	}
@@ -139,6 +154,17 @@ func (f *FileManager) loadManifest() (*Manifest, error) {
 }
 
 func (f *FileManager) saveManifest(manifest *Manifest) error {
+	// Clean up empty maps to keep JSON minimal
+	if len(manifest.Registries) == 0 {
+		manifest.Registries = nil
+	}
+	if len(manifest.Rulesets) == 0 {
+		manifest.Rulesets = nil
+	}
+	if len(manifest.Sinks) == 0 {
+		manifest.Sinks = nil
+	}
+
 	data, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
 		return err
@@ -159,19 +185,22 @@ func (f *FileManager) SaveManifest(manifest *Manifest) error {
 func (f *FileManager) AddGitRegistry(ctx context.Context, name string, config registry.GitRegistryConfig, force bool) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
-		manifest = &Manifest{
-			Registries: make(map[string]map[string]interface{}),
-			Rulesets:   make(map[string]map[string]Entry),
-		}
+		// Create minimal manifest if file doesn't exist
+		manifest = &Manifest{}
+	}
+	// Ensure maps are initialized
+	if manifest.Registries == nil {
+		manifest.Registries = make(map[string]map[string]interface{})
+	}
+	if manifest.Rulesets == nil {
+		manifest.Rulesets = make(map[string]map[string]Entry)
+	}
+	if manifest.Sinks == nil {
+		manifest.Sinks = make(map[string]SinkConfig)
 	}
 
 	if _, exists := manifest.Registries[name]; exists && !force {
 		return errors.New("registry already exists (use --force to overwrite)")
-	}
-
-	// Apply default branches if not specified
-	if len(config.Branches) == 0 {
-		config.Branches = []string{"main", "master"} // Default branches for "latest" resolution
 	}
 
 	configBytes, err := json.Marshal(config)
@@ -190,7 +219,7 @@ func (f *FileManager) AddGitRegistry(ctx context.Context, name string, config re
 		"name", name,
 		"url", config.URL,
 		"type", config.Type,
-		"branches", config.Branches)
+		"branches", config.GetBranches())
 
 	return f.saveManifest(manifest)
 }
@@ -198,10 +227,18 @@ func (f *FileManager) AddGitRegistry(ctx context.Context, name string, config re
 func (f *FileManager) AddGitLabRegistry(ctx context.Context, name string, config *registry.GitLabRegistryConfig, force bool) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
-		manifest = &Manifest{
-			Registries: make(map[string]map[string]interface{}),
-			Rulesets:   make(map[string]map[string]Entry),
-		}
+		// Create minimal manifest if file doesn't exist
+		manifest = &Manifest{}
+	}
+	// Ensure maps are initialized
+	if manifest.Registries == nil {
+		manifest.Registries = make(map[string]map[string]interface{})
+	}
+	if manifest.Rulesets == nil {
+		manifest.Rulesets = make(map[string]map[string]Entry)
+	}
+	if manifest.Sinks == nil {
+		manifest.Sinks = make(map[string]SinkConfig)
 	}
 
 	if _, exists := manifest.Registries[name]; exists && !force {
@@ -226,7 +263,7 @@ func (f *FileManager) AddGitLabRegistry(ctx context.Context, name string, config
 		"type", config.Type,
 		"project_id", config.ProjectID,
 		"group_id", config.GroupID,
-		"api_version", config.APIVersion)
+		"api_version", config.GetAPIVersion())
 
 	return f.saveManifest(manifest)
 }
@@ -278,11 +315,18 @@ func (f *FileManager) AddSink(ctx context.Context, name, directory, layout strin
 	}
 	manifest, err := f.loadManifest()
 	if err != nil {
-		manifest = &Manifest{
-			Registries: make(map[string]map[string]interface{}),
-			Rulesets:   make(map[string]map[string]Entry),
-			Sinks:      make(map[string]SinkConfig),
-		}
+		// Create minimal manifest if file doesn't exist
+		manifest = &Manifest{}
+	}
+	// Ensure maps are initialized
+	if manifest.Registries == nil {
+		manifest.Registries = make(map[string]map[string]interface{})
+	}
+	if manifest.Rulesets == nil {
+		manifest.Rulesets = make(map[string]map[string]Entry)
+	}
+	if manifest.Sinks == nil {
+		manifest.Sinks = make(map[string]SinkConfig)
 	}
 
 	if _, exists := manifest.Sinks[name]; exists && !force {

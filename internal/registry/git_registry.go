@@ -81,7 +81,7 @@ func (g *GitRegistry) ListVersions(ctx context.Context, ruleset string) ([]types
 	}
 
 	// Add branch commits in configuration order
-	for _, branch := range g.config.Branches {
+	for _, branch := range g.config.GetBranches() {
 		hash, err := g.repo.GetBranchHeadCommitHash(ctx, branch)
 		if err != nil {
 			continue // Skip branches that don't exist
