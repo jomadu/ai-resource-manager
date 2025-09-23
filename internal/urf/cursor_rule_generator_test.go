@@ -17,9 +17,8 @@ func TestCursorRuleGenerator_GenerateRule(t *testing.T) {
 			Version:     "1.0.0",
 			Description: "Test description",
 		},
-		Rules: []Rule{
-			{
-				ID:          "rule1",
+		Rules: map[string]Rule{
+			"rule1": {
 				Name:        "Test Rule 1",
 				Description: "First test rule",
 				Priority:    100,
@@ -32,10 +31,10 @@ func TestCursorRuleGenerator_GenerateRule(t *testing.T) {
 		},
 	}
 
-	rule := &ruleset.Rules[0]
+	rule := ruleset.Rules["rule1"]
 	namespace := "ai-rules/test@1.0.0"
 
-	result := generator.GenerateRule(namespace, ruleset, rule)
+	result := generator.GenerateRule(namespace, ruleset, "rule1", &rule)
 
 	// Check Cursor-specific frontmatter
 	if !strings.Contains(result, `description: "First test rule"`) {
@@ -75,9 +74,8 @@ func TestCursorRuleGenerator_GenerateRule_ShouldEnforcement(t *testing.T) {
 
 	ruleset := &Ruleset{
 		Metadata: Metadata{ID: "test", Name: "Test", Version: "1.0.0"},
-		Rules: []Rule{
-			{
-				ID:          "rule1",
+		Rules: map[string]Rule{
+			"rule1": {
 				Name:        "Test Rule",
 				Enforcement: "should",
 				Body:        "Rule content",
@@ -85,7 +83,8 @@ func TestCursorRuleGenerator_GenerateRule_ShouldEnforcement(t *testing.T) {
 		},
 	}
 
-	result := generator.GenerateRule("test", ruleset, &ruleset.Rules[0])
+	rule := ruleset.Rules["rule1"]
+	result := generator.GenerateRule("test", ruleset, "rule1", &rule)
 
 	// Should NOT have alwaysApply for 'should' enforcement
 	if strings.Contains(result, "alwaysApply: true") {

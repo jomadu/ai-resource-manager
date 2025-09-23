@@ -4,28 +4,27 @@ import "github.com/jomadu/ai-rules-manager/internal/types"
 
 // Ruleset represents a Universal Rule Format file
 type Ruleset struct {
-	Version  string   `yaml:"version"`
-	Metadata Metadata `yaml:"metadata"`
-	Rules    []Rule   `yaml:"rules"`
+	Version  string          `yaml:"version" validate:"required"`
+	Metadata Metadata        `yaml:"metadata" validate:"required"`
+	Rules    map[string]Rule `yaml:"rules" validate:"required,min=1"`
 }
 
 // Metadata contains ruleset metadata
 type Metadata struct {
-	ID          string `yaml:"id"`
-	Name        string `yaml:"name"`
-	Version     string `yaml:"version,omitempty"`
+	ID          string `yaml:"id" validate:"required"`
+	Name        string `yaml:"name" validate:"required"`
+	Version     string `yaml:"version" validate:"required"`
 	Description string `yaml:"description,omitempty"`
 }
 
 // Rule represents a single rule within a URF file
 type Rule struct {
-	ID          string  `yaml:"id"`
-	Name        string  `yaml:"name"`
+	Name        string  `yaml:"name" validate:"required"`
 	Description string  `yaml:"description,omitempty"`
 	Priority    int     `yaml:"priority,omitempty"`
 	Enforcement string  `yaml:"enforcement,omitempty"`
 	Scope       []Scope `yaml:"scope,omitempty"`
-	Body        string  `yaml:"body"`
+	Body        string  `yaml:"body" validate:"required"`
 }
 
 // Scope defines where a rule applies
@@ -56,7 +55,7 @@ const (
 
 // RuleGenerator interface for generating tool-specific rule files
 type RuleGenerator interface {
-	GenerateRule(namespace string, ruleset *Ruleset, rule *Rule) string
+	GenerateRule(namespace string, ruleset *Ruleset, ruleID string, rule *Rule) string
 }
 
 // RuleGeneratorFactory interface for creating rule generators
@@ -76,5 +75,5 @@ type FilenameGeneratorFactory interface {
 
 // RuleMetadataGenerator interface for generating metadata blocks
 type RuleMetadataGenerator interface {
-	GenerateRuleMetadata(namespace string, ruleset *Ruleset, rule *Rule) string
+	GenerateRuleMetadata(namespace string, ruleset *Ruleset, ruleID string, rule *Rule) string
 }

@@ -24,10 +24,10 @@ version: "1.0"
 metadata:
   id: "grug-brained-dev"
   name: "Grug-Brained Developer Rules"
-  version: "1.0.0"  # optional
+  version: "1.0.0"  # required
   description: "Simple, obvious coding practices"  # optional
 rules:
-  - id: "simple-code"
+  simple-code:  # Rule ID as map key
     name: "Keep Code Simple"
     description: "Write code that grug brain can understand"  # optional
     priority: 100  # optional
@@ -53,7 +53,7 @@ rules:
       ```python
       calc_tot = lambda i: reduce(add, map(attrgetter('price'), i), 0)
       ```
-  - id: "meaningful-names"
+  meaningful-names:  # Another rule ID as map key
     name: "Use Meaningful Names"
     # Minimal rule - only required fields
     body: |
@@ -66,11 +66,14 @@ rules:
 ### Metadata Section
 - **`id`** (required): Unique identifier for the ruleset
 - **`name`** (required): Human-readable ruleset name
-- **`version`** (optional): Semantic version (e.g., "1.0.0")
+- **`version`** (required): Semantic version (e.g., "1.0.0")
 - **`description`** (optional): Brief description of the ruleset's purpose
 
+### Rules Section
+Rules are defined as a map where each key is the rule ID and the value contains the rule definition. This structure automatically prevents duplicate rule IDs.
+
 ### Rule Fields
-- **`id`** (required): Unique identifier within the ruleset
+- **Rule ID** (map key): Unique identifier within the ruleset
 - **`name`** (required): Human-readable rule name
 - **`description`** (optional): Brief explanation of the rule's purpose
 - **`priority`** (optional): Numeric priority (higher = more important)
@@ -127,11 +130,12 @@ When multiple rulesets are installed, ARM generates an `arm_index.*` file that h
 
 ### Writing URF Rules
 
-1. **Use clear, descriptive IDs** - `simple-code` not `rule1`
+1. **Use clear, descriptive rule IDs** - `simple-code` not `rule1` (rule IDs are map keys)
 2. **Set appropriate priorities** - Reserve 90+ for critical rules
 3. **Choose enforcement levels carefully** - Use `must` sparingly for truly critical rules
 4. **Include examples** - Show both good and bad code patterns
 5. **Scope rules appropriately** - Target specific file types when relevant
+6. **Avoid duplicate rule IDs** - Map structure automatically prevents duplicates
 
 ### Organizing Rulesets
 

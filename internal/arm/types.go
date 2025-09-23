@@ -7,6 +7,7 @@ type OutdatedRuleset = ui.OutdatedRuleset
 type ManifestInfo = ui.ManifestInfo
 type InstallationInfo = ui.InstallationInfo
 type RulesetInfo = ui.RulesetInfo
+type CompileStats = ui.CompileStats
 
 // InstallRequest groups install parameters to avoid repetitive parameter passing.
 type InstallRequest struct {
@@ -17,4 +18,19 @@ type InstallRequest struct {
 	Include  []string
 	Exclude  []string
 	Sinks    []string
+}
+
+// CompileRequest groups compile parameters following ARM patterns
+type CompileRequest struct {
+	Files        []string
+	Target       string
+	OutputDir    string
+	Namespace    string
+	Force        bool
+	Recursive    bool
+	Verbose      bool
+	ValidateOnly bool
+	Include      []string
+	Exclude      []string
+	FailFast     bool
 }
