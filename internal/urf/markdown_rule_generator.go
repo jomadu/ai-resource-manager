@@ -11,11 +11,11 @@ type MarkdownRuleGenerator struct {
 }
 
 // GenerateRule generates a markdown rule file
-func (g *MarkdownRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, rule *Rule) string {
+func (g *MarkdownRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, ruleID string, rule *Rule) string {
 	var content strings.Builder
 
 	// URF metadata block (Amazon Q doesn't use tool-specific frontmatter)
-	content.WriteString(g.metadataGen.GenerateRuleMetadata(namespace, ruleset, rule))
+	content.WriteString(g.metadataGen.GenerateRuleMetadata(namespace, ruleset, ruleID, rule))
 
 	// Rule title and body
 	if rule.Enforcement != "" {

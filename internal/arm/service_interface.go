@@ -33,4 +33,7 @@ type Service interface {
 	ShowRulesetInfo(ctx context.Context, rulesets []string) error
 	ShowOutdated(ctx context.Context, outputFormat string, noSpinner bool) error
 	ShowList(ctx context.Context, sortByPriority bool) error
+
+	// Compile operations
+	CompileFiles(ctx context.Context, req *CompileRequest) error
 }

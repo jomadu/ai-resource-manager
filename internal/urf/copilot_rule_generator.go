@@ -11,7 +11,7 @@ type CopilotRuleGenerator struct {
 }
 
 // GenerateRule generates a GitHub Copilot rule file
-func (g *CopilotRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, rule *Rule) string {
+func (g *CopilotRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, ruleID string, rule *Rule) string {
 	var content strings.Builder
 
 	// GitHub Copilot frontmatter with applyTo
@@ -28,7 +28,7 @@ func (g *CopilotRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, 
 	content.WriteString("---\n\n")
 
 	// URF metadata block
-	content.WriteString(g.metadataGen.GenerateRuleMetadata(namespace, ruleset, rule))
+	content.WriteString(g.metadataGen.GenerateRuleMetadata(namespace, ruleset, ruleID, rule))
 
 	// Rule title and body
 	if rule.Enforcement != "" {

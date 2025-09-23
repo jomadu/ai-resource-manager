@@ -21,16 +21,14 @@ func TestDefaultCompiler_Compile(t *testing.T) {
 			Name:    "Test Ruleset",
 			Version: "1.0.0",
 		},
-		Rules: []Rule{
-			{
-				ID:          "rule1",
+		Rules: map[string]Rule{
+			"rule1": {
 				Name:        "Test Rule 1",
 				Description: "First rule",
 				Enforcement: "must",
 				Body:        "Rule 1 content",
 			},
-			{
-				ID:          "rule2",
+			"rule2": {
 				Name:        "Test Rule 2",
 				Description: "Second rule",
 				Enforcement: "should",
@@ -114,9 +112,8 @@ func TestDefaultCompiler_AmazonQTarget(t *testing.T) {
 			Name:    "Test Ruleset",
 			Version: "1.0.0",
 		},
-		Rules: []Rule{
-			{
-				ID:   "rule1",
+		Rules: map[string]Rule{
+			"rule1": {
 				Name: "Test Rule",
 				Body: "Rule content",
 			},

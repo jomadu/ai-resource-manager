@@ -16,9 +16,8 @@ func TestMarkdownRuleGenerator_GenerateRule(t *testing.T) {
 			Name:    "Test Ruleset",
 			Version: "1.0.0",
 		},
-		Rules: []Rule{
-			{
-				ID:          "rule1",
+		Rules: map[string]Rule{
+			"rule1": {
 				Name:        "Test Rule 1",
 				Description: "First test rule",
 				Priority:    80,
@@ -31,10 +30,10 @@ func TestMarkdownRuleGenerator_GenerateRule(t *testing.T) {
 		},
 	}
 
-	rule := &ruleset.Rules[0]
+	rule := ruleset.Rules["rule1"]
 	namespace := "ai-rules/test@1.0.0"
 
-	result := generator.GenerateRule(namespace, ruleset, rule)
+	result := generator.GenerateRule(namespace, ruleset, "rule1", &rule)
 
 	// Markdown should NOT have tool-specific frontmatter
 	if strings.Contains(result, "description:") && strings.Index(result, "description:") < strings.Index(result, "namespace:") {

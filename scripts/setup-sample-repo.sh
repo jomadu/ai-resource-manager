@@ -321,7 +321,7 @@ metadata:
   version: "2.0.0"
   description: "Sample URF ruleset for ARM testing with grug-brained development principles"
 rules:
-  - id: "grug-simplicity"
+  grug-simplicity:
     name: "Grug Simplicity Rule"
     description: "Keep code simple for grug brain to understand"
     priority: 100
@@ -349,7 +349,7 @@ rules:
         return operationType === 'addition' ? operandA + operandB : null;
       }
       ```
-  - id: "grug-testing"
+  grug-testing:
     name: "Grug Testing Rule"
     description: "Test everything before ship to avoid angry users"
     priority: 90
@@ -369,7 +369,7 @@ rules:
       - Unit tests for small parts
       - Integration tests for big parts
       - End-to-end tests for whole thing
-  - id: "grug-documentation"
+  grug-documentation:
     name: "Grug Documentation Rule"
     description: "Document why, not what - code should explain what"
     priority: 70

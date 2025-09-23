@@ -14,14 +14,13 @@ func TestDefaultRuleMetadataGenerator_GenerateRuleMetadata(t *testing.T) {
 			Name:    "Test Ruleset",
 			Version: "1.0.0",
 		},
-		Rules: []Rule{
-			{ID: "rule1", Name: "Rule 1"},
-			{ID: "rule2", Name: "Rule 2"},
+		Rules: map[string]Rule{
+			"rule1": {Name: "Rule 1"},
+			"rule2": {Name: "Rule 2"},
 		},
 	}
 
 	rule := &Rule{
-		ID:          "rule1",
 		Name:        "Test Rule",
 		Enforcement: "must",
 		Priority:    100,
@@ -31,7 +30,7 @@ func TestDefaultRuleMetadataGenerator_GenerateRuleMetadata(t *testing.T) {
 	}
 
 	namespace := "ai-rules/test@1.0.0"
-	result := generator.GenerateRuleMetadata(namespace, ruleset, rule)
+	result := generator.GenerateRuleMetadata(namespace, ruleset, "rule1", rule)
 
 	// Check metadata structure
 	if !strings.Contains(result, "---\n") {
@@ -88,18 +87,17 @@ func TestDefaultRuleMetadataGenerator_GenerateRuleMetadata_NoScope(t *testing.T)
 
 	ruleset := &Ruleset{
 		Metadata: Metadata{ID: "test", Name: "Test", Version: "1.0.0"},
-		Rules:    []Rule{{ID: "rule1"}},
+		Rules:    map[string]Rule{"rule1": {}},
 	}
 
 	rule := &Rule{
-		ID:          "rule1",
 		Name:        "Test Rule",
 		Enforcement: "should",
 		Priority:    50,
 		Scope:       []Scope{}, // Empty scope
 	}
 
-	result := generator.GenerateRuleMetadata("test", ruleset, rule)
+	result := generator.GenerateRuleMetadata("test", ruleset, "rule1", rule)
 
 	// Should not contain scope section when no scope files
 	if strings.Contains(result, "scope:") {
