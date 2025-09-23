@@ -142,7 +142,7 @@ metadata:
   name: "Grug-Brained Developer Rules"
   version: "1.0.0"
 rules:
-  - id: "simple-code"
+  simple-code:  # Rule ID as map key
     name: "Keep Code Simple"
     priority: 100
     enforcement: "must"

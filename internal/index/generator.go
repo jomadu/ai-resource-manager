@@ -23,9 +23,8 @@ func (g *DefaultIndexGenerator) CreateRuleset(data *IndexData) *urf.Ruleset {
 			Name:    "ARM Rulesets Index",
 			Version: version.Version,
 		},
-		Rules: []urf.Rule{
-			{
-				ID:          "index",
+		Rules: map[string]urf.Rule{
+			"index": {
 				Name:        "ARM Rulesets Index",
 				Enforcement: "must",
 				Priority:    1000,

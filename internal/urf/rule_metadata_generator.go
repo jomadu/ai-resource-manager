@@ -14,7 +14,7 @@ func NewRuleMetadataGenerator() RuleMetadataGenerator {
 }
 
 // GenerateRuleMetadata generates the shared metadata block
-func (g *DefaultRuleMetadataGenerator) GenerateRuleMetadata(namespace string, ruleset *Ruleset, rule *Rule) string {
+func (g *DefaultRuleMetadataGenerator) GenerateRuleMetadata(namespace string, ruleset *Ruleset, ruleID string, rule *Rule) string {
 	var content strings.Builder
 
 	content.WriteString("---\n")
@@ -26,11 +26,11 @@ func (g *DefaultRuleMetadataGenerator) GenerateRuleMetadata(namespace string, ru
 		content.WriteString(fmt.Sprintf("  version: %s\n", ruleset.Metadata.Version))
 	}
 	content.WriteString("  rules:\n")
-	for _, r := range ruleset.Rules {
-		content.WriteString(fmt.Sprintf("    - %s\n", r.ID))
+	for id := range ruleset.Rules {
+		content.WriteString(fmt.Sprintf("    - %s\n", id))
 	}
 	content.WriteString("rule:\n")
-	content.WriteString(fmt.Sprintf("  id: %s\n", rule.ID))
+	content.WriteString(fmt.Sprintf("  id: %s\n", ruleID))
 	content.WriteString(fmt.Sprintf("  name: %s\n", rule.Name))
 	if rule.Enforcement != "" {
 		content.WriteString(fmt.Sprintf("  enforcement: %s\n", strings.ToUpper(rule.Enforcement)))

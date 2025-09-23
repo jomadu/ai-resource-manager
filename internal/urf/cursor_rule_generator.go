@@ -11,7 +11,7 @@ type CursorRuleGenerator struct {
 }
 
 // GenerateRule generates a Cursor rule file
-func (g *CursorRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, rule *Rule) string {
+func (g *CursorRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, ruleID string, rule *Rule) string {
 	var content strings.Builder
 
 	// Cursor-specific frontmatter
@@ -39,7 +39,7 @@ func (g *CursorRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, r
 	content.WriteString("---\n\n")
 
 	// URF metadata block
-	content.WriteString(g.metadataGen.GenerateRuleMetadata(namespace, ruleset, rule))
+	content.WriteString(g.metadataGen.GenerateRuleMetadata(namespace, ruleset, ruleID, rule))
 
 	// Rule title and body
 	if rule.Enforcement != "" {

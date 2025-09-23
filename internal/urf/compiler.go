@@ -46,9 +46,9 @@ func (c *DefaultCompiler) Compile(namespace string, file *types.File) ([]*types.
 	}
 
 	var compiledFiles []*types.File
-	for _, rule := range ruleset.Rules {
-		filename := c.filenameGen.GenerateFilename(ruleset.Metadata.ID, rule.ID)
-		content := c.ruleGen.GenerateRule(namespace, ruleset, &rule)
+	for ruleID, rule := range ruleset.Rules {
+		filename := c.filenameGen.GenerateFilename(ruleset.Metadata.ID, ruleID)
+		content := c.ruleGen.GenerateRule(namespace, ruleset, ruleID, &rule)
 		compiledFiles = append(compiledFiles, &types.File{
 			Path:    filename,
 			Content: []byte(content),

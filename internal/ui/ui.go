@@ -39,6 +39,15 @@ type RulesetInfo struct {
 	Installation InstallationInfo `json:"installation"`
 }
 
+// CompileStats tracks compilation statistics
+type CompileStats struct {
+	FilesProcessed int `json:"filesProcessed"`
+	FilesCompiled  int `json:"filesCompiled"`
+	FilesSkipped   int `json:"filesSkipped"`
+	RulesGenerated int `json:"rulesGenerated"`
+	Errors         int `json:"errors"`
+}
+
 // Interface defines the UI methods needed by the service
 type Interface interface {
 	// Progress reporting
@@ -55,6 +64,10 @@ type Interface interface {
 	RulesetInfoGrouped(rulesets []*RulesetInfo, detailed bool)
 	OutdatedTable(outdated []OutdatedRuleset, outputFormat string)
 	VersionInfo(info version.VersionInfo)
+
+	// Compile operations
+	CompileStep(step string)
+	CompileComplete(stats CompileStats, validateOnly bool)
 }
 
 // UI provides pterm-based user interface functionality
@@ -367,5 +380,20 @@ func (u *UI) OutdatedTable(outdated []OutdatedRuleset, outputFormat string) {
 		}
 
 		_ = pterm.DefaultTable.WithHasHeader().WithData(tableData).Render()
+	}
+}
+
+// CompileStep displays a compilation step
+func (u *UI) CompileStep(step string) {
+	pterm.Info.Printf("%s ✓\n", step)
+}
+
+// CompileComplete displays compilation results
+func (u *UI) CompileComplete(stats CompileStats, validateOnly bool) {
+	if validateOnly {
+		pterm.Success.Printf("Validated %d files\n", stats.FilesProcessed)
+	} else {
+		pterm.Success.Printf("Compiled %d files, generated %d rules\n",
+			stats.FilesCompiled, stats.RulesGenerated)
 	}
 }
