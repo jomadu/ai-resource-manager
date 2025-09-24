@@ -18,24 +18,25 @@ arm config registry add my-gitlab https://gitlab.example.com --type gitlab --gro
 
 ## Authentication
 
-GitLab registries require explicit token authentication in `.armrc`:
+GitLab registries require explicit token authentication in `.armrc`. See the [.armrc documentation](../armrc.md) for complete details.
 
-```ini
-[registry gitlab.example.com/project/123]
-token = ${GITLAB_TOKEN}
-```
+**Quick Setup:**
 
-Or for group-level packages:
+1. Create `.armrc` file:
+   ```ini
+   [registry https://gitlab.example.com/project/123]
+   token = glpat-xxxxxxxxxxxxxxxxxxxx
+   ```
 
-```ini
-[registry gitlab.example.com/group/456]
-token = ${GITLAB_TOKEN}
-```
+2. Set file permissions:
+   ```bash
+   chmod 600 .armrc
+   ```
 
-Set your GitLab token:
-```bash
-export GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxx
-```
+3. Test installation:
+   ```bash
+   arm install my-gitlab/ai-rules --sinks cursor
+   ```
 
 **Note**: Unlike Git registries which use Git's built-in authentication, GitLab registries require explicit token configuration because they use GitLab's Package Registry API.
 
