@@ -23,23 +23,12 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-log() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
-
-error() {
-    echo -e "${RED}✗${NC} $1"
-}
-
-warn() {
-    echo -e "${YELLOW}⚠${NC} $1"
-}
+log() { echo -e "${BLUE}[INFO]${NC} $1"; }
+success() { echo -e "${GREEN}✓${NC} $1"; }
+error() { echo -e "${RED}✗${NC} $1"; }
+warn() { echo -e "${YELLOW}⚠${NC} $1"; }
 
 run_arm() {
     echo -e "${BLUE}$ ./arm $*${NC}"
@@ -66,18 +55,15 @@ pause() {
     fi
 }
 
-# === SETUP SANDBOX ===
-log "=== SETUP SANDBOX ==="
-
-# Get script directory and project root
+# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-log "Running setup-sandbox script..."
-"$SCRIPT_DIR/setup-sandbox.sh"
+log "=== Comprehensive Git Workflow ==="
 
-log "Entering sandbox..."
-cd "$PROJECT_ROOT/sandbox"
+# Setup sandbox
+log "Setting up sandbox..."
+"$SCRIPT_DIR/init-git-sandbox.sh"
+cd "$SCRIPT_DIR/sandbox"
 
 show_tree "Initial sandbox structure"
 pause
@@ -255,7 +241,7 @@ pause
 
 # === SUMMARY ===
 log "=== WORKFLOW COMPLETE ==="
-success "New workflow completed successfully!"
+success "Comprehensive Git workflow completed successfully!"
 echo ""
 echo "This workflow demonstrated:"
 echo "• Sandbox setup and binary building"

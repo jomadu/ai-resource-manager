@@ -7,45 +7,37 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Default repository name
-DEFAULT_REPO="ai-rules-manager-sample-git-registry"
+log() { echo -e "${BLUE}[INFO]${NC} $1"; }
+success() { echo -e "${GREEN}✓${NC} $1"; }
+error() { echo -e "${RED}✗${NC} $1"; }
 
 usage() {
     echo "Usage: $0 [repo-name]"
     echo ""
-    echo "Creates a comprehensive sample repository for ARM testing."
+    echo "Creates a sample Git repository for ARM testing."
     echo ""
     echo "Arguments:"
-    echo "  repo-name    - Name for sample repository (default: $DEFAULT_REPO)"
-    echo ""
-    echo "Examples:"
-    echo "  $0                    # Use default name"
-    echo "  $0 my-sample-repo    # Custom name"
-    echo ""
-    echo "Requirements:"
-    echo "  - GitHub CLI (gh) must be installed and authenticated"
-    echo "  - Git must be installed"
+    echo "  repo-name    - Name for sample repository (default: ai-rules-manager-sample-git-registry)"
 }
 
-log() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+# Default repository name
+DEFAULT_REPO="ai-rules-manager-sample-git-registry"
+
+check_dependencies() {
+    if ! command -v gh &> /dev/null; then
+        error "GitHub CLI (gh) not found! Install from: https://cli.github.com/"
+        return 1
+    fi
+
+    if ! gh auth status &> /dev/null; then
+        error "GitHub CLI not authenticated! Run: gh auth login"
+        return 1
+    fi
+
+    success "Dependencies check passed"
 }
-
-success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
-
-error() {
-    echo -e "${RED}✗${NC} $1"
-}
-
-warn() {
-    echo -e "${YELLOW}⚠${NC} $1"
-}
-
-
 
 create_version_1_0_0() {
     mkdir -p rules/cursor rules/amazonq rules/copilot
@@ -137,8 +129,6 @@ description: 'Grug-brained development instructions for GitHub Copilot'
 - Use names that make sense
 - Small functions better than big functions
 EOF
-
-
 }
 
 create_version_1_1_0() {
@@ -256,11 +246,9 @@ description: 'Task processing instructions for GitHub Copilot'
 - Document blockers and solutions
 - Review completed work
 EOF
-
-
 }
 
-create_version_1_2_0() {
+create_version_1_0_1() {
     # Bug fix in grug-brained-dev files (patch release)
     cat > rules/cursor/grug-brained-dev.mdc << 'EOF'
 # Grug Brained Dev Rules (Cursor)
@@ -306,8 +294,6 @@ description: 'Grug-brained development instructions for GitHub Copilot'
 - Use names that make sense
 - Small functions better than big functions
 EOF
-
-
 }
 
 create_version_2_0_0() {
@@ -514,43 +500,13 @@ description: 'Advanced task processing instructions for GitHub Copilot v2'
 EOF
 }
 
-check_dependencies() {
-    log "Checking dependencies..."
-
-    if ! command -v gh &> /dev/null; then
-        error "GitHub CLI (gh) not found!"
-        echo "Please install it from: https://cli.github.com/"
-        echo "Then run: gh auth login"
-        return 1
-    fi
-
-    if ! command -v git &> /dev/null; then
-        error "Git not found!"
-        echo "Please install Git first."
-        return 1
-    fi
-
-    # Check if authenticated
-    if ! gh auth status &> /dev/null; then
-        error "GitHub CLI not authenticated!"
-        echo "Please run: gh auth login"
-        return 1
-    fi
-
-    success "Dependencies check passed"
-}
-
 create_sample_repo() {
     local repo_name="$1"
     local temp_dir="/tmp/arm-setup-$$"
 
-    log "Checking if repository exists: $repo_name"
-
-    # Check if repo already exists
     if gh repo view "$repo_name" &> /dev/null; then
         error "Repository $repo_name already exists!"
-        echo "Please choose a different name or delete the existing repository."
-        echo "To delete: gh repo delete $repo_name"
+        echo "Delete it first: gh repo delete $repo_name"
         return 1
     fi
 
@@ -558,7 +514,6 @@ create_sample_repo() {
 
     mkdir -p "$temp_dir"
     cd "$temp_dir"
-
     git init
 
     # Create v1.0.0 - Basic content
@@ -574,7 +529,7 @@ create_sample_repo() {
     git tag v1.1.0
 
     # Create v1.0.1 - Bug fix
-    create_version_1_2_0
+    create_version_1_0_1
     git add .
     git commit -m "fix: bug fix in grug-brained-dev.mdc rule"
     git tag v1.0.1
@@ -667,12 +622,9 @@ EOF
     success "Sample repository created: https://github.com/$(gh api user --jq .login)/$repo_name"
 }
 
-
-
 main() {
     local repo_name="${1:-$DEFAULT_REPO}"
 
-    # Check for help
     if [[ "$1" == "--help" || "$1" == "-h" ]]; then
         usage
         exit 0
@@ -691,10 +643,7 @@ main() {
     echo ""
     echo "Next steps:"
     echo "1. Test your setup:"
-    echo "   ./scripts/sample-workflow.sh all \"https://github.com/\$(gh api user --jq .login)/$repo_name\""
-    echo ""
-    echo "2. Or run interactively:"
-    echo "   ./scripts/sample-workflow.sh all"
+    echo "   ./scripts/workflows/git/sample-git-workflow.sh"
     echo ""
     echo "Your sample repository is ready for action!"
 }
