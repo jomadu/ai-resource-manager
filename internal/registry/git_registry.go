@@ -37,6 +37,18 @@ func NewGitRegistry(config GitRegistryConfig, rulesetCache cache.RegistryRuleset
 	}
 }
 
+// NewGitRegistryNoCache creates a new Git-based registry without caching for testing
+func NewGitRegistryNoCache(config GitRegistryConfig, repoCache cache.GitRepoCache) *GitRegistry {
+	return &GitRegistry{
+		cache:     cache.NewNoopRegistryRulesetCache(),
+		repo:      repoCache,
+		config:    config,
+		resolver:  resolver.NewGitConstraintResolver(),
+		semver:    common.NewSemverHelper(),
+		extractor: archive.NewExtractor(),
+	}
+}
+
 // isBranchConstraint checks if a constraint refers to a branch name.
 // Uses permissive detection: anything that's not a semantic version or "latest" is treated as a potential branch.
 func (g *GitRegistry) isBranchConstraint(constraint string) bool {

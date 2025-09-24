@@ -35,3 +35,6 @@ node_modules
 
 sandbox/
 test-sandbox/
+
+.env
+.armrc

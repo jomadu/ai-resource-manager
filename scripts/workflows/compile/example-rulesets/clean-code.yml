@@ -1,0 +1,24 @@
+version: "1.0"
+metadata:
+  id: "clean-code"
+  name: "Clean Code Guidelines"
+  version: "1.0.0"
+rules:
+  naming:
+    name: "Meaningful Names"
+    priority: 100
+    enforcement: "must"
+    body: |
+      Use meaningful, descriptive names:
+      - Choose names that reveal intent
+      - Avoid abbreviations
+      - Use searchable names
+  functions:
+    name: "Small Functions"
+    priority: 90
+    enforcement: "should"
+    body: |
+      Keep functions small and focused:
+      - Do one thing well
+      - Aim for 20 lines or fewer
+      - Use descriptive names
