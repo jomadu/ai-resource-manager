@@ -47,7 +47,7 @@ cd "$SCRIPT_DIR/sandbox"
 
 # Create .armrc with authentication
 cat > .armrc << EOF
-[registry gitlab.adsrvr.org/project/${GITLAB_PROJECT_ID}]
+[registry ${GITLAB_URL}/project/${GITLAB_PROJECT_ID}]
 token = ${GITLAB_TOKEN}
 EOF
 

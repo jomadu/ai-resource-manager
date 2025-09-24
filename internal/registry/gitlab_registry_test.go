@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
+
 	"testing"
 	"time"
 
@@ -46,10 +46,8 @@ func TestGitLabRegistry_ListVersions(t *testing.T) {
 	// Override rcfile service to use test directory
 	registry.rcService = rcfile.NewServiceWithPaths(tmpDir, "/nonexistent")
 	armrcPath := filepath.Join(tmpDir, ".armrc")
-	// Extract host from server URL for .armrc format
-	serverHost := strings.TrimPrefix(server.URL, "http://")
-	serverHost = strings.TrimPrefix(serverHost, "https://")
-	armrcContent := fmt.Sprintf("[registry %s/project/123]\ntoken = test-token\n", serverHost)
+	// Use full server URL for .armrc format
+	armrcContent := fmt.Sprintf("[registry %s/project/123]\ntoken = test-token\n", server.URL)
 	err := os.WriteFile(armrcPath, []byte(armrcContent), 0o644)
 	if err != nil {
 		t.Fatal(err)
@@ -121,10 +119,8 @@ func TestGitLabRegistry_GetContent(t *testing.T) {
 	// Override rcfile service to use test directory
 	registry.rcService = rcfile.NewServiceWithPaths(tmpDir, "/nonexistent")
 	armrcPath := filepath.Join(tmpDir, ".armrc")
-	// Extract host from server URL for .armrc format
-	serverHost := strings.TrimPrefix(server.URL, "http://")
-	serverHost = strings.TrimPrefix(serverHost, "https://")
-	armrcContent := fmt.Sprintf("[registry %s/project/123]\ntoken = test-token\n", serverHost)
+	// Use full server URL for .armrc format
+	armrcContent := fmt.Sprintf("[registry %s/project/123]\ntoken = test-token\n", server.URL)
 	err := os.WriteFile(armrcPath, []byte(armrcContent), 0o644)
 	if err != nil {
 		t.Fatal(err)

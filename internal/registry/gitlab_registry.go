@@ -117,13 +117,13 @@ func (g *GitLabRegistry) loadToken() error {
 
 // getAuthKey constructs the composite authentication key
 func (g *GitLabRegistry) getAuthKey() string {
-	host := strings.TrimPrefix(g.config.URL, "https://")
-	host = strings.TrimPrefix(host, "http://")
+	// Use full URL including protocol for better disambiguation
+	baseURL := g.config.URL
 
 	if g.config.ProjectID != "" {
-		return fmt.Sprintf("%s/project/%s", host, g.config.ProjectID)
+		return fmt.Sprintf("%s/project/%s", baseURL, g.config.ProjectID)
 	}
-	return fmt.Sprintf("%s/group/%s", host, g.config.GroupID)
+	return fmt.Sprintf("%s/group/%s", baseURL, g.config.GroupID)
 }
 
 func (g *GitLabRegistry) ListVersions(ctx context.Context, ruleset string) ([]types.Version, error) {
