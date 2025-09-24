@@ -101,12 +101,12 @@ func TestService_GetSection(t *testing.T) {
 
 	// Create test .armrc file with multi-credential section
 	rcContent := `# Test .armrc file
-[registry nexus.company.com]
+[registry https://nexus.company.com]
 username = ${NEXUS_USER}
 password = ${NEXUS_PASS}
 url = https://nexus.company.com
 
-[registry gitlab.example.com/project/123]
+[registry https://gitlab.example.com/project/123]
 token = ${GITLAB_TOKEN}
 `
 
@@ -130,7 +130,7 @@ token = ${GITLAB_TOKEN}
 	}{
 		{
 			name:    "nexus multi-credential",
-			section: "registry nexus.company.com",
+			section: "registry https://nexus.company.com",
 			expected: map[string]string{
 				"username": "test-user",
 				"password": "test-pass",
@@ -139,7 +139,7 @@ token = ${GITLAB_TOKEN}
 		},
 		{
 			name:    "gitlab single credential",
-			section: "registry gitlab.example.com/project/123",
+			section: "registry https://gitlab.example.com/project/123",
 			expected: map[string]string{
 				"token": "gitlab-token-123",
 			},
@@ -233,7 +233,7 @@ func TestService_HierarchicalLookup(t *testing.T) {
 	defer func() { _ = os.RemoveAll(emptyDir) }()
 
 	// Create user .armrc with global token
-	userRcContent := `[registry gitlab.example.com]
+	userRcContent := `[registry https://gitlab.example.com]
 token = ${GLOBAL_TOKEN}
 `
 	userRcPath := filepath.Join(homeDir, ".armrc")
@@ -242,7 +242,7 @@ token = ${GLOBAL_TOKEN}
 	}
 
 	// Create project .armrc with project-specific token
-	projectRcContent := `[registry gitlab.example.com]
+	projectRcContent := `[registry https://gitlab.example.com]
 token = ${PROJECT_TOKEN}
 `
 	projectRcPath := filepath.Join(projectDir, ".armrc")
@@ -257,7 +257,7 @@ token = ${PROJECT_TOKEN}
 	// Test 1: From project directory - should get project token
 	projectService := NewServiceWithPaths(projectDir, homeDir)
 
-	token, err := projectService.GetValue("registry gitlab.example.com", "token")
+	token, err := projectService.GetValue("registry https://gitlab.example.com", "token")
 	if err != nil {
 		t.Errorf("GetValue() error = %v", err)
 	}
@@ -268,7 +268,7 @@ token = ${PROJECT_TOKEN}
 	// Test 2: From directory without .armrc - should get user token
 	emptyService := NewServiceWithPaths(emptyDir, homeDir)
 
-	token, err = emptyService.GetValue("registry gitlab.example.com", "token")
+	token, err = emptyService.GetValue("registry https://gitlab.example.com", "token")
 	if err != nil {
 		t.Errorf("GetValue() error = %v", err)
 	}
