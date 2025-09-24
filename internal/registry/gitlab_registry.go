@@ -53,14 +53,14 @@ type GitLabPackage struct {
 	ID          int                 `json:"id"`
 	Name        string              `json:"name"`
 	Version     string              `json:"version"`
-	PackageType string              `json:"packageType"`
-	CreatedAt   time.Time           `json:"createdAt"`
-	Files       []GitLabPackageFile `json:"packageFiles"`
+	PackageType string              `json:"package_type"`
+	CreatedAt   time.Time           `json:"created_at"`
+	Files       []GitLabPackageFile `json:"package_files"`
 }
 
 type GitLabPackageFile struct {
 	ID       int    `json:"id"`
-	FileName string `json:"fileName"`
+	FileName string `json:"file_name"`
 	Size     int64  `json:"size"`
 }
 
@@ -74,6 +74,26 @@ func NewGitLabRegistry(registryName string, config *GitLabRegistryConfig, rulese
 
 	return &GitLabRegistry{
 		cache:        rulesetCache,
+		config:       *config,
+		resolver:     resolver.NewGitConstraintResolver(),
+		client:       client,
+		registryName: registryName,
+		semver:       common.NewSemverHelper(),
+		rcService:    rcfile.NewService(),
+		extractor:    archive.NewExtractor(),
+	}
+}
+
+// NewGitLabRegistryNoCache creates a new GitLab-based registry without caching for testing
+func NewGitLabRegistryNoCache(registryName string, config *GitLabRegistryConfig) *GitLabRegistry {
+	client := &GitLabClient{
+		baseURL:    config.URL,
+		apiVersion: config.GetAPIVersion(),
+		httpClient: &http.Client{Timeout: 30 * time.Second},
+	}
+
+	return &GitLabRegistry{
+		cache:        cache.NewNoopRegistryRulesetCache(),
 		config:       *config,
 		resolver:     resolver.NewGitConstraintResolver(),
 		client:       client,

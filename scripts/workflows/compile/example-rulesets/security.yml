@@ -1,0 +1,24 @@
+version: "1.0"
+metadata:
+  id: "security"
+  name: "Security Best Practices"
+  version: "1.0.0"
+rules:
+  input-validation:
+    name: "Input Validation"
+    priority: 200
+    enforcement: "must"
+    body: |
+      Always validate user input:
+      - Validate at boundaries
+      - Use parameterized queries
+      - Sanitize before output
+  authentication:
+    name: "Authentication"
+    priority: 180
+    enforcement: "must"
+    body: |
+      Implement secure authentication:
+      - Strong password policies
+      - Multi-factor authentication
+      - Secure session management

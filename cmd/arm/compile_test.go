@@ -18,7 +18,7 @@ func TestNewCompileCmd(t *testing.T) {
 	assert.NotNil(t, targetFlag)
 
 	// Check optional flags exist
-	flags := []string{"output", "namespace", "force", "recursive", "dry-run", "verbose", "validate-only", "include", "exclude", "fail-fast"}
+	flags := []string{"output", "namespace", "force", "recursive", "verbose", "validate-only", "include", "exclude", "fail-fast"}
 	for _, flagName := range flags {
 		flag := cmd.Flag(flagName)
 		assert.NotNil(t, flag, "Flag %s should exist", flagName)
@@ -59,9 +59,6 @@ func TestCompileCmdFlagDefaults(t *testing.T) {
 
 	recursive, _ := cmd.Flags().GetBool("recursive")
 	assert.False(t, recursive)
-
-	dryRun, _ := cmd.Flags().GetBool("dry-run")
-	assert.False(t, dryRun)
 
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	assert.False(t, verbose)

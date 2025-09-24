@@ -8,6 +8,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.9.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/gofrs/flock v0.12.1
+	github.com/joho/godotenv v1.5.1
 	github.com/pterm/pterm v0.12.81
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.9.0
