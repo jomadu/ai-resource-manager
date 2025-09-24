@@ -50,6 +50,8 @@ Version: 1.0.0, 1.1.0, 2.0.0, etc.
 Files:
 ├── clean-code.yml              # URF rulesets
 ├── security.yml
+├── rules.tar.gz                # Optional: archived rules
+├── legacy-rules.zip            # Optional: archived rules
 └── build/                      # Pre-compiled rules
     ├── cursor/
     │   ├── clean-code.mdc
@@ -58,6 +60,15 @@ Files:
         ├── clean-code.md
         └── security.md
 ```
+
+### Archive Support
+
+GitLab packages automatically extract and process archives during installation:
+
+- **Supported formats**: `.zip` and `.tar.gz` files
+- **Automatic processing**: Archives are detected and extracted transparently
+- **Merge behavior**: Extracted files are merged with loose files, with archives taking precedence
+- **Security**: Path sanitization prevents directory traversal attacks
 
 ## Installing Rules
 
@@ -74,6 +85,18 @@ arm install my-gitlab/ai-rules@1.0.0 --sinks cursor
 Install pre-compiled rules:
 ```bash
 arm install my-gitlab/ai-rules --include "build/cursor/**" --sinks cursor
+```
+
+Install from archives:
+```bash
+# Install all files from archives and loose files
+arm install my-gitlab/ai-rules --sinks cursor
+
+# Install only YAML files (from both archives and loose files)
+arm install my-gitlab/ai-rules --include "**/*.yml" --sinks cursor
+
+# Install specific archive
+arm install my-gitlab/ai-rules --include "rules.tar.gz" --sinks cursor
 ```
 
 ## Publishing Packages
