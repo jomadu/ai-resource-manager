@@ -180,6 +180,26 @@ build/                      # Pre-compiled rules
 
 This structure works for both Git repositories and GitLab packages, with URF files at the root level and pre-compiled rules organized under `build/` by AI tool. ARM defaults to installing URF files (`*.yml, *.yaml`) when no `--include` patterns are specified, making URF the primary workflow while keeping pre-compiled rules available via explicit patterns like `--include "build/cursor/**"`.
 
+#### Archive Support
+
+ARM automatically extracts and processes **zip** and **tar.gz** archives during installation:
+
+- **Supported formats**: `.zip` and `.tar.gz` files
+- **Automatic extraction**: Archives are detected by extension and extracted transparently
+- **Merge behavior**: Extracted files are merged with loose files, with archives taking precedence in case of path conflicts
+- **Security**: Path sanitization prevents directory traversal attacks
+- **Pattern filtering**: `--include` patterns are applied to the merged content after extraction
+
+**Example with archives:**
+```
+Repository contents:
+├── rules.tar.gz           # Contains: security.yml, build/cursor/security.mdc
+├── clean-code.yml         # Loose URF file
+└── build/cursor/clean-code.mdc  # Loose pre-compiled file
+```
+
+Installing with `arm install registry/rules --include "**/*.yml"` will extract the archive and install both `security.yml` (from archive) and `clean-code.yml` (loose file).
+
 **Examples:**
 - [PatrickJS/awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules) - Community collection of Cursor rules
 - [snarktank/ai-dev-tasks](https://github.com/snarktank/ai-dev-tasks) - AI development task templates

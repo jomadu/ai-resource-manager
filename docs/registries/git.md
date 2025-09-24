@@ -35,6 +35,8 @@ Repository Root:
 ├── clean-code.yml              # URF rulesets
 ├── security.yml
 ├── performance.yml
+├── rules.tar.gz                # Optional: archived rules
+├── legacy-rules.zip            # Optional: archived rules
 └── build/                      # Pre-compiled rules (optional)
     ├── cursor/
     │   ├── clean-code.mdc
@@ -43,6 +45,15 @@ Repository Root:
         ├── clean-code.md
         └── security.md
 ```
+
+### Archive Support
+
+Git registries automatically extract and process archives during installation:
+
+- **Supported formats**: `.zip` and `.tar.gz` files
+- **Automatic processing**: Archives are detected and extracted transparently
+- **Merge behavior**: Extracted files are merged with loose files, with archives taking precedence
+- **Security**: Path sanitization prevents directory traversal attacks
 
 ## Installing Rules
 
@@ -69,6 +80,18 @@ arm install ai-rules/rules --include "security.yml" --sinks cursor
 Install pre-compiled rules:
 ```bash
 arm install ai-rules/rules --include "build/cursor/**" --sinks cursor
+```
+
+Install from archives:
+```bash
+# Install all files from archives and loose files
+arm install ai-rules/rules --sinks cursor
+
+# Install only YAML files (from both archives and loose files)
+arm install ai-rules/rules --include "**/*.yml" --sinks cursor
+
+# Install specific archive
+arm install ai-rules/rules --include "rules.tar.gz" --sinks cursor
 ```
 
 ## Version Resolution
