@@ -66,6 +66,11 @@ Add GitLab registry:
 arm config registry add my-gitlab https://gitlab.example.com --type gitlab --project-id 123 --api-version v4
 ```
 
+Add Cloudsmith registry:
+```bash
+arm config registry add my-cloudsmith https://app.cloudsmith.com/myorg/ai-rules --type cloudsmith
+```
+
 Configure sinks:
 
 **Cursor:**
@@ -161,6 +166,7 @@ Registries are remote sources where rulesets are stored and versioned, similar t
 
 - **Git registries**: GitHub repositories, GitLab projects, or any Git remote
 - **GitLab Package registries**: GitLab's Generic Package Registry for versioned rule packages
+- **Cloudsmith registries**: Cloudsmith's package repository service for single-file artifacts
 
 #### Registry Structure
 
@@ -208,6 +214,7 @@ Installing with `arm install registry/rules --include "**/*.yml"` will extract t
 **Key Commands:**
 - `arm config registry add <name> <url> --type git` - Add Git registry
 - `arm config registry add <name> <url> --type gitlab --project-id <id>` - Add GitLab registry
+- `arm config registry add <name> <url> --type cloudsmith` - Add Cloudsmith registry
 - `arm config registry list` - List registries
 - `arm config registry remove <name>` - Remove registry
 
