@@ -19,6 +19,7 @@ type Manager interface {
 	GetRawRegistries(ctx context.Context) (map[string]map[string]interface{}, error)
 	AddGitRegistry(ctx context.Context, name string, config registry.GitRegistryConfig, force bool) error
 	AddGitLabRegistry(ctx context.Context, name string, config *registry.GitLabRegistryConfig, force bool) error
+	AddCloudsmithRegistry(ctx context.Context, name string, config *registry.CloudsmithRegistryConfig, force bool) error
 	UpdateGitRegistry(ctx context.Context, name, field, value string) error
 	RemoveRegistry(ctx context.Context, name string) error
 	CreateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error
@@ -74,18 +75,7 @@ func (f *FileManager) GetRawRegistries(ctx context.Context) (map[string]map[stri
 func (f *FileManager) CreateEntry(ctx context.Context, registry, ruleset string, entry *Entry) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
-		// Create minimal manifest if file doesn't exist
-		manifest = &Manifest{}
-	}
-	// Ensure maps are initialized
-	if manifest.Registries == nil {
-		manifest.Registries = make(map[string]map[string]interface{})
-	}
-	if manifest.Rulesets == nil {
-		manifest.Rulesets = make(map[string]map[string]Entry)
-	}
-	if manifest.Sinks == nil {
-		manifest.Sinks = make(map[string]SinkConfig)
+		return err
 	}
 	if manifest.Rulesets[registry] == nil {
 		manifest.Rulesets[registry] = make(map[string]Entry)
@@ -133,7 +123,12 @@ func (f *FileManager) RemoveEntry(ctx context.Context, registry, ruleset string)
 func (f *FileManager) loadManifest() (*Manifest, error) {
 	data, err := os.ReadFile("arm.json")
 	if err != nil {
-		return nil, err
+		// File doesn't exist, return initialized manifest
+		return &Manifest{
+			Registries: make(map[string]map[string]interface{}),
+			Rulesets:   make(map[string]map[string]Entry),
+			Sinks:      make(map[string]SinkConfig),
+		}, nil
 	}
 	var manifest Manifest
 	if err := json.Unmarshal(data, &manifest); err != nil {
@@ -184,18 +179,7 @@ func (f *FileManager) SaveManifest(manifest *Manifest) error {
 func (f *FileManager) AddGitRegistry(ctx context.Context, name string, config registry.GitRegistryConfig, force bool) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
-		// Create minimal manifest if file doesn't exist
-		manifest = &Manifest{}
-	}
-	// Ensure maps are initialized
-	if manifest.Registries == nil {
-		manifest.Registries = make(map[string]map[string]interface{})
-	}
-	if manifest.Rulesets == nil {
-		manifest.Rulesets = make(map[string]map[string]Entry)
-	}
-	if manifest.Sinks == nil {
-		manifest.Sinks = make(map[string]SinkConfig)
+		return err
 	}
 
 	if _, exists := manifest.Registries[name]; exists && !force {
@@ -219,18 +203,31 @@ func (f *FileManager) AddGitRegistry(ctx context.Context, name string, config re
 func (f *FileManager) AddGitLabRegistry(ctx context.Context, name string, config *registry.GitLabRegistryConfig, force bool) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
-		// Create minimal manifest if file doesn't exist
-		manifest = &Manifest{}
+		return err
 	}
-	// Ensure maps are initialized
-	if manifest.Registries == nil {
-		manifest.Registries = make(map[string]map[string]interface{})
+
+	if _, exists := manifest.Registries[name]; exists && !force {
+		return errors.New("registry already exists (use --force to overwrite)")
 	}
-	if manifest.Rulesets == nil {
-		manifest.Rulesets = make(map[string]map[string]Entry)
+
+	configBytes, err := json.Marshal(config)
+	if err != nil {
+		return err
 	}
-	if manifest.Sinks == nil {
-		manifest.Sinks = make(map[string]SinkConfig)
+	var rawConfig map[string]interface{}
+	if err := json.Unmarshal(configBytes, &rawConfig); err != nil {
+		return err
+	}
+
+	manifest.Registries[name] = rawConfig
+
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) AddCloudsmithRegistry(ctx context.Context, name string, config *registry.CloudsmithRegistryConfig, force bool) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
 	}
 
 	if _, exists := manifest.Registries[name]; exists && !force {
@@ -292,18 +289,7 @@ func (f *FileManager) AddSink(ctx context.Context, name, directory, layout strin
 	}
 	manifest, err := f.loadManifest()
 	if err != nil {
-		// Create minimal manifest if file doesn't exist
-		manifest = &Manifest{}
-	}
-	// Ensure maps are initialized
-	if manifest.Registries == nil {
-		manifest.Registries = make(map[string]map[string]interface{})
-	}
-	if manifest.Rulesets == nil {
-		manifest.Rulesets = make(map[string]map[string]Entry)
-	}
-	if manifest.Sinks == nil {
-		manifest.Sinks = make(map[string]SinkConfig)
+		return err
 	}
 
 	if _, exists := manifest.Sinks[name]; exists && !force {
