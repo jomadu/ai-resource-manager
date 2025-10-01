@@ -2,7 +2,6 @@ version: "1.0"
 metadata:
   id: "clean-code"
   name: "Clean Code Guidelines"
-  version: "1.0.0"
 rules:
   naming:
     name: "Meaningful Names"

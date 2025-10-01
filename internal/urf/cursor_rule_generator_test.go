@@ -14,7 +14,6 @@ func TestCursorRuleGenerator_GenerateRule(t *testing.T) {
 		Metadata: Metadata{
 			ID:          "test-ruleset",
 			Name:        "Test Ruleset",
-			Version:     "1.0.0",
 			Description: "Test description",
 		},
 		Rules: map[string]Rule{
@@ -73,7 +72,7 @@ func TestCursorRuleGenerator_GenerateRule_ShouldEnforcement(t *testing.T) {
 	}
 
 	ruleset := &Ruleset{
-		Metadata: Metadata{ID: "test", Name: "Test", Version: "1.0.0"},
+		Metadata: Metadata{ID: "test", Name: "Test"},
 		Rules: map[string]Rule{
 			"rule1": {
 				Name:        "Test Rule",

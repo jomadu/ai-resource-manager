@@ -17,9 +17,8 @@ func TestDefaultCompiler_Compile(t *testing.T) {
 	ruleset := &Ruleset{
 		Version: "1.0",
 		Metadata: Metadata{
-			ID:      "test-ruleset",
-			Name:    "Test Ruleset",
-			Version: "1.0.0",
+			ID:   "test-ruleset",
+			Name: "Test Ruleset",
 		},
 		Rules: map[string]Rule{
 			"rule1": {
@@ -108,9 +107,8 @@ func TestDefaultCompiler_AmazonQTarget(t *testing.T) {
 	ruleset := &Ruleset{
 		Version: "1.0",
 		Metadata: Metadata{
-			ID:      "test-ruleset",
-			Name:    "Test Ruleset",
-			Version: "1.0.0",
+			ID:   "test-ruleset",
+			Name: "Test Ruleset",
 		},
 		Rules: map[string]Rule{
 			"rule1": {

@@ -10,9 +10,8 @@ func TestDefaultRuleMetadataGenerator_GenerateRuleMetadata(t *testing.T) {
 
 	ruleset := &Ruleset{
 		Metadata: Metadata{
-			ID:      "test-ruleset",
-			Name:    "Test Ruleset",
-			Version: "1.0.0",
+			ID:   "test-ruleset",
+			Name: "Test Ruleset",
 		},
 		Rules: map[string]Rule{
 			"rule1": {Name: "Rule 1"},
@@ -44,9 +43,6 @@ func TestDefaultRuleMetadataGenerator_GenerateRuleMetadata(t *testing.T) {
 	}
 	if !strings.Contains(result, "name: Test Ruleset") {
 		t.Error("Expected ruleset name in metadata")
-	}
-	if !strings.Contains(result, "version: 1.0.0") {
-		t.Error("Expected ruleset version in metadata")
 	}
 
 	// Check rules list
@@ -86,7 +82,7 @@ func TestDefaultRuleMetadataGenerator_GenerateRuleMetadata_NoScope(t *testing.T)
 	generator := NewRuleMetadataGenerator()
 
 	ruleset := &Ruleset{
-		Metadata: Metadata{ID: "test", Name: "Test", Version: "1.0.0"},
+		Metadata: Metadata{ID: "test", Name: "Test"},
 		Rules:    map[string]Rule{"rule1": {}},
 	}
 
