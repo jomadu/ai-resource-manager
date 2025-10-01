@@ -2,7 +2,6 @@ version: "1.0"
 metadata:
   id: "security"
   name: "Security Best Practices"
-  version: "1.0.0"
 rules:
   input-validation:
     name: "Input Validation"

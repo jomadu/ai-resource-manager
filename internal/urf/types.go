@@ -13,7 +13,6 @@ type Ruleset struct {
 type Metadata struct {
 	ID          string `yaml:"id" validate:"required"`
 	Name        string `yaml:"name" validate:"required"`
-	Version     string `yaml:"version" validate:"required"`
 	Description string `yaml:"description,omitempty"`
 }
 

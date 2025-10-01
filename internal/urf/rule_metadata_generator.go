@@ -22,9 +22,6 @@ func (g *DefaultRuleMetadataGenerator) GenerateRuleMetadata(namespace string, ru
 	content.WriteString("ruleset:\n")
 	content.WriteString(fmt.Sprintf("  id: %s\n", ruleset.Metadata.ID))
 	content.WriteString(fmt.Sprintf("  name: %s\n", ruleset.Metadata.Name))
-	if ruleset.Metadata.Version != "" {
-		content.WriteString(fmt.Sprintf("  version: %s\n", ruleset.Metadata.Version))
-	}
 	content.WriteString("  rules:\n")
 	for id := range ruleset.Rules {
 		content.WriteString(fmt.Sprintf("    - %s\n", id))

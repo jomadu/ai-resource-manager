@@ -24,7 +24,6 @@ version: "1.0"
 metadata:
   id: "grug-brained-dev"
   name: "Grug-Brained Developer Rules"
-  version: "1.0.0"  # required
   description: "Simple, obvious coding practices"  # optional
 rules:
   simple-code:  # Rule ID as map key
@@ -66,7 +65,6 @@ rules:
 ### Metadata Section
 - **`id`** (required): Unique identifier for the ruleset
 - **`name`** (required): Human-readable ruleset name
-- **`version`** (required): Semantic version (e.g., "1.0.0")
 - **`description`** (optional): Brief description of the ruleset's purpose
 
 ### Rules Section

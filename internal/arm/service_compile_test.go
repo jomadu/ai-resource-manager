@@ -135,7 +135,6 @@ func TestArmService_validateURFFile(t *testing.T) {
 metadata:
   id: "test-rules"
   name: "Test Rules"
-  version: "1.0.0"
 rules:
   rule1:
     name: "Test Rule"
@@ -176,7 +175,6 @@ func TestArmService_CompileFiles_ValidateOnly(t *testing.T) {
 metadata:
   id: "test-rules"
   name: "Test Rules"
-  version: "1.0.0"
 rules:
   rule1:
     name: "Test Rule"

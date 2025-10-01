@@ -21,7 +21,6 @@ func TestArmService_CompileFiles_Integration(t *testing.T) {
 metadata:
   id: "integration-test"
   name: "Integration Test Rules"
-  version: "1.0.0"
 rules:
   rule1:
     name: "Test Rule 1"
@@ -81,7 +80,6 @@ func TestArmService_CompileFiles_MultiTarget_Integration(t *testing.T) {
 metadata:
   id: "multi-target-test"
   name: "Multi Target Test Rules"
-  version: "1.0.0"
 rules:
   rule1:
     name: "Test Rule"

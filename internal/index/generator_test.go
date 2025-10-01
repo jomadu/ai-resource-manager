@@ -3,8 +3,6 @@ package index
 import (
 	"strings"
 	"testing"
-
-	"github.com/jomadu/ai-rules-manager/internal/version"
 )
 
 func TestDefaultIndexGenerator_CreateRuleset(t *testing.T) {
@@ -28,9 +26,6 @@ func TestDefaultIndexGenerator_CreateRuleset(t *testing.T) {
 
 	if ruleset.Metadata.ID != "arm" {
 		t.Errorf("expected ID 'arm', got %s", ruleset.Metadata.ID)
-	}
-	if ruleset.Metadata.Version != version.Version {
-		t.Errorf("expected version %s, got %s", version.Version, ruleset.Metadata.Version)
 	}
 	if len(ruleset.Rules) != 1 {
 		t.Errorf("expected 1 rule, got %d", len(ruleset.Rules))
