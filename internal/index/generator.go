@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"github.com/jomadu/ai-rules-manager/internal/urf"
-	"github.com/jomadu/ai-rules-manager/internal/version"
 )
 
 type IndexGenerator interface {
@@ -19,9 +18,8 @@ func (g *DefaultIndexGenerator) CreateRuleset(data *IndexData) *urf.Ruleset {
 	return &urf.Ruleset{
 		Version: "1.0",
 		Metadata: urf.Metadata{
-			ID:      "arm",
-			Name:    "ARM Rulesets Index",
-			Version: version.Version,
+			ID:   "arm",
+			Name: "ARM Rulesets Index",
 		},
 		Rules: map[string]urf.Rule{
 			"index": {

@@ -12,9 +12,8 @@ func TestMarkdownRuleGenerator_GenerateRule(t *testing.T) {
 
 	ruleset := &Ruleset{
 		Metadata: Metadata{
-			ID:      "test-ruleset",
-			Name:    "Test Ruleset",
-			Version: "1.0.0",
+			ID:   "test-ruleset",
+			Name: "Test Ruleset",
 		},
 		Rules: map[string]Rule{
 			"rule1": {
