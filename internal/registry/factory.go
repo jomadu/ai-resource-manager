@@ -20,6 +20,8 @@ func NewRegistry(name string, rawConfig map[string]interface{}) (Registry, error
 		return newGitRegistry(name, rawConfig)
 	case "gitlab":
 		return newGitLabRegistry(name, rawConfig)
+	case "cloudsmith":
+		return newCloudsmithRegistry(name, rawConfig)
 	default:
 		return nil, fmt.Errorf("unsupported registry type: %s", registryType)
 	}
@@ -85,4 +87,32 @@ func newGitLabRegistry(name string, rawConfig map[string]interface{}) (*GitLabRe
 	}
 
 	return NewGitLabRegistry(name, &gitlabConfig, rulesetCache), nil
+}
+
+func newCloudsmithRegistry(name string, rawConfig map[string]interface{}) (*CloudsmithRegistry, error) {
+	// Parse raw config into CloudsmithRegistryConfig
+	configBytes, err := json.Marshal(rawConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal config: %w", err)
+	}
+
+	var cloudsmithConfig CloudsmithRegistryConfig
+	if err := json.Unmarshal(configBytes, &cloudsmithConfig); err != nil {
+		return nil, fmt.Errorf("failed to parse cloudsmith registry config: %w", err)
+	}
+
+	// Build registry key object for cache uniqueness
+	registryKeyObj := map[string]string{
+		"url":        cloudsmithConfig.GetBaseURL(),
+		"type":       cloudsmithConfig.Type,
+		"owner":      cloudsmithConfig.Owner,
+		"repository": cloudsmithConfig.Repository,
+	}
+
+	rulesetCache, err := cache.NewRegistryRulesetCache(registryKeyObj)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCloudsmithRegistry(name, &cloudsmithConfig, rulesetCache), nil
 }

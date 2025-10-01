@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jomadu/ai-rules-manager/internal/registry"
 	"github.com/spf13/cobra"
 )
 
@@ -35,6 +36,8 @@ Available commands:
 
 Examples:
   arm config registry add ai-rules https://github.com/user/rules-repo --type git
+  arm config registry add gitlab-rules https://gitlab.com/user/rules --type gitlab --project-id 123
+  arm config registry add cloudsmith-rules https://app.cloudsmith.com/myorg/myrepo --type cloudsmith
   arm config registry remove ai-rules`,
 }
 
@@ -92,7 +95,8 @@ Flags:
 
 Examples:
   arm config registry add ai-rules https://github.com/user/rules-repo --type git
-  arm config registry add company-rules https://gitlab.com/company/rules --type git`,
+  arm config registry add company-rules https://gitlab.com/company/rules --type gitlab --project-id 123
+  arm config registry add cloudsmith-rules https://app.cloudsmith.com/myorg/myrepo --type cloudsmith`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
@@ -122,6 +126,14 @@ Examples:
 			options["project_id"] = projectID
 			options["group_id"] = groupID
 			options["api_version"] = apiVersion
+		case "cloudsmith":
+			// Parse URL to extract owner and repository
+			owner, repository, err := registry.ParseCloudsmithURL(url)
+			if err != nil {
+				return fmt.Errorf("failed to parse Cloudsmith URL: %w", err)
+			}
+			options["owner"] = owner
+			options["repository"] = repository
 		default:
 			return fmt.Errorf("registry type %s is not implemented", registryType)
 		}
@@ -298,7 +310,7 @@ func init() {
 	configSinkCmd.AddCommand(sinkUpdateCmd)
 	configRulesetCmd.AddCommand(rulesetUpdateCmd)
 
-	registryAddCmd.Flags().String("type", "git", "Registry type (git, gitlab, http)")
+	registryAddCmd.Flags().String("type", "git", "Registry type (git, gitlab, cloudsmith)")
 	registryAddCmd.Flags().StringSlice("branches", nil, "Git branches to track (default: main,master)")
 	registryAddCmd.Flags().String("project-id", "", "GitLab project ID (for gitlab type)")
 	registryAddCmd.Flags().String("group-id", "", "GitLab group ID (for gitlab type)")

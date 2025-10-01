@@ -56,6 +56,20 @@ func (a *ArmService) AddRegistry(ctx context.Context, name, url, regType string,
 			config.APIVersion = apiVersion
 		}
 		err = a.manifestManager.AddGitLabRegistry(ctx, name, config, false)
+	case "cloudsmith":
+		config := &registry.CloudsmithRegistryConfig{
+			RegistryConfig: registry.RegistryConfig{
+				Type: "cloudsmith",
+				URL:  url,
+			},
+		}
+		if owner, ok := options["owner"].(string); ok {
+			config.Owner = owner
+		}
+		if repository, ok := options["repository"].(string); ok {
+			config.Repository = repository
+		}
+		err = a.manifestManager.AddCloudsmithRegistry(ctx, name, config, false)
 	default:
 		return fmt.Errorf("unsupported registry type: %s", regType)
 	}
