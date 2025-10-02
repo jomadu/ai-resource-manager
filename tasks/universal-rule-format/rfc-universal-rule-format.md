@@ -61,7 +61,7 @@ compiled meta-data for the critical security check rule
 ```
 ---
 namespace: namespace-id
-ruleset:
+metadata:
   id: ruleset-id
   name: Ruleset Name
   version: 1.0.0
@@ -145,7 +145,7 @@ alwaysApply: true
 
 ---
 namespace: namespace-id
-ruleset:
+metadata:
   id: ruleset-id
   name: Ruleset Name
   version: 1.0.0
@@ -178,7 +178,7 @@ Rule content in markdown format.
 ```markdown
 ---
 namespace: namespace-id
-ruleset:
+metadata:
   id: ruleset-id
   name: Ruleset Name
   version: 1.0.0
