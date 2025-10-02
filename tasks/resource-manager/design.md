@@ -69,7 +69,7 @@ arm update promptset my-promptset   # updates specific promptset
 #### arm.json (Enhanced)
 ```json
 {
-  "version": "3.0.0",
+  "version": "3.0",
   "registries": { ... },
   "sinks": { ... },
   "rulesets": {
@@ -225,11 +225,3 @@ Focus on input validation, authentication, and data exposure.
 ## Breaking Changes
 
 - All install/info/uninstall commands now require resource type
-- Configuration file format version bump to 3.0.0
-- Old command syntax will show migration hints
-
-## Backward Compatibility
-
-- Provide clear error messages with migration examples
-- Include migration guide in documentation
-- Consider temporary alias support during transition period
