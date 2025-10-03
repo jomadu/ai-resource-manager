@@ -1,0 +1,11 @@
+Evaluate this code for quality, maintainability, and adherence to best practices. Focus on:
+- Code readability and clarity
+- Function and class design
+- Naming conventions and consistency
+- Code organization and structure
+- Documentation and comments
+- Error handling and edge cases
+- Code duplication and DRY principles
+- Testability and unit test coverage
+- SOLID principles adherence
+- Code complexity and cyclomatic complexity

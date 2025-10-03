@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Ruleset
+metadata:
+    id: "cleanCode"
+    name: "Clean Code"
+    description: "Make clean code"
+spec:
+    rules:
+        ruleOne:
+            name: "Rule 1"
+            description: "Rule with optional description, priority, enforcement (must|should|may), scope[0].files attributes defined"
+            priority: 100
+            enforcement: must
+            scope:
+                - files: ["**/*.py"]
+            body: |
+                This is the body of the rule.
+        ruleTwo:
+            name: "Rule 2"
+            description: "Rule with optional description and enforcement (must|should|may) defined"
+            enforcement: should
+            body: |
+                This is the body of the rule.
+        ruleThree:
+            name: "Rule 3"
+            description: "Rule with optional description and enforcement (must|should|may) defined"
+            enforcement: may
+            body: |
+                This is the body of the rule.
+        ruleFour:
+            name: "Rule 4"
+            description: "Rule with optional description defined"
+            body: |
+                This is the body of the rule.
+        ruleFive:
+            name: "Rule with no description"
+            body: |
+                This is the body of the rule.

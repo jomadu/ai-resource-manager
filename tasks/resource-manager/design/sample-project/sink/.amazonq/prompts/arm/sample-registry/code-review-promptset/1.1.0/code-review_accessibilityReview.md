@@ -1,0 +1,11 @@
+Review this code for accessibility compliance and inclusive design principles. Examine:
+- ARIA labels and semantic HTML
+- Keyboard navigation support
+- Screen reader compatibility
+- Color contrast and visual accessibility
+- Focus management and tab order
+- Alternative text for images and media
+- Form labels and error messaging
+- Responsive design considerations
+- Mobile accessibility features
+- WCAG 2.1 compliance guidelines

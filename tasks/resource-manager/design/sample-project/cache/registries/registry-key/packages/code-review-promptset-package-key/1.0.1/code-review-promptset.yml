@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Promptset
+metadata:
+    id: "code-review"
+    name: "Code Review"
+    description: "Comprehensive code review prompts for quality assurance"
+spec:
+    prompts:
+        securityReview:
+            name: "Security Review"
+            description: "Focus on security vulnerabilities and best practices"
+            body: |
+                Review this code for security vulnerabilities and potential issues. Look for:
+                - Input validation and sanitization
+                - Authentication and authorization flaws
+                - SQL injection and XSS vulnerabilities
+                - Insecure data storage or transmission
+                - Hardcoded secrets or credentials
+                - Insecure random number generation
+                - Missing security headers or configurations
+                - Potential buffer overflows or memory leaks
+                - Insecure file operations
+                - Weak cryptographic implementations
+        performanceReview:
+            name: "Performance Review"
+            description: "Analyze code for performance bottlenecks and optimization opportunities"
+            body: |
+                Analyze this code for performance issues and optimization opportunities. Consider:
+                - Algorithm efficiency and time complexity
+                - Memory usage and potential leaks
+                - Database query optimization
+                - Caching strategies and opportunities
+                - I/O operations and blocking calls
+                - Resource utilization patterns
+                - Scalability concerns
+                - Network latency and bandwidth usage
+                - CPU-intensive operations
+                - Memory allocation patterns

@@ -1,0 +1,9 @@
+---
+description: "Rule with optional description, priority, enforcement (must|should|may), scope[0].files attributes defined"
+globs: **/*.py
+alwaysApply: true
+---
+
+# Rule 1 (MUST)
+
+This is the body of the rule.

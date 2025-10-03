@@ -1,0 +1,11 @@
+Analyze this code for performance issues and optimization opportunities. Consider:
+- Algorithm efficiency and time complexity
+- Memory usage and potential leaks
+- Database query optimization
+- Caching strategies and opportunities
+- I/O operations and blocking calls
+- Resource utilization patterns
+- Scalability concerns
+- Network latency and bandwidth usage
+- CPU-intensive operations
+- Memory allocation patterns
