@@ -222,6 +222,228 @@ Focus on input validation, authentication, and data exposure.
 2. Migration tooling
 3. Updated examples and documentation
 
+## Resource Type Design Deep Dive
+
+### Core Principles
+
+1. **Type Safety**: Each resource type has a distinct schema and purpose
+2. **Extensibility**: New resource types can be added without breaking existing ones
+3. **Tool Specialization**: Each AI tool can handle resource types differently
+4. **Clear Semantics**: Commands explicitly state what type of resource they're operating on
+
+### Resource Type Characteristics
+
+| Aspect | Rulesets | Promptsets |
+|--------|----------|------------|
+| **Purpose** | Modify AI behavior | Provide task templates |
+| **Priority** | Yes (conflict resolution) | No (independent prompts) |
+| **Compilation** | Tool-specific formats | Tool-specific formats |
+| **Sink Types** | `cursor`, `amazonq`, `copilot` | `cursor-prompts`, `amazonq-prompts` |
+| **Index File** | `arm_index.*` with priorities | `arm-index.json` metadata only |
+| **Versioning** | Semantic versioning | Semantic versioning |
+
+### Schema Evolution Strategy
+
+#### Base Resource Schema
+```yaml
+version: "1.0"  # URF version
+metadata:
+  id: string      # Unique identifier
+  name: string    # Human-readable name
+  description?: string
+  version: string # Resource version
+  tags?: string[]
+  author?: string
+  license?: string
+```
+
+#### Ruleset Schema Extension
+```yaml
+# Extends base schema
+rules:
+  rule-id:        # Map key as rule ID
+    name: string
+    priority?: number
+    enforcement?: "must" | "should" | "may"
+    body: string
+    tags?: string[]
+```
+
+#### Promptset Schema Extension
+```yaml
+# Extends base schema
+prompts:
+  prompt-id:      # Map key as prompt ID
+    name: string
+    description?: string
+    body: string
+    parameters?: object  # Future: parameterized prompts
+    tags?: string[]
+```
+
+### Registry Organization
+
+#### Mixed Resource Repositories
+```
+my-ai-resources/
+├── rulesets/
+│   ├── clean-code.yml
+│   └── security.yml
+├── promptsets/
+│   ├── code-review.yml
+│   └── documentation.yml
+└── build/           # Pre-compiled resources
+    ├── cursor/
+    │   ├── rules/
+    │   └── prompts/
+    └── amazonq/
+        ├── rules/
+        └── prompts/
+```
+
+#### Resource Discovery
+- Default patterns by type:
+  - Rulesets: `rulesets/**/*.yml`, `rulesets/**/*.yaml`
+  - Promptsets: `promptsets/**/*.yml`, `promptsets/**/*.yaml`
+- Explicit patterns: `--include "custom-path/**/*.yml"`
+- Type inference from schema content
+
+### Command Interface Refinements
+
+#### Resource-Specific Options
+```bash
+# Ruleset-specific options
+arm install ruleset my-reg/clean-code --priority 100 --enforcement must
+
+# Promptset-specific options (future)
+arm install promptset my-reg/code-review --parameters '{"language": "go"}'
+```
+
+#### Bulk Operations
+```bash
+# Install all resources of a type
+arm install ruleset my-reg/* --sinks cursor-rules
+arm install promptset my-reg/* --sinks cursor-prompts
+
+# Mixed operations
+arm update  # Updates all resource types
+arm outdated --type ruleset  # Filter by type
+```
+
+### Sink Type Specialization
+
+#### Ruleset Sinks
+- `cursor` → `.cursor/rules/`
+- `amazonq` → `.amazonq/rules/`
+- `copilot` → `.github/copilot/`
+
+#### Promptset Sinks
+- `cursor-prompts` → `.cursor/prompts/` or `.cursor/commands/`
+- `amazonq-prompts` → `.amazonq/prompts/`
+- `copilot-prompts` → `.github/copilot/prompts/`
+
+### Implementation Challenges
+
+#### 1. Resource Type Detection
+```go
+type ResourceType string
+
+const (
+    ResourceTypeRuleset   ResourceType = "ruleset"
+    ResourceTypePromptset ResourceType = "promptset"
+)
+
+func DetectResourceType(content []byte) (ResourceType, error) {
+    var base struct {
+        Rules   map[string]interface{} `yaml:"rules"`
+        Prompts map[string]interface{} `yaml:"prompts"`
+    }
+
+    if err := yaml.Unmarshal(content, &base); err != nil {
+        return "", err
+    }
+
+    hasRules := len(base.Rules) > 0
+    hasPrompts := len(base.Prompts) > 0
+
+    if hasRules && hasPrompts {
+        return "", errors.New("resource cannot contain both rules and prompts")
+    }
+    if hasRules {
+        return ResourceTypeRuleset, nil
+    }
+    if hasPrompts {
+        return ResourceTypePromptset, nil
+    }
+    return "", errors.New("resource must contain either rules or prompts")
+}
+```
+
+#### 2. Unified Resource Interface
+```go
+type Resource interface {
+    GetType() ResourceType
+    GetMetadata() Metadata
+    Compile(tool string) ([]CompiledFile, error)
+    Validate() error
+}
+
+type Ruleset struct {
+    Metadata Metadata            `yaml:"metadata"`
+    Rules    map[string]Rule     `yaml:"rules"`
+}
+
+type Promptset struct {
+    Metadata Metadata            `yaml:"metadata"`
+    Prompts  map[string]Prompt   `yaml:"prompts"`
+}
+```
+
+#### 3. Configuration Migration
+```go
+// Migrate from v2 to v3 configuration
+func MigrateConfig(v2Config *ConfigV2) *ConfigV3 {
+    v3Config := &ConfigV3{
+        Version:    "3.0",
+        Registries: v2Config.Registries,
+        Sinks:      v2Config.Sinks,
+        Rulesets:   v2Config.Rulesets,  // Direct copy
+        Promptsets: make(map[string]PromptsetConfig),  // Empty initially
+    }
+    return v3Config
+}
+```
+
+### Future Extensions
+
+#### Additional Resource Types
+- **Templates**: Code scaffolding and boilerplate
+- **Workflows**: Multi-step AI processes
+- **Contexts**: Domain-specific knowledge bases
+- **Agents**: Complete AI assistant configurations
+
+#### Resource Dependencies
+```yaml
+metadata:
+  id: "advanced-security"
+  dependencies:
+    - type: ruleset
+      name: "my-reg/basic-security"
+      version: "^1.0.0"
+```
+
 ## Breaking Changes
 
+### Command Interface
 - All install/info/uninstall commands now require resource type
+- `arm install <name>` becomes `arm install ruleset <name>`
+
+### Configuration Format
+- `arm.json` version bumped to "3.0"
+- Rulesets moved under `rulesets` key
+- New `promptsets` key added
+
+### Migration Path
+1. **Phase 1**: Add deprecation warnings for old commands
+2. **Phase 2**: Support both old and new formats
+3. **Phase 3**: Remove backward compatibility
