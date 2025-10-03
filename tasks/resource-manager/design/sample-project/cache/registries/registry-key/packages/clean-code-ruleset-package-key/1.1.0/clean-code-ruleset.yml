@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: Ruleset
+metadata:
+    id: "cleanCode"
+    name: "Clean Code"
+    description: "Essential clean code principles for maintainable software"
+spec:
+    rules:
+        meaningfulNames:
+            name: "Use Meaningful Names"
+            description: "Choose names that reveal intent and are easy to understand"
+            priority: 100
+            enforcement: must
+            scope:
+                - files: ["**/*.py", "**/*.js", "**/*.ts", "**/*.java", "**/*.go"]
+            body: |
+                Use intention-revealing names. Avoid disinformation, make meaningful distinctions, use pronounceable names, and use searchable names. A name should tell you why it exists, what it does, and how it is used.
+
+                Good: `userAccountBalance`, `isValidEmail`, `calculateTotalPrice`
+                Bad: `data`, `temp`, `x`, `flag`
+        smallFunctions:
+            name: "Keep Functions Small"
+            description: "Functions should do one thing and do it well"
+            priority: 90
+            enforcement: must
+            scope:
+                - files: ["**/*.py", "**/*.js", "**/*.ts", "**/*.java", "**/*.go"]
+            body: |
+                Functions should be small and do only one thing. They should fit on a screen and have a single level of abstraction. If you need to add comments to explain what a function does, it's probably too long.
+
+                - Aim for functions under 20 lines
+                - One level of abstraction per function
+                - Use descriptive names that eliminate the need for comments
+        avoidComments:
+            name: "Don't Comment Bad Code"
+            description: "Write self-documenting code instead of relying on comments"
+            priority: 80
+            enforcement: should
+            scope:
+                - files: ["**/*.py", "**/*.js", "**/*.ts", "**/*.java", "**/*.go"]
+            body: |
+                Comments are a failure. If you need a comment to explain what your code does, rewrite the code to be self-explanatory. Good code documents itself through clear naming and structure.
+
+                Exceptions: Legal comments, TODO comments, warnings, and public API documentation.
+        singleResponsibility:
+            name: "Single Responsibility Principle"
+            description: "A class should have only one reason to change"
+            priority: 85
+            enforcement: should
+            scope:
+                - files: ["**/*.py", "**/*.js", "**/*.ts", "**/*.java", "**/*.go"]
+            body: |
+                Every class should have a single responsibility. If a class has multiple reasons to change, it violates the Single Responsibility Principle and should be refactored into smaller, focused classes.
+
+                Signs of violation:
+                - Multiple responsibilities in one class
+                - Classes that are hard to test
+                - Classes that are hard to understand
+        avoidDuplication:
+            name: "Don't Repeat Yourself (DRY)"
+            description: "Every piece of knowledge should have a single representation"
+            priority: 75
+            enforcement: may
+            scope:
+                - files: ["**/*.py", "**/*.js", "**/*.ts", "**/*.java", "**/*.go"]
+            body: |
+                Duplication is the root of all evil in software design. When you find yourself copying and pasting code, extract it into a function, class, or module that can be reused.
+
+                Types of duplication to avoid:
+                - Copy-paste code
+                - Similar logic in different places
+                - Repeated configuration
+                - Duplicate data structures
+        consistentFormatting:
+            name: "Consistent Code Formatting"
+            description: "Use consistent formatting and style throughout your codebase"
+            priority: 70
+            enforcement: should
+            scope:
+                - files: ["**/*.py", "**/*.js", "**/*.ts", "**/*.java", "**/*.go"]
+            body: |
+                Consistent formatting makes code easier to read and maintain. Use automated formatting tools and establish team-wide style guidelines.
+
+                - Use linters and formatters (ESLint, Prettier, Black, gofmt)
+                - Configure your IDE for consistent formatting
+                - Establish coding standards for your team
+                - Use pre-commit hooks to enforce formatting
+        errorHandling:
+            name: "Proper Error Handling"
+            description: "Handle errors gracefully and provide meaningful error messages"
+            priority: 85
+            enforcement: must
+            scope:
+                - files: ["**/*.py", "**/*.js", "**/*.ts", "**/*.java", "**/*.go"]
+            body: |
+                Error handling is crucial for robust applications. Always handle errors explicitly and provide meaningful error messages to help with debugging.
+
+                - Use try-catch blocks appropriately
+                - Don't ignore errors silently
+                - Provide context in error messages
+                - Log errors with sufficient detail
+                - Use specific exception types when possible

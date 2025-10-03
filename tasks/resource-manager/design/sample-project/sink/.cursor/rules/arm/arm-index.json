@@ -1,0 +1,19 @@
+{
+    "rulesets": {
+        "sample-registry": {
+            "clean-code-ruleset": {
+                "version": "1.1.0",
+                "priority": 100,
+                "file_paths": [
+                    "arm/sample-registry/clean-code-ruleset/1.1.0/cleanCode_meaningfulNames.mdc",
+                    "arm/sample-registry/clean-code-ruleset/1.1.0/cleanCode_smallFunctions.mdc",
+                    "arm/sample-registry/clean-code-ruleset/1.1.0/cleanCode_avoidComments.mdc",
+                    "arm/sample-registry/clean-code-ruleset/1.1.0/cleanCode_singleResponsibility.mdc",
+                    "arm/sample-registry/clean-code-ruleset/1.1.0/cleanCode_avoidDuplication.mdc",
+                    "arm/sample-registry/clean-code-ruleset/1.1.0/cleanCode_consistentFormatting.mdc",
+                    "arm/sample-registry/clean-code-ruleset/1.1.0/cleanCode_errorHandling.mdc"
+                ]
+            }
+        }
+    }
+}

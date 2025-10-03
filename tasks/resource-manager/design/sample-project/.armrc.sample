@@ -1,0 +1,2 @@
+[registry https://app.cloudsmith.com/sample-org/arm-registry]
+token = sample-cloudsmith-api-token-here

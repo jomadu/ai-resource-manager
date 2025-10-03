@@ -6,7 +6,7 @@
 apiVersion: v1
 kind: Ruleset
 metadata:
-    id: "clean-code"
+    id: "cleanCode"
     name: "Clean Code"
     description: "Make clean code"
 spec:
@@ -43,6 +43,32 @@ spec:
                 This is the body of the rule.
 ```
 
+metadata block for ruleset rule
+
+```md
+---
+namespace: some-namespace
+ruleset:
+    id: "clean-code"
+    name: "Clean Code"
+    description: "Make clean code"
+    rules:
+        - ruleOne
+        - ruleTwo
+        - ruleThree
+        - ruleFour
+        - ruleFive
+rule:
+    id: ruleOne
+    name: "Rule 1"
+    description: "Rule with optional description, priority, enforcement (must|should|may), scope[0].files attributes defined"
+    priority: 100
+    enforcement: must
+    scope:
+        - files: ["**/*.py"]
+---
+```
+
 ### Promptset
 
 ```yml
@@ -64,6 +90,25 @@ spec:
             description: "Prompt with optional description defined"
             body: |
                 This is how you review the code.
+```
+
+metadata block for ruleset rule
+
+```md
+---
+namespace: some-namespace
+promptset:
+    id: "code-review"
+    name: "Code Review"
+    description: "Review the code!"
+    rules:
+        - promptOne
+        - promptTwo
+prompt:
+    id: promptOne
+    name: "Prompt One"
+    description: "Prompt with optional description defined""
+---
 ```
 
 ### Future Resources

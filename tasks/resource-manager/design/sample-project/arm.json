@@ -1,0 +1,55 @@
+{
+    "registries": {
+        "sample-registry": {
+            "url": "https://app.cloudsmith.com/sample-org/arm-registry",
+            "type": "cloudsmith"
+        }
+    },
+    "packages": {
+        "rulesets": {
+            "sample-registry": {
+                "clean-code-ruleset": {
+                    "version": "^1.0.0",
+                    "priority": 100,
+                    "sinks": [
+                        "cursor-rules",
+                        "amazonq-rules"
+                    ]
+                }
+            }
+        },
+        "promptsets": {
+            "sample-registry": {
+                "code-review-promptset": {
+                    "version": "^1.0.0",
+                    "sinks": [
+                        "cursor-prompts",
+                        "amazonq-prompts"
+                    ]
+                }
+            }
+        }
+    },
+    "sinks": {
+        "cursor-rules": {
+            "directory": ".cursor/rules",
+            "layout": "hierarchical",
+            "compileTarget": "cursor"
+        },
+        "amazonq-rules": {
+            "directory": ".amazonq/rules",
+            "layout": "hierarchical",
+            "compileTarget": "amazonq"
+        },
+        "cursor-prompts": {
+            "directory": ".cursor/prompts",
+            "layout": "hierarchical",
+            "compileTarget": "cursor"
+        },
+        "amazonq-prompts": {
+            "directory": ".amazonq/prompts",
+            "layout": "hierarchical",
+            "compileTarget": "amazonq"
+        }
+    }
+}
