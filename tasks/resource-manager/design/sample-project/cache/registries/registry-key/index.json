@@ -1,0 +1,61 @@
+{
+    "registry_metadata": {
+        "url": "https://app.cloudsmith.com/sample-org/arm-registry",
+        "type": "cloudsmith"
+    },
+    "created_on": "2025-01-08T23:10:43.984784Z",
+    "last_updated_on": "2025-01-08T23:10:43.984784Z",
+    "last_accessed_on": "2025-01-08T23:10:43.984784Z",
+    "packages": {
+        "clean-code-ruleset-package-key": {
+            "package_metadata": {
+                "name": "clean-code-ruleset"
+            },
+            "created_on": "2025-01-08T23:10:43.984784Z",
+            "last_updated_on": "2025-01-08T23:10:43.984784Z",
+            "last_accessed_on": "2025-01-08T23:10:43.984784Z",
+            "versions": {
+                "1.0.0": {
+                    "created_on": "2025-01-08T23:10:43.984784Z",
+                    "last_updated_on": "2025-01-08T23:10:43.984784Z",
+                    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+                },
+                "1.0.1": {
+                    "created_on": "2025-01-08T23:10:43.984784Z",
+                    "last_updated_on": "2025-01-08T23:10:43.984784Z",
+                    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+                },
+                "1.1.0": {
+                    "created_on": "2025-01-08T23:10:43.984784Z",
+                    "last_updated_on": "2025-01-08T23:10:43.984784Z",
+                    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+                }
+            }
+        },
+        "code-review-promptset-package-key": {
+            "package_metadata": {
+                "name": "code-review-promptset"
+            },
+            "created_on": "2025-01-08T23:10:43.984784Z",
+            "last_updated_on": "2025-01-08T23:10:43.984784Z",
+            "last_accessed_on": "2025-01-08T23:10:43.984784Z",
+            "versions": {
+                "1.0.0": {
+                    "created_on": "2025-01-08T23:10:43.984784Z",
+                    "last_updated_on": "2025-01-08T23:10:43.984784Z",
+                    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+                },
+                "1.0.1": {
+                    "created_on": "2025-01-08T23:10:43.984784Z",
+                    "last_updated_on": "2025-01-08T23:10:43.984784Z",
+                    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+                },
+                "1.1.0": {
+                    "created_on": "2025-01-08T23:10:43.984784Z",
+                    "last_updated_on": "2025-01-08T23:10:43.984784Z",
+                    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+                }
+            }
+        }
+    }
+}

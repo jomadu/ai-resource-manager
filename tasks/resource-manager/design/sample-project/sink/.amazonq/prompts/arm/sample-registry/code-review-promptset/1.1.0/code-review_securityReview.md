@@ -1,0 +1,11 @@
+Review this code for security vulnerabilities and potential issues. Look for:
+- Input validation and sanitization
+- Authentication and authorization flaws
+- SQL injection and XSS vulnerabilities
+- Insecure data storage or transmission
+- Hardcoded secrets or credentials
+- Insecure random number generation
+- Missing security headers or configurations
+- Potential buffer overflows or memory leaks
+- Insecure file operations
+- Weak cryptographic implementations

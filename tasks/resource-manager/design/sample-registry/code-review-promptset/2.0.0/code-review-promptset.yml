@@ -1,0 +1,171 @@
+apiVersion: v1
+kind: Promptset
+metadata:
+    id: "code-review"
+    name: "Advanced Code Review"
+    description: "Comprehensive code review prompts for quality assurance - Major refactor with enhanced prompts"
+spec:
+    prompts:
+        comprehensiveSecurityAudit:
+            name: "Comprehensive Security Audit"
+            description: "Deep security analysis with threat modeling and vulnerability assessment"
+            body: |
+                Conduct a comprehensive security audit of this code. Perform threat modeling and vulnerability assessment focusing on:
+
+                **Authentication & Authorization:**
+                - Multi-factor authentication implementation
+                - Session management and token security
+                - Role-based access control (RBAC) implementation
+                - OAuth 2.0 and OpenID Connect security
+
+                **Data Protection:**
+                - Encryption at rest and in transit
+                - Data classification and handling
+                - PII and sensitive data protection
+                - Key management and rotation
+
+                **Input Validation & Sanitization:**
+                - SQL injection prevention (parameterized queries)
+                - XSS protection and output encoding
+                - CSRF protection mechanisms
+                - File upload security and validation
+
+                **Infrastructure Security:**
+                - Container and cloud security configurations
+                - Network security and firewall rules
+                - API security and rate limiting
+                - Logging and monitoring for security events
+
+                **Compliance & Standards:**
+                - OWASP Top 10 compliance
+                - Industry-specific security standards
+                - Privacy regulations (GDPR, CCPA)
+                - Security testing and penetration testing results
+        performanceOptimizationAnalysis:
+            name: "Performance Optimization Analysis"
+            description: "Advanced performance analysis with profiling and scalability assessment"
+            body: |
+                Perform advanced performance analysis and optimization assessment. Focus on:
+
+                **Algorithm & Data Structure Analysis:**
+                - Time complexity analysis (Big O notation)
+                - Space complexity optimization
+                - Data structure selection rationale
+                - Algorithm efficiency improvements
+
+                **System Performance:**
+                - Database query optimization and indexing
+                - Caching strategies (Redis, Memcached, CDN)
+                - Load balancing and horizontal scaling
+                - Microservices performance patterns
+
+                **Resource Management:**
+                - Memory usage patterns and leak detection
+                - CPU utilization and optimization
+                - I/O operations and async processing
+                - Connection pooling and resource pooling
+
+                **Monitoring & Profiling:**
+                - Application performance monitoring (APM)
+                - Profiling tools and bottleneck identification
+                - Performance testing and load testing
+                - Real-time performance metrics
+
+                **Scalability Considerations:**
+                - Horizontal vs vertical scaling strategies
+                - Database sharding and partitioning
+                - Message queuing and event-driven architecture
+                - Cloud-native performance optimization
+        codeQualityExcellence:
+            name: "Code Quality Excellence"
+            description: "Comprehensive code quality assessment with maintainability focus"
+            body: |
+                Conduct a comprehensive code quality assessment focusing on maintainability and excellence:
+
+                **Code Architecture:**
+                - SOLID principles implementation
+                - Design patterns usage and appropriateness
+                - Dependency injection and inversion of control
+                - Clean architecture and hexagonal architecture
+
+                **Code Maintainability:**
+                - Code readability and self-documentation
+                - Function and class cohesion
+                - Cyclomatic complexity analysis
+                - Technical debt identification and remediation
+
+                **Testing & Quality Assurance:**
+                - Unit test coverage and quality
+                - Integration and end-to-end testing
+                - Test-driven development (TDD) practices
+                - Code coverage and mutation testing
+
+                **Documentation & Standards:**
+                - API documentation completeness
+                - Code comments and inline documentation
+                - Coding standards compliance
+                - README and setup documentation
+
+                **Refactoring Opportunities:**
+                - Code duplication identification
+                - Legacy code modernization
+                - Performance optimization opportunities
+                - Security hardening improvements
+        inclusiveDesignReview:
+            name: "Inclusive Design Review"
+            description: "Comprehensive accessibility and inclusive design assessment"
+            body: |
+                Perform a comprehensive inclusive design and accessibility review:
+
+                **WCAG 2.1 AA Compliance:**
+                - Perceivable: Color contrast, text alternatives, adaptable content
+                - Operable: Keyboard navigation, timing, seizures and physical reactions
+                - Understandable: Readable, predictable, input assistance
+                - Robust: Compatible with assistive technologies
+
+                **Inclusive Design Principles:**
+                - Diversity and inclusion considerations
+                - Cultural sensitivity and localization
+                - Multi-language support
+                - Cross-platform compatibility
+
+                **Assistive Technology Support:**
+                - Screen reader compatibility
+                - Voice control and speech recognition
+                - Switch navigation and alternative input
+                - Magnification and high contrast support
+
+                **User Experience Accessibility:**
+                - Error prevention and recovery
+                - Clear navigation and wayfinding
+                - Consistent interaction patterns
+                - Mobile accessibility and responsive design
+        devopsAndDeploymentReview:
+            name: "DevOps and Deployment Review"
+            description: "Infrastructure, deployment, and operational excellence assessment"
+            body: |
+                Review DevOps practices, deployment strategies, and operational excellence:
+
+                **CI/CD Pipeline:**
+                - Continuous integration best practices
+                - Automated testing and quality gates
+                - Deployment strategies (blue-green, canary, rolling)
+                - Infrastructure as Code (IaC) implementation
+
+                **Monitoring & Observability:**
+                - Application performance monitoring
+                - Log aggregation and analysis
+                - Distributed tracing and correlation
+                - Alerting and incident response
+
+                **Security in DevOps:**
+                - DevSecOps integration
+                - Container security scanning
+                - Secrets management
+                - Vulnerability management and patching
+
+                **Scalability & Reliability:**
+                - Auto-scaling configurations
+                - Disaster recovery planning
+                - High availability design
+                - Performance under load

@@ -1,0 +1,7 @@
+---
+description: "Rule with optional description and enforcement (must|should|may) defined"
+---
+
+# Rule 2 (SHOULD)
+
+This is the body of the rule.
