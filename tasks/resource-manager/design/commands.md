@@ -122,11 +122,17 @@ $ arm info registry my-org
 Registry: my-org
 Type: git
 URL: https://github.com/my-org/arm-registry
-Status: connected
-Available packages:
-  - clean-code-ruleset (versions: 1.0.0, 1.0.1, 1.1.0)
-  - security-ruleset (versions: 2.0.0, 2.1.0)
-  - code-review-promptset (versions: 1.0.0, 1.1.0)
+
+$ arm info registry my-gitlab
+Registry: my-gitlab
+Type: gitlab
+URL: https://gitlab.com
+Gitlab Group Id: 123
+
+$ arm info registry sample-registry
+Registry: sample-registry
+Type: cloudsmith
+URL: https://app.cloudsmith.com/sample-org/arm-registry
 ```
 
 ## Sink Management
