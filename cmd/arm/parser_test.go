@@ -5,27 +5,27 @@ import (
 	"testing"
 )
 
-func TestParseRulesetArg(t *testing.T) {
+func TestParsePackageArg(t *testing.T) {
 	tests := []struct {
 		name    string
 		arg     string
-		want    RulesetRef
+		want    PackageRef
 		wantErr bool
 	}{
 		{
-			name: "registry and ruleset only",
-			arg:  "registry/ruleset",
-			want: RulesetRef{Registry: "registry", Name: "ruleset", Version: ""},
+			name: "registry and package only",
+			arg:  "registry/package",
+			want: PackageRef{Registry: "registry", Name: "package", Version: ""},
 		},
 		{
 			name: "with version",
-			arg:  "registry/ruleset@1.0.0",
-			want: RulesetRef{Registry: "registry", Name: "ruleset", Version: "1.0.0"},
+			arg:  "registry/package@1.0.0",
+			want: PackageRef{Registry: "registry", Name: "package", Version: "1.0.0"},
 		},
 		{
 			name: "with branch version",
-			arg:  "registry/ruleset@main",
-			want: RulesetRef{Registry: "registry", Name: "ruleset", Version: "main"},
+			arg:  "registry/package@main",
+			want: PackageRef{Registry: "registry", Name: "package", Version: "main"},
 		},
 		{
 			name:    "empty arg",
@@ -34,88 +34,88 @@ func TestParseRulesetArg(t *testing.T) {
 		},
 		{
 			name:    "missing registry",
-			arg:     "ruleset",
+			arg:     "package",
 			wantErr: true,
 		},
 		{
 			name:    "empty registry",
-			arg:     "/ruleset",
+			arg:     "/package",
 			wantErr: true,
 		},
 		{
-			name:    "empty ruleset",
+			name:    "empty package",
 			arg:     "registry/",
 			wantErr: true,
 		},
 		{
-			name:    "empty ruleset with version",
+			name:    "empty package with version",
 			arg:     "registry/@1.0.0",
 			wantErr: true,
 		},
 		{
 			name: "complex registry name",
-			arg:  "github.com/user/ruleset@v1.0.0",
-			want: RulesetRef{Registry: "github.com", Name: "user/ruleset", Version: "v1.0.0"},
+			arg:  "github.com/user/package@v1.0.0",
+			want: PackageRef{Registry: "github.com", Name: "user/package", Version: "v1.0.0"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseRulesetArg(tt.arg)
+			got, err := ParsePackageArg(tt.arg)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseRulesetArg() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParsePackageArg() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParseRulesetArg() = %v, want %v", got, tt.want)
+				t.Errorf("ParsePackageArg() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestParseRulesetArgs(t *testing.T) {
+func TestParsePackageArgs(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    []string
-		want    []RulesetRef
+		want    []PackageRef
 		wantErr bool
 	}{
 		{
 			name: "single arg",
-			args: []string{"registry/ruleset"},
-			want: []RulesetRef{
-				{Registry: "registry", Name: "ruleset", Version: ""},
+			args: []string{"registry/package"},
+			want: []PackageRef{
+				{Registry: "registry", Name: "package", Version: ""},
 			},
 		},
 		{
 			name: "multiple args",
-			args: []string{"registry1/ruleset1", "registry2/ruleset2@1.0.0"},
-			want: []RulesetRef{
-				{Registry: "registry1", Name: "ruleset1", Version: ""},
-				{Registry: "registry2", Name: "ruleset2", Version: "1.0.0"},
+			args: []string{"registry1/package1", "registry2/package2@1.0.0"},
+			want: []PackageRef{
+				{Registry: "registry1", Name: "package1", Version: ""},
+				{Registry: "registry2", Name: "package2", Version: "1.0.0"},
 			},
 		},
 		{
 			name: "empty args",
 			args: []string{},
-			want: []RulesetRef{},
+			want: []PackageRef{},
 		},
 		{
 			name:    "invalid arg",
-			args:    []string{"registry/ruleset", "invalid"},
+			args:    []string{"registry/package", "invalid"},
 			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseRulesetArgs(tt.args)
+			got, err := ParsePackageArgs(tt.args)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseRulesetArgs() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParsePackageArgs() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParseRulesetArgs() = %v, want %v", got, tt.want)
+				t.Errorf("ParsePackageArgs() = %v, want %v", got, tt.want)
 			}
 		})
 	}

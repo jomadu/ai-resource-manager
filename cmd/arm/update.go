@@ -8,24 +8,54 @@ import (
 )
 
 func newUpdateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update resources",
+		Long:  "Update all configured resources, or use subcommands for specific resource types.",
+		RunE:  runUpdateAll,
+	}
+
+	// Add subcommands
+	cmd.AddCommand(newUpdateRulesetCmd())
+	cmd.AddCommand(newUpdatePromptsetCmd())
+
+	return cmd
+}
+
+func newUpdateRulesetCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "update [ruleset...]",
+		Use:   "ruleset [registry/ruleset...]",
 		Short: "Update rulesets",
-		Long:  "Update rulesets. If no ruleset is specified, updates all rulesets.",
-		RunE:  runUpdate,
+		Long:  "Update specific rulesets or all rulesets if none specified.",
+		RunE:  runUpdateRuleset,
 	}
 }
 
-func runUpdate(cmd *cobra.Command, args []string) error {
+func newUpdatePromptsetCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "promptset [registry/promptset...]",
+		Short: "Update promptsets",
+		Long:  "Update specific promptsets or all promptsets if none specified.",
+		RunE:  runUpdatePromptset,
+	}
+}
+
+func runUpdateAll(cmd *cobra.Command, args []string) error {
+	ctx := context.Background()
+	// TODO: Implement unified update when service interface is updated
+	return armService.UpdateAllRulesets(ctx) // Temporary fallback to rulesets only
+}
+
+func runUpdateRuleset(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
-	// If no arguments, update all
+	// If no arguments, update all rulesets
 	if len(args) == 0 {
 		return armService.UpdateAllRulesets(ctx)
 	}
 
 	// Parse arguments
-	rulesets, err := ParseRulesetArgs(args)
+	rulesets, err := ParsePackageArgs(args)
 	if err != nil {
 		return fmt.Errorf("failed to parse arguments: %w", err)
 	}
@@ -39,4 +69,9 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func runUpdatePromptset(cmd *cobra.Command, args []string) error {
+	// TODO: Implement promptset update when service interface is updated
+	return fmt.Errorf("promptset update not yet implemented - service interface needs to be updated first")
 }
