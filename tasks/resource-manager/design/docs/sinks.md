@@ -4,11 +4,7 @@ Sinks define where installed resources should be placed in your local filesystem
 
 ## Commands
 
-- `arm add sink --type <cursor|amazonq|copilot> <name> <directory>` - Add sink
-- `arm list sink` - List sinks
-- `arm info sink [name...]` - Show sink information
-- `arm config sink set <name> <key> <value>` - Update sink configuration
-- `arm remove sink <name>` - Remove sink
+For detailed command usage and examples, see [Sink Management](commands.md#sink-management) in the commands reference.
 
 ## Layout Modes
 

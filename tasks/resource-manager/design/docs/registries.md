@@ -8,13 +8,7 @@ Registries are remote sources where rulesets and promptsets are stored and versi
 
 ## Commands
 
-- `arm add registry --type git <name> <url>` - Add Git registry
-- `arm add registry --type gitlab --gitlab-project-id <id> <name> <url>` - Add GitLab registry
-- `arm add registry --type cloudsmith <name> <url>` - Add Cloudsmith registry
-- `arm list registry` - List registries
-- `arm info registry [name...]` - Show registry information
-- `arm config registry set <name> <key> <value>` - Update registry configuration
-- `arm remove registry <name>` - Remove registry
+For detailed command usage and examples, see [Registry Management](commands.md#registry-management) in the commands reference.
 
 ## Registry Structure
 
