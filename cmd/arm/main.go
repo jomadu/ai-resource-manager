@@ -25,14 +25,15 @@ func main() {
 
 var rootCmd = &cobra.Command{
 	Use:   "arm",
-	Short: "AI Rules Manager - Manage AI rule rulesets",
-	Long:  "ARM helps you install, manage, and organize AI rule rulesets from various registries.",
+	Short: "AI Resource Manager - Manage AI resources (rulesets and promptsets)",
+	Long:  "ARM helps you install, manage, and organize AI resources (rulesets and promptsets) from various registries.",
 }
 
 func init() {
 	rootCmd.AddCommand(newInstallCmd())
 	rootCmd.AddCommand(newUninstallCmd())
 	rootCmd.AddCommand(newUpdateCmd())
+	rootCmd.AddCommand(newUpgradeCmd())
 	rootCmd.AddCommand(newOutdatedCmd())
 	rootCmd.AddCommand(newListCmd())
 	rootCmd.AddCommand(newInfoCmd())

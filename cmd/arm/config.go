@@ -12,13 +12,13 @@ func newConfigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "Manage configuration",
-		Long:  "Manage ARM configuration including registries and sinks.",
+		Long:  "Manage ARM configuration including registries, sinks, and resources.",
 	}
 
 	cmd.AddCommand(configRegistryCmd)
 	cmd.AddCommand(configSinkCmd)
 	cmd.AddCommand(configRulesetCmd)
-	cmd.AddCommand(configListCmd)
+	cmd.AddCommand(configPromptsetCmd)
 
 	return cmd
 }
@@ -28,17 +28,18 @@ var configRegistryCmd = &cobra.Command{
 	Short: "Manage registry configuration",
 	Long: `Manage registry configuration for ARM.
 
-Registries are remote sources where rulesets are stored and versioned, similar to npm registries for JavaScript packages. ARM supports Git-based registries that can point to GitHub repositories, GitLab projects, or any Git remote containing rule collections.
+Registries are remote sources where rulesets are stored and versioned, similar to npm registries for JavaScript packages. ARM supports Git, GitLab, and Cloudsmith registries for storing and distributing resources.
 
 Available commands:
   add     Add a new registry
   remove  Remove an existing registry
+  set     Set registry configuration values
 
 Examples:
-  arm config registry add ai-rules https://github.com/user/rules-repo --type git
-  arm config registry add gitlab-rules https://gitlab.com/user/rules --type gitlab --project-id 123
-  arm config registry add cloudsmith-rules https://app.cloudsmith.com/myorg/myrepo --type cloudsmith
-  arm config registry remove ai-rules`,
+  arm config registry add my-org https://github.com/my-org/arm-registry --type git
+  arm config registry add my-gitlab https://gitlab.com --type gitlab --gitlab-group-id 123
+  arm config registry add sample-registry https://app.cloudsmith.com/sample-org/arm-registry --type cloudsmith
+  arm config registry remove my-org`,
 }
 
 var configSinkCmd = &cobra.Command{
@@ -55,12 +56,12 @@ Sinks support two layout modes:
 Available commands:
   add     Add a new sink
   remove  Remove an existing sink
-  update  Update sink configuration
+  set     Set sink configuration values
 
 Examples:
-  arm config sink add cursor .cursor/rules --layout hierarchical
-  arm config sink add q .amazonq/rules --layout hierarchical
-  arm config sink add github .github/instructions --layout flat`,
+  arm config sink add cursor-rules .cursor/rules --type cursor
+  arm config sink add q-rules .amazonq/rules --type amazonq
+  arm config sink add copilot-rules .github/copilot --type copilot`,
 }
 
 var configRulesetCmd = &cobra.Command{
@@ -71,12 +72,27 @@ var configRulesetCmd = &cobra.Command{
 Rulesets are collections of AI rules that can be configured with priorities, version constraints, and sink assignments.
 
 Available commands:
-  update  Update ruleset configuration (triggers reinstall)
+  set     Set ruleset configuration values (triggers reinstall)
 
 Examples:
   arm config ruleset update ai-rules/ruleset priority 150
   arm config ruleset update ai-rules/ruleset version 1.1.0
   arm config ruleset update ai-rules/ruleset sinks cursor,q`,
+}
+
+var configPromptsetCmd = &cobra.Command{
+	Use:   "promptset",
+	Short: "Manage promptset configuration",
+	Long: `Manage promptset configuration for ARM.
+
+Promptsets are collections of AI prompts that can be configured with version constraints and sink assignments. Unlike rulesets, promptsets do not have priorities.
+
+Available commands:
+  set     Set promptset configuration values (triggers reinstall)
+
+Examples:
+  arm config promptset update ai-rules/promptset version 1.1.0
+  arm config promptset update ai-rules/promptset sinks cursor,q`,
 }
 
 var registryAddCmd = &cobra.Command{
@@ -91,12 +107,17 @@ Arguments:
   url   Registry URL (Git repository URL)
 
 Flags:
-  --type  Registry type (default: git)
+  --type                Registry type (git, gitlab, cloudsmith)
+  --git-branches        Git branches to track (for git type)
+  --gitlab-group-id     GitLab group ID (for gitlab type)
+  --gitlab-project-id   GitLab project ID (for gitlab type)
+  --gitlab-api-version  GitLab API version (for gitlab type)
 
 Examples:
-  arm config registry add ai-rules https://github.com/user/rules-repo --type git
-  arm config registry add company-rules https://gitlab.com/company/rules --type gitlab --project-id 123
-  arm config registry add cloudsmith-rules https://app.cloudsmith.com/myorg/myrepo --type cloudsmith`,
+  arm config registry add my-org https://github.com/my-org/arm-registry --type git
+  arm config registry add my-gitlab https://gitlab.com --type gitlab --gitlab-group-id 123
+  arm config registry add my-gitlab-project https://gitlab.com --type gitlab --gitlab-project-id 456
+  arm config registry add sample-registry https://app.cloudsmith.com/sample-org/arm-registry --type cloudsmith`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
@@ -108,23 +129,20 @@ Examples:
 		options := make(map[string]interface{})
 		switch registryType {
 		case "git":
-			branches, _ := cmd.Flags().GetStringSlice("branches")
-			if len(branches) == 0 {
-				branches = []string{"main", "master"}
-			}
+			branches, _ := cmd.Flags().GetStringSlice("git-branches")
 			options["branches"] = branches
 		case "gitlab":
-			projectID, _ := cmd.Flags().GetString("project-id")
-			groupID, _ := cmd.Flags().GetString("group-id")
-			apiVersion, _ := cmd.Flags().GetString("api-version")
+			gitlabProjectID, _ := cmd.Flags().GetString("gitlab-project-id")
+			gitlabGroupID, _ := cmd.Flags().GetString("gitlab-group-id")
+			apiVersion, _ := cmd.Flags().GetString("gitlab-api-version")
 			if apiVersion == "" {
 				apiVersion = "v4"
 			}
-			if projectID == "" && groupID == "" {
-				return fmt.Errorf("either --project-id or --group-id must be specified for GitLab registries")
+			if gitlabProjectID == "" && gitlabGroupID == "" {
+				return fmt.Errorf("either --gitlab-project-id or --gitlab-group-id must be specified for GitLab registries")
 			}
-			options["project_id"] = projectID
-			options["group_id"] = groupID
+			options["project_id"] = gitlabProjectID
+			options["group_id"] = gitlabGroupID
 			options["api_version"] = apiVersion
 		case "cloudsmith":
 			// Parse URL to extract owner and repository
@@ -152,8 +170,8 @@ Arguments:
   name  Registry name to remove
 
 Examples:
-  arm config registry remove ai-rules
-  arm config registry remove company-rules`,
+  arm config registry remove my-org
+  arm config registry remove my-gitlab`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
@@ -183,9 +201,9 @@ Type Defaults:
 - amazonq: hierarchical layout, amazonq compile target
 
 Examples:
-  arm config sink add cursor .cursor/rules --type cursor
-  arm config sink add copilot .github/copilot --type copilot
-  arm config sink add q .amazonq/rules --type amazonq
+  arm config sink add cursor-rules .cursor/rules --type cursor
+  arm config sink add q-rules .amazonq/rules --type amazonq
+  arm config sink add copilot-rules .github/copilot --type copilot
   arm config sink add custom .custom/rules --layout flat --compile-to markdown`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -211,8 +229,8 @@ Arguments:
   name  Sink name to remove
 
 Examples:
-  arm config sink remove q
-  arm config sink remove cursor`,
+  arm config sink remove cursor-rules
+  arm config sink remove q-rules`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
@@ -220,27 +238,19 @@ Examples:
 	},
 }
 
-var configListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List configuration",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return armService.ShowConfig(context.Background())
-	},
-}
-
-var registryUpdateCmd = &cobra.Command{
-	Use:   "update <name> <field> <value>",
-	Short: "Update registry field",
+var registrySetCmd = &cobra.Command{
+	Use:   "set <name> <field> <value>",
+	Short: "Set registry field",
 	Long: `Update a specific field in an existing registry configuration.
 
 Arguments:
   name   Registry name
-  field  Field to update (url, type, branches)
+  field  Field to update (url, type, git_branches)
   value  New field value (comma-separated for branches)
 
 Examples:
-  arm config registry update ai-rules url https://new-url
-  arm config registry update ai-rules branches main,develop`,
+  arm config registry set my-org url https://github.com/my-org/new-arm-registry
+  arm config registry set my-gitlab gitlab_group_id 789`,
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, field, value := args[0], args[1], args[2]
@@ -248,9 +258,9 @@ Examples:
 	},
 }
 
-var sinkUpdateCmd = &cobra.Command{
-	Use:   "update <name> <field> <value>",
-	Short: "Update sink field",
+var sinkSetCmd = &cobra.Command{
+	Use:   "set <name> <field> <value>",
+	Short: "Set sink field",
 	Long: `Update a specific field in an existing sink configuration.
 
 Arguments:
@@ -259,9 +269,9 @@ Arguments:
   value  New field value
 
 Examples:
-  arm config sink update q directory .amazonq/rules
-  arm config sink update q layout flat
-  arm config sink update q compileTarget amazonq`,
+  arm config sink set cursor-rules layout flat
+  arm config sink set cursor-rules directory .cursor/new-rules
+  arm config sink set cursor-rules compile_target md`,
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, field, value := args[0], args[1], args[2]
@@ -269,9 +279,9 @@ Examples:
 	},
 }
 
-var rulesetUpdateCmd = &cobra.Command{
-	Use:   "update <name> <field> <value>",
-	Short: "Update ruleset configuration",
+var rulesetSetCmd = &cobra.Command{
+	Use:   "set <name> <field> <value>",
+	Short: "Set ruleset configuration",
 	Long: `Update a specific field in an existing ruleset configuration. This triggers a reinstall of the ruleset.
 
 Arguments:
@@ -280,41 +290,73 @@ Arguments:
   value  New field value
 
 Examples:
-  arm config ruleset update ai-rules/ruleset priority 150
-  arm config ruleset update ai-rules/ruleset version 1.1.0
-  arm config ruleset update ai-rules/ruleset sinks cursor,q
-  arm config ruleset update ai-rules/ruleset include "**/*.py,**/*.js"
-  arm config ruleset update ai-rules/ruleset exclude "**/test/**,**/node_modules/**"`,
+  arm config ruleset set my-org/clean-code-ruleset priority 150
+  arm config ruleset set my-org/clean-code-ruleset version ^2.0.0
+  arm config ruleset set my-org/clean-code-ruleset sinks cursor-rules,q-rules`,
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, field, value := args[0], args[1], args[2]
 
 		// Parse ruleset name
-		rulesets, err := ParseRulesetArgs([]string{name})
+		ruleset, err := ParsePackageArg(name)
 		if err != nil {
 			return fmt.Errorf("failed to parse ruleset name: %w", err)
 		}
-		ruleset := rulesets[0]
 
 		// Use service to update ruleset config
 		return armService.UpdateRulesetConfig(context.Background(), ruleset.Registry, ruleset.Name, field, value)
 	},
 }
 
+var promptsetSetCmd = &cobra.Command{
+	Use:   "set <name> <field> <value>",
+	Short: "Set promptset configuration",
+	Long: `Update a specific field in an existing promptset configuration. This triggers a reinstall of the promptset.
+
+Arguments:
+  name   Promptset name (registry/promptset)
+  field  Field to update (version, sinks, include, exclude) - priority not supported for promptsets
+  value  New field value
+
+Examples:
+  arm config promptset set my-org/code-review-promptset version ^2.0.0
+  arm config promptset set my-org/code-review-promptset sinks cursor-prompts,q-prompts`,
+	Args: cobra.ExactArgs(3),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		name, field, _ := args[0], args[1], args[2]
+
+		// Validate that priority is not being set for promptsets
+		if field == "priority" {
+			return fmt.Errorf("priority is not supported for promptsets")
+		}
+
+		// Parse promptset name
+		_, err := ParsePackageArg(name)
+		if err != nil {
+			return fmt.Errorf("failed to parse promptset name: %w", err)
+		}
+
+		// TODO: Implement promptset config update when service interface is updated
+		return fmt.Errorf("promptset config update not yet implemented - service interface needs to be updated first")
+	},
+}
+
 func init() {
 	configRegistryCmd.AddCommand(registryAddCmd)
 	configRegistryCmd.AddCommand(registryRemoveCmd)
-	configRegistryCmd.AddCommand(registryUpdateCmd)
+	configRegistryCmd.AddCommand(registrySetCmd)
 	configSinkCmd.AddCommand(sinkAddCmd)
 	configSinkCmd.AddCommand(sinkRemoveCmd)
-	configSinkCmd.AddCommand(sinkUpdateCmd)
-	configRulesetCmd.AddCommand(rulesetUpdateCmd)
+	configSinkCmd.AddCommand(sinkSetCmd)
+	configRulesetCmd.AddCommand(rulesetSetCmd)
+	configPromptsetCmd.AddCommand(promptsetSetCmd)
 
 	registryAddCmd.Flags().String("type", "git", "Registry type (git, gitlab, cloudsmith)")
-	registryAddCmd.Flags().StringSlice("branches", nil, "Git branches to track (default: main,master)")
-	registryAddCmd.Flags().String("project-id", "", "GitLab project ID (for gitlab type)")
-	registryAddCmd.Flags().String("group-id", "", "GitLab group ID (for gitlab type)")
-	registryAddCmd.Flags().String("api-version", "v4", "GitLab API version (default: v4)")
+	registryAddCmd.Flags().StringSlice("git-branches", nil, "Git branches to track (for git type)")
+
+	registryAddCmd.Flags().String("gitlab-project-id", "", "GitLab project ID (for gitlab type)")
+	registryAddCmd.Flags().String("gitlab-group-id", "", "GitLab group ID (for gitlab type)")
+	registryAddCmd.Flags().String("gitlab-api-version", "v4", "GitLab API version (for gitlab type)")
 	registryAddCmd.Flags().Bool("force", false, "Overwrite existing registry")
 	sinkAddCmd.Flags().String("type", "", "Sink type with defaults (cursor, copilot, amazonq)")
 	sinkAddCmd.Flags().String("layout", "", "Layout mode (hierarchical, flat)")

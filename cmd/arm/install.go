@@ -10,67 +10,105 @@ import (
 
 func newInstallCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "install [ruleset...]",
+		Use:   "install",
+		Short: "Install resources",
+		Long:  "Install all configured resources from manifest, or use subcommands for specific resource types.",
+		RunE:  runInstallAll,
+	}
+
+	// Add subcommands
+	cmd.AddCommand(newInstallRulesetCmd())
+	cmd.AddCommand(newInstallPromptsetCmd())
+
+	return cmd
+}
+
+func newInstallRulesetCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "ruleset <registry/ruleset[@version]> <sink...>",
 		Short: "Install rulesets",
-		Long:  "Install rulesets from a registry. If no ruleset is specified, installs from manifest.",
-		RunE:  runInstall,
+		Long:  "Install rulesets from a registry to specified sinks.",
+		Args:  cobra.MinimumNArgs(2),
+		RunE:  runInstallRuleset,
 	}
 
 	cmd.Flags().StringSlice("include", nil, "Include patterns")
 	cmd.Flags().StringSlice("exclude", nil, "Exclude patterns")
-	cmd.Flags().StringSlice("sinks", nil, "Target sinks")
 	cmd.Flags().Int("priority", 100, "Ruleset installation priority (1-1000+)")
 
 	return cmd
 }
 
-func runInstall(cmd *cobra.Command, args []string) error {
+func newInstallPromptsetCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "promptset <registry/promptset[@version]> <sink...>",
+		Short: "Install promptsets",
+		Long:  "Install promptsets from a registry to specified sinks.",
+		Args:  cobra.MinimumNArgs(2),
+		RunE:  runInstallPromptset,
+	}
+
+	cmd.Flags().StringSlice("include", nil, "Include patterns")
+	cmd.Flags().StringSlice("exclude", nil, "Exclude patterns")
+
+	return cmd
+}
+
+func runInstallAll(cmd *cobra.Command, args []string) error {
+	ctx := context.Background()
+	return armService.InstallManifest(ctx)
+}
+
+func runInstallRuleset(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
-	// If no arguments, install from manifest
-	if len(args) == 0 {
-		return armService.InstallManifest(ctx)
+	// Parse ruleset argument
+	ruleset, err := ParsePackageArg(args[0])
+	if err != nil {
+		return fmt.Errorf("failed to parse ruleset: %w", err)
 	}
 
-	// Parse arguments
-	rulesets, err := ParseRulesetArgs(args)
-	if err != nil {
-		return fmt.Errorf("failed to parse arguments: %w", err)
-	}
+	// Get sinks from remaining arguments
+	sinks := args[1:]
 
 	// Get flags
 	include, _ := cmd.Flags().GetStringSlice("include")
 	exclude, _ := cmd.Flags().GetStringSlice("exclude")
-	sinks, _ := cmd.Flags().GetStringSlice("sinks")
 	priority, _ := cmd.Flags().GetInt("priority")
-	include = GetDefaultIncludePatterns(include) //TODO: should rely on the struct default
 
 	// Validate priority
 	if priority < 1 {
 		return fmt.Errorf("priority must be a positive integer (got %d)", priority)
 	}
 
-	// Require sinks for new installations
-	if len(sinks) == 0 {
-		return fmt.Errorf("--sinks is required for installing rulesets")
+	// Install ruleset
+	req := &arm.InstallRequest{
+		Registry: ruleset.Registry,
+		Ruleset:  ruleset.Name,
+		Version:  ruleset.Version,
+		Priority: priority,
+		Include:  include,
+		Exclude:  exclude,
+		Sinks:    sinks,
 	}
 
-	// Install each ruleset
-	for _, ruleset := range rulesets {
-		req := &arm.InstallRequest{
-			Registry: ruleset.Registry,
-			Ruleset:  ruleset.Name,
-			Version:  ruleset.Version,
-			Priority: priority,
-			Include:  include,
-			Exclude:  exclude,
-			Sinks:    sinks,
-		}
-		err := armService.InstallRuleset(ctx, req)
-		if err != nil {
-			return fmt.Errorf("failed to install %s/%s: %w", ruleset.Registry, ruleset.Name, err)
-		}
+	return armService.InstallRuleset(ctx, req)
+}
+
+func runInstallPromptset(cmd *cobra.Command, args []string) error {
+	// Parse promptset argument
+	_, err := ParsePackageArg(args[0])
+	if err != nil {
+		return fmt.Errorf("failed to parse promptset: %w", err)
 	}
 
-	return nil
+	// Get sinks from remaining arguments
+	_ = args[1:]
+
+	// Get flags
+	_, _ = cmd.Flags().GetStringSlice("include")
+	_, _ = cmd.Flags().GetStringSlice("exclude")
+
+	// TODO: Implement promptset installation when service interface is updated
+	return fmt.Errorf("promptset installation not yet implemented - service interface needs to be updated first")
 }

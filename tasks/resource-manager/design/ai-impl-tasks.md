@@ -22,12 +22,12 @@ This document provides a detailed investigation of the codebase to identify spec
 
 ## Detailed Implementation Tasks
 
-### 1. Command Structure Refactoring (`cmd/`)
+### 1. Command Structure Refactoring (`cmd/`) ✅ COMPLETED
 
 #### 1.1 Root Command Updates
 **File**: `cmd/arm/main.go`
-- [ ] Update root command description from "AI rule rulesets" to "AI resources (rulesets and promptsets)"
-- [ ] Add new command structure supporting both unified and resource-specific commands
+- [x] Update root command description from "AI rule rulesets" to "AI resources (rulesets and promptsets)"
+- [x] Add new command structure supporting both unified and resource-specific commands
 
 #### 1.2 New Command Structure
 **Files**: All command files need major restructuring
@@ -44,48 +44,48 @@ This document provides a detailed investigation of the codebase to identify spec
 #### 1.3 Command Implementation Tasks
 **Files**: `cmd/arm/install.go`, `cmd/arm/uninstall.go`, `cmd/arm/update.go`, `cmd/arm/outdated.go`, `cmd/arm/list.go`, `cmd/arm/info.go`
 
-- [ ] **Install Commands**:
-  - [ ] Create unified `arm install` command that installs all configured packages
-  - [ ] Create `arm install ruleset REGISTRY/RULESET[@VERSION] SINK...` with priority, include/exclude flags
-  - [ ] Create `arm install promptset REGISTRY/PROMPTSET[@VERSION] SINK...` with include/exclude flags
-  - [ ] Update argument parsing to handle resource type detection
+- [x] **Install Commands**:
+  - [x] Create unified `arm install` command that installs all configured packages
+  - [x] Create `arm install ruleset REGISTRY/RULESET[@VERSION] SINK...` with priority, include/exclude flags
+  - [x] Create `arm install promptset REGISTRY/PROMPTSET[@VERSION] SINK...` with include/exclude flags
+  - [x] Update argument parsing to handle resource type detection
 
-- [ ] **Uninstall Commands**:
-  - [ ] Create unified `arm uninstall` command
-  - [ ] Create `arm uninstall ruleset REGISTRY/RULESET`
-  - [ ] Create `arm uninstall promptset REGISTRY/PROMPTSET`
+- [x] **Uninstall Commands**:
+  - [x] Create unified `arm uninstall` command
+  - [x] Create `arm uninstall ruleset REGISTRY/RULESET`
+  - [x] Create `arm uninstall promptset REGISTRY/PROMPTSET`
 
-- [ ] **Update/Upgrade Commands**:
-  - [ ] Create unified `arm update` and `arm upgrade` commands
-  - [ ] Create resource-specific update/upgrade commands
-  - [ ] Handle version constraint logic for both resource types
+- [x] **Update/Upgrade Commands**:
+  - [x] Create unified `arm update` and `arm upgrade` commands
+  - [x] Create resource-specific update/upgrade commands
+  - [x] Handle version constraint logic for both resource types
 
-- [ ] **List/Info Commands**:
-  - [ ] Create unified `arm list` and `arm info` commands
-  - [ ] Create resource-specific list/info commands
-  - [ ] Update output formatting to distinguish resource types
+- [x] **List/Info Commands**:
+  - [x] Create unified `arm list` and `arm info` commands
+  - [x] Create resource-specific list/info commands
+  - [x] Update output formatting to distinguish resource types
 
-- [ ] **Outdated Commands**:
-  - [ ] Create unified `arm outdated` command
-  - [ ] Create resource-specific outdated commands
-  - [ ] Support `--output` format options (table, json, list)
+- [x] **Outdated Commands**:
+  - [x] Create unified `arm outdated` command
+  - [x] Create resource-specific outdated commands
+  - [x] Support `--output` format options (table, json, list)
 
 #### 1.4 Configuration Commands
 **File**: `cmd/arm/config.go`
 
-- [ ] **Registry Commands**: Already support the new design
-- [ ] **Sink Commands**: Already support the new design
-- [ ] **Resource Config Commands**:
-  - [ ] Create `arm config ruleset set REGISTRY/RULESET KEY VALUE`
-  - [ ] Create `arm config promptset set REGISTRY/PROMPTSET KEY VALUE`
-  - [ ] Support keys: `version`, `priority` (rulesets only), `sinks`, `includes`, `excludes`
+- [x] **Registry Commands**: Already support the new design
+- [x] **Sink Commands**: Already support the new design
+- [x] **Resource Config Commands**:
+  - [x] Create `arm config ruleset set REGISTRY/RULESET KEY VALUE`
+  - [x] Create `arm config promptset set REGISTRY/PROMPTSET KEY VALUE`
+  - [x] Support keys: `version`, `priority` (rulesets only), `sinks`, `includes`, `excludes`
 
 #### 1.5 Utility Commands
 **Files**: `cmd/arm/cache.go`, `cmd/arm/compile.go`
 
-- [ ] **Cache Commands**: Update to handle both resource types
-- [ ] **Compile Commands**: Update to support both rulesets and promptsets
-- [ ] Add `arm clean sinks` command for sink cleanup
+- [x] **Cache Commands**: Update to handle both resource types
+- [x] **Compile Commands**: Update to support both rulesets and promptsets
+- [x] Add `arm clean sinks` command for sink cleanup
 
 ### 2. Internal Package Refactoring
 

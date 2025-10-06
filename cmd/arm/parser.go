@@ -5,53 +5,53 @@ import (
 	"strings"
 )
 
-// RulesetRef represents a parsed ruleset reference
-type RulesetRef struct {
+// PackageRef represents a parsed package reference (ruleset or promptset)
+type PackageRef struct {
 	Registry string
 	Name     string
 	Version  string
 }
 
-// ParseRulesetArg parses registry/ruleset[@version] format
-func ParseRulesetArg(arg string) (RulesetRef, error) {
+// ParsePackageArg parses registry/package[@version] format
+func ParsePackageArg(arg string) (PackageRef, error) {
 	if arg == "" {
-		return RulesetRef{}, fmt.Errorf("ruleset argument cannot be empty")
+		return PackageRef{}, fmt.Errorf("package argument cannot be empty")
 	}
 
 	parts := strings.SplitN(arg, "/", 2)
 	if len(parts) != 2 {
-		return RulesetRef{}, fmt.Errorf("invalid ruleset format: %s (expected registry/ruleset[@version])", arg)
+		return PackageRef{}, fmt.Errorf("invalid package format: %s (expected registry/package[@version])", arg)
 	}
 
 	registry := parts[0]
-	rulesetAndVersion := parts[1]
+	packageAndVersion := parts[1]
 
-	versionParts := strings.SplitN(rulesetAndVersion, "@", 2)
-	ruleset := versionParts[0]
+	versionParts := strings.SplitN(packageAndVersion, "@", 2)
+	packageName := versionParts[0]
 	version := ""
 	if len(versionParts) > 1 {
 		version = versionParts[1]
 	}
 
 	if registry == "" {
-		return RulesetRef{}, fmt.Errorf("registry name cannot be empty")
+		return PackageRef{}, fmt.Errorf("registry name cannot be empty")
 	}
-	if ruleset == "" {
-		return RulesetRef{}, fmt.Errorf("ruleset name cannot be empty")
+	if packageName == "" {
+		return PackageRef{}, fmt.Errorf("package name cannot be empty")
 	}
 
-	return RulesetRef{
+	return PackageRef{
 		Registry: registry,
-		Name:     ruleset,
+		Name:     packageName,
 		Version:  version,
 	}, nil
 }
 
-// ParseRulesetArgs parses multiple ruleset arguments
-func ParseRulesetArgs(args []string) ([]RulesetRef, error) {
-	refs := make([]RulesetRef, len(args))
+// ParsePackageArgs parses multiple package arguments
+func ParsePackageArgs(args []string) ([]PackageRef, error) {
+	refs := make([]PackageRef, len(args))
 	for i, arg := range args {
-		ref, err := ParseRulesetArg(arg)
+		ref, err := ParsePackageArg(arg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse argument %d (%s): %w", i+1, arg, err)
 		}
