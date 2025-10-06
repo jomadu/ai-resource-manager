@@ -4,12 +4,7 @@ Rulesets are collections of AI rules packaged as versioned units, identified by 
 
 ## Commands
 
-- `arm install ruleset <registry>/<ruleset>[@version] <sink>...` - Install ruleset to specific sinks
-- `arm update ruleset [ruleset...]` - Update to latest compatible versions
-- `arm uninstall ruleset <registry>/<ruleset>` - Remove ruleset
-- `arm list ruleset` - Show installed rulesets
-- `arm info ruleset [ruleset...]` - Show detailed information
-- `arm config ruleset set <registry>/<ruleset> <key> <value>` - Update ruleset configuration
+For detailed command usage and examples, see [Ruleset Management](commands.md#ruleset-management) in the commands reference.
 
 ## ARM Resource Format
 

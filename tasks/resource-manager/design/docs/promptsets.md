@@ -4,12 +4,7 @@ Promptsets are collections of AI prompts packaged as versioned units, identified
 
 ## Commands
 
-- `arm install promptset <registry>/<promptset>[@version] <sink>...` - Install promptset to specific sinks
-- `arm update promptset [promptset...]` - Update to latest compatible versions
-- `arm uninstall promptset <registry>/<promptset>` - Remove promptset
-- `arm list promptset` - Show installed promptsets
-- `arm info promptset [promptset...]` - Show detailed information
-- `arm config promptset set <registry>/<promptset> <key> <value>` - Update promptset configuration
+For detailed command usage and examples, see [Promptset Management](commands.md#promptset-management) in the commands reference.
 
 ## ARM Promptset Format
 
