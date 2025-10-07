@@ -2,51 +2,53 @@
 
 ## Table of Contents
 
-- [Core](#core)
-  - [arm version](#arm-version)
-  - [arm help](#arm-help)
-- [Registry Management](#registry-management)
-  - [arm add registry](#arm-add-registry)
-  - [arm remove registry](#arm-remove-registry)
-  - [arm config registry set](#arm-config-registry-set)
-  - [arm list registry](#arm-list-registry)
-  - [arm info registry](#arm-info-registry)
-- [Sink Management](#sink-management)
-  - [arm add sink](#arm-add-sink)
-  - [arm remove sink](#arm-remove-sink)
-  - [arm config sink set](#arm-config-sink-set)
-  - [arm list sink](#arm-list-sink)
-  - [arm info sink](#arm-info-sink)
-- [Package Management](#package-management)
-  - [arm install](#arm-install)
-  - [arm outdated](#arm-outdated)
-  - [arm update](#arm-update)
-  - [arm upgrade](#arm-upgrade)
-  - [arm uninstall](#arm-uninstall)
-  - [arm list](#arm-list)
-  - [arm info](#arm-info)
-- [Ruleset Management](#ruleset-management)
-  - [arm install ruleset](#arm-install-ruleset)
-  - [arm uninstall ruleset](#arm-uninstall-ruleset)
-  - [arm config ruleset set](#arm-config-ruleset-set)
-  - [arm list ruleset](#arm-list-ruleset)
-  - [arm info ruleset](#arm-info-ruleset)
-  - [arm update ruleset](#arm-update-ruleset)
-  - [arm upgrade ruleset](#arm-upgrade-ruleset)
-  - [arm outdated ruleset](#arm-outdated-ruleset)
-- [Promptset Management](#promptset-management)
-  - [arm install promptset](#arm-install-promptset)
-  - [arm uninstall promptset](#arm-uninstall-promptset)
-  - [arm config promptset set](#arm-config-promptset-set)
-  - [arm list promptset](#arm-list-promptset)
-  - [arm info promptset](#arm-info-promptset)
-  - [arm update promptset](#arm-update-promptset)
-  - [arm upgrade promptset](#arm-upgrade-promptset)
-  - [arm outdated promptset](#arm-outdated-promptset)
-- [Utilities](#utilities)
-  - [arm clean cache](#arm-clean-cache)
-  - [arm clean sinks](#arm-clean-sinks)
-  - [arm compile](#arm-compile)
+- [Commands](#commands)
+  - [Table of Contents](#table-of-contents)
+  - [Core](#core)
+    - [arm version](#arm-version)
+    - [arm help](#arm-help)
+  - [Registry Management](#registry-management)
+    - [arm add registry](#arm-add-registry)
+    - [arm remove registry](#arm-remove-registry)
+    - [arm config registry set](#arm-config-registry-set)
+    - [arm list registry](#arm-list-registry)
+    - [arm info registry](#arm-info-registry)
+  - [Sink Management](#sink-management)
+    - [arm add sink](#arm-add-sink)
+    - [arm remove sink](#arm-remove-sink)
+    - [arm config sink set](#arm-config-sink-set)
+    - [arm list sink](#arm-list-sink)
+    - [arm info sink](#arm-info-sink)
+  - [Package Management](#package-management)
+    - [arm install](#arm-install)
+    - [arm outdated](#arm-outdated)
+    - [arm update](#arm-update)
+    - [arm upgrade](#arm-upgrade)
+    - [arm uninstall](#arm-uninstall)
+    - [arm list](#arm-list)
+    - [arm info](#arm-info)
+  - [Ruleset Management](#ruleset-management)
+    - [arm install ruleset](#arm-install-ruleset)
+    - [arm uninstall ruleset](#arm-uninstall-ruleset)
+    - [arm config ruleset set](#arm-config-ruleset-set)
+    - [arm list ruleset](#arm-list-ruleset)
+    - [arm info ruleset](#arm-info-ruleset)
+    - [arm update ruleset](#arm-update-ruleset)
+    - [arm upgrade ruleset](#arm-upgrade-ruleset)
+    - [arm outdated ruleset](#arm-outdated-ruleset)
+  - [Promptset Management](#promptset-management)
+    - [arm install promptset](#arm-install-promptset)
+    - [arm uninstall promptset](#arm-uninstall-promptset)
+    - [arm config promptset set](#arm-config-promptset-set)
+    - [arm list promptset](#arm-list-promptset)
+    - [arm info promptset](#arm-info-promptset)
+    - [arm update promptset](#arm-update-promptset)
+    - [arm upgrade promptset](#arm-upgrade-promptset)
+    - [arm outdated promptset](#arm-outdated-promptset)
+  - [Utilities](#utilities)
+    - [arm clean cache](#arm-clean-cache)
+    - [arm clean sinks](#arm-clean-sinks)
+    - [arm compile](#arm-compile)
 
 ## Core
 
@@ -95,23 +97,26 @@ $ arm add registry --help
 
 ### arm add registry
 
-`arm add registry --type <git|gitlab|cloudsmith> [--gitlab-group-id ID] [--gitlab-project-id ID] NAME URL`
+`arm add registry --type <git|gitlab|cloudsmith> [--branches BRANCH...] [--group-id ID] [--project-id ID] [--api-version VERSION] [--owner OWNER] [--repo REPO] NAME URL`
 
-Add a new registry to the ARM configuration. This command supports different registry types (git, gitlab, cloudsmith) and allows specifying additional parameters like GitLab group and project IDs for more precise targeting.
+Add a new registry to the ARM configuration. This command supports different registry types (git, gitlab, cloudsmith) and allows specifying additional parameters like GitLab group and project IDs, or Cloudsmith owner and repository for more precise targeting.
 
 **Examples:**
 ```bash
 # Add a Git registry
 $ arm add registry --type git my-org https://github.com/my-org/arm-registry
 
+# Add a Git registry with specific branches
+$ arm add registry --type git --branches main,develop my-org https://github.com/my-org/arm-registry
+
 # Add a GitLab registry with group ID
-$ arm add registry --type gitlab --gitlab-group-id 123 my-gitlab https://gitlab.com
+$ arm add registry --type gitlab --group-id 123 my-gitlab https://gitlab.example.com
 
 # Add a GitLab registry with project ID
-$ arm add registry --type gitlab --gitlab-project-id 456 my-gitlab-project https://gitlab.com
+$ arm add registry --type gitlab --project-id 456 my-gitlab-project https://gitlab.example.com
 
 # Add a Cloudsmith registry
-$ arm add registry --type cloudsmith sample-registry https://app.cloudsmith.com/sample-org/arm-registry
+$ arm add registry --type cloudsmith --owner my-org --repo my-repo cloudsmith-registry https://app.cloudsmith.com
 ```
 
 ### arm remove registry
@@ -137,10 +142,16 @@ Set configuration values for a specific registry. This command allows you to con
 $ arm config registry set my-org url https://github.com/my-org/new-arm-registry
 
 # Set GitLab group ID
-$ arm config registry set my-gitlab gitlab_group_id 789
+$ arm config registry set my-gitlab group_id 789
 
 # Set GitLab project ID
-$ arm config registry set my-gitlab-project gitlab_project_id 101
+$ arm config registry set my-gitlab-project project_id 101
+
+# Set Cloudsmith owner
+$ arm config registry set cloudsmith-registry owner new-org
+
+# Set Cloudsmith repository
+$ arm config registry set cloudsmith-registry repository new-repo
 ```
 
 ### arm list registry
@@ -154,9 +165,9 @@ List all configured registries. This command displays all registries that have b
 $ arm list registry
 NAME              TYPE        URL                                          CONFIG
 my-org            git         https://github.com/my-org/arm-registry
-my-gitlab         gitlab      https://gitlab.com                          gitlab_group_id=123
-my-gitlab-project gitlab      https://gitlab.com                          gitlab_project_id=101
-sample-registry   cloudsmith  https://app.cloudsmith.com/sample-org/arm-registry
+my-gitlab         gitlab      https://gitlab.example.com                  group_id=123
+my-gitlab-project gitlab      https://gitlab.example.com                  project_id=101
+cloudsmith-registry cloudsmith  https://app.cloudsmith.com                    owner=my-org, repository=my-repo
 ```
 
 ### arm info registry
@@ -171,7 +182,7 @@ Display detailed information about one or more registries. This command shows co
 $ arm info registry
 
 # Show info for specific registries
-$ arm info registry my-org sample-registry
+$ arm info registry my-org cloudsmith-registry
 ```
 
 **Sample output:**
@@ -184,13 +195,15 @@ URL: https://github.com/my-org/arm-registry
 $ arm info registry my-gitlab
 Registry: my-gitlab
 Type: gitlab
-URL: https://gitlab.com
-Gitlab Group Id: 123
+URL: https://gitlab.example.com
+Group Id: 123
 
-$ arm info registry sample-registry
-Registry: sample-registry
+$ arm info registry cloudsmith-registry
+Registry: cloudsmith-registry
 Type: cloudsmith
-URL: https://app.cloudsmith.com/sample-org/arm-registry
+URL: https://app.cloudsmith.com
+Owner: my-org
+Repository: my-repo
 ```
 
 ## Sink Management

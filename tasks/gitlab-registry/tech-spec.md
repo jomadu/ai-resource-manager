@@ -290,13 +290,13 @@ func (c *GitLabClient) downloadSingleFile(ctx context.Context, pkg GitLabPackage
 #### CLI Commands
 ```bash
 # Add GitLab project registry
-arm config registry add my-gitlab https://gitlab.com/group/project --type gitlab
+arm config registry add my-gitlab https://gitlab.example.com/group/project --type gitlab
 
 # Add with explicit project ID
-arm config registry add my-gitlab https://gitlab.com --type gitlab --project-id 12345
+arm config registry add my-gitlab https://gitlab.example.com --type gitlab --project-id 12345
 
 # Add GitLab group registry
-arm config registry add my-gitlab-group https://gitlab.com/group --type gitlab --group-id 456
+arm config registry add my-gitlab-group https://gitlab.example.com/group --type gitlab --group-id 456
 
 # Install from GitLab registry with file selection
 arm install my-gitlab/cursor-rules --include "*.mdc" --sinks cursor

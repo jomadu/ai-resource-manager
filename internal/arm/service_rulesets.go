@@ -17,7 +17,7 @@ import (
 
 func (a *ArmService) InstallRuleset(ctx context.Context, req *InstallRulesetRequest) error {
 	// Load registries once and validate
-	registries, err := a.manifestManager.GetRawRegistries(ctx)
+	registries, err := a.manifestManager.GetRegistries(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get registries: %w", err)
 	}
@@ -77,7 +77,7 @@ func (a *ArmService) InstallAll(ctx context.Context) error {
 }
 
 func (a *ArmService) InstallManifest(ctx context.Context) error {
-	manifestEntries, manifestErr := a.manifestManager.GetEntries(ctx)
+	manifestEntries, manifestErr := a.manifestManager.GetRulesets(ctx)
 	lockEntries, lockErr := a.lockFileManager.GetEntries(ctx)
 
 	// Case: No manifest, no lockfile
@@ -116,7 +116,7 @@ func (a *ArmService) InstallManifest(ctx context.Context) error {
 
 func (a *ArmService) UninstallRuleset(ctx context.Context, registry, ruleset string) error {
 	// Get manifest entry to find target sinks
-	manifestEntry, err := a.manifestManager.GetEntry(ctx, registry, ruleset)
+	manifestEntry, err := a.manifestManager.GetRuleset(ctx, registry, ruleset)
 	if err != nil {
 		return fmt.Errorf("failed to get manifest entry: %w", err)
 	}
@@ -139,7 +139,7 @@ func (a *ArmService) UninstallRuleset(ctx context.Context, registry, ruleset str
 	}
 
 	// Remove from manifest
-	if err := a.manifestManager.RemoveEntry(ctx, registry, ruleset); err != nil {
+	if err := a.manifestManager.RemoveRuleset(ctx, registry, ruleset); err != nil {
 		return fmt.Errorf("failed to remove from manifest: %w", err)
 	}
 
@@ -154,13 +154,13 @@ func (a *ArmService) UninstallRuleset(ctx context.Context, registry, ruleset str
 
 func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetName string) error {
 	// Get manifest entry for version constraint
-	manifestEntry, err := a.manifestManager.GetEntry(ctx, registryName, rulesetName)
+	manifestEntry, err := a.manifestManager.GetRuleset(ctx, registryName, rulesetName)
 	if err != nil {
 		return fmt.Errorf("failed to get manifest entry: %w", err)
 	}
 
 	// Resolve what version we should have
-	registries, err := a.manifestManager.GetRawRegistries(ctx)
+	registries, err := a.manifestManager.GetRegistries(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get registries: %w", err)
 	}
@@ -250,7 +250,7 @@ func (a *ArmService) UpdateAll(ctx context.Context) error {
 }
 
 func (a *ArmService) UpdateAllRulesets(ctx context.Context) error {
-	manifestEntries, manifestErr := a.manifestManager.GetEntries(ctx)
+	manifestEntries, manifestErr := a.manifestManager.GetRulesets(ctx)
 	_, lockErr := a.lockFileManager.GetEntries(ctx)
 
 	// Case: No manifest, no lockfile
@@ -278,7 +278,7 @@ func (a *ArmService) UpdateAllRulesets(ctx context.Context) error {
 func (a *ArmService) SetRulesetConfig(ctx context.Context, registry, ruleset, field, value string) error {
 
 	// Get current manifest entry
-	entry, err := a.manifestManager.GetEntry(ctx, registry, ruleset)
+	entry, err := a.manifestManager.GetRuleset(ctx, registry, ruleset)
 	if err != nil {
 		return fmt.Errorf("failed to get ruleset entry: %w", err)
 	}
@@ -313,7 +313,7 @@ func (a *ArmService) SetRulesetConfig(ctx context.Context, registry, ruleset, fi
 	}
 
 	// Update manifest
-	if err := a.manifestManager.UpdateEntry(ctx, registry, ruleset, entry); err != nil {
+	if err := a.manifestManager.UpdateRuleset(ctx, registry, ruleset, entry); err != nil {
 		return fmt.Errorf("failed to update manifest: %w", err)
 	}
 
@@ -353,15 +353,15 @@ func (a *ArmService) updateTrackingFiles(ctx context.Context, req *InstallRulese
 	}
 	manifestVersion = expandVersionShorthand(manifestVersion)
 
-	manifestEntry := manifest.Entry{
+	manifestEntry := manifest.RulesetConfig{
 		Version:  manifestVersion,
 		Priority: &req.Priority,
 		Include:  req.Include,
 		Exclude:  req.Exclude,
 		Sinks:    req.Sinks,
 	}
-	if err := a.manifestManager.CreateEntry(ctx, req.Registry, req.Ruleset, &manifestEntry); err != nil {
-		if err := a.manifestManager.UpdateEntry(ctx, req.Registry, req.Ruleset, &manifestEntry); err != nil {
+	if err := a.manifestManager.AddRuleset(ctx, req.Registry, req.Ruleset, &manifestEntry); err != nil {
+		if err := a.manifestManager.UpdateRuleset(ctx, req.Registry, req.Ruleset, &manifestEntry); err != nil {
 			return fmt.Errorf("failed to update manifest: %w", err)
 		}
 	}
@@ -383,7 +383,7 @@ func (a *ArmService) updateTrackingFiles(ctx context.Context, req *InstallRulese
 
 func (a *ArmService) cleanPreviousInstallation(ctx context.Context, registry, ruleset string) error {
 	// Get current manifest entry to find previous sinks
-	manifestEntry, err := a.manifestManager.GetEntry(ctx, registry, ruleset)
+	manifestEntry, err := a.manifestManager.GetRuleset(ctx, registry, ruleset)
 	if err != nil {
 		// No previous installation
 		return nil
@@ -456,7 +456,7 @@ func (a *ArmService) installFromLockfile(ctx context.Context, lockEntries map[st
 
 func (a *ArmService) installExactVersion(ctx context.Context, registryName, ruleset string, lockEntry *lockfile.Entry) error {
 	// Get registry config from manifest
-	registries, err := a.manifestManager.GetRawRegistries(ctx)
+	registries, err := a.manifestManager.GetRegistries(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get registries: %w", err)
 	}
@@ -466,7 +466,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 	}
 
 	// Get manifest entry for include/exclude patterns
-	manifestEntry, err := a.manifestManager.GetEntry(ctx, registryName, ruleset)
+	manifestEntry, err := a.manifestManager.GetRuleset(ctx, registryName, ruleset)
 	if err != nil {
 		return fmt.Errorf("failed to get manifest entry: %w", err)
 	}
@@ -513,12 +513,12 @@ func (a *ArmService) getOutdatedRulesets(ctx context.Context) ([]OutdatedRuleset
 		return nil, fmt.Errorf("failed to get lockfile entries: %w", err)
 	}
 
-	manifestEntries, err := a.manifestManager.GetEntries(ctx)
+	manifestEntries, err := a.manifestManager.GetRulesets(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get manifest entries: %w", err)
 	}
 
-	registryConfigs, err := a.manifestManager.GetRawRegistries(ctx)
+	registryConfigs, err := a.manifestManager.GetRegistries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get registries: %w", err)
 	}
@@ -609,7 +609,7 @@ func (a *ArmService) listInstalledRulesets(ctx context.Context) ([]*RulesetInfo,
 
 func (a *ArmService) getRulesetInfo(ctx context.Context, registry, ruleset string) (*RulesetInfo, error) {
 	// Get manifest entry
-	manifestEntry, err := a.manifestManager.GetEntry(ctx, registry, ruleset)
+	manifestEntry, err := a.manifestManager.GetRuleset(ctx, registry, ruleset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get manifest entry: %w", err)
 	}

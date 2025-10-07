@@ -65,7 +65,7 @@ Complete `.armrc` example:
 token = glpat-abc123def456ghi789
 
 # GitLab.com project
-[registry https://gitlab.com/project/12345]
+[registry https://gitlab.example.com/project/12345]
 token = glpat-xyz789uvw456rst123
 
 # Group-level packages
@@ -75,6 +75,10 @@ token = glpat-group-token-here
 # Internal HTTP registry with custom port
 [registry http://internal-gitlab.company.com:8080/project/999]
 token = glpat-internal-token-here
+
+# Cloudsmith registry
+[registry https://app.cloudsmith.com/myorg/ai-rules]
+token = ckcy_abc123def456ghi789jkl012mno345pqr678stu901vwx234yz
 ```
 
 ## Security Notes
