@@ -20,7 +20,7 @@ import (
 
 // CloudsmithRegistry implements the Registry interface for Cloudsmith package registries
 type CloudsmithRegistry struct {
-	cache        cache.RegistryRulesetCache
+	cache        cache.RegistryPackageCache
 	config       CloudsmithRegistryConfig
 	resolver     resolver.ConstraintResolver
 	client       *CloudsmithClient
@@ -66,14 +66,14 @@ type CloudsmithPackage struct {
 // We'll handle this in the parsing logic
 
 // NewCloudsmithRegistry creates a new Cloudsmith-based registry
-func NewCloudsmithRegistry(registryName string, config *CloudsmithRegistryConfig, rulesetCache cache.RegistryRulesetCache) *CloudsmithRegistry {
+func NewCloudsmithRegistry(registryName string, config *CloudsmithRegistryConfig, packageCache cache.RegistryPackageCache) *CloudsmithRegistry {
 	client := &CloudsmithClient{
 		baseURL:    "https://api.cloudsmith.io", // Always use API base URL for client
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}
 
 	return &CloudsmithRegistry{
-		cache:        rulesetCache,
+		cache:        packageCache,
 		config:       *config,
 		resolver:     resolver.NewGitConstraintResolver(),
 		client:       client,
@@ -92,7 +92,7 @@ func NewCloudsmithRegistryNoCache(registryName string, config *CloudsmithRegistr
 	}
 
 	return &CloudsmithRegistry{
-		cache:        cache.NewNoopRegistryRulesetCache(),
+		cache:        cache.NewNoopRegistryPackageCache(),
 		config:       *config,
 		resolver:     resolver.NewGitConstraintResolver(),
 		client:       client,
@@ -173,7 +173,7 @@ func (c *CloudsmithRegistry) ResolveVersion(ctx context.Context, ruleset, constr
 
 func (c *CloudsmithRegistry) GetContent(ctx context.Context, ruleset string, version types.Version, selector types.ContentSelector) ([]types.File, error) {
 	// Try cache first
-	files, err := c.cache.GetRulesetVersion(ctx, selector, version.Version)
+	files, err := c.cache.GetPackageVersion(ctx, selector, version.Version)
 	if err == nil {
 		return files, nil
 	}
@@ -203,7 +203,7 @@ func (c *CloudsmithRegistry) GetContent(ctx context.Context, ruleset string, ver
 	}
 
 	// Cache the result
-	_ = c.cache.SetRulesetVersion(ctx, selector, version.Version, filteredFiles)
+	_ = c.cache.SetPackageVersion(ctx, selector, version.Version, filteredFiles)
 
 	return filteredFiles, nil
 }

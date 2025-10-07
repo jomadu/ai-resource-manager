@@ -20,7 +20,7 @@ import (
 
 // GitLabRegistry implements the Registry interface for GitLab package registries
 type GitLabRegistry struct {
-	cache        cache.RegistryRulesetCache
+	cache        cache.RegistryPackageCache
 	config       GitLabRegistryConfig
 	resolver     resolver.ConstraintResolver
 	client       *GitLabClient
@@ -65,7 +65,7 @@ type GitLabPackageFile struct {
 }
 
 // NewGitLabRegistry creates a new GitLab-based registry
-func NewGitLabRegistry(registryName string, config *GitLabRegistryConfig, rulesetCache cache.RegistryRulesetCache) *GitLabRegistry {
+func NewGitLabRegistry(registryName string, config *GitLabRegistryConfig, packageCache cache.RegistryPackageCache) *GitLabRegistry {
 	client := &GitLabClient{
 		baseURL:    config.URL,
 		apiVersion: config.GetAPIVersion(),
@@ -73,7 +73,7 @@ func NewGitLabRegistry(registryName string, config *GitLabRegistryConfig, rulese
 	}
 
 	return &GitLabRegistry{
-		cache:        rulesetCache,
+		cache:        packageCache,
 		config:       *config,
 		resolver:     resolver.NewGitConstraintResolver(),
 		client:       client,
@@ -93,7 +93,7 @@ func NewGitLabRegistryNoCache(registryName string, config *GitLabRegistryConfig)
 	}
 
 	return &GitLabRegistry{
-		cache:        cache.NewNoopRegistryRulesetCache(),
+		cache:        cache.NewNoopRegistryPackageCache(),
 		config:       *config,
 		resolver:     resolver.NewGitConstraintResolver(),
 		client:       client,
@@ -195,7 +195,7 @@ func (g *GitLabRegistry) ResolveVersion(ctx context.Context, ruleset, constraint
 
 func (g *GitLabRegistry) GetContent(ctx context.Context, ruleset string, version types.Version, selector types.ContentSelector) ([]types.File, error) {
 	// Try cache first
-	files, err := g.cache.GetRulesetVersion(ctx, selector, version.Version)
+	files, err := g.cache.GetPackageVersion(ctx, selector, version.Version)
 	if err == nil {
 		return files, nil
 	}
@@ -234,7 +234,7 @@ func (g *GitLabRegistry) GetContent(ctx context.Context, ruleset string, version
 	}
 
 	// Cache the result
-	_ = g.cache.SetRulesetVersion(ctx, selector, version.Version, filteredFiles)
+	_ = g.cache.SetPackageVersion(ctx, selector, version.Version, filteredFiles)
 
 	return filteredFiles, nil
 }

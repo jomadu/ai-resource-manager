@@ -17,7 +17,7 @@ func NewRegistry(name string, rawConfig map[string]interface{}) (Registry, error
 
 	switch registryType {
 	case "git":
-		return newGitRegistry(name, rawConfig)
+		return newGitRegistry(rawConfig)
 	case "gitlab":
 		return newGitLabRegistry(name, rawConfig)
 	case "cloudsmith":
@@ -27,7 +27,7 @@ func NewRegistry(name string, rawConfig map[string]interface{}) (Registry, error
 	}
 }
 
-func newGitRegistry(name string, rawConfig map[string]interface{}) (*GitRegistry, error) {
+func newGitRegistry(rawConfig map[string]interface{}) (*GitRegistry, error) {
 	// Parse raw config into GitRegistryConfig
 	configBytes, err := json.Marshal(rawConfig)
 	if err != nil {
@@ -44,17 +44,17 @@ func newGitRegistry(name string, rawConfig map[string]interface{}) (*GitRegistry
 		"type": gitConfig.Type,
 	}
 
-	rulesetCache, err := cache.NewRegistryRulesetCache(registryKeyObj)
+	packageCache, err := cache.NewRegistryPackageCache(registryKeyObj)
 	if err != nil {
 		return nil, err
 	}
 
-	repoCache, err := cache.NewGitRepoCache(registryKeyObj, name, gitConfig.URL)
+	repoCache, err := cache.NewGitRepoCache(registryKeyObj, gitConfig.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewGitRegistry(gitConfig, rulesetCache, repoCache), nil
+	return NewGitRegistry(gitConfig, packageCache, repoCache), nil
 }
 
 func newGitLabRegistry(name string, rawConfig map[string]interface{}) (*GitLabRegistry, error) {
@@ -81,12 +81,12 @@ func newGitLabRegistry(name string, rawConfig map[string]interface{}) (*GitLabRe
 		registryKeyObj["group_id"] = gitlabConfig.GroupID
 	}
 
-	rulesetCache, err := cache.NewRegistryRulesetCache(registryKeyObj)
+	packageCache, err := cache.NewRegistryPackageCache(registryKeyObj)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewGitLabRegistry(name, &gitlabConfig, rulesetCache), nil
+	return NewGitLabRegistry(name, &gitlabConfig, packageCache), nil
 }
 
 func newCloudsmithRegistry(name string, rawConfig map[string]interface{}) (*CloudsmithRegistry, error) {
@@ -109,10 +109,10 @@ func newCloudsmithRegistry(name string, rawConfig map[string]interface{}) (*Clou
 		"repository": cloudsmithConfig.Repository,
 	}
 
-	rulesetCache, err := cache.NewRegistryRulesetCache(registryKeyObj)
+	packageCache, err := cache.NewRegistryPackageCache(registryKeyObj)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewCloudsmithRegistry(name, &cloudsmithConfig, rulesetCache), nil
+	return NewCloudsmithRegistry(name, &cloudsmithConfig, packageCache), nil
 }

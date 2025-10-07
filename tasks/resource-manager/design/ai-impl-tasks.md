@@ -188,27 +188,40 @@ This document provides a detailed investigation of the codebase to identify spec
 - [x] Combined Create/Update into CreateOrUpdate methods
 - [x] Updated service implementations to use new interface
 
-#### 2.5 Cache System Updates
+#### 2.5 Cache System Updates ✅ COMPLETED
 **File**: `internal/cache/registry_ruleset_cache.go` → `internal/cache/registry_package_cache.go`
 
-- [ ] **Rename Interface**: `RegistryRulesetCache` → `RegistryPackageCache`
-- [ ] **Update Methods**:
-  - [ ] `GetRulesetVersion` → `GetPackageVersion` (with resource type parameter)
-  - [ ] `SetRulesetVersion` → `SetPackageVersion` (with resource type parameter)
-  - [ ] Add resource type handling throughout
+- [x] **Rename Interface**: `RegistryRulesetCache` → `RegistryPackageCache`
+- [x] **Update Methods**:
+  - [x] `GetRulesetVersion` → `GetPackageVersion` (generic, no resource type parameter)
+  - [x] `SetRulesetVersion` → `SetPackageVersion` (generic, no resource type parameter)
+  - [x] `InvalidateRuleset` → `InvalidatePackage` (removed unused methods)
+  - [x] `InvalidateVersion` → `InvalidateVersion` (removed unused methods)
+  - [x] Added `Cleanup(maxAge time.Duration) error` method for cache cleanup
 
 **File**: `internal/cache/file_registry_ruleset_cache.go` → `internal/cache/file_registry_package_cache.go`
-- [ ] Rename file and update implementation
-- [ ] Update cache directory structure to support both resource types
-- [ ] Update file naming conventions
+- [x] Rename file and update implementation
+- [x] Update cache directory structure to use `packages/` instead of `rulesets/`
+- [x] Update all method names and variable names to use generic package terminology
+- [x] Inlined `CleanupOldVersions` logic into `Cleanup` method
+- [x] Updated index structure to use `PackageIndexEntry` and `packages` field
 
 **File**: `internal/cache/file_git_repo_cache.go`
-- [ ] Update to store cloned repo as `repository` (remove name requirement)
-- [ ] Simplify structure per design notes
+- [x] Update to store cloned repo as `repository` (remove name requirement)
+- [x] Simplified constructor to remove unused `repoName` parameter
 
 **File**: `internal/cache/manager.go`
-- [ ] Update to work with new package cache interface
-- [ ] Handle both resource types in cleanup operations
+- [x] **ELIMINATED**: Moved cache manager logic directly into ARM service
+- [x] **REFACTORED**: `CleanCacheWithAge` now handles all registries directly
+- [x] **IMPROVED**: Better error handling and user feedback for cache operations
+
+**Additional Improvements**:
+- [x] **Removed unused methods**: `InvalidatePackage` and `InvalidateVersion` were never called
+- [x] **Enhanced interface**: Added `Cleanup` method for selective cache cleanup
+- [x] **Simplified architecture**: Eliminated unnecessary pass-through layer in cache manager
+- [x] **Updated all registry implementations**: Git, GitLab, and Cloudsmith registries now use new interface
+- [x] **Updated test mocks**: All test infrastructure updated to use new interface
+- [x] **Updated factory**: Registry factory now creates `RegistryPackageCache` instances
 
 #### 2.6 Index Manager Updates
 **File**: `internal/index/manager.go`
