@@ -17,9 +17,6 @@ func TestDefaultIndexGenerator_CreateRuleset(t *testing.T) {
 				},
 			},
 		},
-		Files: map[string]FileInfo{
-			"./security/rule1.md": {Registry: "ai-rules", Ruleset: "security"},
-		},
 	}
 
 	ruleset := generator.CreateRuleset(data)
@@ -77,7 +74,6 @@ func TestDefaultIndexGenerator_GenerateBody_Empty(t *testing.T) {
 	generator := &DefaultIndexGenerator{}
 	data := &IndexData{
 		Rulesets: make(map[string]map[string]RulesetInfo),
-		Files:    make(map[string]FileInfo),
 	}
 
 	body := generator.GenerateBody(data)

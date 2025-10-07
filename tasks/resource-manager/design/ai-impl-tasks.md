@@ -223,20 +223,20 @@ This document provides a detailed investigation of the codebase to identify spec
 - [x] **Updated test mocks**: All test infrastructure updated to use new interface
 - [x] **Updated factory**: Registry factory now creates `RegistryPackageCache` instances
 
-#### 2.6 Index Manager Updates
+#### 2.6 Index Manager Updates ✅ COMPLETED
 **File**: `internal/index/manager.go`
 
-- [ ] **Update Interface**: Support both rulesets and promptsets
-- [ ] **Ruleset Operations**: Continue to impact `arm_index.*` generation
-- [ ] **Promptset Operations**: Do NOT impact `arm_index.*` generation
-- [ ] **Update Methods**:
-  - [ ] `Create` method should accept resource type parameter
-  - [ ] `Read` method should return resource type information
-  - [ ] `Delete` method should handle both resource types
+- [x] **Update Interface**: Support both rulesets and promptsets
+- [x] **Ruleset Operations**: Continue to impact `arm_index.*` generation
+- [x] **Promptset Operations**: Do NOT impact `arm_index.*` generation
+- [x] **Update Methods**:
+  - [x] `Create` method should accept resource type parameter
+  - [x] `Read` method should return resource type information
+  - [x] `Delete` method should handle both resource types
 
 **File**: `internal/index/generator.go`
-- [ ] Update to only generate index for rulesets
-- [ ] Ignore promptsets in index generation
+- [x] Update to only generate index for rulesets
+- [x] Ignore promptsets in index generation
 
 #### 2.7 Installer Updates
 **File**: `internal/installer/types.go`
