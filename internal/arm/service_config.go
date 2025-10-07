@@ -7,7 +7,7 @@ import (
 	"github.com/jomadu/ai-rules-manager/internal/installer"
 	"github.com/jomadu/ai-rules-manager/internal/manifest"
 	"github.com/jomadu/ai-rules-manager/internal/registry"
-	"github.com/jomadu/ai-rules-manager/internal/urf"
+	"github.com/jomadu/ai-rules-manager/internal/resource"
 )
 
 func (a *ArmService) ShowConfig(ctx context.Context) error {
@@ -131,7 +131,7 @@ func (a *ArmService) AddSink(ctx context.Context, name, directory, sinkType, lay
 	}
 
 	// Use manifest manager to add sink
-	return a.manifestManager.AddSink(ctx, name, directory, layout, urf.CompileTarget(compileTarget), force)
+	return a.manifestManager.AddSink(ctx, name, directory, layout, resource.CompileTarget(compileTarget), force)
 }
 
 func (a *ArmService) RemoveSink(ctx context.Context, name string) error {

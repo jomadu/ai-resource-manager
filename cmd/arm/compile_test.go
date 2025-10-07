@@ -10,7 +10,7 @@ func TestNewCompileCmd(t *testing.T) {
 	cmd := newCompileCmd()
 
 	assert.Equal(t, "compile [file...]", cmd.Use)
-	assert.Equal(t, "Compile URF files to target format", cmd.Short)
+	assert.Equal(t, "Compile resource files to target format", cmd.Short)
 	assert.True(t, cmd.HasFlags())
 
 	// Check that target flag exists

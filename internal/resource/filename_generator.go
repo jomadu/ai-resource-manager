@@ -1,4 +1,4 @@
-package urf
+package resource
 
 import "fmt"
 

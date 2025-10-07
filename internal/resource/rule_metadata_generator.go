@@ -1,4 +1,4 @@
-package urf
+package resource
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ func (g *DefaultRuleMetadataGenerator) GenerateRuleMetadata(namespace string, ru
 	content.WriteString(fmt.Sprintf("  id: %s\n", ruleset.Metadata.ID))
 	content.WriteString(fmt.Sprintf("  name: %s\n", ruleset.Metadata.Name))
 	content.WriteString("  rules:\n")
-	for id := range ruleset.Rules {
+	for id := range ruleset.Spec.Rules {
 		content.WriteString(fmt.Sprintf("    - %s\n", id))
 	}
 	content.WriteString("rule:\n")

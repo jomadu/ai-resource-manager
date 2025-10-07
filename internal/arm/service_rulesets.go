@@ -282,7 +282,7 @@ func (a *ArmService) UpdateRulesetConfig(ctx context.Context, registry, ruleset,
 		if _, err := fmt.Sscanf(value, "%d", &priority); err != nil {
 			return fmt.Errorf("priority must be a number: %w", err)
 		}
-		entry.Priority = priority
+		entry.Priority = &priority
 	case "version":
 		entry.Version = value
 	case "sinks":
@@ -328,7 +328,7 @@ func (a *ArmService) UpdateRulesetConfig(ctx context.Context, registry, ruleset,
 		Registry: registry,
 		Ruleset:  ruleset,
 		Version:  entry.Version,
-		Priority: entry.Priority,
+		Priority: *entry.Priority,
 		Include:  entry.GetIncludePatterns(),
 		Exclude:  entry.Exclude,
 		Sinks:    entry.Sinks,
@@ -347,7 +347,7 @@ func (a *ArmService) updateTrackingFiles(ctx context.Context, req *InstallReques
 
 	manifestEntry := manifest.Entry{
 		Version:  manifestVersion,
-		Priority: req.Priority,
+		Priority: &req.Priority,
 		Include:  req.Include,
 		Exclude:  req.Exclude,
 		Sinks:    req.Sinks,
@@ -490,7 +490,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 		if sink, exists := sinks[sinkName]; exists {
 			installer := installer.NewInstaller(&sink)
 			// Use display version for directory names
-			if err := installer.Install(ctx, registryName, ruleset, lockEntry.Display, manifestEntry.Priority, files); err != nil {
+			if err := installer.Install(ctx, registryName, ruleset, lockEntry.Display, *manifestEntry.Priority, files); err != nil {
 				return err
 			}
 		}
@@ -639,7 +639,7 @@ func (a *ArmService) getRulesetInfo(ctx context.Context, registry, ruleset strin
 		Name:     ruleset,
 		Manifest: ManifestInfo{
 			Constraint: manifestEntry.Version,
-			Priority:   manifestEntry.Priority,
+			Priority:   *manifestEntry.Priority,
 			Include:    manifestEntry.Include,
 			Exclude:    manifestEntry.Exclude,
 			Sinks:      manifestEntry.Sinks,

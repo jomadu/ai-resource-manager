@@ -1,4 +1,4 @@
-package urf
+package resource
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ type MarkdownRuleGenerator struct {
 func (g *MarkdownRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, ruleID string, rule *Rule) string {
 	var content strings.Builder
 
-	// URF metadata block (Amazon Q doesn't use tool-specific frontmatter)
+	// Resource metadata block (Amazon Q doesn't use tool-specific frontmatter)
 	content.WriteString(g.metadataGen.GenerateRuleMetadata(namespace, ruleset, ruleID, rule))
 
 	// Rule title and body

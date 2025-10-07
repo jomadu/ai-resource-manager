@@ -89,32 +89,32 @@ This document provides a detailed investigation of the codebase to identify spec
 
 ### 2. Internal Package Refactoring
 
-#### 2.1 URF → Resource Package Rename
+#### 2.1 URF → Resource Package Rename ✅ COMPLETED
 **Directory**: `internal/urf/` → `internal/resource/`
 
-- [ ] **Rename Package**: `urf` → `resource`
-- [ ] **Update Types** (`internal/resource/types.go`):
-  - [ ] Add `Promptset` struct with `apiVersion`, `kind: Promptset`, `metadata`, `spec.prompts`
-  - [ ] Add `Prompt` struct with `name`, `description`, `body`
-  - [ ] Update `Parser` interface to support both `Ruleset` and `Promptset`
-  - [ ] Update `Compiler` interface to handle both resource types
-  - [ ] Add `PromptGenerator` interface for prompt compilation
-  - [ ] Update `CompileTarget` constants if needed
+- [x] **Rename Package**: `urf` → `resource`
+- [x] **Update Types** (`internal/resource/types.go`):
+  - [x] Add `Promptset` struct with `apiVersion`, `kind: Promptset`, `metadata`, `spec.prompts`
+  - [x] Add `Prompt` struct with `name`, `description`, `body`
+  - [x] Update `Parser` interface to support both `Ruleset` and `Promptset`
+  - [x] Update `Compiler` interface to handle both resource types
+  - [x] Add `PromptGenerator` interface for prompt compilation
+  - [x] Update `CompileTarget` constants if needed
 
-- [ ] **Update Parser** (`internal/resource/parser.go`):
-  - [ ] Modify `IsURF` → `IsResource` to detect both rulesets and promptsets
-  - [ ] Update `Parse` to return interface{} or union type
-  - [ ] Add validation for promptset structure
+- [x] **Update Parser** (`internal/resource/parser.go`):
+  - [x] Modify `IsURF` → `IsResource` to detect both rulesets and promptsets
+  - [x] Update `Parse` to return interface{} or union type
+  - [x] Add validation for promptset structure
 
-- [ ] **Update Compiler** (`internal/resource/compiler.go`):
-  - [ ] Support compilation of both rulesets and promptsets
-  - [ ] Add prompt compilation logic (simpler than rules - no metadata)
-  - [ ] Update `Compile` method signature
+- [x] **Update Compiler** (`internal/resource/compiler.go`):
+  - [x] Support compilation of both rulesets and promptsets
+  - [x] Add prompt compilation logic (simpler than rules - no metadata)
+  - [x] Update `Compile` method signature
 
-- [ ] **Update Generators**:
-  - [ ] Create prompt generators for each target (cursor, amazonq, copilot, md)
-  - [ ] Update rule generators if needed
-  - [ ] Ensure prompt compilation produces content-only files (no frontmatter)
+- [x] **Update Generators**:
+  - [x] Create prompt generators for each target (cursor, amazonq, copilot, md)
+  - [x] Update rule generators if needed
+  - [x] Ensure prompt compilation produces content-only files (no frontmatter)
 
 #### 2.2 Service Interface Updates
 **File**: `internal/arm/service_interface.go`

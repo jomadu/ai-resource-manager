@@ -44,7 +44,7 @@ func (m *MockUI) CompileComplete(stats ui.CompileStats, validateOnly bool) {
 	m.Called(stats, validateOnly)
 }
 
-func TestArmService_isURFFile(t *testing.T) {
+func TestArmService_isResourceFile(t *testing.T) {
 	service := &ArmService{}
 
 	tests := []struct {
@@ -63,7 +63,7 @@ func TestArmService_isURFFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := service.isURFFile(tt.path)
+			result := service.isResourceFile(tt.path)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -126,41 +126,43 @@ func TestArmService_discoverFiles(t *testing.T) {
 	})
 }
 
-func TestArmService_validateURFFile(t *testing.T) {
+func TestArmService_validateResourceFile(t *testing.T) {
 	tempDir := t.TempDir()
 	service := &ArmService{}
 
-	t.Run("valid URF file", func(t *testing.T) {
-		validURF := `version: "1.0"
+	t.Run("valid resource file", func(t *testing.T) {
+		validResource := `apiVersion: "v1"
+kind: "Ruleset"
 metadata:
   id: "test-rules"
   name: "Test Rules"
-rules:
-  rule1:
-    name: "Test Rule"
-    body: "This is a test rule"`
+spec:
+  rules:
+    rule1:
+      name: "Test Rule"
+      body: "This is a test rule"`
 
 		filePath := filepath.Join(tempDir, "valid.yaml")
-		err := os.WriteFile(filePath, []byte(validURF), 0o644)
+		err := os.WriteFile(filePath, []byte(validResource), 0o644)
 		assert.NoError(t, err)
 
-		err = service.validateURFFile(filePath)
+		err = service.validateResourceFile(filePath)
 		assert.NoError(t, err)
 	})
 
-	t.Run("invalid URF file", func(t *testing.T) {
+	t.Run("invalid resource file", func(t *testing.T) {
 		invalidURF := `invalid: yaml`
 
 		filePath := filepath.Join(tempDir, "invalid.yaml")
 		err := os.WriteFile(filePath, []byte(invalidURF), 0o644)
 		assert.NoError(t, err)
 
-		err = service.validateURFFile(filePath)
+		err = service.validateResourceFile(filePath)
 		assert.Error(t, err)
 	})
 
 	t.Run("non-existent file", func(t *testing.T) {
-		err := service.validateURFFile("nonexistent.yaml")
+		err := service.validateResourceFile("nonexistent.yaml")
 		assert.Error(t, err)
 	})
 }
@@ -170,8 +172,9 @@ func TestArmService_CompileFiles_ValidateOnly(t *testing.T) {
 	mockUI := &MockUI{}
 	service := &ArmService{ui: mockUI}
 
-	// Create valid URF file
-	validURF := `version: "1.0"
+	// Create valid resource file
+	validResource := `apiVersion: "v1"
+kind: "Ruleset"
 metadata:
   id: "test-rules"
   name: "Test Rules"
@@ -181,7 +184,7 @@ rules:
     body: "This is a test rule"`
 
 	filePath := filepath.Join(tempDir, "test.yaml")
-	err := os.WriteFile(filePath, []byte(validURF), 0o644)
+	err := os.WriteFile(filePath, []byte(validResource), 0o644)
 	assert.NoError(t, err)
 
 	// Set up mock expectations
@@ -208,7 +211,7 @@ func TestArmService_CompileFiles_EmptyFiles(t *testing.T) {
 	service := &ArmService{ui: mockUI}
 
 	// Set up mock expectations
-	mockUI.On("Warning", "No URF files found matching the criteria").Once()
+	mockUI.On("Warning", "No resource files found matching the criteria").Once()
 
 	req := &CompileRequest{
 		Files:  []string{tempDir}, // Empty directory

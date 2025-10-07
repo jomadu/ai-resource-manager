@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/jomadu/ai-rules-manager/internal/registry"
-	"github.com/jomadu/ai-rules-manager/internal/urf"
+	"github.com/jomadu/ai-rules-manager/internal/resource"
 )
 
 // Manager handles arm.json manifest file operations.
@@ -27,7 +27,7 @@ type Manager interface {
 	RemoveEntry(ctx context.Context, registry, ruleset string) error
 	GetSinks(ctx context.Context) (map[string]SinkConfig, error)
 	GetSink(ctx context.Context, name string) (*SinkConfig, error)
-	AddSink(ctx context.Context, name, directory, layout string, compileTarget urf.CompileTarget, force bool) error
+	AddSink(ctx context.Context, name, directory, layout string, compileTarget resource.CompileTarget, force bool) error
 	UpdateSink(ctx context.Context, name, field, value string) error
 	RemoveSink(ctx context.Context, name string) error
 }
@@ -61,7 +61,7 @@ func (f *FileManager) GetEntries(ctx context.Context) (map[string]map[string]Ent
 	if err != nil {
 		return nil, err
 	}
-	return manifest.Rulesets, nil
+	return manifest.Packages.Rulesets, nil
 }
 
 func (f *FileManager) GetRawRegistries(ctx context.Context) (map[string]map[string]interface{}, error) {
@@ -77,13 +77,16 @@ func (f *FileManager) CreateEntry(ctx context.Context, registry, ruleset string,
 	if err != nil {
 		return err
 	}
-	if manifest.Rulesets[registry] == nil {
-		manifest.Rulesets[registry] = make(map[string]Entry)
+	if manifest.Packages.Rulesets == nil {
+		manifest.Packages.Rulesets = make(map[string]map[string]Entry)
 	}
-	if _, exists := manifest.Rulesets[registry][ruleset]; exists {
+	if manifest.Packages.Rulesets[registry] == nil {
+		manifest.Packages.Rulesets[registry] = make(map[string]Entry)
+	}
+	if _, exists := manifest.Packages.Rulesets[registry][ruleset]; exists {
 		return errors.New("entry already exists")
 	}
-	manifest.Rulesets[registry][ruleset] = *entry
+	manifest.Packages.Rulesets[registry][ruleset] = *entry
 	return f.saveManifest(manifest)
 }
 
@@ -92,13 +95,13 @@ func (f *FileManager) UpdateEntry(ctx context.Context, registry, ruleset string,
 	if err != nil {
 		return err
 	}
-	if manifest.Rulesets[registry] == nil {
+	if manifest.Packages.Rulesets == nil || manifest.Packages.Rulesets[registry] == nil {
 		return errors.New("registry not found")
 	}
-	if _, exists := manifest.Rulesets[registry][ruleset]; !exists {
+	if _, exists := manifest.Packages.Rulesets[registry][ruleset]; !exists {
 		return errors.New("entry not found")
 	}
-	manifest.Rulesets[registry][ruleset] = *entry
+	manifest.Packages.Rulesets[registry][ruleset] = *entry
 	return f.saveManifest(manifest)
 }
 
@@ -107,15 +110,15 @@ func (f *FileManager) RemoveEntry(ctx context.Context, registry, ruleset string)
 	if err != nil {
 		return err
 	}
-	if manifest.Rulesets[registry] == nil {
+	if manifest.Packages.Rulesets == nil || manifest.Packages.Rulesets[registry] == nil {
 		return errors.New("registry not found")
 	}
-	if _, exists := manifest.Rulesets[registry][ruleset]; !exists {
+	if _, exists := manifest.Packages.Rulesets[registry][ruleset]; !exists {
 		return errors.New("entry not found")
 	}
-	delete(manifest.Rulesets[registry], ruleset)
-	if len(manifest.Rulesets[registry]) == 0 {
-		delete(manifest.Rulesets, registry)
+	delete(manifest.Packages.Rulesets[registry], ruleset)
+	if len(manifest.Packages.Rulesets[registry]) == 0 {
+		delete(manifest.Packages.Rulesets, registry)
 	}
 	return f.saveManifest(manifest)
 }
@@ -126,8 +129,11 @@ func (f *FileManager) loadManifest() (*Manifest, error) {
 		// File doesn't exist, return initialized manifest
 		return &Manifest{
 			Registries: make(map[string]map[string]interface{}),
-			Rulesets:   make(map[string]map[string]Entry),
-			Sinks:      make(map[string]SinkConfig),
+			Packages: PackageConfig{
+				Rulesets:   make(map[string]map[string]Entry),
+				Promptsets: make(map[string]map[string]Entry),
+			},
+			Sinks: make(map[string]SinkConfig),
 		}, nil
 	}
 	var manifest Manifest
@@ -138,8 +144,11 @@ func (f *FileManager) loadManifest() (*Manifest, error) {
 	if manifest.Registries == nil {
 		manifest.Registries = make(map[string]map[string]interface{})
 	}
-	if manifest.Rulesets == nil {
-		manifest.Rulesets = make(map[string]map[string]Entry)
+	if manifest.Packages.Rulesets == nil {
+		manifest.Packages.Rulesets = make(map[string]map[string]Entry)
+	}
+	if manifest.Packages.Promptsets == nil {
+		manifest.Packages.Promptsets = make(map[string]map[string]Entry)
 	}
 	if manifest.Sinks == nil {
 		manifest.Sinks = make(map[string]SinkConfig)
@@ -152,8 +161,11 @@ func (f *FileManager) saveManifest(manifest *Manifest) error {
 	if len(manifest.Registries) == 0 {
 		manifest.Registries = nil
 	}
-	if len(manifest.Rulesets) == 0 {
-		manifest.Rulesets = nil
+	if len(manifest.Packages.Rulesets) == 0 {
+		manifest.Packages.Rulesets = nil
+	}
+	if len(manifest.Packages.Promptsets) == 0 {
+		manifest.Packages.Promptsets = nil
 	}
 	if len(manifest.Sinks) == 0 {
 		manifest.Sinks = nil
@@ -283,7 +295,7 @@ func (f *FileManager) GetSink(ctx context.Context, name string) (*SinkConfig, er
 	return &sink, nil
 }
 
-func (f *FileManager) AddSink(ctx context.Context, name, directory, layout string, compileTarget urf.CompileTarget, force bool) error {
+func (f *FileManager) AddSink(ctx context.Context, name, directory, layout string, compileTarget resource.CompileTarget, force bool) error {
 	if layout == "" {
 		layout = "hierarchical"
 	}
@@ -319,7 +331,7 @@ func (f *FileManager) RemoveSink(ctx context.Context, name string) error {
 
 	// Check if any rulesets are using this sink
 	var usingRulesets []string
-	for registryName, rulesets := range manifest.Rulesets {
+	for registryName, rulesets := range manifest.Packages.Rulesets {
 		for rulesetName, entry := range rulesets {
 			for _, sink := range entry.Sinks {
 				if sink == name {
@@ -360,7 +372,7 @@ func (f *FileManager) UpdateSink(ctx context.Context, name, field, value string)
 		}
 		sink.Layout = value
 	case "compileTarget":
-		sink.CompileTarget = urf.CompileTarget(strings.TrimSpace(value))
+		sink.CompileTarget = resource.CompileTarget(strings.TrimSpace(value))
 	default:
 		return fmt.Errorf("unknown field '%s' (valid: directory, layout, compileTarget)", field)
 	}

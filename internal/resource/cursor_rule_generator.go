@@ -1,4 +1,4 @@
-package urf
+package resource
 
 import (
 	"fmt"
@@ -21,16 +21,16 @@ func (g *CursorRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, r
 	}
 
 	if len(rule.Scope) > 0 && len(rule.Scope[0].Files) > 0 {
-		content.WriteString("globs: [")
+		content.WriteString("globs: ")
 		for i, file := range rule.Scope[0].Files {
 			if i > 0 {
 				content.WriteString(", ")
 			}
-			content.WriteString(fmt.Sprintf("%q", file))
+			content.WriteString(file)
 		}
-		content.WriteString("]\n")
+		content.WriteString("\n")
 	} else {
-		content.WriteString("globs: [\"**/*\"]\n")
+		content.WriteString("globs: **/*\n")
 	}
 
 	if rule.Enforcement == "must" {
@@ -38,7 +38,7 @@ func (g *CursorRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, r
 	}
 	content.WriteString("---\n\n")
 
-	// URF metadata block
+	// Resource metadata block
 	content.WriteString(g.metadataGen.GenerateRuleMetadata(namespace, ruleset, ruleID, rule))
 
 	// Rule title and body
