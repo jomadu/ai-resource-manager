@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/jomadu/ai-rules-manager/internal/index"
+	"github.com/jomadu/ai-rules-manager/internal/resource"
 	"github.com/jomadu/ai-rules-manager/internal/types"
-	"github.com/jomadu/ai-rules-manager/internal/urf"
 )
 
 // FlatInstaller implements flat file installation where all files are placed directly in the target directory
@@ -19,12 +19,12 @@ import (
 type FlatInstaller struct {
 	baseDir      string
 	indexManager *index.IndexManager
-	compiler     urf.Compiler
+	compiler     resource.Compiler
 }
 
 // NewFlatInstaller creates a new flat installer.
-func NewFlatInstaller(baseDir string, target urf.CompileTarget) *FlatInstaller {
-	compiler, _ := urf.NewCompiler(target)
+func NewFlatInstaller(baseDir string, target resource.CompileTarget) *FlatInstaller {
+	compiler, _ := resource.NewCompiler(target)
 	return &FlatInstaller{
 		baseDir:      baseDir,
 		indexManager: index.NewIndexManager(baseDir, "flat", target),
@@ -42,8 +42,8 @@ func (f *FlatInstaller) Install(ctx context.Context, registry, ruleset, version 
 		return err
 	}
 
-	// Process URF files
-	processedFiles, err := processURFFiles(files, registry, ruleset, version, f.compiler)
+	// Process resource files
+	processedFiles, err := processResourceFiles(files, registry, ruleset, version, f.compiler)
 	if err != nil {
 		return err
 	}

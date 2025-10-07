@@ -1,4 +1,4 @@
-package urf
+package resource
 
 import (
 	"strings"
@@ -9,13 +9,17 @@ func TestDefaultRuleMetadataGenerator_GenerateRuleMetadata(t *testing.T) {
 	generator := NewRuleMetadataGenerator()
 
 	ruleset := &Ruleset{
+		APIVersion: "v1",
+		Kind:       "Ruleset",
 		Metadata: Metadata{
 			ID:   "test-ruleset",
 			Name: "Test Ruleset",
 		},
-		Rules: map[string]Rule{
-			"rule1": {Name: "Rule 1"},
-			"rule2": {Name: "Rule 2"},
+		Spec: RulesetSpec{
+			Rules: map[string]Rule{
+				"rule1": {Name: "Rule 1"},
+				"rule2": {Name: "Rule 2"},
+			},
 		},
 	}
 
@@ -82,8 +86,12 @@ func TestDefaultRuleMetadataGenerator_GenerateRuleMetadata_NoScope(t *testing.T)
 	generator := NewRuleMetadataGenerator()
 
 	ruleset := &Ruleset{
-		Metadata: Metadata{ID: "test", Name: "Test"},
-		Rules:    map[string]Rule{"rule1": {}},
+		APIVersion: "v1",
+		Kind:       "Ruleset",
+		Metadata:   Metadata{ID: "test", Name: "Test"},
+		Spec: RulesetSpec{
+			Rules: map[string]Rule{"rule1": {}},
+		},
 	}
 
 	rule := &Rule{

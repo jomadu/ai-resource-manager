@@ -1,4 +1,4 @@
-package urf
+package resource
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ func (g *CopilotRuleGenerator) GenerateRule(namespace string, ruleset *Ruleset, 
 	}
 	content.WriteString("---\n\n")
 
-	// URF metadata block
+	// Resource metadata block
 	content.WriteString(g.metadataGen.GenerateRuleMetadata(namespace, ruleset, ruleID, rule))
 
 	// Rule title and body

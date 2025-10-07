@@ -132,7 +132,7 @@ func TestGitLabRegistry_GetContent(t *testing.T) {
 	_ = os.Chdir(tmpDir)
 
 	version := types.Version{Version: "1.0.0", Display: "1.0.0"}
-	selector := types.ContentSelector{Include: []string{"*.yml", "*.yaml"}} // URF files
+	selector := types.ContentSelector{Include: []string{"*.yml", "*.yaml"}} // Resource files
 
 	files, err := registry.GetContent(context.Background(), "ai-rules", version, selector)
 	if err != nil {
@@ -140,10 +140,10 @@ func TestGitLabRegistry_GetContent(t *testing.T) {
 	}
 
 	if len(files) != 2 {
-		t.Fatalf("Expected 2 URF files, got %d", len(files))
+		t.Fatalf("Expected 2 resource files, got %d", len(files))
 	}
 
-	// Should get URF files by default
+	// Should get resource files by default
 	expectedPaths := map[string]bool{
 		"clean-code.yml": false,
 		"security.yml":   false,
@@ -159,7 +159,7 @@ func TestGitLabRegistry_GetContent(t *testing.T) {
 
 	for path, found := range expectedPaths {
 		if !found {
-			t.Errorf("Expected URF file %s not found", path)
+			t.Errorf("Expected resource file %s not found", path)
 		}
 	}
 }

@@ -7,14 +7,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/jomadu/ai-rules-manager/internal/resource"
 	"github.com/jomadu/ai-rules-manager/internal/types"
-	"github.com/jomadu/ai-rules-manager/internal/urf"
 	"gopkg.in/yaml.v3"
 )
 
 type IndexManager struct {
 	sinkDir   string
-	compiler  urf.Compiler
+	compiler  resource.Compiler
 	generator IndexGenerator
 	layout    string
 }
@@ -35,8 +35,8 @@ type FileInfo struct {
 	Ruleset  string `json:"ruleset"`
 }
 
-func NewIndexManager(sinkDir, layout string, target urf.CompileTarget) *IndexManager {
-	compiler, _ := urf.NewCompiler(target)
+func NewIndexManager(sinkDir, layout string, target resource.CompileTarget) *IndexManager {
+	compiler, _ := resource.NewCompiler(target)
 	return &IndexManager{
 		sinkDir:   sinkDir,
 		compiler:  compiler,
@@ -160,19 +160,19 @@ func (m *IndexManager) writeJSON(data *IndexData) error {
 func (m *IndexManager) writeCompiled(data *IndexData) error {
 	ruleset := m.generator.CreateRuleset(data)
 
-	// Convert ruleset to URF file format
-	urfContent, err := yaml.Marshal(ruleset)
+	// Convert ruleset to resource file format
+	resourceContent, err := yaml.Marshal(ruleset)
 	if err != nil {
 		return fmt.Errorf("failed to marshal ruleset to YAML: %w", err)
 	}
 
-	urfFile := &types.File{
+	resourceFile := &types.File{
 		Path:    "arm-rulesets.yml",
-		Content: urfContent,
-		Size:    int64(len(urfContent)),
+		Content: resourceContent,
+		Size:    int64(len(resourceContent)),
 	}
 
-	files, err := m.compiler.Compile("arm", urfFile)
+	files, err := m.compiler.CompileRuleset("arm", resourceFile)
 	if err != nil {
 		return err
 	}

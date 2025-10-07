@@ -1,4 +1,4 @@
-package urf
+package resource
 
 import (
 	"strings"
@@ -11,26 +11,30 @@ func TestCursorRuleGenerator_GenerateRule(t *testing.T) {
 	}
 
 	ruleset := &Ruleset{
+		APIVersion: "v1",
+		Kind:       "Ruleset",
 		Metadata: Metadata{
 			ID:          "test-ruleset",
 			Name:        "Test Ruleset",
 			Description: "Test description",
 		},
-		Rules: map[string]Rule{
-			"rule1": {
-				Name:        "Test Rule 1",
-				Description: "First test rule",
-				Priority:    100,
-				Enforcement: "must",
-				Scope: []Scope{
-					{Files: []string{"**/*.js", "**/*.ts"}},
+		Spec: RulesetSpec{
+			Rules: map[string]Rule{
+				"rule1": {
+					Name:        "Test Rule 1",
+					Description: "First test rule",
+					Priority:    100,
+					Enforcement: "must",
+					Scope: []Scope{
+						{Files: []string{"**/*.js", "**/*.ts"}},
+					},
+					Body: "This is the rule body content.",
 				},
-				Body: "This is the rule body content.",
 			},
 		},
 	}
 
-	rule := ruleset.Rules["rule1"]
+	rule := ruleset.Spec.Rules["rule1"]
 	namespace := "ai-rules/test@1.0.0"
 
 	result := generator.GenerateRule(namespace, ruleset, "rule1", &rule)
@@ -39,14 +43,14 @@ func TestCursorRuleGenerator_GenerateRule(t *testing.T) {
 	if !strings.Contains(result, `description: "First test rule"`) {
 		t.Error("Expected description in frontmatter")
 	}
-	if !strings.Contains(result, `globs: ["**/*.js", "**/*.ts"]`) {
-		t.Error("Expected globs array in frontmatter")
+	if !strings.Contains(result, `globs: **/*.js, **/*.ts`) {
+		t.Error("Expected comma-separated globs in frontmatter")
 	}
 	if !strings.Contains(result, "alwaysApply: true") {
 		t.Error("Expected alwaysApply: true for 'must' enforcement")
 	}
 
-	// Check URF metadata block
+	// Check resource metadata block
 	if !strings.Contains(result, "namespace: "+namespace) {
 		t.Error("Expected namespace in metadata block")
 	}
@@ -72,17 +76,21 @@ func TestCursorRuleGenerator_GenerateRule_ShouldEnforcement(t *testing.T) {
 	}
 
 	ruleset := &Ruleset{
-		Metadata: Metadata{ID: "test", Name: "Test"},
-		Rules: map[string]Rule{
-			"rule1": {
-				Name:        "Test Rule",
-				Enforcement: "should",
-				Body:        "Rule content",
+		APIVersion: "v1",
+		Kind:       "Ruleset",
+		Metadata:   Metadata{ID: "test", Name: "Test"},
+		Spec: RulesetSpec{
+			Rules: map[string]Rule{
+				"rule1": {
+					Name:        "Test Rule",
+					Enforcement: "should",
+					Body:        "Rule content",
+				},
 			},
 		},
 	}
 
-	rule := ruleset.Rules["rule1"]
+	rule := ruleset.Spec.Rules["rule1"]
 	result := generator.GenerateRule("test", ruleset, "rule1", &rule)
 
 	// Should NOT have alwaysApply for 'should' enforcement

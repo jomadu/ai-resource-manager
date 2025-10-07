@@ -10,8 +10,8 @@ import (
 func newCompileCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "compile [file...]",
-		Short:        "Compile URF files to target format",
-		Long:         `Compile Universal Rule Format (URF) files to specific AI tool formats.`,
+		Short:        "Compile resource files to target format",
+		Long:         `Compile resource files (rulesets and promptsets) to specific AI tool formats.`,
 		RunE:         runCompile,
 		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
@@ -21,9 +21,9 @@ func newCompileCmd() *cobra.Command {
 	cmd.Flags().StringP("output", "o", ".", "Output directory")
 	cmd.Flags().StringP("namespace", "n", "", "Optional namespace for compiled rules")
 	cmd.Flags().BoolP("force", "f", false, "Overwrite existing files")
-	cmd.Flags().BoolP("recursive", "r", false, "Recursively find URF files in directories")
+	cmd.Flags().BoolP("recursive", "r", false, "Recursively find resource files in directories")
 	cmd.Flags().BoolP("verbose", "v", false, "Show detailed compilation information")
-	cmd.Flags().Bool("validate-only", false, "Validate URF syntax without compilation")
+	cmd.Flags().Bool("validate-only", false, "Validate resource syntax without compilation")
 	cmd.Flags().StringSlice("include", nil, "Include patterns for file filtering")
 	cmd.Flags().StringSlice("exclude", nil, "Exclude patterns for file filtering")
 	cmd.Flags().Bool("fail-fast", false, "Stop compilation on first error")

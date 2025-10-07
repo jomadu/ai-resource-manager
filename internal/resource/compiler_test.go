@@ -1,4 +1,4 @@
-package urf
+package resource
 
 import (
 	"strings"
@@ -15,41 +15,44 @@ func TestDefaultCompiler_Compile(t *testing.T) {
 	}
 
 	ruleset := &Ruleset{
-		Version: "1.0",
+		APIVersion: "v1",
+		Kind:       "Ruleset",
 		Metadata: Metadata{
 			ID:   "test-ruleset",
 			Name: "Test Ruleset",
 		},
-		Rules: map[string]Rule{
-			"rule1": {
-				Name:        "Test Rule 1",
-				Description: "First rule",
-				Enforcement: "must",
-				Body:        "Rule 1 content",
-			},
-			"rule2": {
-				Name:        "Test Rule 2",
-				Description: "Second rule",
-				Enforcement: "should",
-				Body:        "Rule 2 content",
+		Spec: RulesetSpec{
+			Rules: map[string]Rule{
+				"rule1": {
+					Name:        "Test Rule 1",
+					Description: "First rule",
+					Enforcement: "must",
+					Body:        "Rule 1 content",
+				},
+				"rule2": {
+					Name:        "Test Rule 2",
+					Description: "Second rule",
+					Enforcement: "should",
+					Body:        "Rule 2 content",
+				},
 			},
 		},
 	}
 
 	namespace := "ai-rules/test@1.0.0"
-	// Convert ruleset to URF file format
-	urfContent, err := yaml.Marshal(ruleset)
+	// Convert ruleset to resource file format
+	resourceContent, err := yaml.Marshal(ruleset)
 	if err != nil {
 		t.Fatalf("Failed to marshal ruleset: %v", err)
 	}
 
-	urfFile := &types.File{
+	resourceFile := &types.File{
 		Path:    "test-ruleset.yml",
-		Content: urfContent,
-		Size:    int64(len(urfContent)),
+		Content: resourceContent,
+		Size:    int64(len(resourceContent)),
 	}
 
-	files, err := compiler.Compile(namespace, urfFile)
+	files, err := compiler.CompileRuleset(namespace, resourceFile)
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}
@@ -105,32 +108,35 @@ func TestDefaultCompiler_AmazonQTarget(t *testing.T) {
 	}
 
 	ruleset := &Ruleset{
-		Version: "1.0",
+		APIVersion: "v1",
+		Kind:       "Ruleset",
 		Metadata: Metadata{
 			ID:   "test-ruleset",
 			Name: "Test Ruleset",
 		},
-		Rules: map[string]Rule{
-			"rule1": {
-				Name: "Test Rule",
-				Body: "Rule content",
+		Spec: RulesetSpec{
+			Rules: map[string]Rule{
+				"rule1": {
+					Name: "Test Rule",
+					Body: "Rule content",
+				},
 			},
 		},
 	}
 
-	// Convert ruleset to URF file format
-	urfContent, err := yaml.Marshal(ruleset)
+	// Convert ruleset to resource file format
+	resourceContent, err := yaml.Marshal(ruleset)
 	if err != nil {
 		t.Fatalf("Failed to marshal ruleset: %v", err)
 	}
 
-	urfFile := &types.File{
+	resourceFile := &types.File{
 		Path:    "test-ruleset.yml",
-		Content: urfContent,
-		Size:    int64(len(urfContent)),
+		Content: resourceContent,
+		Size:    int64(len(resourceContent)),
 	}
 
-	files, err := compiler.Compile("test-namespace", urfFile)
+	files, err := compiler.CompileRuleset("test-namespace", resourceFile)
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}

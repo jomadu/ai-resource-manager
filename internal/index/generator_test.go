@@ -27,8 +27,8 @@ func TestDefaultIndexGenerator_CreateRuleset(t *testing.T) {
 	if ruleset.Metadata.ID != "arm" {
 		t.Errorf("expected ID 'arm', got %s", ruleset.Metadata.ID)
 	}
-	if len(ruleset.Rules) != 1 {
-		t.Errorf("expected 1 rule, got %d", len(ruleset.Rules))
+	if len(ruleset.Spec.Rules) != 1 {
+		t.Errorf("expected 1 rule, got %d", len(ruleset.Spec.Rules))
 	}
 }
 
