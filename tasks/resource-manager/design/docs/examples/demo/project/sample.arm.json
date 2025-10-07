@@ -1,8 +1,10 @@
 {
     "registries": {
         "sample-registry": {
-            "url": "https://app.cloudsmith.com/sample-org/arm-registry",
-            "type": "cloudsmith"
+            "url": "https://app.cloudsmith.com",
+            "type": "cloudsmith",
+            "owner": "sample-org",
+            "repository": "arm-registry"
         }
     },
     "packages": {

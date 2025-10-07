@@ -105,7 +105,9 @@ func NewCloudsmithRegistryNoCache(registryName string, config *CloudsmithRegistr
 
 // loadToken loads authentication token from .armrc file
 func (c *CloudsmithRegistry) loadToken() error {
-	token, err := c.rcService.GetValue("registry "+c.config.URL, "token")
+	// Construct the full URL with owner/repository path for .armrc lookup
+	fullURL := fmt.Sprintf("%s/%s/%s", c.config.URL, c.config.Owner, c.config.Repository)
+	token, err := c.rcService.GetValue("registry "+fullURL, "token")
 	if err != nil {
 		return fmt.Errorf("failed to load token from .armrc: %w", err)
 	}

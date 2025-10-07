@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/jomadu/ai-rules-manager/internal/registry"
 	"github.com/spf13/cobra"
 )
 
@@ -37,8 +37,8 @@ Available commands:
 
 Examples:
   arm config registry add my-org https://github.com/my-org/arm-registry --type git
-  arm config registry add my-gitlab https://gitlab.com --type gitlab --gitlab-group-id 123
-  arm config registry add sample-registry https://app.cloudsmith.com/sample-org/arm-registry --type cloudsmith
+  arm config registry add my-gitlab https://gitlab.example.com --type gitlab --group-id 123
+  arm config registry add cloudsmith-registry https://app.cloudsmith.com --type cloudsmith --owner my-org --repo my-repo
   arm config registry remove my-org`,
 }
 
@@ -95,6 +95,49 @@ Examples:
   arm config promptset update ai-rules/promptset sinks cursor,q`,
 }
 
+// validateRegistryFlags validates that the provided flags are appropriate for the registry type
+func validateRegistryFlags(registryType string, flags map[string]string) error {
+	switch registryType {
+	case "git":
+		// Git registries can only use branches flag
+		for flag := range flags {
+			if flag != "branches" {
+				return fmt.Errorf("--%s flag is not valid for git registry type", flag)
+			}
+		}
+	case "gitlab":
+		// GitLab registries can use group-id, project-id, api-version
+		// Cannot use owner, repo, or branches
+		for flag := range flags {
+			if flag != "group-id" && flag != "project-id" && flag != "api-version" {
+				return fmt.Errorf("--%s flag is not valid for gitlab registry type", flag)
+			}
+		}
+		// Cannot specify both group-id and project-id
+		if flags["group-id"] != "" && flags["project-id"] != "" {
+			return fmt.Errorf("cannot specify both --group-id and --project-id for gitlab registry")
+		}
+		// Must specify either group-id or project-id
+		if flags["group-id"] == "" && flags["project-id"] == "" {
+			return fmt.Errorf("either --group-id or --project-id must be specified for gitlab registry")
+		}
+	case "cloudsmith":
+		// Cloudsmith registries can only use owner and repo flags
+		for flag := range flags {
+			if flag != "owner" && flag != "repo" {
+				return fmt.Errorf("--%s flag is not valid for cloudsmith registry type", flag)
+			}
+		}
+		// Both owner and repo are required
+		if flags["owner"] == "" || flags["repo"] == "" {
+			return fmt.Errorf("both --owner and --repo must be specified for cloudsmith registry")
+		}
+	default:
+		return fmt.Errorf("unsupported registry type: %s", registryType)
+	}
+	return nil
+}
+
 var registryAddCmd = &cobra.Command{
 	Use:   "add <name> <url>",
 	Short: "Add a new registry",
@@ -107,17 +150,25 @@ Arguments:
   url   Registry URL (Git repository URL)
 
 Flags:
-  --type                Registry type (git, gitlab, cloudsmith)
-  --git-branches        Git branches to track (for git type)
-  --gitlab-group-id     GitLab group ID (for gitlab type)
-  --gitlab-project-id   GitLab project ID (for gitlab type)
-  --gitlab-api-version  GitLab API version (for gitlab type)
+  --type         Registry type (git, gitlab, cloudsmith)
+
+Git-specific flags:
+  --branches     Git branches to track
+
+GitLab-specific flags:
+  --group-id     GitLab group ID (mutually exclusive with --project-id)
+  --project-id   GitLab project ID (mutually exclusive with --group-id)
+  --api-version  GitLab API version (default: v4)
+
+Cloudsmith-specific flags:
+  --owner        Cloudsmith owner (required)
+  --repo         Cloudsmith repository (required)
 
 Examples:
   arm config registry add my-org https://github.com/my-org/arm-registry --type git
-  arm config registry add my-gitlab https://gitlab.com --type gitlab --gitlab-group-id 123
-  arm config registry add my-gitlab-project https://gitlab.com --type gitlab --gitlab-project-id 456
-  arm config registry add sample-registry https://app.cloudsmith.com/sample-org/arm-registry --type cloudsmith`,
+  arm config registry add my-gitlab https://gitlab.example.com --type gitlab --group-id 123
+  arm config registry add my-gitlab-project https://gitlab.example.com --type gitlab --project-id 456
+  arm config registry add cloudsmith-registry https://app.cloudsmith.com --type cloudsmith --owner my-org --repo my-repo`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
@@ -126,32 +177,54 @@ Examples:
 		if registryType == "" {
 			registryType = "git"
 		}
+		// Collect all flags
+		flags := make(map[string]string)
+		if branches, _ := cmd.Flags().GetStringSlice("branches"); len(branches) > 0 {
+			flags["branches"] = strings.Join(branches, ",")
+		}
+		if groupID, _ := cmd.Flags().GetString("group-id"); groupID != "" {
+			flags["group-id"] = groupID
+		}
+		if projectID, _ := cmd.Flags().GetString("project-id"); projectID != "" {
+			flags["project-id"] = projectID
+		}
+		if apiVersion, _ := cmd.Flags().GetString("api-version"); apiVersion != "" {
+			flags["api-version"] = apiVersion
+		}
+		if owner, _ := cmd.Flags().GetString("owner"); owner != "" {
+			flags["owner"] = owner
+		}
+		if repo, _ := cmd.Flags().GetString("repo"); repo != "" {
+			flags["repo"] = repo
+		}
+
+		// Validate flags based on registry type
+		if err := validateRegistryFlags(registryType, flags); err != nil {
+			return err
+		}
+
+		// Build options map
 		options := make(map[string]interface{})
 		switch registryType {
 		case "git":
-			branches, _ := cmd.Flags().GetStringSlice("git-branches")
-			options["branches"] = branches
+			if branches, exists := flags["branches"]; exists {
+				options["branches"] = strings.Split(branches, ",")
+			}
 		case "gitlab":
-			gitlabProjectID, _ := cmd.Flags().GetString("gitlab-project-id")
-			gitlabGroupID, _ := cmd.Flags().GetString("gitlab-group-id")
-			apiVersion, _ := cmd.Flags().GetString("gitlab-api-version")
-			if apiVersion == "" {
-				apiVersion = "v4"
+			if groupID, exists := flags["group-id"]; exists {
+				options["group_id"] = groupID
 			}
-			if gitlabProjectID == "" && gitlabGroupID == "" {
-				return fmt.Errorf("either --gitlab-project-id or --gitlab-group-id must be specified for GitLab registries")
+			if projectID, exists := flags["project-id"]; exists {
+				options["project_id"] = projectID
 			}
-			options["project_id"] = gitlabProjectID
-			options["group_id"] = gitlabGroupID
-			options["api_version"] = apiVersion
+			if apiVersion, exists := flags["api-version"]; exists {
+				options["api_version"] = apiVersion
+			} else {
+				options["api_version"] = "v4"
+			}
 		case "cloudsmith":
-			// Parse URL to extract owner and repository
-			owner, repository, err := registry.ParseCloudsmithURL(url)
-			if err != nil {
-				return fmt.Errorf("failed to parse Cloudsmith URL: %w", err)
-			}
-			options["owner"] = owner
-			options["repository"] = repository
+			options["owner"] = flags["owner"]
+			options["repository"] = flags["repo"]
 		default:
 			return fmt.Errorf("registry type %s is not implemented", registryType)
 		}
@@ -352,11 +425,18 @@ func init() {
 	configPromptsetCmd.AddCommand(promptsetSetCmd)
 
 	registryAddCmd.Flags().String("type", "git", "Registry type (git, gitlab, cloudsmith)")
-	registryAddCmd.Flags().StringSlice("git-branches", nil, "Git branches to track (for git type)")
 
-	registryAddCmd.Flags().String("gitlab-project-id", "", "GitLab project ID (for gitlab type)")
-	registryAddCmd.Flags().String("gitlab-group-id", "", "GitLab group ID (for gitlab type)")
-	registryAddCmd.Flags().String("gitlab-api-version", "v4", "GitLab API version (for gitlab type)")
+	// Git-specific flags
+	registryAddCmd.Flags().StringSlice("branches", nil, "Git branches to track (for git type)")
+
+	// GitLab-specific flags
+	registryAddCmd.Flags().String("group-id", "", "GitLab group ID (for gitlab type, mutually exclusive with --project-id)")
+	registryAddCmd.Flags().String("project-id", "", "GitLab project ID (for gitlab type, mutually exclusive with --group-id)")
+	registryAddCmd.Flags().String("api-version", "v4", "GitLab API version (for gitlab type)")
+
+	// Cloudsmith-specific flags
+	registryAddCmd.Flags().String("owner", "", "Cloudsmith owner (for cloudsmith type, required)")
+	registryAddCmd.Flags().String("repo", "", "Cloudsmith repository (for cloudsmith type, required)")
 	registryAddCmd.Flags().Bool("force", false, "Overwrite existing registry")
 	sinkAddCmd.Flags().String("type", "", "Sink type with defaults (cursor, copilot, amazonq)")
 	sinkAddCmd.Flags().String("layout", "", "Layout mode (hierarchical, flat)")
