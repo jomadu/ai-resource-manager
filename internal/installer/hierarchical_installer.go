@@ -59,7 +59,7 @@ func (h *HierarchicalInstaller) Install(ctx context.Context, registry, ruleset, 
 	}
 
 	// Update index manager
-	if err := h.indexManager.Create(ctx, registry, ruleset, version, priority, filePaths); err != nil {
+	if err := h.indexManager.CreateRuleset(ctx, registry, ruleset, version, priority, filePaths); err != nil {
 		return err
 	}
 
@@ -68,7 +68,7 @@ func (h *HierarchicalInstaller) Install(ctx context.Context, registry, ruleset, 
 
 func (h *HierarchicalInstaller) Uninstall(ctx context.Context, registry, ruleset string) error {
 	// Remove from index first
-	if err := h.indexManager.Delete(ctx, registry, ruleset); err != nil {
+	if err := h.indexManager.DeleteRuleset(ctx, registry, ruleset); err != nil {
 		// Continue even if not in index
 		_ = err // Explicitly ignore error
 	}
@@ -97,7 +97,7 @@ func (h *HierarchicalInstaller) Uninstall(ctx context.Context, registry, ruleset
 }
 
 func (h *HierarchicalInstaller) ListInstalled(ctx context.Context) ([]Ruleset, error) {
-	rulesets, err := h.indexManager.List(ctx)
+	rulesets, err := h.indexManager.ListRulesets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func (h *HierarchicalInstaller) ListInstalled(ctx context.Context) ([]Ruleset, e
 }
 
 func (h *HierarchicalInstaller) IsInstalled(ctx context.Context, registry, ruleset string) (installed bool, version string, err error) {
-	info, err := h.indexManager.Read(ctx, registry, ruleset)
+	info, err := h.indexManager.ReadRuleset(ctx, registry, ruleset)
 	if err != nil {
 		return false, "", nil
 	}

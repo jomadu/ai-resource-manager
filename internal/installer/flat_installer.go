@@ -62,7 +62,7 @@ func (f *FlatInstaller) Install(ctx context.Context, registry, ruleset, version 
 	}
 
 	// Update index manager
-	if err := f.indexManager.Create(ctx, registry, ruleset, version, priority, filePaths); err != nil {
+	if err := f.indexManager.CreateRuleset(ctx, registry, ruleset, version, priority, filePaths); err != nil {
 		return err
 	}
 
@@ -70,7 +70,7 @@ func (f *FlatInstaller) Install(ctx context.Context, registry, ruleset, version 
 }
 
 func (f *FlatInstaller) Uninstall(ctx context.Context, registry, ruleset string) error {
-	info, err := f.indexManager.Read(ctx, registry, ruleset)
+	info, err := f.indexManager.ReadRuleset(ctx, registry, ruleset)
 	if err != nil {
 		return nil // Not installed
 	}
@@ -86,7 +86,7 @@ func (f *FlatInstaller) Uninstall(ctx context.Context, registry, ruleset string)
 	}
 
 	// Remove from index
-	if err := f.indexManager.Delete(ctx, registry, ruleset); err != nil {
+	if err := f.indexManager.DeleteRuleset(ctx, registry, ruleset); err != nil {
 		return err
 	}
 
@@ -94,7 +94,7 @@ func (f *FlatInstaller) Uninstall(ctx context.Context, registry, ruleset string)
 }
 
 func (f *FlatInstaller) ListInstalled(ctx context.Context) ([]Ruleset, error) {
-	rulesets, err := f.indexManager.List(ctx)
+	rulesets, err := f.indexManager.ListRulesets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (f *FlatInstaller) ListInstalled(ctx context.Context) ([]Ruleset, error) {
 }
 
 func (f *FlatInstaller) IsInstalled(ctx context.Context, registry, ruleset string) (installed bool, version string, err error) {
-	info, err := f.indexManager.Read(ctx, registry, ruleset)
+	info, err := f.indexManager.ReadRuleset(ctx, registry, ruleset)
 	if err != nil {
 		return false, "", nil
 	}
