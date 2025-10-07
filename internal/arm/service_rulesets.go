@@ -73,12 +73,8 @@ func (a *ArmService) InstallRuleset(ctx context.Context, req *InstallRulesetRequ
 }
 
 func (a *ArmService) InstallAll(ctx context.Context) error {
-	return a.InstallManifest(ctx)
-}
-
-func (a *ArmService) InstallManifest(ctx context.Context) error {
 	manifestEntries, manifestErr := a.manifestManager.GetRulesets(ctx)
-	lockEntries, lockErr := a.lockFileManager.GetEntries(ctx)
+	lockEntries, lockErr := a.lockFileManager.GetRulesets(ctx)
 
 	// Case: No manifest, no lockfile
 	if manifestErr != nil && lockErr != nil {
@@ -144,7 +140,7 @@ func (a *ArmService) UninstallRuleset(ctx context.Context, registry, ruleset str
 	}
 
 	// Remove from lockfile
-	if err := a.lockFileManager.RemoveEntry(ctx, registry, ruleset); err != nil {
+	if err := a.lockFileManager.RemoveRuleset(ctx, registry, ruleset); err != nil {
 		return fmt.Errorf("failed to remove from lockfile: %w", err)
 	}
 
@@ -222,7 +218,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 	// Check if installed version matches what we want
 	if installedVersion == resolvedVersionResult.Version.Display {
 		// Get lockfile entry to verify checksum
-		currentLockEntry, err := a.lockFileManager.GetEntry(ctx, registryName, rulesetName)
+		currentLockEntry, err := a.lockFileManager.GetRuleset(ctx, registryName, rulesetName)
 		if err == nil {
 			// Verify checksum to ensure integrity
 			selector := types.ContentSelector{Include: manifestEntry.GetIncludePatterns(), Exclude: manifestEntry.Exclude}
@@ -251,7 +247,7 @@ func (a *ArmService) UpdateAll(ctx context.Context) error {
 
 func (a *ArmService) UpdateAllRulesets(ctx context.Context) error {
 	manifestEntries, manifestErr := a.manifestManager.GetRulesets(ctx)
-	_, lockErr := a.lockFileManager.GetEntries(ctx)
+	_, lockErr := a.lockFileManager.GetRulesets(ctx)
 
 	// Case: No manifest, no lockfile
 	if manifestErr != nil && lockErr != nil {
@@ -372,10 +368,8 @@ func (a *ArmService) updateTrackingFiles(ctx context.Context, req *InstallRulese
 		Display:  version.Display,
 		Checksum: checksum,
 	}
-	if err := a.lockFileManager.CreateEntry(ctx, req.Registry, req.Ruleset, lockEntry); err != nil {
-		if err := a.lockFileManager.UpdateEntry(ctx, req.Registry, req.Ruleset, lockEntry); err != nil {
-			return fmt.Errorf("failed to update lockfile: %w", err)
-		}
+	if err := a.lockFileManager.CreateOrUpdateRuleset(ctx, req.Registry, req.Ruleset, lockEntry); err != nil {
+		return fmt.Errorf("failed to update lockfile: %w", err)
 	}
 
 	return nil
@@ -508,7 +502,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 }
 
 func (a *ArmService) getOutdatedRulesets(ctx context.Context) ([]OutdatedRuleset, error) {
-	lockEntries, err := a.lockFileManager.GetEntries(ctx)
+	lockEntries, err := a.lockFileManager.GetRulesets(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get lockfile entries: %w", err)
 	}
@@ -580,7 +574,7 @@ func (a *ArmService) getOutdatedRulesets(ctx context.Context) ([]OutdatedRuleset
 }
 
 func (a *ArmService) listInstalledRulesets(ctx context.Context) ([]*RulesetInfo, error) {
-	lockEntries, err := a.lockFileManager.GetEntries(ctx)
+	lockEntries, err := a.lockFileManager.GetRulesets(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get lockfile entries: %w", err)
 	}
