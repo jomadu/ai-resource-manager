@@ -9,8 +9,8 @@ type InstallationInfo = ui.InstallationInfo
 type RulesetInfo = ui.RulesetInfo
 type CompileStats = ui.CompileStats
 
-// InstallRequest groups install parameters to avoid repetitive parameter passing.
-type InstallRequest struct {
+// InstallRulesetRequest groups ruleset install parameters to avoid repetitive parameter passing.
+type InstallRulesetRequest struct {
 	Registry string
 	Ruleset  string
 	Version  string
@@ -18,6 +18,16 @@ type InstallRequest struct {
 	Include  []string
 	Exclude  []string
 	Sinks    []string
+}
+
+// InstallPromptsetRequest groups promptset install parameters.
+type InstallPromptsetRequest struct {
+	Registry  string
+	Promptset string
+	Version   string
+	Include   []string
+	Exclude   []string
+	Sinks     []string
 }
 
 // CompileRequest groups compile parameters following ARM patterns

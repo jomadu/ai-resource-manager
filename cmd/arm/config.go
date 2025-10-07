@@ -254,7 +254,7 @@ Examples:
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, field, value := args[0], args[1], args[2]
-		return armService.UpdateRegistry(context.Background(), name, field, value)
+		return armService.SetRegistryConfig(context.Background(), name, field, value)
 	},
 }
 
@@ -275,7 +275,7 @@ Examples:
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name, field, value := args[0], args[1], args[2]
-		return armService.UpdateSink(context.Background(), name, field, value)
+		return armService.SetSinkConfig(context.Background(), name, field, value)
 	},
 }
 
@@ -304,7 +304,7 @@ Examples:
 		}
 
 		// Use service to update ruleset config
-		return armService.UpdateRulesetConfig(context.Background(), ruleset.Registry, ruleset.Name, field, value)
+		return armService.SetRulesetConfig(context.Background(), ruleset.Registry, ruleset.Name, field, value)
 	},
 }
 

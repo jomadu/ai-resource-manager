@@ -43,7 +43,7 @@ func newUpdatePromptsetCmd() *cobra.Command {
 func runUpdateAll(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 	// TODO: Implement unified update when service interface is updated
-	return armService.UpdateAllRulesets(ctx) // Temporary fallback to rulesets only
+	return armService.UpdateAll(ctx) // Temporary fallback to rulesets only
 }
 
 func runUpdateRuleset(cmd *cobra.Command, args []string) error {
@@ -51,7 +51,7 @@ func runUpdateRuleset(cmd *cobra.Command, args []string) error {
 
 	// If no arguments, update all rulesets
 	if len(args) == 0 {
-		return armService.UpdateAllRulesets(ctx)
+		return armService.UpdateAll(ctx)
 	}
 
 	// Parse arguments

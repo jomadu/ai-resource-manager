@@ -154,7 +154,7 @@ func (a *ArmService) RemoveSink(ctx context.Context, name string) error {
 	return nil
 }
 
-func (a *ArmService) UpdateRegistry(ctx context.Context, name, field, value string) error {
+func (a *ArmService) SetRegistryConfig(ctx context.Context, name, field, value string) error {
 	err := a.manifestManager.UpdateGitRegistry(ctx, name, field, value)
 	if err != nil {
 		return err
@@ -163,7 +163,7 @@ func (a *ArmService) UpdateRegistry(ctx context.Context, name, field, value stri
 	return nil
 }
 
-func (a *ArmService) UpdateSink(ctx context.Context, name, field, value string) error {
+func (a *ArmService) SetSinkConfig(ctx context.Context, name, field, value string) error {
 	err := a.manifestManager.UpdateSink(ctx, name, field, value)
 	if err != nil {
 		return err
