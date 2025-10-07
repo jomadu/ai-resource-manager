@@ -169,10 +169,10 @@ This document provides a detailed investigation of the codebase to identify spec
 - [x] Add validation for resource-specific constraints
 - [x] Update serialization/deserialization logic
 
-#### 2.4 Lockfile Manager Updates
+#### 2.4 Lockfile Manager Updates ✅ COMPLETED
 **File**: `internal/lockfile/types.go`
 
-- [ ] **Update LockFile Structure**:
+- [x] **Update LockFile Structure**:
   ```go
   type LockFile struct {
       Rulesets   map[string]map[string]Entry `json:"rulesets"`
@@ -181,9 +181,12 @@ This document provides a detailed investigation of the codebase to identify spec
   ```
 
 **File**: `internal/lockfile/manager.go`
-- [ ] Update all methods to handle both resource types
-- [ ] Add methods for promptset lock management
-- [ ] Update serialization/deserialization logic
+- [x] Update all methods to handle both resource types
+- [x] Add methods for promptset lock management
+- [x] Update serialization/deserialization logic
+- [x] Refactored interface to use specific methods (GetRuleset, GetPromptset, etc.)
+- [x] Combined Create/Update into CreateOrUpdate methods
+- [x] Updated service implementations to use new interface
 
 #### 2.5 Cache System Updates
 **File**: `internal/cache/registry_ruleset_cache.go` → `internal/cache/registry_package_cache.go`
