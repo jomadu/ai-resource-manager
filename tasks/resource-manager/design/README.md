@@ -63,12 +63,12 @@ arm add registry --type git ai-rules https://github.com/jomadu/ai-rules-manager-
 
 Add GitLab registry:
 ```bash
-arm add registry --type gitlab --gitlab-project-id 123 my-gitlab https://gitlab.example.com
+arm add registry --type gitlab --project-id 123 my-gitlab https://gitlab.example.com
 ```
 
 Add Cloudsmith registry:
 ```bash
-arm add registry --type cloudsmith my-cloudsmith https://app.cloudsmith.com/myorg/ai-rules
+arm add registry --type cloudsmith --owner myorg --repo ai-rules my-cloudsmith https://app.cloudsmith.com
 ```
 
 Configure sinks:

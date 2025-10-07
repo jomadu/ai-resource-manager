@@ -145,10 +145,10 @@ This document provides a detailed investigation of the codebase to identify spec
   - [x] Removed redundant `ShowConfig` function (replaced by specific list/info commands)
   - [x] Added `InstallPromptsetRequest` type for promptset operations
 
-#### 2.3 Manifest Manager Updates
+#### 2.3 Manifest Manager Updates ✅ COMPLETED
 **File**: `internal/manifest/types.go`
 
-- [ ] **Update Manifest Structure**:
+- [x] **Update Manifest Structure**:
   ```go
   type Manifest struct {
       Registries map[string]map[string]interface{} `json:"registries,omitempty"`
@@ -160,14 +160,14 @@ This document provides a detailed investigation of the codebase to identify spec
   }
   ```
 
-- [ ] **Update Entry Structure**:
-  - [ ] Make `Priority` optional (only for rulesets)
-  - [ ] Add validation to ensure promptsets don't have priority
+- [x] **Update Entry Structure**:
+  - [x] Make `Priority` optional (only for rulesets)
+  - [x] Add validation to ensure promptsets don't have priority
 
 **File**: `internal/manifest/manager.go`
-- [ ] Update all methods to handle both `rulesets` and `promptsets` sections
-- [ ] Add validation for resource-specific constraints
-- [ ] Update serialization/deserialization logic
+- [x] Update all methods to handle both `rulesets` and `promptsets` sections
+- [x] Add validation for resource-specific constraints
+- [x] Update serialization/deserialization logic
 
 #### 2.4 Lockfile Manager Updates
 **File**: `internal/lockfile/types.go`
