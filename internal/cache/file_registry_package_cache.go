@@ -13,14 +13,14 @@ import (
 	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
-// FileRegistryRulesetCache implements filesystem-based ruleset caching.
-type FileRegistryRulesetCache struct {
+// FileRegistryPackageCache implements filesystem-based package caching.
+type FileRegistryPackageCache struct {
 	registryKeyObj interface{}
 	registryDir    string
 }
 
-// NewRegistryRulesetCache creates a new registry-scoped ruleset cache.
-func NewRegistryRulesetCache(registryKeyObj interface{}) (*FileRegistryRulesetCache, error) {
+// NewRegistryPackageCache creates a new registry-scoped package cache.
+func NewRegistryPackageCache(registryKeyObj interface{}) (*FileRegistryPackageCache, error) {
 	registryKey, err := GenerateKey(registryKeyObj)
 	if err != nil {
 		return nil, err
@@ -29,20 +29,20 @@ func NewRegistryRulesetCache(registryKeyObj interface{}) (*FileRegistryRulesetCa
 	registriesDir := GetRegistriesDir()
 	registryDir := filepath.Join(registriesDir, registryKey)
 
-	return &FileRegistryRulesetCache{
+	return &FileRegistryPackageCache{
 		registryKeyObj: registryKeyObj,
 		registryDir:    registryDir,
 	}, nil
 }
 
-func (f *FileRegistryRulesetCache) ListVersions(ctx context.Context, keyObj interface{}) ([]string, error) {
-	rulesetKey, err := GenerateKey(keyObj)
+func (f *FileRegistryPackageCache) ListVersions(ctx context.Context, keyObj interface{}) ([]string, error) {
+	packageKey, err := GenerateKey(keyObj)
 	if err != nil {
 		return nil, err
 	}
 
-	rulesetDir := filepath.Join(f.registryDir, "rulesets", rulesetKey)
-	entries, err := os.ReadDir(rulesetDir)
+	packageDir := filepath.Join(f.registryDir, "packages", packageKey)
+	entries, err := os.ReadDir(packageDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return []string{}, nil
@@ -60,18 +60,18 @@ func (f *FileRegistryRulesetCache) ListVersions(ctx context.Context, keyObj inte
 	return versions, nil
 }
 
-func (f *FileRegistryRulesetCache) GetRulesetVersion(ctx context.Context, keyObj interface{}, version string) ([]types.File, error) {
+func (f *FileRegistryPackageCache) GetPackageVersion(ctx context.Context, keyObj interface{}, version string) ([]types.File, error) {
 	registryKey, _ := GenerateKey(f.registryKeyObj)
 	var files []types.File
 	var walkErr error
 
 	err := WithRegistryLock(registryKey, func() error {
-		rulesetKey, err := GenerateKey(keyObj)
+		packageKey, err := GenerateKey(keyObj)
 		if err != nil {
 			return err
 		}
 
-		versionDir := filepath.Join(f.registryDir, "rulesets", rulesetKey, version)
+		versionDir := filepath.Join(f.registryDir, "packages", packageKey, version)
 		if _, statErr := os.Stat(versionDir); os.IsNotExist(statErr) {
 			return fmt.Errorf("version %s not found in cache", version)
 		}
@@ -121,16 +121,16 @@ func (f *FileRegistryRulesetCache) GetRulesetVersion(ctx context.Context, keyObj
 	return files, walkErr
 }
 
-func (f *FileRegistryRulesetCache) SetRulesetVersion(ctx context.Context, keyObj interface{}, version string, files []types.File) error {
+func (f *FileRegistryPackageCache) SetPackageVersion(ctx context.Context, keyObj interface{}, version string, files []types.File) error {
 	registryKey, _ := GenerateKey(f.registryKeyObj)
 
 	return WithRegistryLock(registryKey, func() error {
-		rulesetKey, err := GenerateKey(keyObj)
+		packageKey, err := GenerateKey(keyObj)
 		if err != nil {
 			return err
 		}
 
-		versionDir := filepath.Join(f.registryDir, "rulesets", rulesetKey, version)
+		versionDir := filepath.Join(f.registryDir, "packages", packageKey, version)
 		if err := os.MkdirAll(versionDir, 0o755); err != nil {
 			return err
 		}
@@ -153,28 +153,18 @@ func (f *FileRegistryRulesetCache) SetRulesetVersion(ctx context.Context, keyObj
 	})
 }
 
-func (f *FileRegistryRulesetCache) InvalidateRuleset(ctx context.Context, rulesetKey string) error {
-	rulesetDir := filepath.Join(f.registryDir, "rulesets", rulesetKey)
-	return os.RemoveAll(rulesetDir)
-}
-
-func (f *FileRegistryRulesetCache) InvalidateVersion(ctx context.Context, rulesetKey, version string) error {
-	versionDir := filepath.Join(f.registryDir, "rulesets", rulesetKey, version)
-	return os.RemoveAll(versionDir)
-}
-
 // RegistryIndex tracks metadata for cached registry data.
 type RegistryIndex struct {
 	RegistryMetadata interface{}                  `json:"registryMetadata"`
 	CreatedOn        time.Time                    `json:"createdOn"`
 	LastUpdatedOn    time.Time                    `json:"lastUpdatedOn"`
 	LastAccessedOn   time.Time                    `json:"lastAccessedOn"`
-	Rulesets         map[string]RulesetIndexEntry `json:"rulesets"`
+	Packages         map[string]PackageIndexEntry `json:"packages"`
 }
 
-// RulesetIndexEntry tracks metadata for a cached ruleset.
-type RulesetIndexEntry struct {
-	RulesetMetadata interface{}                  `json:"rulesetMetadata"`
+// PackageIndexEntry tracks metadata for a cached package.
+type PackageIndexEntry struct {
+	PackageMetadata interface{}                  `json:"packageMetadata"`
 	CreatedOn       time.Time                    `json:"createdOn"`
 	LastUpdatedOn   time.Time                    `json:"lastUpdatedOn"`
 	LastAccessedOn  time.Time                    `json:"lastAccessedOn"`
@@ -189,7 +179,7 @@ type VersionIndexEntry struct {
 }
 
 // loadIndex loads the registry index from disk, creating a new one if it doesn't exist.
-func (f *FileRegistryRulesetCache) loadIndex() (*RegistryIndex, error) {
+func (f *FileRegistryPackageCache) loadIndex() (*RegistryIndex, error) {
 	indexPath := filepath.Join(f.registryDir, "index.json")
 
 	data, err := os.ReadFile(indexPath)
@@ -201,7 +191,7 @@ func (f *FileRegistryRulesetCache) loadIndex() (*RegistryIndex, error) {
 			CreatedOn:        now,
 			LastUpdatedOn:    now,
 			LastAccessedOn:   now,
-			Rulesets:         make(map[string]RulesetIndexEntry),
+			Packages:         make(map[string]PackageIndexEntry),
 		}, nil
 	}
 	if err != nil {
@@ -217,7 +207,7 @@ func (f *FileRegistryRulesetCache) loadIndex() (*RegistryIndex, error) {
 }
 
 // saveIndex saves the registry index to disk.
-func (f *FileRegistryRulesetCache) saveIndex(index *RegistryIndex) error {
+func (f *FileRegistryPackageCache) saveIndex(index *RegistryIndex) error {
 	if err := os.MkdirAll(f.registryDir, 0o755); err != nil {
 		return err
 	}
@@ -231,9 +221,9 @@ func (f *FileRegistryRulesetCache) saveIndex(index *RegistryIndex) error {
 	return os.WriteFile(indexPath, data, 0o644)
 }
 
-// updateIndexOnAccess updates the index when a ruleset version is accessed.
-func (f *FileRegistryRulesetCache) updateIndexOnAccess(keyObj interface{}, version string) error {
-	rulesetKey, err := GenerateKey(keyObj)
+// updateIndexOnAccess updates the index when a package version is accessed.
+func (f *FileRegistryPackageCache) updateIndexOnAccess(keyObj interface{}, version string) error {
+	packageKey, err := GenerateKey(keyObj)
 	if err != nil {
 		return err
 	}
@@ -246,27 +236,27 @@ func (f *FileRegistryRulesetCache) updateIndexOnAccess(keyObj interface{}, versi
 	now := time.Now().UTC()
 	index.LastAccessedOn = now
 
-	// Update existing ruleset entry (should exist since we're accessing cached data)
-	rulesetEntry, exists := index.Rulesets[rulesetKey]
+	// Update existing package entry (should exist since we're accessing cached data)
+	packageEntry, exists := index.Packages[packageKey]
 	if exists {
-		rulesetEntry.LastAccessedOn = now
+		packageEntry.LastAccessedOn = now
 
 		// Update existing version entry
-		versionEntry, versionExists := rulesetEntry.Versions[version]
+		versionEntry, versionExists := packageEntry.Versions[version]
 		if versionExists {
 			versionEntry.LastAccessedOn = now
-			rulesetEntry.Versions[version] = versionEntry
+			packageEntry.Versions[version] = versionEntry
 		}
 
-		index.Rulesets[rulesetKey] = rulesetEntry
+		index.Packages[packageKey] = packageEntry
 	}
 
 	return f.saveIndex(index)
 }
 
-// updateIndexOnSet updates the index when a ruleset version is cached.
-func (f *FileRegistryRulesetCache) updateIndexOnSet(keyObj interface{}, version string) error {
-	rulesetKey, err := GenerateKey(keyObj)
+// updateIndexOnSet updates the index when a package version is cached.
+func (f *FileRegistryPackageCache) updateIndexOnSet(keyObj interface{}, version string) error {
+	packageKey, err := GenerateKey(keyObj)
 	if err != nil {
 		return err
 	}
@@ -279,18 +269,18 @@ func (f *FileRegistryRulesetCache) updateIndexOnSet(keyObj interface{}, version 
 	now := time.Now().UTC()
 	index.LastUpdatedOn = now
 
-	// Update or create ruleset entry
-	rulesetEntry, exists := index.Rulesets[rulesetKey]
+	// Update or create package entry
+	packageEntry, exists := index.Packages[packageKey]
 	if !exists {
-		rulesetEntry = RulesetIndexEntry{
-			RulesetMetadata: keyObj,
+		packageEntry = PackageIndexEntry{
+			PackageMetadata: keyObj,
 			CreatedOn:       now,
 			LastUpdatedOn:   now,
 			LastAccessedOn:  now,
 			Versions:        make(map[string]VersionIndexEntry),
 		}
 	} else {
-		rulesetEntry.LastUpdatedOn = now
+		packageEntry.LastUpdatedOn = now
 	}
 
 	// Update or create version entry
@@ -300,14 +290,14 @@ func (f *FileRegistryRulesetCache) updateIndexOnSet(keyObj interface{}, version 
 		LastAccessedOn: now,
 	}
 
-	rulesetEntry.Versions[version] = versionEntry
-	index.Rulesets[rulesetKey] = rulesetEntry
+	packageEntry.Versions[version] = versionEntry
+	index.Packages[packageKey] = packageEntry
 
 	return f.saveIndex(index)
 }
 
-// CleanupOldVersions removes cached versions that haven't been accessed within maxAge.
-func (f *FileRegistryRulesetCache) CleanupOldVersions(ctx context.Context, maxAge time.Duration) error {
+// Cleanup removes cached versions that haven't been accessed within maxAge.
+func (f *FileRegistryPackageCache) Cleanup(maxAge time.Duration) error {
 	index, err := f.loadIndex()
 	if err != nil {
 		return err
@@ -316,21 +306,21 @@ func (f *FileRegistryRulesetCache) CleanupOldVersions(ctx context.Context, maxAg
 	cutoff := time.Now().UTC().Add(-maxAge)
 	modified := false
 
-	for rulesetKey, rulesetEntry := range index.Rulesets {
-		for version, versionEntry := range rulesetEntry.Versions {
+	for packageKey, packageEntry := range index.Packages {
+		for version, versionEntry := range packageEntry.Versions {
 			if versionEntry.LastAccessedOn.Before(cutoff) {
 				// Remove version directory
-				versionDir := filepath.Join(f.registryDir, "rulesets", rulesetKey, version)
+				versionDir := filepath.Join(f.registryDir, "packages", packageKey, version)
 				if err := os.RemoveAll(versionDir); err != nil {
 					return err
 				}
 				// Remove from index
-				delete(rulesetEntry.Versions, version)
+				delete(packageEntry.Versions, version)
 				modified = true
 			}
 		}
 		// Update index entry
-		index.Rulesets[rulesetKey] = rulesetEntry
+		index.Packages[packageKey] = packageEntry
 	}
 
 	if modified {

@@ -16,7 +16,7 @@ import (
 // It abstracts all git repository operations - users simply create the registry
 // and call methods like GetTags() without worrying about cloning, fetching, etc.
 type GitRegistry struct {
-	cache     cache.RegistryRulesetCache
+	cache     cache.RegistryPackageCache
 	repo      cache.GitRepoCache
 	config    GitRegistryConfig
 	resolver  resolver.ConstraintResolver
@@ -26,9 +26,9 @@ type GitRegistry struct {
 
 // NewGitRegistry creates a new Git-based registry that handles all git operations internally.
 // The registry will automatically clone the repository on first use and fetch updates as needed.
-func NewGitRegistry(config GitRegistryConfig, rulesetCache cache.RegistryRulesetCache, repoCache cache.GitRepoCache) *GitRegistry {
+func NewGitRegistry(config GitRegistryConfig, packageCache cache.RegistryPackageCache, repoCache cache.GitRepoCache) *GitRegistry {
 	return &GitRegistry{
-		cache:     rulesetCache,
+		cache:     packageCache,
 		repo:      repoCache,
 		config:    config,
 		resolver:  resolver.NewGitConstraintResolver(),
@@ -40,7 +40,7 @@ func NewGitRegistry(config GitRegistryConfig, rulesetCache cache.RegistryRuleset
 // NewGitRegistryNoCache creates a new Git-based registry without caching for testing
 func NewGitRegistryNoCache(config GitRegistryConfig, repoCache cache.GitRepoCache) *GitRegistry {
 	return &GitRegistry{
-		cache:     cache.NewNoopRegistryRulesetCache(),
+		cache:     cache.NewNoopRegistryPackageCache(),
 		repo:      repoCache,
 		config:    config,
 		resolver:  resolver.NewGitConstraintResolver(),
@@ -107,7 +107,7 @@ func (g *GitRegistry) ListVersions(ctx context.Context, ruleset string) ([]types
 func (g *GitRegistry) GetContent(ctx context.Context, ruleset string, version types.Version, selector types.ContentSelector) ([]types.File, error) {
 	// ruleset parameter ignored - Git registries use selector for caching
 	// Try cache first
-	files, err := g.cache.GetRulesetVersion(ctx, selector, version.Version)
+	files, err := g.cache.GetPackageVersion(ctx, selector, version.Version)
 	if err == nil {
 		return files, nil
 	}
@@ -134,7 +134,7 @@ func (g *GitRegistry) GetContent(ctx context.Context, ruleset string, version ty
 	}
 
 	// Cache the result
-	_ = g.cache.SetRulesetVersion(ctx, selector, version.Version, filteredFiles)
+	_ = g.cache.SetPackageVersion(ctx, selector, version.Version, filteredFiles)
 
 	return filteredFiles, nil
 }

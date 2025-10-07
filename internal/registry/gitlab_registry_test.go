@@ -37,7 +37,7 @@ func TestGitLabRegistry_ListVersions(t *testing.T) {
 		APIVersion:     "v4",
 	}
 
-	mockCache := &mockRegistryRulesetCache{}
+	mockCache := &mockRegistryPackageCache{}
 	registry := NewGitLabRegistry("test-registry", &config, mockCache)
 
 	// Create temporary .armrc file
@@ -110,7 +110,7 @@ func TestGitLabRegistry_GetContent(t *testing.T) {
 		APIVersion:     "v4",
 	}
 
-	mockCache := &mockRegistryRulesetCache{}
+	mockCache := &mockRegistryPackageCache{}
 	registry := NewGitLabRegistry("test-registry-2", &config, mockCache)
 
 	// Create temporary .armrc file
@@ -208,15 +208,15 @@ func TestGitLabClient_buildURLs(t *testing.T) {
 }
 
 // Mock cache implementation for testing
-type mockRegistryRulesetCache struct {
+type mockRegistryPackageCache struct {
 	data map[string][]types.File
 }
 
-func (m *mockRegistryRulesetCache) ListVersions(ctx context.Context, keyObj interface{}) ([]string, error) {
+func (m *mockRegistryPackageCache) ListVersions(ctx context.Context, keyObj interface{}) ([]string, error) {
 	return []string{}, nil
 }
 
-func (m *mockRegistryRulesetCache) GetRulesetVersion(ctx context.Context, keyObj interface{}, version string) ([]types.File, error) {
+func (m *mockRegistryPackageCache) GetPackageVersion(ctx context.Context, keyObj interface{}, version string) ([]types.File, error) {
 	if m.data == nil {
 		return nil, fmt.Errorf("not found in cache")
 	}
@@ -227,7 +227,7 @@ func (m *mockRegistryRulesetCache) GetRulesetVersion(ctx context.Context, keyObj
 	return files, nil
 }
 
-func (m *mockRegistryRulesetCache) SetRulesetVersion(ctx context.Context, keyObj interface{}, version string, files []types.File) error {
+func (m *mockRegistryPackageCache) SetPackageVersion(ctx context.Context, keyObj interface{}, version string, files []types.File) error {
 	if m.data == nil {
 		m.data = make(map[string][]types.File)
 	}
@@ -235,10 +235,7 @@ func (m *mockRegistryRulesetCache) SetRulesetVersion(ctx context.Context, keyObj
 	return nil
 }
 
-func (m *mockRegistryRulesetCache) InvalidateRuleset(ctx context.Context, rulesetKey string) error {
-	return nil
-}
-
-func (m *mockRegistryRulesetCache) InvalidateVersion(ctx context.Context, rulesetKey, version string) error {
+func (m *mockRegistryPackageCache) Cleanup(maxAge time.Duration) error {
+	// Do nothing - no cleanup needed for test mock
 	return nil
 }
