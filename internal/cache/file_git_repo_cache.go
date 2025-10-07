@@ -19,7 +19,7 @@ type FileGitRepoCache struct {
 }
 
 // NewGitRepoCache creates a new git repository cache.
-func NewGitRepoCache(keyObj interface{}, repoName, url string) (*FileGitRepoCache, error) {
+func NewGitRepoCache(keyObj interface{}, url string) (*FileGitRepoCache, error) {
 	registryKey, err := GenerateKey(keyObj)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func NewGitRepoCache(keyObj interface{}, repoName, url string) (*FileGitRepoCach
 
 	registriesDir := GetRegistriesDir()
 	registryDir := filepath.Join(registriesDir, registryKey)
-	repoDir := filepath.Join(registryDir, "repository", repoName)
+	repoDir := filepath.Join(registryDir, "repository")
 
 	return &FileGitRepoCache{
 		registryDir: registryDir,
