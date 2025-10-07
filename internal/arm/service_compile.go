@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jomadu/ai-rules-manager/internal/resource"
 	"github.com/jomadu/ai-rules-manager/internal/types"
-	"github.com/jomadu/ai-rules-manager/internal/urf"
 )
 
-// CompileFiles compiles URF files to target formats
+// CompileFiles compiles resource files to target formats
 func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) error {
 	// 1. Discover files
 	files, err := a.discoverFiles(req.Files, req.Recursive, req.Include, req.Exclude)
@@ -20,7 +20,7 @@ func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) erro
 	}
 
 	if len(files) == 0 {
-		a.ui.Warning("No URF files found matching the criteria")
+		a.ui.Warning("No resource files found matching the criteria")
 		return nil
 	}
 
@@ -42,7 +42,7 @@ func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) erro
 		}
 
 		if req.ValidateOnly {
-			if err := a.validateURFFile(filePath); err != nil {
+			if err := a.validateResourceFile(filePath); err != nil {
 				a.ui.Error(fmt.Errorf("validation failed for %s: %w", filePath, err))
 				errors = append(errors, err)
 				stats.Errors++
@@ -81,7 +81,7 @@ func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) erro
 	return nil
 }
 
-// discoverFiles finds URF files based on the input patterns
+// discoverFiles finds resource files based on the input patterns
 func (a *ArmService) discoverFiles(inputs []string, recursive bool, include, exclude []string) ([]string, error) {
 	var files []string
 
@@ -97,7 +97,7 @@ func (a *ArmService) discoverFiles(inputs []string, recursive bool, include, exc
 				return nil, err
 			}
 			files = append(files, dirFiles...)
-		} else if a.isURFFile(input) {
+		} else if a.isResourceFile(input) {
 			files = append(files, input)
 		}
 	}
@@ -105,7 +105,7 @@ func (a *ArmService) discoverFiles(inputs []string, recursive bool, include, exc
 	return files, nil
 }
 
-// discoverInDirectory finds URF files in a directory
+// discoverInDirectory finds resource files in a directory
 func (a *ArmService) discoverInDirectory(dir string, recursive bool, _, _ []string) ([]string, error) {
 	var files []string
 
@@ -114,7 +114,7 @@ func (a *ArmService) discoverInDirectory(dir string, recursive bool, _, _ []stri
 			if err != nil {
 				return err
 			}
-			if !info.IsDir() && a.isURFFile(path) {
+			if !info.IsDir() && a.isResourceFile(path) {
 				files = append(files, path)
 			}
 			return nil
@@ -130,7 +130,7 @@ func (a *ArmService) discoverInDirectory(dir string, recursive bool, _, _ []stri
 		for _, entry := range entries {
 			if !entry.IsDir() {
 				path := filepath.Join(dir, entry.Name())
-				if a.isURFFile(path) {
+				if a.isResourceFile(path) {
 					files = append(files, path)
 				}
 			}
@@ -140,14 +140,15 @@ func (a *ArmService) discoverInDirectory(dir string, recursive bool, _, _ []stri
 	return files, nil
 }
 
-// isURFFile checks if a file is a URF file by extension
-func (a *ArmService) isURFFile(path string) bool {
+// isResourceFile checks if a file is a resource file by extension
+// TODO: this is dumb. it should be checking if the file is both the yml extension, and can be parsed as any resource kind.
+func (a *ArmService) isResourceFile(path string) bool {
 	ext := strings.ToLower(filepath.Ext(path))
 	return ext == ".yaml" || ext == ".yml"
 }
 
-// validateURFFile validates a URF file
-func (a *ArmService) validateURFFile(filePath string) error {
+// validateResourceFile validates a resource file
+func (a *ArmService) validateResourceFile(filePath string) error {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to read file: %w", err)
@@ -159,12 +160,17 @@ func (a *ArmService) validateURFFile(filePath string) error {
 		Size:    int64(len(content)),
 	}
 
-	parser := urf.NewParser()
-	_, err = parser.Parse(file)
+	parser := resource.NewParser()
+	// Try parsing as either ruleset or promptset
+	if _, err := parser.ParseRuleset(file); err != nil {
+		if _, err := parser.ParsePromptset(file); err != nil {
+			return fmt.Errorf("file is not a valid resource (neither ruleset nor promptset)")
+		}
+	}
 	return err
 }
 
-// compileFile compiles a single URF file to multiple targets
+// compileFile compiles a single resource file to multiple targets
 func (a *ArmService) compileFile(filePath string, targets []string, req *CompileRequest) (int, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
@@ -186,14 +192,24 @@ func (a *ArmService) compileFile(filePath string, targets []string, req *Compile
 	totalRules := 0
 
 	for _, target := range targets {
-		compiler, err := urf.NewCompiler(urf.CompileTarget(target))
+		compiler, err := resource.NewCompiler(resource.CompileTarget(target))
 		if err != nil {
 			return 0, fmt.Errorf("failed to create compiler for target %s: %w", target, err)
 		}
 
-		compiledFiles, err := compiler.Compile(namespace, file)
-		if err != nil {
-			return 0, fmt.Errorf("failed to compile for target %s: %w", target, err)
+		// Try to compile as ruleset first, then promptset
+		parser := resource.NewParser()
+		var compiledFiles []*types.File
+		var compileErr error
+		if _, err := parser.ParseRuleset(file); err == nil {
+			compiledFiles, compileErr = compiler.CompileRuleset(namespace, file)
+		} else if _, err := parser.ParsePromptset(file); err == nil {
+			compiledFiles, compileErr = compiler.CompilePromptset(namespace, file)
+		} else {
+			return 0, fmt.Errorf("file is not a valid resource (neither ruleset nor promptset)")
+		}
+		if compileErr != nil {
+			return 0, fmt.Errorf("failed to compile for target %s: %w", target, compileErr)
 		}
 
 		// Write compiled files

@@ -7,20 +7,20 @@ import (
 	"strings"
 
 	"github.com/jomadu/ai-rules-manager/internal/index"
+	"github.com/jomadu/ai-rules-manager/internal/resource"
 	"github.com/jomadu/ai-rules-manager/internal/types"
-	"github.com/jomadu/ai-rules-manager/internal/urf"
 )
 
 // HierarchicalInstaller implements hierarchical file installation preserving directory structure.
 type HierarchicalInstaller struct {
 	baseDir      string
 	indexManager *index.IndexManager
-	compiler     urf.Compiler
+	compiler     resource.Compiler
 }
 
 // NewHierarchicalInstaller creates a new hierarchical installer.
-func NewHierarchicalInstaller(baseDir string, target urf.CompileTarget) *HierarchicalInstaller {
-	compiler, _ := urf.NewCompiler(target)
+func NewHierarchicalInstaller(baseDir string, target resource.CompileTarget) *HierarchicalInstaller {
+	compiler, _ := resource.NewCompiler(target)
 	return &HierarchicalInstaller{
 		baseDir:      baseDir,
 		indexManager: index.NewIndexManager(baseDir, "hierarchical", target),
@@ -39,8 +39,8 @@ func (h *HierarchicalInstaller) Install(ctx context.Context, registry, ruleset, 
 		return err
 	}
 
-	// Process URF files
-	processedFiles, err := processURFFiles(files, registry, ruleset, version, h.compiler)
+	// Process resource files
+	processedFiles, err := processResourceFiles(files, registry, ruleset, version, h.compiler)
 	if err != nil {
 		return err
 	}

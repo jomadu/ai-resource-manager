@@ -16,21 +16,23 @@ func TestArmService_CompileFiles_Integration(t *testing.T) {
 	mockUI := &MockUI{}
 	service := &ArmService{ui: mockUI}
 
-	// Create valid URF file
-	validURF := `version: "1.0"
+	// Create valid resource file
+	validResource := `apiVersion: "v1"
+kind: "Ruleset"
 metadata:
   id: "integration-test"
   name: "Integration Test Rules"
-rules:
-  rule1:
-    name: "Test Rule 1"
-    body: "This is test rule 1"
-  rule2:
-    name: "Test Rule 2"
-    body: "This is test rule 2"`
+spec:
+  rules:
+    rule1:
+      name: "Test Rule 1"
+      body: "This is test rule 1"
+    rule2:
+      name: "Test Rule 2"
+      body: "This is test rule 2"`
 
 	filePath := filepath.Join(tempDir, "integration.yaml")
-	err := os.WriteFile(filePath, []byte(validURF), 0o644)
+	err := os.WriteFile(filePath, []byte(validResource), 0o644)
 	assert.NoError(t, err)
 
 	outputDir := filepath.Join(tempDir, "output")
@@ -75,18 +77,20 @@ func TestArmService_CompileFiles_MultiTarget_Integration(t *testing.T) {
 	mockUI := &MockUI{}
 	service := &ArmService{ui: mockUI}
 
-	// Create valid URF file
-	validURF := `version: "1.0"
+	// Create valid resource file
+	validResource := `apiVersion: "v1"
+kind: "Ruleset"
 metadata:
   id: "multi-target-test"
   name: "Multi Target Test Rules"
-rules:
-  rule1:
-    name: "Test Rule"
-    body: "This is a test rule"`
+spec:
+  rules:
+    rule1:
+      name: "Test Rule"
+      body: "This is a test rule"`
 
 	filePath := filepath.Join(tempDir, "multi.yaml")
-	err := os.WriteFile(filePath, []byte(validURF), 0o644)
+	err := os.WriteFile(filePath, []byte(validResource), 0o644)
 	assert.NoError(t, err)
 
 	outputDir := filepath.Join(tempDir, "multi-output")

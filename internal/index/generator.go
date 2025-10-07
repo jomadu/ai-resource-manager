@@ -4,29 +4,32 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/jomadu/ai-rules-manager/internal/urf"
+	"github.com/jomadu/ai-rules-manager/internal/resource"
 )
 
 type IndexGenerator interface {
-	CreateRuleset(data *IndexData) *urf.Ruleset
+	CreateRuleset(data *IndexData) *resource.Ruleset
 	GenerateBody(data *IndexData) string
 }
 
 type DefaultIndexGenerator struct{}
 
-func (g *DefaultIndexGenerator) CreateRuleset(data *IndexData) *urf.Ruleset {
-	return &urf.Ruleset{
-		Version: "1.0",
-		Metadata: urf.Metadata{
+func (g *DefaultIndexGenerator) CreateRuleset(data *IndexData) *resource.Ruleset {
+	return &resource.Ruleset{
+		APIVersion: "v1",
+		Kind:       "Ruleset",
+		Metadata: resource.Metadata{
 			ID:   "arm",
 			Name: "ARM Rulesets Index",
 		},
-		Rules: map[string]urf.Rule{
-			"index": {
-				Name:        "ARM Rulesets Index",
-				Enforcement: "must",
-				Priority:    1000,
-				Body:        g.GenerateBody(data),
+		Spec: resource.RulesetSpec{
+			Rules: map[string]resource.Rule{
+				"index": {
+					Name:        "ARM Rulesets Index",
+					Enforcement: "must",
+					Priority:    1000,
+					Body:        g.GenerateBody(data),
+				},
 			},
 		},
 	}

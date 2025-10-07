@@ -1,4 +1,4 @@
-package urf
+package resource
 
 import (
 	"strings"
@@ -11,38 +11,42 @@ func TestMarkdownRuleGenerator_GenerateRule(t *testing.T) {
 	}
 
 	ruleset := &Ruleset{
+		APIVersion: "v1",
+		Kind:       "Ruleset",
 		Metadata: Metadata{
 			ID:   "test-ruleset",
 			Name: "Test Ruleset",
 		},
-		Rules: map[string]Rule{
-			"rule1": {
-				Name:        "Test Rule 1",
-				Description: "First test rule",
-				Priority:    80,
-				Enforcement: "should",
-				Scope: []Scope{
-					{Files: []string{"**/*.py"}},
+		Spec: RulesetSpec{
+			Rules: map[string]Rule{
+				"rule1": {
+					Name:        "Test Rule 1",
+					Description: "First test rule",
+					Priority:    80,
+					Enforcement: "should",
+					Scope: []Scope{
+						{Files: []string{"**/*.py"}},
+					},
+					Body: "This is the rule body content.",
 				},
-				Body: "This is the rule body content.",
 			},
 		},
 	}
 
-	rule := ruleset.Rules["rule1"]
+	rule := ruleset.Spec.Rules["rule1"]
 	namespace := "ai-rules/test@1.0.0"
 
 	result := generator.GenerateRule(namespace, ruleset, "rule1", &rule)
 
 	// Markdown should NOT have tool-specific frontmatter
 	if strings.Contains(result, "description:") && strings.Index(result, "description:") < strings.Index(result, "namespace:") {
-		t.Error("Markdown should not have tool-specific frontmatter before URF metadata")
+		t.Error("Markdown should not have tool-specific frontmatter before resource metadata")
 	}
 	if strings.Contains(result, "globs:") && strings.Index(result, "globs:") < strings.Index(result, "namespace:") {
-		t.Error("Markdown should not have globs frontmatter before URF metadata")
+		t.Error("Markdown should not have globs frontmatter before resource metadata")
 	}
 
-	// Check URF metadata block
+	// Check resource metadata block
 	if !strings.Contains(result, "namespace: "+namespace) {
 		t.Error("Expected namespace in metadata block")
 	}
