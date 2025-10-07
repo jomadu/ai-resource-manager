@@ -116,25 +116,34 @@ This document provides a detailed investigation of the codebase to identify spec
   - [x] Update rule generators if needed
   - [x] Ensure prompt compilation produces content-only files (no frontmatter)
 
-#### 2.2 Service Interface Updates
+#### 2.2 Service Interface Updates ✅ COMPLETED
 **File**: `internal/arm/service_interface.go`
 
-- [ ] **Add Promptset Operations**:
-  - [ ] `InstallPromptset(ctx context.Context, req *InstallPromptsetRequest) error`
-  - [ ] `UninstallPromptset(ctx context.Context, registry, promptset string) error`
-  - [ ] `UpdatePromptset(ctx context.Context, registry, promptset string) error`
-  - [ ] `UpdatePromptsetConfig(ctx context.Context, registry, promptset, field, value string) error`
+- [x] **Add Promptset Operations**:
+  - [x] `InstallPromptset(ctx context.Context, req *InstallPromptsetRequest) error`
+  - [x] `UninstallPromptset(ctx context.Context, registry, promptset string) error`
+  - [x] `UpdatePromptset(ctx context.Context, registry, promptset string) error`
+  - [x] `SetPromptsetConfig(ctx context.Context, registry, promptset, field, value string) error`
 
-- [ ] **Add Unified Operations**:
-  - [ ] `InstallAll(ctx context.Context) error` (replaces `InstallManifest`)
-  - [ ] `UpdateAll(ctx context.Context) error`
-  - [ ] `UpgradeAll(ctx context.Context) error`
-  - [ ] `UninstallAll(ctx context.Context) error`
+- [x] **Add Unified Operations**:
+  - [x] `InstallAll(ctx context.Context) error` (replaces `InstallManifest`)
+  - [x] `UpdateAll(ctx context.Context) error`
+  - [x] `UpgradeAll(ctx context.Context) error`
+  - [x] `UninstallAll(ctx context.Context) error`
 
-- [ ] **Update Info Operations**:
-  - [ ] `ShowPromptsetInfo(ctx context.Context, promptsets []string) error`
-  - [ ] Update `ShowOutdated` to handle both resource types
-  - [ ] Update `ShowList` to handle both resource types
+- [x] **Update Info Operations**:
+  - [x] `ShowPromptsetInfo(ctx context.Context, promptsets []string) error`
+  - [x] Update `ShowOutdated` to handle both resource types
+  - [x] Update `ShowList` to handle both resource types
+
+- [x] **Additional Improvements**:
+  - [x] Renamed `InstallRequest` → `InstallRulesetRequest` for consistency
+  - [x] Renamed `UpdateRulesetConfig` → `SetRulesetConfig` for consistency
+  - [x] Renamed `UpdatePromptsetConfig` → `SetPromptsetConfig` for consistency
+  - [x] Renamed `UpdateRegistry` → `SetRegistryConfig` for consistency
+  - [x] Renamed `UpdateSink` → `SetSinkConfig` for consistency
+  - [x] Removed redundant `ShowConfig` function (replaced by specific list/info commands)
+  - [x] Added `InstallPromptsetRequest` type for promptset operations
 
 #### 2.3 Manifest Manager Updates
 **File**: `internal/manifest/types.go`

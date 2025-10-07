@@ -15,7 +15,7 @@ import (
 	"github.com/pterm/pterm"
 )
 
-func (a *ArmService) InstallRuleset(ctx context.Context, req *InstallRequest) error {
+func (a *ArmService) InstallRuleset(ctx context.Context, req *InstallRulesetRequest) error {
 	// Load registries once and validate
 	registries, err := a.manifestManager.GetRawRegistries(ctx)
 	if err != nil {
@@ -72,6 +72,10 @@ func (a *ArmService) InstallRuleset(ctx context.Context, req *InstallRequest) er
 	return nil
 }
 
+func (a *ArmService) InstallAll(ctx context.Context) error {
+	return a.InstallManifest(ctx)
+}
+
 func (a *ArmService) InstallManifest(ctx context.Context) error {
 	manifestEntries, manifestErr := a.manifestManager.GetEntries(ctx)
 	lockEntries, lockErr := a.lockFileManager.GetEntries(ctx)
@@ -94,7 +98,7 @@ func (a *ArmService) InstallManifest(ctx context.Context) error {
 	// Case: Manifest exists, no lockfile - resolve from manifest and create lockfile
 	for registryName, rulesets := range manifestEntries {
 		for rulesetName, entry := range rulesets {
-			if err := a.InstallRuleset(ctx, &InstallRequest{
+			if err := a.InstallRuleset(ctx, &InstallRulesetRequest{
 				Registry: registryName,
 				Ruleset:  rulesetName,
 				Version:  entry.Version,
@@ -206,7 +210,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 
 	if !isCurrentlyInstalled {
 		// Nothing installed, proceed with install
-		return a.InstallRuleset(ctx, &InstallRequest{
+		return a.InstallRuleset(ctx, &InstallRulesetRequest{
 			Registry: registryName,
 			Ruleset:  rulesetName,
 			Version:  manifestEntry.Version,
@@ -231,7 +235,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 	}
 
 	// Version changed or integrity check failed, proceed with update
-	return a.InstallRuleset(ctx, &InstallRequest{
+	return a.InstallRuleset(ctx, &InstallRulesetRequest{
 		Registry: registryName,
 		Ruleset:  rulesetName,
 		Version:  manifestEntry.Version,
@@ -239,6 +243,10 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 		Exclude:  manifestEntry.Exclude,
 		Sinks:    manifestEntry.Sinks,
 	})
+}
+
+func (a *ArmService) UpdateAll(ctx context.Context) error {
+	return a.UpdateAllRulesets(ctx)
 }
 
 func (a *ArmService) UpdateAllRulesets(ctx context.Context) error {
@@ -267,7 +275,7 @@ func (a *ArmService) UpdateAllRulesets(ctx context.Context) error {
 	return nil
 }
 
-func (a *ArmService) UpdateRulesetConfig(ctx context.Context, registry, ruleset, field, value string) error {
+func (a *ArmService) SetRulesetConfig(ctx context.Context, registry, ruleset, field, value string) error {
 
 	// Get current manifest entry
 	entry, err := a.manifestManager.GetEntry(ctx, registry, ruleset)
@@ -324,7 +332,7 @@ func (a *ArmService) UpdateRulesetConfig(ctx context.Context, registry, ruleset,
 	}
 
 	// Trigger reinstall
-	return a.InstallRuleset(ctx, &InstallRequest{
+	return a.InstallRuleset(ctx, &InstallRulesetRequest{
 		Registry: registry,
 		Ruleset:  ruleset,
 		Version:  entry.Version,
@@ -337,7 +345,7 @@ func (a *ArmService) UpdateRulesetConfig(ctx context.Context, registry, ruleset,
 
 // Private helper methods
 
-func (a *ArmService) updateTrackingFiles(ctx context.Context, req *InstallRequest, version types.Version, files []types.File) error {
+func (a *ArmService) updateTrackingFiles(ctx context.Context, req *InstallRulesetRequest, version types.Version, files []types.File) error {
 	// Store normalized version in manifest
 	manifestVersion := req.Version
 	if manifestVersion == "" {
@@ -400,7 +408,7 @@ func (a *ArmService) cleanPreviousInstallation(ctx context.Context, registry, ru
 	return nil
 }
 
-func (a *ArmService) installToSinks(ctx context.Context, req *InstallRequest, version types.Version, files []types.File) (int, error) {
+func (a *ArmService) installToSinks(ctx context.Context, req *InstallRulesetRequest, version types.Version, files []types.File) (int, error) {
 	// First, remove from previous sink locations if this is a reinstall
 	if err := a.cleanPreviousInstallation(ctx, req.Registry, req.Ruleset); err != nil {
 		// Continue on cleanup failure
@@ -663,4 +671,35 @@ func expandVersionShorthand(constraint string) string {
 		return "~" + constraint + ".0"
 	}
 	return constraint
+}
+
+// Promptset operations - TODO: Implement these methods
+func (a *ArmService) InstallPromptset(ctx context.Context, req *InstallPromptsetRequest) error {
+	return fmt.Errorf("InstallPromptset not yet implemented")
+}
+
+func (a *ArmService) UninstallPromptset(ctx context.Context, registry, promptset string) error {
+	return fmt.Errorf("UninstallPromptset not yet implemented")
+}
+
+func (a *ArmService) UpdatePromptset(ctx context.Context, registry, promptset string) error {
+	return fmt.Errorf("UpdatePromptset not yet implemented")
+}
+
+func (a *ArmService) SetPromptsetConfig(ctx context.Context, registry, promptset, field, value string) error {
+	return fmt.Errorf("SetPromptsetConfig not yet implemented")
+}
+
+// Unified operations - TODO: Implement these methods
+func (a *ArmService) UpgradeAll(ctx context.Context) error {
+	return fmt.Errorf("UpgradeAll not yet implemented")
+}
+
+func (a *ArmService) UninstallAll(ctx context.Context) error {
+	return fmt.Errorf("UninstallAll not yet implemented")
+}
+
+// Info operations - TODO: Implement this method
+func (a *ArmService) ShowPromptsetInfo(ctx context.Context, promptsets []string) error {
+	return fmt.Errorf("ShowPromptsetInfo not yet implemented")
 }

@@ -56,7 +56,7 @@ func newInstallPromptsetCmd() *cobra.Command {
 
 func runInstallAll(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
-	return armService.InstallManifest(ctx)
+	return armService.InstallAll(ctx)
 }
 
 func runInstallRuleset(cmd *cobra.Command, args []string) error {
@@ -82,7 +82,7 @@ func runInstallRuleset(cmd *cobra.Command, args []string) error {
 	}
 
 	// Install ruleset
-	req := &arm.InstallRequest{
+	req := &arm.InstallRulesetRequest{
 		Registry: ruleset.Registry,
 		Ruleset:  ruleset.Name,
 		Version:  ruleset.Version,
