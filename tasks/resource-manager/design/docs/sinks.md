@@ -70,5 +70,5 @@ arm add sink --type copilot copilot-rules .github/copilot
 
 Change sink layout:
 ```bash
-arm config sink set cursor-rules layout flat
+arm set sink cursor-rules layout flat
 ```

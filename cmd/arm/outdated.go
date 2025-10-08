@@ -1,72 +1,77 @@
 package main
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
 )
 
-func newOutdatedCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "outdated",
-		Short: "Show outdated resources",
-		Long:  "Show all outdated resources, or use subcommands for specific resource types.",
-		RunE:  runOutdatedAll,
-	}
+var outdatedCmd = &cobra.Command{
+	Use:   "outdated",
+	Short: "Check for outdated packages, rulesets, and promptsets",
+	Long:  "Check for outdated packages, rulesets, and promptsets across all configured registries",
+}
 
-	cmd.Flags().StringP("output", "o", "table", "Output format (table, json, or list)")
-	cmd.Flags().Bool("no-spinner", false, "Disable spinner for machine-readable output")
+var outdatedPackageCmd = &cobra.Command{
+	Use:   "package [--output <table|json|list>]",
+	Short: "Check for outdated packages",
+	Long:  "Check for outdated packages across all configured registries.",
+	Run: func(cmd *cobra.Command, args []string) {
+		checkOutdatedPackages(cmd)
+	},
+}
 
+var outdatedRulesetCmd = &cobra.Command{
+	Use:   "ruleset [--output <table|json|list>]",
+	Short: "Check for outdated rulesets",
+	Long:  "Check for outdated rulesets across all configured registries.",
+	Run: func(cmd *cobra.Command, args []string) {
+		checkOutdatedRulesets(cmd)
+	},
+}
+
+var outdatedPromptsetCmd = &cobra.Command{
+	Use:   "promptset [--output <table|json|list>]",
+	Short: "Check for outdated promptsets",
+	Long:  "Check for outdated promptsets across all configured registries.",
+	Run: func(cmd *cobra.Command, args []string) {
+		checkOutdatedPromptsets(cmd)
+	},
+}
+
+func init() {
 	// Add subcommands
-	cmd.AddCommand(newOutdatedRulesetCmd())
-	cmd.AddCommand(newOutdatedPromptsetCmd())
+	outdatedCmd.AddCommand(outdatedPackageCmd)
+	outdatedCmd.AddCommand(outdatedRulesetCmd)
+	outdatedCmd.AddCommand(outdatedPromptsetCmd)
 
-	return cmd
+	// Add output format flags
+	outdatedPackageCmd.Flags().String("output", "table", "Output format (table, json, list)")
+	outdatedRulesetCmd.Flags().String("output", "table", "Output format (table, json, list)")
+	outdatedPromptsetCmd.Flags().String("output", "table", "Output format (table, json, list)")
 }
 
-func newOutdatedRulesetCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "ruleset",
-		Short: "Show outdated rulesets",
-		RunE:  runOutdatedRuleset,
+func checkOutdatedPackages(cmd *cobra.Command) {
+	output, _ := cmd.Flags().GetString("output")
+
+	if err := armService.ShowAllOutdated(ctx, output, false); err != nil {
+		// TODO: Handle error properly
+		return
 	}
-
-	cmd.Flags().StringP("output", "o", "table", "Output format (table, json, or list)")
-	cmd.Flags().Bool("no-spinner", false, "Disable spinner for machine-readable output")
-
-	return cmd
 }
 
-func newOutdatedPromptsetCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "promptset",
-		Short: "Show outdated promptsets",
-		RunE:  runOutdatedPromptset,
+func checkOutdatedRulesets(cmd *cobra.Command) {
+	output, _ := cmd.Flags().GetString("output")
+
+	if err := armService.ShowRulesetOutdated(ctx, output, false); err != nil {
+		// TODO: Handle error properly
+		return
 	}
-
-	cmd.Flags().StringP("output", "o", "table", "Output format (table, json, or list)")
-	cmd.Flags().Bool("no-spinner", false, "Disable spinner for machine-readable output")
-
-	return cmd
 }
 
-func runOutdatedAll(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-	outputFormat, _ := cmd.Flags().GetString("output")
-	noSpinner, _ := cmd.Flags().GetBool("no-spinner")
-	return armService.ShowAllOutdated(ctx, outputFormat, noSpinner)
-}
+func checkOutdatedPromptsets(cmd *cobra.Command) {
+	output, _ := cmd.Flags().GetString("output")
 
-func runOutdatedRuleset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-	outputFormat, _ := cmd.Flags().GetString("output")
-	noSpinner, _ := cmd.Flags().GetBool("no-spinner")
-	return armService.ShowRulesetOutdated(ctx, outputFormat, noSpinner)
-}
-
-func runOutdatedPromptset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-	outputFormat, _ := cmd.Flags().GetString("output")
-	noSpinner, _ := cmd.Flags().GetBool("no-spinner")
-	return armService.ShowPromptsetOutdated(ctx, outputFormat, noSpinner)
+	if err := armService.ShowPromptsetOutdated(ctx, output, false); err != nil {
+		// TODO: Handle error properly
+		return
+	}
 }

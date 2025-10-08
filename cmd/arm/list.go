@@ -1,60 +1,100 @@
 package main
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
 )
 
-func newListCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List installed resources",
-		Long:  "List all installed resources, or use subcommands for specific resource types.",
-		RunE:  runListAll,
-	}
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List resources",
+	Long:  "List registries, sinks, rulesets, promptsets, and packages",
+}
 
+var listRegistryCmd = &cobra.Command{
+	Use:   "registry",
+	Short: "List all registries",
+	Long:  "List all configured registries.",
+	Run: func(cmd *cobra.Command, args []string) {
+		listRegistries()
+	},
+}
+
+var listSinkCmd = &cobra.Command{
+	Use:   "sink",
+	Short: "List all sinks",
+	Long:  "List all configured sinks.",
+	Run: func(cmd *cobra.Command, args []string) {
+		listSinks()
+	},
+}
+
+var listRulesetCmd = &cobra.Command{
+	Use:   "ruleset",
+	Short: "List all rulesets",
+	Long:  "List all installed rulesets.",
+	Run: func(cmd *cobra.Command, args []string) {
+		listRulesets()
+	},
+}
+
+var listPromptsetCmd = &cobra.Command{
+	Use:   "promptset",
+	Short: "List all promptsets",
+	Long:  "List all installed promptsets.",
+	Run: func(cmd *cobra.Command, args []string) {
+		listPromptsets()
+	},
+}
+
+var listPackageCmd = &cobra.Command{
+	Use:   "package",
+	Short: "List all packages",
+	Long:  "List all installed packages across all sinks.",
+	Run: func(cmd *cobra.Command, args []string) {
+		listPackages()
+	},
+}
+
+func init() {
 	// Add subcommands
-	cmd.AddCommand(newListRulesetCmd())
-	cmd.AddCommand(newListPromptsetCmd())
-
-	return cmd
+	listCmd.AddCommand(listRegistryCmd)
+	listCmd.AddCommand(listSinkCmd)
+	listCmd.AddCommand(listRulesetCmd)
+	listCmd.AddCommand(listPromptsetCmd)
+	listCmd.AddCommand(listPackageCmd)
 }
 
-func newListRulesetCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "ruleset",
-		Short: "List installed rulesets",
-		RunE:  runListRuleset,
-	}
-
-	cmd.Flags().Bool("sort-priority", false, "Sort by priority (highest first) instead of alphanumeric")
-
-	return cmd
-}
-
-func newListPromptsetCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "promptset",
-		Short: "List installed promptsets",
-		RunE:  runListPromptset,
+func listRegistries() {
+	if err := armService.ListRegistries(ctx); err != nil {
+		// TODO: Handle error properly
+		return
 	}
 }
 
-func runListAll(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-	return armService.ShowAllList(ctx, false)
+func listSinks() {
+	if err := armService.ListSinks(ctx); err != nil {
+		// TODO: Handle error properly
+		return
+	}
 }
 
-func runListRuleset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	sortPriority, _ := cmd.Flags().GetBool("sort-priority")
-
-	return armService.ShowRulesetList(ctx, sortPriority)
+func listRulesets() {
+	if err := armService.ShowRulesetList(ctx, false); err != nil {
+		// TODO: Handle error properly
+		return
+	}
 }
 
-func runListPromptset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-	return armService.ShowPromptsetList(ctx)
+func listPromptsets() {
+	if err := armService.ShowPromptsetList(ctx); err != nil {
+		// TODO: Handle error properly
+		return
+	}
+}
+
+func listPackages() {
+	if err := armService.ShowAllList(ctx, false); err != nil {
+		// TODO: Handle error properly
+		return
+	}
 }

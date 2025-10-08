@@ -1,125 +1,136 @@
 package main
 
 import (
-	"context"
-	"fmt"
+	"strings"
 
 	"github.com/jomadu/ai-rules-manager/internal/arm"
 	"github.com/spf13/cobra"
 )
 
-func newInstallCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "install",
-		Short: "Install resources",
-		Long:  "Install all configured resources from manifest, or use subcommands for specific resource types.",
-		RunE:  runInstallAll,
-	}
+var installCmd = &cobra.Command{
+	Use:   "install",
+	Short: "Install packages, rulesets, and promptsets",
+	Long:  "Install packages, rulesets, and promptsets to their assigned sinks",
+}
 
+var installPackageCmd = &cobra.Command{
+	Use:   "package",
+	Short: "Install all configured packages",
+	Long:  "Install all configured packages (rulesets and promptsets) to their assigned sinks.",
+	Run: func(cmd *cobra.Command, args []string) {
+		installPackages()
+	},
+}
+
+var installRulesetCmd = &cobra.Command{
+	Use:   "ruleset [--priority PRIORITY] [--include GLOB...] [--exclude GLOB...] REGISTRY_NAME/RULESET_NAME[@VERSION] SINK_NAME...",
+	Short: "Install a ruleset",
+	Long:  "Install a specific ruleset from a registry to one or more sinks.",
+	Args:  cobra.MinimumNArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		installRuleset(cmd, args[0], args[1:])
+	},
+}
+
+var installPromptsetCmd = &cobra.Command{
+	Use:   "promptset [--include GLOB...] [--exclude GLOB...] REGISTRY_NAME/PROMPTSET[@VERSION] SINK_NAME...",
+	Short: "Install a promptset",
+	Long:  "Install a specific promptset from a registry to one or more sinks.",
+	Args:  cobra.MinimumNArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		installPromptset(cmd, args[0], args[1:])
+	},
+}
+
+func init() {
 	// Add subcommands
-	cmd.AddCommand(newInstallRulesetCmd())
-	cmd.AddCommand(newInstallPromptsetCmd())
+	installCmd.AddCommand(installPackageCmd)
+	installCmd.AddCommand(installRulesetCmd)
+	installCmd.AddCommand(installPromptsetCmd)
 
-	return cmd
+	// Add ruleset flags
+	installRulesetCmd.Flags().Int("priority", 100, "Ruleset priority")
+	installRulesetCmd.Flags().StringSlice("include", []string{"**/*.yml", "**/*.yaml"}, "Include patterns")
+	installRulesetCmd.Flags().StringSlice("exclude", []string{}, "Exclude patterns")
+
+	// Add promptset flags
+	installPromptsetCmd.Flags().StringSlice("include", []string{"**/*.yml", "**/*.yaml"}, "Include patterns")
+	installPromptsetCmd.Flags().StringSlice("exclude", []string{}, "Exclude patterns")
 }
 
-func newInstallRulesetCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "ruleset <registry/ruleset[@version]> <sink...>",
-		Short: "Install rulesets",
-		Long:  "Install rulesets from a registry to specified sinks.",
-		Args:  cobra.MinimumNArgs(2),
-		RunE:  runInstallRuleset,
+func installPackages() {
+	if err := armService.InstallAll(ctx); err != nil {
+		// TODO: Handle error properly
+		return
 	}
-
-	cmd.Flags().StringSlice("include", nil, "Include patterns")
-	cmd.Flags().StringSlice("exclude", nil, "Exclude patterns")
-	cmd.Flags().Int("priority", 100, "Ruleset installation priority (1-1000+)")
-
-	return cmd
 }
 
-func newInstallPromptsetCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "promptset <registry/promptset[@version]> <sink...>",
-		Short: "Install promptsets",
-		Long:  "Install promptsets from a registry to specified sinks.",
-		Args:  cobra.MinimumNArgs(2),
-		RunE:  runInstallPromptset,
-	}
-
-	cmd.Flags().StringSlice("include", nil, "Include patterns")
-	cmd.Flags().StringSlice("exclude", nil, "Exclude patterns")
-
-	return cmd
-}
-
-func runInstallAll(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-	return armService.InstallAll(ctx)
-}
-
-func runInstallRuleset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	// Parse ruleset argument
-	ruleset, err := ParsePackageArg(args[0])
-	if err != nil {
-		return fmt.Errorf("failed to parse ruleset: %w", err)
-	}
-
-	// Get sinks from remaining arguments
-	sinks := args[1:]
-
-	// Get flags
+func installRuleset(cmd *cobra.Command, packageName string, sinks []string) {
+	priority, _ := cmd.Flags().GetInt("priority")
 	include, _ := cmd.Flags().GetStringSlice("include")
 	exclude, _ := cmd.Flags().GetStringSlice("exclude")
-	priority, _ := cmd.Flags().GetInt("priority")
 
-	// Validate priority
-	if priority < 1 {
-		return fmt.Errorf("priority must be a positive integer (got %d)", priority)
-	}
+	// Parse registry/ruleset from packageName
+	registry, ruleset, version := parsePackageName(packageName)
 
-	// Install ruleset
 	req := &arm.InstallRulesetRequest{
-		Registry: ruleset.Registry,
-		Ruleset:  ruleset.Name,
-		Version:  ruleset.Version,
+		Registry: registry,
+		Ruleset:  ruleset,
+		Version:  version,
 		Priority: priority,
 		Include:  include,
 		Exclude:  exclude,
 		Sinks:    sinks,
 	}
 
-	return armService.InstallRuleset(ctx, req)
+	if err := armService.InstallRuleset(ctx, req); err != nil {
+		// TODO: Handle error properly
+		return
+	}
 }
 
-func runInstallPromptset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	// Parse promptset argument
-	promptset, err := ParsePackageArg(args[0])
-	if err != nil {
-		return fmt.Errorf("failed to parse promptset: %w", err)
-	}
-
-	// Get sinks from remaining arguments
-	sinks := args[1:]
-
-	// Get flags
+func installPromptset(cmd *cobra.Command, packageName string, sinks []string) {
 	include, _ := cmd.Flags().GetStringSlice("include")
 	exclude, _ := cmd.Flags().GetStringSlice("exclude")
 
-	// Install promptset
+	// Parse registry/promptset from packageName
+	registry, promptset, version := parsePackageName(packageName)
+
 	req := &arm.InstallPromptsetRequest{
-		Registry:  promptset.Registry,
-		Promptset: promptset.Name,
-		Version:   promptset.Version,
+		Registry:  registry,
+		Promptset: promptset,
+		Version:   version,
 		Include:   include,
 		Exclude:   exclude,
 		Sinks:     sinks,
 	}
 
-	return armService.InstallPromptset(ctx, req)
+	if err := armService.InstallPromptset(ctx, req); err != nil {
+		// TODO: Handle error properly
+		return
+	}
+}
+
+// parsePackageName parses a package name like "registry/package@version" or "registry/package"
+func parsePackageName(packageName string) (registry, pkgName, version string) {
+	parts := strings.Split(packageName, "/")
+	if len(parts) != 2 {
+		// TODO: Handle error
+		return "", "", ""
+	}
+
+	registry = parts[0]
+	packageWithVersion := parts[1]
+
+	// Check for version
+	if strings.Contains(packageWithVersion, "@") {
+		versionParts := strings.Split(packageWithVersion, "@")
+		pkgName = versionParts[0]
+		version = versionParts[1]
+	} else {
+		pkgName = packageWithVersion
+		version = ""
+	}
+
+	return registry, pkgName, version
 }

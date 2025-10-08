@@ -15,11 +15,11 @@ type ArmService struct {
 }
 
 // NewArmService creates a new ARM service instance with all dependencies.
-func NewArmService(uiInterface ui.Interface) *ArmService {
+func NewArmService() *ArmService {
 	return &ArmService{
 		manifestManager: manifest.NewFileManager(),
 		lockFileManager: lockfile.NewFileManager(),
-		ui:              uiInterface,
+		ui:              ui.New(false), // Set debug to false by default
 	}
 }
 
