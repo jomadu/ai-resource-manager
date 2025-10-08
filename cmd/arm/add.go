@@ -107,7 +107,7 @@ func addSink(cmd *cobra.Command, name, path string) {
 			compileTo = "copilot"
 		case "amazonq":
 			layout = "hierarchical"
-			compileTo = "md"
+			compileTo = "markdown"
 		}
 	}
 
