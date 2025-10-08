@@ -76,8 +76,8 @@ func (g *GitRegistry) isBranchConstraint(constraint string) bool {
 	return true
 }
 
-func (g *GitRegistry) ListVersions(ctx context.Context, ruleset string) ([]types.Version, error) {
-	// ruleset parameter ignored - Git registries return all repository versions
+func (g *GitRegistry) ListVersions(ctx context.Context, packageName string) ([]types.Version, error) {
+	// packageName parameter ignored - Git registries return all repository versions
 	tags, err := g.repo.GetTags(ctx)
 	if err != nil {
 		return nil, err
@@ -104,8 +104,8 @@ func (g *GitRegistry) ListVersions(ctx context.Context, ruleset string) ([]types
 	return versions, nil
 }
 
-func (g *GitRegistry) GetContent(ctx context.Context, ruleset string, version types.Version, selector types.ContentSelector) ([]types.File, error) {
-	// ruleset parameter ignored - Git registries use selector for caching
+func (g *GitRegistry) GetContent(ctx context.Context, packageName string, version types.Version, selector types.ContentSelector) ([]types.File, error) {
+	// packageName parameter ignored - Git registries use selector for caching
 	// Try cache first
 	files, err := g.cache.GetPackageVersion(ctx, selector, version.Version)
 	if err == nil {
@@ -149,8 +149,8 @@ func (g *GitRegistry) GetBranches(ctx context.Context) ([]string, error) {
 	return g.repo.GetBranches(ctx)
 }
 
-func (g *GitRegistry) ResolveVersion(ctx context.Context, ruleset, constraint string) (*resolver.ResolvedVersion, error) {
-	// ruleset parameter ignored - Git registries resolve versions for entire repository
+func (g *GitRegistry) ResolveVersion(ctx context.Context, packageName, constraint string) (*resolver.ResolvedVersion, error) {
+	// packageName parameter ignored - Git registries resolve versions for entire repository
 	// Parse constraint first
 	parsedConstraint, err := g.resolver.ParseConstraint(constraint)
 	if err != nil {
@@ -178,7 +178,7 @@ func (g *GitRegistry) ResolveVersion(ctx context.Context, ruleset, constraint st
 	}
 
 	// Handle semantic version constraints
-	versions, err := g.ListVersions(ctx, ruleset)
+	versions, err := g.ListVersions(ctx, packageName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list versions: %w", err)
 	}
