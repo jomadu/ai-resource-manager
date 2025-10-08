@@ -1,23 +1,34 @@
-version: "1.0"
+apiVersion: v1
+kind: Ruleset
 metadata:
-  id: "clean-code"
+  id: "cleanCode"
   name: "Clean Code Guidelines"
-rules:
-  naming:
-    name: "Meaningful Names"
-    priority: 100
-    enforcement: "must"
-    body: |
-      Use meaningful, descriptive names:
-      - Choose names that reveal intent
-      - Avoid abbreviations
-      - Use searchable names
-  functions:
-    name: "Small Functions"
-    priority: 90
-    enforcement: "should"
-    body: |
-      Keep functions small and focused:
-      - Do one thing well
-      - Aim for 20 lines or fewer
-      - Use descriptive names
+  description: "Essential clean code practices for maintainable software"
+spec:
+  rules:
+    naming:
+      name: "Meaningful Names"
+      description: "Use intention-revealing names for variables, functions, and classes"
+      priority: 100
+      enforcement: must
+      scope:
+        - files: ["**/*.py", "**/*.js", "**/*.ts", "**/*.java", "**/*.go"]
+      body: |
+        Use meaningful, descriptive names:
+        - Choose names that reveal intent
+        - Avoid abbreviations and disinformation
+        - Use searchable names
+        - Make meaningful distinctions
+    functions:
+      name: "Small Functions"
+      description: "Keep functions small and focused on a single responsibility"
+      priority: 90
+      enforcement: should
+      scope:
+        - files: ["**/*.py", "**/*.js", "**/*.ts", "**/*.java", "**/*.go"]
+      body: |
+        Keep functions small and focused:
+        - Do one thing well
+        - Aim for 20 lines or fewer
+        - Use descriptive names that eliminate the need for comments
+        - One level of abstraction per function

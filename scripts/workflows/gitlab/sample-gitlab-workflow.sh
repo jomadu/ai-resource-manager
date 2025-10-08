@@ -45,23 +45,32 @@ cd "$SCRIPT_DIR/sandbox"
 # Install configured ruleset
 log "Installing $RULESET_NAME..."
 if [ -n "$INCLUDE_PATTERNS" ]; then
-    ./arm install gitlab-registry/$RULESET_NAME --include "$INCLUDE_PATTERNS" --sinks $SINKS
+    ./arm install ruleset gitlab-registry/$RULESET_NAME --include "$INCLUDE_PATTERNS" --sinks $SINKS
 else
-    ./arm install gitlab-registry/$RULESET_NAME --sinks $SINKS
+    ./arm install ruleset gitlab-registry/$RULESET_NAME --sinks $SINKS
 fi
 
 success "Setup complete! Try these commands:"
 echo ""
 echo "Basic commands:"
-echo "  ./arm list                    # Show installed rulesets"
-echo "  ./arm info                    # Show detailed info"
+echo "  ./arm list                    # Show all installed resources"
+echo "  ./arm list ruleset            # Show installed rulesets only"
+echo "  ./arm list promptset          # Show installed promptsets only"
+echo "  ./arm info                    # Show detailed info for all resources"
+echo "  ./arm info ruleset            # Show detailed info for rulesets"
 echo "  ./arm outdated                # Check for updates"
 echo ""
 echo "Management commands:"
-echo "  ./arm uninstall gitlab-registry/$RULESET_NAME"
-echo "  ./arm update                  # Update all rulesets"
+echo "  ./arm uninstall ruleset gitlab-registry/$RULESET_NAME"
+echo "  ./arm update                  # Update all resources"
+echo "  ./arm update ruleset          # Update rulesets only"
 echo ""
 echo "Configuration commands:"
 echo "  ./arm config list             # Show current config"
-echo "  ./arm config ruleset update gitlab-registry/$RULESET_NAME priority 200"
+echo "  ./arm config ruleset set gitlab-registry/$RULESET_NAME priority 200"
+echo ""
+echo "Example promptset commands:"
+echo "  ./arm install promptset gitlab-registry/code-review-promptset --sinks cursor"
+echo "  ./arm list promptset"
+echo "  ./arm uninstall promptset gitlab-registry/code-review-promptset"
 echo ""
