@@ -83,48 +83,50 @@ pause
 log "=== REGISTRY SETUP ==="
 
 log "Setting up git registry..."
-run_arm config registry add ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry --type git
+run_arm add registry --type git ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry
 
 log "Showing configuration..."
-run_arm config list
+run_arm list registry
+run_arm list sink
 pause
 
 # === SINK SETUP ===
 log "=== SINK SETUP ==="
 
 log "Setting up cursor sink (hierarchical)..."
-run_arm config sink add cursor .cursor/rules --type cursor
+run_arm add sink --type cursor cursor-rules .cursor/rules
 
 log "Setting up Amazon Q sink (hierarchical)..."
-run_arm config sink add q .amazonq/rules --type amazonq
+run_arm add sink --type amazonq q-rules .amazonq/rules
 
 log "Setting up copilot sink (flat)..."
-run_arm config sink add copilot .github/copilot --type copilot
+run_arm add sink --type copilot copilot-rules .github/copilot
 
 log "Showing configuration..."
-run_arm config list
+run_arm list registry
+run_arm list sink
 pause
 
 # === INSTALL RULESETS ===
 log "=== INSTALL RULESETS ==="
 
 log "Installing cursor rules to cursor sink..."
-run_arm install ruleset ai-rules/cursor-rules --include "rules/cursor/*.mdc" --sinks cursor
+run_arm install ruleset ai-rules/cursor-rules --include "rules/cursor/*.mdc" cursor-rules
 
 log "Installing Amazon Q rules to q sink..."
-run_arm install ruleset ai-rules/amazonq-rules --include "rules/amazonq/*.md" --sinks q
+run_arm install ruleset ai-rules/amazonq-rules --include "rules/amazonq/*.md" q-rules
 
 log "Installing copilot rules to copilot sink..."
-run_arm install ruleset ai-rules/copilot-rules --include "rules/copilot/*.instructions.md" --sinks copilot
+run_arm install ruleset ai-rules/copilot-rules --include "rules/copilot/*.instructions.md" copilot-rules
 
 log "Installing grug-brained-dev ruleset to all sinks..."
-run_arm install ruleset ai-rules/grug-brained-dev --include "rulesets/grug-brained-dev.yml" --sinks cursor,q,copilot --priority 150
+run_arm install ruleset --priority 150 ai-rules/grug-brained-dev --include "rulesets/grug-brained-dev.yml" cursor-rules q-rules copilot-rules
 
 log "Installing code-review promptset to cursor sink..."
-run_arm install promptset ai-rules/code-review --include "promptsets/code-review.yml" --sinks cursor
+run_arm install promptset ai-rules/code-review --include "promptsets/code-review.yml" cursor-rules
 
 log "Installing testing promptset to cursor sink..."
-run_arm install promptset ai-rules/testing --include "promptsets/testing.yml" --sinks cursor
+run_arm install promptset ai-rules/testing --include "promptsets/testing.yml" cursor-rules
 
 show_tree "Project structure after installs"
 pause
@@ -181,7 +183,7 @@ pause
 log "=== INSTALL FROM MAIN BRANCH ==="
 
 log "Installing cursor ruleset from main branch..."
-run_arm install ruleset ai-rules/cursor-rules@main --include "rules/cursor/*.mdc" --sinks cursor
+run_arm install ruleset ai-rules/cursor-rules@main --include "rules/cursor/*.mdc" cursor-rules
 
 log "Showing info for main branch install..."
 run_arm info ruleset ai-rules/cursor-rules
@@ -212,7 +214,7 @@ run_arm info ruleset ai-rules/cursor-rules
 pause
 
 log "Adding q sink to cursor-rules..."
-run_arm config ruleset set ai-rules/cursor-rules sinks cursor,q
+run_arm config ruleset set ai-rules/cursor-rules sinks cursor-rules,q-rules
 
 log "Showing updated sinks..."
 run_arm info ruleset ai-rules/cursor-rules
@@ -222,21 +224,21 @@ pause
 log "=== VERSION CONSTRAINT DEMOS ==="
 
 log "Installing cursor ruleset with major version 1 (should resolve to 1.1.0)..."
-run_arm install ruleset ai-rules/cursor-rules@1 --include "rules/cursor/*.mdc" --sinks cursor
+run_arm install ruleset ai-rules/cursor-rules@1 --include "rules/cursor/*.mdc" cursor-rules
 
 log "Showing info (should show 1.1.0)..."
 run_arm info ruleset ai-rules/cursor-rules
 pause
 
 log "Installing cursor ruleset with minor version 1.0 (should resolve to 1.0.1)..."
-run_arm install ruleset ai-rules/cursor-rules@1.0 --include "rules/cursor/*.mdc" --sinks cursor
+run_arm install ruleset ai-rules/cursor-rules@1.0 --include "rules/cursor/*.mdc" cursor-rules
 
 log "Showing info (should show 1.0.1)..."
 run_arm info ruleset ai-rules/cursor-rules
 pause
 
 log "Installing cursor ruleset with patch version 1.0.0 (should resolve to 1.0.0)..."
-run_arm install ruleset ai-rules/cursor-rules@1.0.0 --include "rules/cursor/*.mdc" --sinks cursor
+run_arm install ruleset ai-rules/cursor-rules@1.0.0 --include "rules/cursor/*.mdc" cursor-rules
 
 log "Showing info (should show 1.0.0)..."
 run_arm info ruleset ai-rules/cursor-rules
@@ -246,7 +248,7 @@ pause
 log "=== SINK REMOVAL PROTECTION ==="
 
 log "Attempting to remove cursor sink (should fail because ruleset is installed)..."
-if run_arm config sink remove cursor 2>&1; then
+if run_arm remove sink cursor-rules 2>&1; then
     error "Sink removal should have failed!"
 else
     success "Sink removal correctly blocked due to active ruleset"
@@ -260,7 +262,7 @@ log "Removing cursor ruleset..."
 run_arm uninstall ruleset ai-rules/cursor-rules
 
 log "Now removing cursor sink (should succeed)..."
-run_arm config sink remove cursor
+run_arm remove sink cursor-rules
 
 success "Cleanup complete"
 pause

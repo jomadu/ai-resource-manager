@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -42,9 +41,7 @@ func newInfoPromptsetCmd() *cobra.Command {
 
 func runInfoAll(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
-
-	// TODO: Implement unified info when service interface is updated
-	return armService.ShowRulesetInfo(ctx, []string{}) // Temporary fallback to all rulesets
+	return armService.ShowAllInfo(ctx)
 }
 
 func runInfoRuleset(cmd *cobra.Command, args []string) error {
@@ -58,6 +55,11 @@ func runInfoRuleset(cmd *cobra.Command, args []string) error {
 }
 
 func runInfoPromptset(cmd *cobra.Command, args []string) error {
-	// TODO: Implement promptset info when service interface is updated
-	return fmt.Errorf("promptset info not yet implemented - service interface needs to be updated first")
+	ctx := context.Background()
+
+	// Convert args to promptset strings for service
+	var promptsetStrings []string
+	promptsetStrings = append(promptsetStrings, args...)
+
+	return armService.ShowPromptsetInfo(ctx, promptsetStrings)
 }

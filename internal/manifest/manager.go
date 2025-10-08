@@ -17,15 +17,13 @@ type Manager interface {
 	// Ruleset operations
 	GetRuleset(ctx context.Context, registry, ruleset string) (*RulesetConfig, error)
 	GetRulesets(ctx context.Context) (map[string]map[string]RulesetConfig, error)
-	AddRuleset(ctx context.Context, registry, ruleset string, entry *RulesetConfig) error
-	UpdateRuleset(ctx context.Context, registry, ruleset string, entry *RulesetConfig) error
+	CreateOrUpdateRuleset(ctx context.Context, registry, ruleset string, entry *RulesetConfig) error
 	RemoveRuleset(ctx context.Context, registry, ruleset string) error
 
 	// Promptset operations
 	GetPromptset(ctx context.Context, registry, promptset string) (*PromptsetConfig, error)
 	GetPromptsets(ctx context.Context) (map[string]map[string]PromptsetConfig, error)
-	AddPromptset(ctx context.Context, registry, promptset string, entry *PromptsetConfig) error
-	UpdatePromptset(ctx context.Context, registry, promptset string, entry *PromptsetConfig) error
+	CreateOrUpdatePromptset(ctx context.Context, registry, promptset string, entry *PromptsetConfig) error
 	RemovePromptset(ctx context.Context, registry, promptset string) error
 
 	// Registry operations
@@ -89,7 +87,7 @@ func (f *FileManager) GetRegistries(ctx context.Context) (map[string]map[string]
 	return manifest.Registries, nil
 }
 
-func (f *FileManager) AddRuleset(ctx context.Context, registry, ruleset string, entry *RulesetConfig) error {
+func (f *FileManager) CreateOrUpdateRuleset(ctx context.Context, registry, ruleset string, entry *RulesetConfig) error {
 	if err := f.validateRuleset(entry); err != nil {
 		return err
 	}
@@ -102,27 +100,6 @@ func (f *FileManager) AddRuleset(ctx context.Context, registry, ruleset string, 
 	}
 	if manifest.Packages.Rulesets[registry] == nil {
 		manifest.Packages.Rulesets[registry] = make(map[string]RulesetConfig)
-	}
-	if _, exists := manifest.Packages.Rulesets[registry][ruleset]; exists {
-		return errors.New("ruleset already exists")
-	}
-	manifest.Packages.Rulesets[registry][ruleset] = *entry
-	return f.saveManifest(manifest)
-}
-
-func (f *FileManager) UpdateRuleset(ctx context.Context, registry, ruleset string, entry *RulesetConfig) error {
-	if err := f.validateRuleset(entry); err != nil {
-		return err
-	}
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-	if manifest.Packages.Rulesets == nil || manifest.Packages.Rulesets[registry] == nil {
-		return errors.New("registry not found")
-	}
-	if _, exists := manifest.Packages.Rulesets[registry][ruleset]; !exists {
-		return errors.New("ruleset not found")
 	}
 	manifest.Packages.Rulesets[registry][ruleset] = *entry
 	return f.saveManifest(manifest)
@@ -171,7 +148,7 @@ func (f *FileManager) GetPromptsets(ctx context.Context) (map[string]map[string]
 	return manifest.Packages.Promptsets, nil
 }
 
-func (f *FileManager) AddPromptset(ctx context.Context, registry, promptset string, entry *PromptsetConfig) error {
+func (f *FileManager) CreateOrUpdatePromptset(ctx context.Context, registry, promptset string, entry *PromptsetConfig) error {
 	if err := f.validatePromptset(entry); err != nil {
 		return err
 	}
@@ -184,27 +161,6 @@ func (f *FileManager) AddPromptset(ctx context.Context, registry, promptset stri
 	}
 	if manifest.Packages.Promptsets[registry] == nil {
 		manifest.Packages.Promptsets[registry] = make(map[string]PromptsetConfig)
-	}
-	if _, exists := manifest.Packages.Promptsets[registry][promptset]; exists {
-		return errors.New("promptset already exists")
-	}
-	manifest.Packages.Promptsets[registry][promptset] = *entry
-	return f.saveManifest(manifest)
-}
-
-func (f *FileManager) UpdatePromptset(ctx context.Context, registry, promptset string, entry *PromptsetConfig) error {
-	if err := f.validatePromptset(entry); err != nil {
-		return err
-	}
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-	if manifest.Packages.Promptsets == nil || manifest.Packages.Promptsets[registry] == nil {
-		return errors.New("registry not found")
-	}
-	if _, exists := manifest.Packages.Promptsets[registry][promptset]; !exists {
-		return errors.New("promptset not found")
 	}
 	manifest.Packages.Promptsets[registry][promptset] = *entry
 	return f.saveManifest(manifest)

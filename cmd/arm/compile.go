@@ -17,7 +17,7 @@ func newCompileCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 
-	cmd.Flags().StringP("target", "t", "", "Target format (cursor, amazonq, markdown, copilot) - supports comma-separated")
+	cmd.Flags().StringSliceP("target", "t", []string{}, "Target format (cursor, amazonq, markdown, copilot) - supports multiple values")
 	cmd.Flags().StringP("output", "o", ".", "Output directory")
 	cmd.Flags().StringP("namespace", "n", "", "Optional namespace for compiled rules")
 	cmd.Flags().BoolP("force", "f", false, "Overwrite existing files")
@@ -36,7 +36,7 @@ func runCompile(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// Parse flags
-	target, _ := cmd.Flags().GetString("target")
+	targets, _ := cmd.Flags().GetStringSlice("target")
 	outputDir, _ := cmd.Flags().GetString("output")
 	namespace, _ := cmd.Flags().GetString("namespace")
 	force, _ := cmd.Flags().GetBool("force")
@@ -50,7 +50,7 @@ func runCompile(cmd *cobra.Command, args []string) error {
 	// Create compile request
 	req := &arm.CompileRequest{
 		Paths:        args,
-		Target:       target,
+		Targets:      targets,
 		OutputDir:    outputDir,
 		Namespace:    namespace,
 		Force:        force,

@@ -309,7 +309,7 @@ type Service interface {
 // CompileRequest groups compile parameters following ARM patterns
 type CompileRequest struct {
     Files        []string
-    Target       string
+    Targets      []string
     OutputDir    string
     Namespace    string
     Force        bool
@@ -333,8 +333,8 @@ func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) erro
         return err
     }
 
-    // 2. Parse targets
-    targets := strings.Split(req.Target, ",")
+    // 2. Use targets directly from request
+    targets := req.Targets
 
     // 3. Process each file
     var errors []error

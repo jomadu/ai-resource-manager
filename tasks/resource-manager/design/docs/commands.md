@@ -97,9 +97,9 @@ $ arm add registry --help
 
 ### arm add registry
 
-`arm add registry --type <git|gitlab|cloudsmith> [--branches BRANCH...] [--group-id ID] [--project-id ID] [--api-version VERSION] [--owner OWNER] [--repo REPO] NAME URL`
+`arm add registry --type <git|gitlab|cloudsmith> [--branches BRANCH...] [--group-id ID] [--project-id ID] [--api-version VERSION] [--owner OWNER] [--repo REPO] [--force] NAME URL`
 
-Add a new registry to the ARM configuration. This command supports different registry types (git, gitlab, cloudsmith) and allows specifying additional parameters like GitLab group and project IDs, or Cloudsmith owner and repository for more precise targeting.
+Add a new registry to the ARM configuration. This command supports different registry types (git, gitlab, cloudsmith) and allows specifying additional parameters like GitLab group and project IDs, or Cloudsmith owner and repository for more precise targeting. The `--force` flag allows overwriting an existing registry with the same name.
 
 **Examples:**
 ```bash
@@ -117,6 +117,9 @@ $ arm add registry --type gitlab --project-id 456 my-gitlab-project https://gitl
 
 # Add a Cloudsmith registry
 $ arm add registry --type cloudsmith --owner my-org --repo my-repo cloudsmith-registry https://app.cloudsmith.com
+
+# Overwrite an existing registry
+$ arm add registry --type git --force my-org https://github.com/my-org/new-arm-registry
 ```
 
 ### arm remove registry
@@ -210,9 +213,9 @@ Repository: my-repo
 
 ### arm add sink
 
-`arm add sink [--type <cursor|copilot|amazonq>] [--layout <hierarchical|flat>] [--compile-to <md|cursor|amazonq|copilot>] NAME PATH`
+`arm add sink [--type <cursor|copilot|amazonq>] [--layout <hierarchical|flat>] [--compile-to <md|cursor|amazonq|copilot>] [--force] NAME PATH`
 
-Add a new sink to the ARM configuration. A sink defines where and how compiled rulesets and promptsets should be output. The `--type` flag is a shortcut that sets combinations of `--layout` and `--compile-to` (e.g., `--type cursor` sets `--layout hierarchical --compile-to cursor`). You can also specify `--layout` and `--compile-to` individually for custom configurations.
+Add a new sink to the ARM configuration. A sink defines where and how compiled rulesets and promptsets should be output. The `--type` flag is a shortcut that sets combinations of `--layout` and `--compile-to` (e.g., `--type cursor` sets `--layout hierarchical --compile-to cursor`). You can also specify `--layout` and `--compile-to` individually for custom configurations. The `--force` flag allows overwriting an existing sink with the same name.
 
 **Examples:**
 ```bash
@@ -230,6 +233,9 @@ $ arm add sink --type amazonq q-prompts .amazonq/prompts
 
 # Add GitHub Copilot sink
 $ arm add sink --type copilot copilot-rules .github/copilot
+
+# Overwrite an existing sink
+$ arm add sink --type cursor --force cursor-rules .cursor/new-rules
 ```
 
 ### arm remove sink
@@ -433,14 +439,14 @@ Version: 1.1.0
 Constraint: ^1.0.0
 Priority: 100
 Sinks: cursor-rules, q-rules
-Includes: **/*.yml, **/*.yaml
+Include: **/*.yml, **/*.yaml
 
 Package: my-org/code-review-promptset
 Type: Promptset
 Version: 1.1.0
 Constraint: ~1.1.0
 Sinks: cursor-prompts, q-prompts
-Includes: **/*.yml, **/*.yaml
+Include: **/*.yml, **/*.yaml
 ```
 
 ## Ruleset Management
@@ -481,7 +487,7 @@ $ arm uninstall ruleset my-org/clean-code-ruleset
 
 `arm config ruleset set REGISTRY_NAME/RULESET_NAME KEY VALUE`
 
-Set configuration values for a specific ruleset. This command allows you to configure ruleset-specific settings. The available configuration keys are `version`, `priority`, `sinks`, `includes`, and `excludes`.
+Set configuration values for a specific ruleset. This command allows you to configure ruleset-specific settings. The available configuration keys are `version`, `priority`, `sinks`, `include`, and `exclude`.
 
 **Examples:**
 ```bash
@@ -518,7 +524,7 @@ my-org/security-ruleset         2.1.0    200       cursor-rules, q-rules, copilo
 
 `arm info ruleset [REGISTRY_NAME/RULESET_NAME...]`
 
-Display detailed information about one or more rulesets. This command shows comprehensive details about the specified rulesets, including registry, name, version constraint, resolved version, includes, excludes, sinks, and directories where it's installed. If no names are provided, it shows information for all installed rulesets.
+Display detailed information about one or more rulesets. This command shows comprehensive details about the specified rulesets, including registry, name, version constraint, resolved version, include, exclude, sinks, and directories where it's installed. If no names are provided, it shows information for all installed rulesets.
 
 **Examples:**
 ```bash
@@ -538,7 +544,7 @@ Version: 1.0.1
 Constraint: ^1.0.0
 Priority: 100
 Sinks: cursor-rules, q-rules
-Includes: **/*.yml, **/*.yaml
+Include: **/*.yml, **/*.yaml
 ```
 
 ### arm update ruleset
@@ -648,7 +654,7 @@ $ arm uninstall promptset my-org/code-review-promptset
 
 `arm config promptset set REGISTRY_NAME/PROMPTSET KEY VALUE`
 
-Set configuration values for a specific promptset. This command allows you to configure promptset-specific settings. The available configuration keys are `version`, `sinks`, `includes`, and `excludes`.
+Set configuration values for a specific promptset. This command allows you to configure promptset-specific settings. The available configuration keys are `version`, `sinks`, `include`, and `exclude`.
 
 **Examples:**
 ```bash
@@ -658,8 +664,8 @@ $ arm config promptset set my-org/code-review-promptset version ^2.0.0
 # Update sinks
 $ arm config promptset set my-org/code-review-promptset sinks cursor-prompts,q-prompts
 
-# Update includes pattern
-$ arm config promptset set my-org/code-review-promptset includes "**/*.yml,**/*.yaml"
+# Update include pattern
+$ arm config promptset set my-org/code-review-promptset include "**/*.yml,**/*.yaml"
 ```
 
 ### arm list promptset
@@ -685,7 +691,7 @@ my-org/testing-promptset        2.0.1    cursor-prompts, q-prompts
 
 `arm info promptset [REGISTRY_NAME/PROMPTSET...]`
 
-Display detailed information about one or more promptsets. This command shows comprehensive details about the specified promptsets, including registry, name, version constraint, resolved version, includes, excludes, sinks, and directories where it's installed. If no names are provided, it shows information for all installed promptsets.
+Display detailed information about one or more promptsets. This command shows comprehensive details about the specified promptsets, including registry, name, version constraint, resolved version, include, exclude, sinks, and directories where it's installed. If no names are provided, it shows information for all installed promptsets.
 
 **Examples:**
 ```bash
@@ -704,8 +710,8 @@ Type: promptset
 Version: 1.1.0
 Constraint: ^1.0.0
 Sinks: cursor-prompts, q-prompts
-Includes: **/*.yml, **/*.yaml
-Excludes: none
+Include: **/*.yml, **/*.yaml
+Exclude: none
 ```
 
 ### arm update promptset
@@ -784,18 +790,43 @@ my-org/testing-promptset
 
 ### arm clean cache
 
-`arm clean cache [--nuke]`
+`arm clean cache [--nuke | --max-age DURATION]`
 
-Clean the local cache directory. This command removes cached registry data and downloaded packages from the local cache. The `--nuke` flag performs a more aggressive cleanup, removing all cached data including registry indexes and package archives. Without the flag, it performs a standard cleanup of outdated or corrupted cache entries.
+Clean the local cache directory. This command removes cached registry data and downloaded packages from the local cache. The `--nuke` flag performs a more aggressive cleanup, removing all cached data including registry indexes and package archives. The `--max-age` flag allows you to specify how old cached data should be before it's removed. Without any flags, it performs a standard cleanup of outdated or corrupted cache entries (default: 7 days).
+
+**Flags:**
+- `--nuke`: Aggressive cleanup (remove all cached data)
+- `--max-age`: Remove cached data older than specified duration (e.g., "30m", "2h", "7d")
+
+**Duration Format:**
+The `--max-age` flag supports duration strings with units:
+- **Minutes**: `30m`, `60m`
+- **Hours**: `2h`, `24h`
+- **Days**: `1d`, `7d`
+- **Combined**: `1h30m`, `2d12h`
 
 **Examples:**
 ```bash
-# Standard cache cleanup
+# Standard cache cleanup (removes data older than 7 days)
 $ arm clean cache
+
+# Remove data older than 30 minutes
+$ arm clean cache --max-age 30m
+
+# Remove data older than 2 hours
+$ arm clean cache --max-age 2h
+
+# Remove data older than 1 day
+$ arm clean cache --max-age 1d
+
+# Remove data older than 1 hour and 30 minutes
+$ arm clean cache --max-age 1h30m
 
 # Aggressive cleanup (remove all cached data)
 $ arm clean cache --nuke
 ```
+
+**Note:** The `--nuke` and `--max-age` flags are mutually exclusive and cannot be used together.
 
 ### arm clean sinks
 

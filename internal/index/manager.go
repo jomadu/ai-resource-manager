@@ -156,6 +156,84 @@ func (m *IndexManager) ListPromptsets(ctx context.Context) (map[string]map[strin
 	return data.Promptsets, nil
 }
 
+// GetAllInstalledFiles returns all files that should exist in the sink directory
+// This includes both resource files (from rulesets/promptsets) and index files
+func (m *IndexManager) GetAllInstalledFiles(ctx context.Context) ([]string, error) {
+	var allFiles []string
+
+	// Get all ruleset files
+	rulesets, err := m.ListRulesets(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, registryRulesets := range rulesets {
+		for _, info := range registryRulesets {
+			for _, filePath := range info.FilePaths {
+				fullPath := filepath.Join(m.sinkDir, filePath)
+				allFiles = append(allFiles, fullPath)
+			}
+		}
+	}
+
+	// Get all promptset files
+	promptsets, err := m.ListPromptsets(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, registryPromptsets := range promptsets {
+		for _, info := range registryPromptsets {
+			for _, filePath := range info.FilePaths {
+				fullPath := filepath.Join(m.sinkDir, filePath)
+				allFiles = append(allFiles, fullPath)
+			}
+		}
+	}
+
+	// Add index files
+	indexFiles := m.getIndexFilePaths()
+	allFiles = append(allFiles, indexFiles...)
+
+	return allFiles, nil
+}
+
+// getIndexFilePaths returns the paths of all index files managed by this IndexManager
+func (m *IndexManager) getIndexFilePaths() []string {
+	var paths []string
+
+	// JSON index file
+	if m.layout == "flat" {
+		paths = append(paths, filepath.Join(m.sinkDir, "arm-index.json"))
+	} else {
+		paths = append(paths, filepath.Join(m.sinkDir, "arm", "arm-index.json"))
+	}
+
+	// Get compiled index file paths by using the generator and compiler
+	// Create a dummy IndexData to generate a ruleset and get the actual compiled file paths
+	dummyData := &IndexData{
+		Rulesets:   make(map[string]map[string]RulesetInfo),
+		Promptsets: make(map[string]map[string]PromptsetInfo),
+	}
+
+	// Generate a dummy ruleset using the generator
+	dummyRuleset := m.generator.CreateRuleset(dummyData)
+
+	// Compile the dummy ruleset to get the actual file paths
+	compiledFiles, err := m.compiler.CompileRuleset("arm", dummyRuleset)
+	if err == nil {
+		for _, compiledFile := range compiledFiles {
+			if m.layout == "flat" {
+				paths = append(paths, filepath.Join(m.sinkDir, compiledFile.Path))
+			} else {
+				paths = append(paths, filepath.Join(m.sinkDir, "arm", compiledFile.Path))
+			}
+		}
+	}
+
+	return paths
+}
+
 func (m *IndexManager) sync(data *IndexData) error {
 	if err := m.writeJSON(data); err != nil {
 		return fmt.Errorf("failed to write JSON: %w", err)

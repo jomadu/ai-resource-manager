@@ -174,6 +174,7 @@ Examples:
 		name := args[0]
 		url := args[1]
 		registryType, _ := cmd.Flags().GetString("type")
+		force, _ := cmd.Flags().GetBool("force")
 		if registryType == "" {
 			registryType = "git"
 		}
@@ -228,7 +229,7 @@ Examples:
 		default:
 			return fmt.Errorf("registry type %s is not implemented", registryType)
 		}
-		return armService.AddRegistry(context.Background(), name, url, registryType, options)
+		return armService.AddRegistry(context.Background(), name, url, registryType, options, force)
 	},
 }
 
@@ -287,7 +288,46 @@ Examples:
 		typeStr, _ := cmd.Flags().GetString("type")
 		force, _ := cmd.Flags().GetBool("force")
 
-		return armService.AddSink(context.Background(), name, directory, typeStr, layout, compileToStr, force)
+		// Apply type-based defaults if sinkType is specified
+		if typeStr != "" {
+			switch typeStr {
+			case "cursor":
+				if layout == "" {
+					layout = "hierarchical"
+				}
+				if compileToStr == "" {
+					compileToStr = "cursor"
+				}
+			case "copilot":
+				if layout == "" {
+					layout = "flat"
+				}
+				if compileToStr == "" {
+					compileToStr = "copilot"
+				}
+			case "amazonq":
+				if layout == "" {
+					layout = "hierarchical"
+				}
+				if compileToStr == "" {
+					compileToStr = "amazonq"
+				}
+			default:
+				return fmt.Errorf("type must be one of: cursor, copilot, amazonq")
+			}
+		}
+
+		// Require either type or compileTarget
+		if typeStr == "" && compileToStr == "" {
+			return fmt.Errorf("either --type or --compile-to is required")
+		}
+
+		// Validate compileTarget
+		if compileToStr != "" && compileToStr != "cursor" && compileToStr != "amazonq" && compileToStr != "markdown" && compileToStr != "copilot" {
+			return fmt.Errorf("compile-to must be one of: cursor, amazonq, markdown, copilot")
+		}
+
+		return armService.AddSink(context.Background(), name, directory, layout, compileToStr, force)
 	},
 }
 
@@ -396,7 +436,7 @@ Examples:
   arm config promptset set my-org/code-review-promptset sinks cursor-prompts,q-prompts`,
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		name, field, _ := args[0], args[1], args[2]
+		name, field, value := args[0], args[1], args[2]
 
 		// Validate that priority is not being set for promptsets
 		if field == "priority" {
@@ -404,13 +444,12 @@ Examples:
 		}
 
 		// Parse promptset name
-		_, err := ParsePackageArg(name)
+		promptset, err := ParsePackageArg(name)
 		if err != nil {
 			return fmt.Errorf("failed to parse promptset name: %w", err)
 		}
 
-		// TODO: Implement promptset config update when service interface is updated
-		return fmt.Errorf("promptset config update not yet implemented - service interface needs to be updated first")
+		return armService.SetPromptsetConfig(context.Background(), promptset.Registry, promptset.Name, field, value)
 	},
 }
 
