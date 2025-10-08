@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Promptset
+metadata:
+    id: "code-review"
+    name: "Code Review"
+    description: "Comprehensive code review prompts for AI assistants"
+spec:
+    prompts:
+        promptOne:
+            name: "Code Review Analysis"
+            description: "Analyze code for quality, security, and best practices"
+            body: |
+                Please review this code for:
+                1. Code quality and readability
+                2. Security vulnerabilities
+                3. Performance issues
+                4. Best practices adherence
+                5. Potential bugs or edge cases
+
+                Provide specific feedback with line numbers and suggestions for improvement.
+        promptTwo:
+            name: "Architecture Review"
+            description: "Review code architecture and design patterns"
+            body: |
+                Analyze the architecture and design of this code:
+                1. Design patterns used
+                2. Separation of concerns
+                3. Coupling and cohesion
+                4. Scalability considerations
+                5. Maintainability factors
+
+                Suggest architectural improvements if needed.
