@@ -241,7 +241,7 @@ This document provides a detailed investigation of the codebase to identify spec
 #### 2.7 Installer Updates
 **File**: `internal/installer/types.go`
 
-- [ ] **Add Promptset Type**:
+- [x] **Add Promptset Type**:
   ```go
   type Promptset struct {
       Registry   string
@@ -252,18 +252,18 @@ This document provides a detailed investigation of the codebase to identify spec
   }
   ```
 
-- [ ] **Update Installer Interface**:
-  - [ ] Add methods for promptset installation
-  - [ ] Update existing methods to handle both resource types
+- [x] **Update Installer Interface**:
+  - [x] Add methods for promptset installation
+  - [x] Update existing methods to handle both resource types
 
 **File**: `internal/installer/installer.go`
-- [ ] Update interface to support both resource types
-- [ ] Add resource type parameter to installation methods
+- [x] Update interface to support both resource types
+- [x] Add resource type parameter to installation methods
 
 **File**: `internal/installer/urf_processor.go` → `internal/installer/resource_processor.go`
-- [ ] Rename file and update implementation
-- [ ] Support processing both rulesets and promptsets
-- [ ] Update compilation logic
+- [x] Rename file and update implementation
+- [x] Support processing both rulesets and promptsets
+- [x] Update compilation logic
 
 #### 2.8 Registry Updates
 **File**: `internal/registry/types.go`

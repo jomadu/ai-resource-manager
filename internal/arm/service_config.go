@@ -295,18 +295,35 @@ func (a *ArmService) SetSinkConfig(ctx context.Context, name, field, value strin
 }
 
 func (a *ArmService) syncRemovedSink(ctx context.Context, removedSink *manifest.SinkConfig) {
-	// Scan removed sink directory to find installed rulesets
 	installer := installer.NewInstaller(removedSink)
-	installations, err := installer.ListInstalled(ctx)
+
+	// Scan removed sink directory to find installed rulesets
+	rulesetInstallations, err := installer.ListInstalledRulesets(ctx)
 	if err != nil {
-		return // Skip directory that can't be scanned
+		// Continue even if ruleset scan fails
+		_ = err
+	} else {
+		// Uninstall all found rulesets from this directory
+		for _, installation := range rulesetInstallations {
+			if err := installer.UninstallRuleset(ctx, installation.Registry, installation.Ruleset); err != nil {
+				// Continue on uninstall failure
+				_ = err
+			}
+		}
 	}
 
-	// Uninstall all found rulesets from this directory
-	for _, installation := range installations {
-		if err := installer.Uninstall(ctx, installation.Registry, installation.Ruleset); err != nil {
-			// Continue on uninstall failure
-			_ = err
+	// Scan removed sink directory to find installed promptsets
+	promptsetInstallations, err := installer.ListInstalledPromptsets(ctx)
+	if err != nil {
+		// Continue even if promptset scan fails
+		_ = err
+	} else {
+		// Uninstall all found promptsets from this directory
+		for _, installation := range promptsetInstallations {
+			if err := installer.UninstallPromptset(ctx, installation.Registry, installation.Promptset); err != nil {
+				// Continue on uninstall failure
+				_ = err
+			}
 		}
 	}
 }

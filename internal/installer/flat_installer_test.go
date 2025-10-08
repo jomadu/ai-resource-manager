@@ -84,15 +84,15 @@ func TestFlatInstaller_ListInstalled(t *testing.T) {
 		{Path: "rule2.md", Content: []byte("rule2")},
 	}
 
-	err := installer.Install(ctx, "registry1", "ruleset1", "1.0.0", 100, files)
+	err := installer.InstallRuleset(ctx, "registry1", "ruleset1", "1.0.0", 100, files)
 	if err != nil {
-		t.Fatalf("Install failed: %v", err)
+		t.Fatalf("InstallRuleset failed: %v", err)
 	}
 
-	// Test ListInstalled
-	installations, err := installer.ListInstalled(ctx)
+	// Test ListInstalledRulesets
+	installations, err := installer.ListInstalledRulesets(ctx)
 	if err != nil {
-		t.Fatalf("ListInstalled failed: %v", err)
+		t.Fatalf("ListInstalledRulesets failed: %v", err)
 	}
 
 	if len(installations) != 1 {
