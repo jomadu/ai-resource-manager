@@ -31,24 +31,26 @@ pause
 
 # Basic compile examples
 log "Compiling rulesets to Cursor format..."
-run_arm compile example-rulesets/*.yml --target cursor --output ./cursor-output
+run_arm compile --target cursor example-rulesets/*.yml ./cursor-output
 pause
 
 log "Compiling rulesets to multiple targets..."
-run_arm compile example-rulesets/clean-code.yml --target cursor,amazonq,copilot --output ./multi-output
+run_arm compile --target cursor example-rulesets/clean-code.yml ./multi-output/cursor
+run_arm compile --target amazonq example-rulesets/clean-code.yml ./multi-output/amazonq
+run_arm compile --target copilot example-rulesets/clean-code.yml ./multi-output/copilot
 pause
 
 log "Compiling with validation only..."
-run_arm compile example-rulesets/*.yml --target cursor --validate-only
+run_arm compile --validate-only example-rulesets/*.yml
 pause
 
 log "Compiling promptsets..."
-run_arm compile example-promptsets/*.yml --target cursor --output ./promptset-output
+run_arm compile --target cursor example-promptsets/*.yml ./promptset-output
 pause
 
 log "Demonstrating resource-specific compilation..."
-run_arm compile ruleset example-rulesets/clean-code.yml --target cursor --output ./ruleset-specific-output
-run_arm compile promptset example-promptsets/code-review.yml --target cursor --output ./promptset-specific-output
+run_arm compile --target cursor example-rulesets/clean-code.yml ./ruleset-specific-output
+run_arm compile --target cursor example-promptsets/code-review.yml ./promptset-specific-output
 pause
 
 success "Compile workflow complete! Check outputs:"
@@ -62,9 +64,9 @@ echo "  promptset-specific-output/ - Promptset-specific compilation"
 echo ""
 echo "Try more commands:"
 echo "  ./arm compile --help"
-echo "  ./arm compile example-rulesets/*.yml --target amazonq --output ./amazonq-output"
-echo "  ./arm compile example-promptsets/*.yml --target cursor --output ./promptset-output"
+echo "  ./arm compile --target amazonq example-rulesets/*.yml ./amazonq-output"
+echo "  ./arm compile --target cursor example-promptsets/*.yml ./promptset-output"
 echo ""
 echo "Resource-specific compilation:"
-echo "  ./arm compile ruleset example-rulesets/*.yml --target cursor"
-echo "  ./arm compile promptset example-promptsets/*.yml --target cursor"
+echo "  ./arm compile --target cursor example-rulesets/*.yml ./output"
+echo "  ./arm compile --target cursor example-promptsets/*.yml ./output"

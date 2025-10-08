@@ -40,7 +40,7 @@ log "Cloudsmith URL: $CLOUDSMITH_URL"
 log "Owner: $CLOUDSMITH_OWNER"
 log "Repository: $CLOUDSMITH_REPOSITORY"
 log "Ruleset: $RULESET_NAME"
-log "Includes: $INCLUDE_PATTERNS"
+log "Include: $INCLUDE_PATTERNS"
 log "Sinks: $SINKS"
 
 # Setup sandbox
@@ -51,9 +51,9 @@ cd "$SCRIPT_DIR/sandbox"
 # Install configured ruleset
 log "Installing $RULESET_NAME..."
 if [ -n "$INCLUDE_PATTERNS" ]; then
-    run_arm install ruleset cloudsmith-registry/$RULESET_NAME --include "$INCLUDE_PATTERNS" --sinks $SINKS
+    run_arm install ruleset cloudsmith-registry/$RULESET_NAME --include "$INCLUDE_PATTERNS" cursor-rules q-rules
 else
-    run_arm install ruleset cloudsmith-registry/$RULESET_NAME --sinks $SINKS
+    run_arm install ruleset cloudsmith-registry/$RULESET_NAME cursor-rules q-rules
 fi
 
 success "Setup complete! Try these commands:"
@@ -72,11 +72,12 @@ echo "  ./arm update                  # Update all resources"
 echo "  ./arm update ruleset          # Update rulesets only"
 echo ""
 echo "Configuration commands:"
-echo "  ./arm config list             # Show current config"
+echo "  ./arm list registry           # Show configured registries"
+echo "  ./arm list sink               # Show configured sinks"
 echo "  ./arm config ruleset set cloudsmith-registry/$RULESET_NAME priority 200"
 echo ""
 echo "Example promptset commands:"
-echo "  ./arm install promptset cloudsmith-registry/code-review-promptset --sinks cursor"
+echo "  ./arm install promptset cloudsmith-registry/code-review-promptset cursor-rules"
 echo "  ./arm list promptset"
 echo "  ./arm uninstall promptset cloudsmith-registry/code-review-promptset"
 echo ""

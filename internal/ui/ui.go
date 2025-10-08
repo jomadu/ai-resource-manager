@@ -100,7 +100,12 @@ type Interface interface {
 	PromptsetInfoGrouped(promptsets []*PromptsetInfo, detailed bool)
 	PackageInfoGrouped(rulesets []*RulesetInfo, promptsets []*PromptsetInfo, detailed bool)
 	OutdatedTable(outdated []OutdatedPackage, outputFormat string)
+	PromptsetOutdated(outdated []*OutdatedPromptset, outputFormat string, noSpinner bool)
 	VersionInfo(info version.VersionInfo)
+	RegistryList(registries map[string]map[string]interface{})
+	RegistryInfo(name string, config map[string]interface{})
+	SinkList(sinks map[string]manifest.SinkConfig)
+	SinkInfo(name string, config manifest.SinkConfig)
 
 	// Compile operations
 	CompileStep(step string)
@@ -678,6 +683,44 @@ func (u *UI) OutdatedTable(outdated []OutdatedPackage, outputFormat string) {
 	}
 }
 
+// PromptsetOutdated displays outdated promptsets in specified format
+func (u *UI) PromptsetOutdated(outdated []*OutdatedPromptset, outputFormat string, noSpinner bool) {
+	if len(outdated) == 0 {
+		pterm.Success.Println("All promptsets are up to date!")
+		return
+	}
+
+	switch outputFormat {
+	case "json":
+		jsonData, err := json.Marshal(outdated)
+		if err != nil {
+			pterm.Error.Printf("Failed to marshal JSON: %v\n", err)
+			return
+		}
+		fmt.Println(string(jsonData))
+	case "list":
+		for _, promptset := range outdated {
+			fmt.Printf("%s/%s\n", promptset.PromptsetInfo.Registry, promptset.PromptsetInfo.Name)
+		}
+	default: // table format
+		tableData := [][]string{
+			{"Registry", "Promptset", "Current", "Wanted", "Latest"},
+		}
+
+		for _, promptset := range outdated {
+			tableData = append(tableData, []string{
+				promptset.PromptsetInfo.Registry,
+				promptset.PromptsetInfo.Name,
+				promptset.PromptsetInfo.Installation.Version,
+				promptset.Wanted,
+				promptset.Latest,
+			})
+		}
+
+		_ = pterm.DefaultTable.WithHasHeader().WithData(tableData).Render()
+	}
+}
+
 // CompileStep displays a compilation step
 func (u *UI) CompileStep(step string) {
 	pterm.Info.Printf("%s ✓\n", step)
@@ -691,4 +734,116 @@ func (u *UI) CompileComplete(stats CompileStats, validateOnly bool) {
 		pterm.Success.Printf("Compiled %d files, generated %d rules\n",
 			stats.FilesCompiled, stats.RulesGenerated)
 	}
+}
+
+// RegistryList displays a list of registries
+func (u *UI) RegistryList(registries map[string]map[string]interface{}) {
+	if len(registries) == 0 {
+		pterm.Info.Println("No registries configured")
+		return
+	}
+
+	tableData := [][]string{
+		{"Name", "Type", "URL", "Config"},
+	}
+
+	for name, config := range registries {
+		regType := "unknown"
+		url := ""
+		configStr := ""
+
+		if t, ok := config["type"].(string); ok {
+			regType = t
+		}
+		if u, ok := config["url"].(string); ok {
+			url = u
+		}
+
+		// Build config string from registry-specific fields
+		var configParts []string
+		if groupID, ok := config["group_id"].(string); ok && groupID != "" {
+			configParts = append(configParts, "group_id="+groupID)
+		}
+		if projectID, ok := config["project_id"].(string); ok && projectID != "" {
+			configParts = append(configParts, "project_id="+projectID)
+		}
+		if owner, ok := config["owner"].(string); ok && owner != "" {
+			configParts = append(configParts, "owner="+owner)
+		}
+		if repo, ok := config["repository"].(string); ok && repo != "" {
+			configParts = append(configParts, "repository="+repo)
+		}
+		if branches, ok := config["branches"].([]string); ok && len(branches) > 0 {
+			configParts = append(configParts, "branches="+fmt.Sprintf("%v", branches))
+		}
+
+		configStr = fmt.Sprintf("%v", configParts)
+
+		tableData = append(tableData, []string{name, regType, url, configStr})
+	}
+
+	_ = pterm.DefaultTable.WithHasHeader().WithData(tableData).Render()
+}
+
+// RegistryInfo displays detailed information about a registry
+func (u *UI) RegistryInfo(name string, config map[string]interface{}) {
+	pterm.Info.Printf("Registry: %s\n", name)
+
+	if regType, ok := config["type"].(string); ok {
+		pterm.Printf("Type: %s\n", regType)
+	}
+	if url, ok := config["url"].(string); ok {
+		pterm.Printf("URL: %s\n", url)
+	}
+
+	// Display registry-specific configuration
+	if groupID, ok := config["group_id"].(string); ok && groupID != "" {
+		pterm.Printf("Group ID: %s\n", groupID)
+	}
+	if projectID, ok := config["project_id"].(string); ok && projectID != "" {
+		pterm.Printf("Project ID: %s\n", projectID)
+	}
+	if owner, ok := config["owner"].(string); ok && owner != "" {
+		pterm.Printf("Owner: %s\n", owner)
+	}
+	if repo, ok := config["repository"].(string); ok && repo != "" {
+		pterm.Printf("Repository: %s\n", repo)
+	}
+	if branches, ok := config["branches"].([]string); ok && len(branches) > 0 {
+		pterm.Printf("Branches: %v\n", branches)
+	}
+
+	fmt.Println() // Add spacing
+}
+
+// SinkList displays a list of sinks
+func (u *UI) SinkList(sinks map[string]manifest.SinkConfig) {
+	if len(sinks) == 0 {
+		pterm.Info.Println("No sinks configured")
+		return
+	}
+
+	tableData := [][]string{
+		{"Name", "Layout", "Compile Target", "Directory"},
+	}
+
+	for name, config := range sinks {
+		tableData = append(tableData, []string{
+			name,
+			config.Layout,
+			string(config.CompileTarget),
+			config.Directory,
+		})
+	}
+
+	_ = pterm.DefaultTable.WithHasHeader().WithData(tableData).Render()
+}
+
+// SinkInfo displays detailed information about a sink
+func (u *UI) SinkInfo(name string, config manifest.SinkConfig) {
+	pterm.Info.Printf("Sink: %s\n", name)
+	pterm.Printf("Layout: %s\n", config.Layout)
+	pterm.Printf("Compile Target: %s\n", string(config.CompileTarget))
+	pterm.Printf("Directory: %s\n", config.Directory)
+	fmt.Println() // Add spacing
 }

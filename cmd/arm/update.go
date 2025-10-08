@@ -42,7 +42,6 @@ func newUpdatePromptsetCmd() *cobra.Command {
 
 func runUpdateAll(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
-	// TODO: Implement unified update when service interface is updated
 	return armService.UpdateAll(ctx) // Temporary fallback to rulesets only
 }
 
@@ -51,7 +50,7 @@ func runUpdateRuleset(cmd *cobra.Command, args []string) error {
 
 	// If no arguments, update all rulesets
 	if len(args) == 0 {
-		return armService.UpdateAll(ctx)
+		return armService.UpdateAllRulesets(ctx)
 	}
 
 	// Parse arguments
@@ -72,6 +71,26 @@ func runUpdateRuleset(cmd *cobra.Command, args []string) error {
 }
 
 func runUpdatePromptset(cmd *cobra.Command, args []string) error {
-	// TODO: Implement promptset update when service interface is updated
-	return fmt.Errorf("promptset update not yet implemented - service interface needs to be updated first")
+	ctx := context.Background()
+
+	// If no arguments, update all promptsets
+	if len(args) == 0 {
+		return armService.UpdateAllPromptsets(ctx)
+	}
+
+	// Parse arguments
+	promptsets, err := ParsePackageArgs(args)
+	if err != nil {
+		return fmt.Errorf("failed to parse arguments: %w", err)
+	}
+
+	// Update each promptset
+	for _, promptset := range promptsets {
+		err := armService.UpdatePromptset(ctx, promptset.Registry, promptset.Name)
+		if err != nil {
+			return fmt.Errorf("failed to update %s/%s: %w", promptset.Registry, promptset.Name, err)
+		}
+	}
+
+	return nil
 }

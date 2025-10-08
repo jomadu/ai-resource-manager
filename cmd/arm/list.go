@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -44,9 +43,7 @@ func newListPromptsetCmd() *cobra.Command {
 
 func runListAll(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
-
-	// TODO: Implement unified list when service interface is updated
-	return armService.ShowList(ctx, false) // Temporary fallback to rulesets only
+	return armService.ShowAllList(ctx, false)
 }
 
 func runListRuleset(cmd *cobra.Command, args []string) error {
@@ -54,10 +51,10 @@ func runListRuleset(cmd *cobra.Command, args []string) error {
 
 	sortPriority, _ := cmd.Flags().GetBool("sort-priority")
 
-	return armService.ShowList(ctx, sortPriority)
+	return armService.ShowRulesetList(ctx, sortPriority)
 }
 
 func runListPromptset(cmd *cobra.Command, args []string) error {
-	// TODO: Implement promptset list when service interface is updated
-	return fmt.Errorf("promptset list not yet implemented - service interface needs to be updated first")
+	ctx := context.Background()
+	return armService.ShowPromptsetList(ctx)
 }

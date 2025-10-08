@@ -23,6 +23,12 @@ func NewArmService(uiInterface ui.Interface) *ArmService {
 	}
 }
 
+// ShowVersion displays the current version, build information, and build datetime
+func (a *ArmService) ShowVersion() error {
+	a.ui.VersionInfo(a.Version())
+	return nil
+}
+
 func (a *ArmService) Version() version.VersionInfo {
 	return version.GetVersionInfo()
 }

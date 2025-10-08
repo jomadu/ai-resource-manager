@@ -11,10 +11,11 @@ import (
 var (
 	armService arm.Service
 	uiInstance *ui.UI
+	debugFlag  bool
 )
 
 func main() {
-	uiInstance = ui.New(false) // TODO: Add debug flag support
+	uiInstance = ui.New(debugFlag)
 	armService = arm.NewArmService(uiInstance)
 
 	if err := rootCmd.Execute(); err != nil {
@@ -30,6 +31,8 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	rootCmd.PersistentFlags().BoolVarP(&debugFlag, "debug", "d", false, "Enable debug logging")
+
 	rootCmd.AddCommand(newInstallCmd())
 	rootCmd.AddCommand(newUninstallCmd())
 	rootCmd.AddCommand(newUpdateCmd())
@@ -41,4 +44,5 @@ func init() {
 	rootCmd.AddCommand(newCacheCmd())
 	rootCmd.AddCommand(newCompileCmd())
 	rootCmd.AddCommand(newVersionCmd())
+	rootCmd.AddCommand(newCleanCmd())
 }

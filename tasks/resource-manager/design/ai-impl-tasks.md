@@ -78,7 +78,7 @@ This document provides a detailed investigation of the codebase to identify spec
 - [x] **Resource Config Commands**:
   - [x] Create `arm config ruleset set REGISTRY/RULESET KEY VALUE`
   - [x] Create `arm config promptset set REGISTRY/PROMPTSET KEY VALUE`
-  - [x] Support keys: `version`, `priority` (rulesets only), `sinks`, `includes`, `excludes`
+  - [x] Support keys: `version`, `priority` (rulesets only), `sinks`, `include`, `exclude`
 
 #### 1.5 Utility Commands
 **Files**: `cmd/arm/cache.go`, `cmd/arm/compile.go`

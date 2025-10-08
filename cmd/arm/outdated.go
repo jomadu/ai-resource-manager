@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -55,18 +54,19 @@ func runOutdatedAll(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 	outputFormat, _ := cmd.Flags().GetString("output")
 	noSpinner, _ := cmd.Flags().GetBool("no-spinner")
-	// TODO: Implement unified outdated when service interface is updated
-	return armService.ShowOutdated(ctx, outputFormat, noSpinner) // Temporary fallback to rulesets only
+	return armService.ShowAllOutdated(ctx, outputFormat, noSpinner)
 }
 
 func runOutdatedRuleset(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 	outputFormat, _ := cmd.Flags().GetString("output")
 	noSpinner, _ := cmd.Flags().GetBool("no-spinner")
-	return armService.ShowOutdated(ctx, outputFormat, noSpinner)
+	return armService.ShowRulesetOutdated(ctx, outputFormat, noSpinner)
 }
 
 func runOutdatedPromptset(cmd *cobra.Command, args []string) error {
-	// TODO: Implement promptset outdated when service interface is updated
-	return fmt.Errorf("promptset outdated not yet implemented - service interface needs to be updated first")
+	ctx := context.Background()
+	outputFormat, _ := cmd.Flags().GetString("output")
+	noSpinner, _ := cmd.Flags().GetBool("no-spinner")
+	return armService.ShowPromptsetOutdated(ctx, outputFormat, noSpinner)
 }
