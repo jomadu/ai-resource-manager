@@ -13,6 +13,11 @@ log() { echo -e "${BLUE}[INFO]${NC} $1"; }
 success() { echo -e "${GREEN}✓${NC} $1"; }
 error() { echo -e "${RED}✗${NC} $1"; }
 
+run_arm() {
+    echo -e "${BLUE}$ ./arm $*${NC}"
+    ./arm "$@"
+}
+
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
@@ -41,13 +46,13 @@ cd "$SCRIPT_DIR/sandbox"
 
 # Configure registry and sinks
 log "Configuring registry and sinks..."
-./arm config registry add sample-repo "$REPO_URL" --type git
-./arm config sink add cursor .cursor/rules --type cursor
-./arm config sink add q .amazonq/rules --type amazonq
+run_arm config registry add sample-repo "$REPO_URL" --type git
+run_arm config sink add cursor .cursor/rules --type cursor
+run_arm config sink add q .amazonq/rules --type amazonq
 
 # Install configured ruleset
 log "Installing $RULESET_NAME..."
-./arm install ruleset sample-repo/$RULESET_NAME --include "$INCLUDE_PATTERNS" --sinks $SINKS
+run_arm install ruleset sample-repo/$RULESET_NAME --include "$INCLUDE_PATTERNS" --sinks $SINKS
 
 success "Setup complete! Try these commands:"
 echo ""
