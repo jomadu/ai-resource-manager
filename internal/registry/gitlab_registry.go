@@ -126,8 +126,8 @@ func (g *GitLabRegistry) getAuthKey() string {
 	return fmt.Sprintf("%s/group/%s", baseURL, g.config.GroupID)
 }
 
-func (g *GitLabRegistry) ListVersions(ctx context.Context, ruleset string) ([]types.Version, error) {
-	// Use ruleset as package name for GitLab Package Registry
+func (g *GitLabRegistry) ListVersions(ctx context.Context, packageName string) ([]types.Version, error) {
+	// Use packageName as package name for GitLab Package Registry
 	if err := g.loadToken(); err != nil {
 		return nil, err
 	}
@@ -148,10 +148,10 @@ func (g *GitLabRegistry) ListVersions(ctx context.Context, ruleset string) ([]ty
 		return nil, err
 	}
 
-	// Extract unique versions from the specific ruleset package
+	// Extract unique versions from the specific package
 	versionMap := make(map[string]bool)
 	for _, pkg := range packages {
-		if pkg.PackageType == "generic" && pkg.Name == ruleset {
+		if pkg.PackageType == "generic" && pkg.Name == packageName {
 			versionMap[pkg.Version] = true
 		}
 	}
@@ -171,13 +171,13 @@ func (g *GitLabRegistry) ListVersions(ctx context.Context, ruleset string) ([]ty
 	return versions, nil
 }
 
-func (g *GitLabRegistry) ResolveVersion(ctx context.Context, ruleset, constraint string) (*resolver.ResolvedVersion, error) {
+func (g *GitLabRegistry) ResolveVersion(ctx context.Context, packageName, constraint string) (*resolver.ResolvedVersion, error) {
 	parsedConstraint, err := g.resolver.ParseConstraint(constraint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid version constraint %s: %w", constraint, err)
 	}
 
-	versions, err := g.ListVersions(ctx, ruleset)
+	versions, err := g.ListVersions(ctx, packageName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list versions: %w", err)
 	}
@@ -193,7 +193,7 @@ func (g *GitLabRegistry) ResolveVersion(ctx context.Context, ruleset, constraint
 	}, nil
 }
 
-func (g *GitLabRegistry) GetContent(ctx context.Context, ruleset string, version types.Version, selector types.ContentSelector) ([]types.File, error) {
+func (g *GitLabRegistry) GetContent(ctx context.Context, packageName string, version types.Version, selector types.ContentSelector) ([]types.File, error) {
 	// Try cache first
 	files, err := g.cache.GetPackageVersion(ctx, selector, version.Version)
 	if err == nil {
@@ -208,9 +208,9 @@ func (g *GitLabRegistry) GetContent(ctx context.Context, ruleset string, version
 	var rawFiles []types.File
 	switch {
 	case g.config.ProjectID != "":
-		rawFiles, err = g.client.DownloadProjectPackage(ctx, g.config.ProjectID, ruleset, version.Version)
+		rawFiles, err = g.client.DownloadProjectPackage(ctx, g.config.ProjectID, packageName, version.Version)
 	case g.config.GroupID != "":
-		rawFiles, err = g.client.DownloadGroupPackage(ctx, g.config.GroupID, ruleset, version.Version)
+		rawFiles, err = g.client.DownloadGroupPackage(ctx, g.config.GroupID, packageName, version.Version)
 	default:
 		return nil, fmt.Errorf("either project_id or group_id must be specified")
 	}
