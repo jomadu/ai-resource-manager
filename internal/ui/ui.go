@@ -16,6 +16,23 @@ type OutdatedRuleset struct {
 	Latest      string       `json:"latest"`
 }
 
+// OutdatedPromptset represents a promptset that has newer versions available.
+type OutdatedPromptset struct {
+	PromptsetInfo *PromptsetInfo `json:"promptsetInfo"`
+	Wanted        string         `json:"wanted"`
+	Latest        string         `json:"latest"`
+}
+
+// OutdatedPackage represents either a ruleset or promptset that has newer versions available.
+type OutdatedPackage struct {
+	Package    string `json:"package"`
+	Type       string `json:"type"` // "ruleset" or "promptset"
+	Constraint string `json:"constraint"`
+	Current    string `json:"current"`
+	Wanted     string `json:"wanted"`
+	Latest     string `json:"latest"`
+}
+
 // ManifestInfo contains information from the manifest file.
 type ManifestInfo struct {
 	Constraint string   `json:"constraint"`
@@ -39,6 +56,22 @@ type RulesetInfo struct {
 	Installation InstallationInfo `json:"installation"`
 }
 
+// PromptsetInfo provides detailed information about a promptset.
+type PromptsetInfo struct {
+	Registry     string                `json:"registry"`
+	Name         string                `json:"name"`
+	Manifest     PromptsetManifestInfo `json:"manifest"`
+	Installation InstallationInfo      `json:"installation"`
+}
+
+// PromptsetManifestInfo contains information from the manifest file for promptsets.
+type PromptsetManifestInfo struct {
+	Constraint string   `json:"constraint"`
+	Include    []string `json:"include"`
+	Exclude    []string `json:"exclude"`
+	Sinks      []string `json:"sinks"`
+}
+
 // CompileStats tracks compilation statistics
 type CompileStats struct {
 	FilesProcessed int `json:"filesProcessed"`
@@ -53,7 +86,7 @@ type Interface interface {
 	// Progress reporting
 	InstallStep(step string)
 	InstallStepWithSpinner(step string) func(result string)
-	InstallComplete(registry, ruleset, version string, sinks []string)
+	InstallComplete(registry, resource, version, resourceType string, sinks []string)
 	Success(msg string)
 	Error(err error)
 	Warning(msg string)
@@ -61,8 +94,12 @@ type Interface interface {
 	// Display operations
 	ConfigList(registries map[string]map[string]interface{}, sinks map[string]manifest.SinkConfig)
 	RulesetList(rulesets []*RulesetInfo)
+	PromptsetList(promptsets []*PromptsetInfo)
+	PackageList(rulesets []*RulesetInfo, promptsets []*PromptsetInfo)
 	RulesetInfoGrouped(rulesets []*RulesetInfo, detailed bool)
-	OutdatedTable(outdated []OutdatedRuleset, outputFormat string)
+	PromptsetInfoGrouped(promptsets []*PromptsetInfo, detailed bool)
+	PackageInfoGrouped(rulesets []*RulesetInfo, promptsets []*PromptsetInfo, detailed bool)
+	OutdatedTable(outdated []OutdatedPackage, outputFormat string)
 	VersionInfo(info version.VersionInfo)
 
 	// Compile operations
@@ -219,11 +256,11 @@ func (u *UI) InstallStepWithSpinner(step string) func(result string) {
 }
 
 // InstallComplete displays final installation summary
-func (u *UI) InstallComplete(registry, ruleset, version string, sinks []string) {
+func (u *UI) InstallComplete(registry, resource, version, resourceType string, sinks []string) {
 	if len(sinks) == 1 {
-		pterm.Success.Printf("Installed %s/%s@%s (installed to %s sink)\n", registry, ruleset, version, sinks[0])
+		pterm.Success.Printf("Installed %s/%s@%s (%s installed to %s sink)\n", registry, resource, version, resourceType, sinks[0])
 	} else {
-		pterm.Success.Printf("Installed %s/%s@%s (installed to %d sinks)\n", registry, ruleset, version, len(sinks))
+		pterm.Success.Printf("Installed %s/%s@%s (%s installed to %d sinks)\n", registry, resource, version, resourceType, len(sinks))
 	}
 }
 
@@ -240,6 +277,46 @@ func (u *UI) RulesetList(rulesets []*RulesetInfo) {
 			ruleset.Installation.Version,
 			ruleset.Manifest.Sinks,
 			ruleset.Manifest.Priority)
+	}
+}
+
+// PromptsetList displays installed promptsets
+func (u *UI) PromptsetList(promptsets []*PromptsetInfo) {
+	if len(promptsets) == 0 {
+		pterm.Info.Println("No promptsets installed")
+		return
+	}
+
+	for _, promptset := range promptsets {
+		pterm.Printf("%s/%s@%s - sinks: %v\n",
+			promptset.Registry, promptset.Name,
+			promptset.Installation.Version,
+			promptset.Manifest.Sinks)
+	}
+}
+
+// PackageList displays both rulesets and promptsets in a unified format
+func (u *UI) PackageList(rulesets []*RulesetInfo, promptsets []*PromptsetInfo) {
+	if len(rulesets) == 0 && len(promptsets) == 0 {
+		pterm.Info.Println("No packages installed")
+		return
+	}
+
+	// Display rulesets
+	for _, ruleset := range rulesets {
+		pterm.Printf("%s/%s@%s (ruleset) - sinks: %v, priority: %d\n",
+			ruleset.Registry, ruleset.Name,
+			ruleset.Installation.Version,
+			ruleset.Manifest.Sinks,
+			ruleset.Manifest.Priority)
+	}
+
+	// Display promptsets
+	for _, promptset := range promptsets {
+		pterm.Printf("%s/%s@%s (promptset) - sinks: %v\n",
+			promptset.Registry, promptset.Name,
+			promptset.Installation.Version,
+			promptset.Manifest.Sinks)
 	}
 }
 
@@ -348,10 +425,224 @@ func (u *UI) RulesetInfoGrouped(rulesets []*RulesetInfo, detailed bool) {
 	}
 }
 
-// OutdatedTable displays outdated rulesets in specified format
-func (u *UI) OutdatedTable(outdated []OutdatedRuleset, outputFormat string) {
+// PromptsetInfo displays detailed promptset information
+func (u *UI) PromptsetInfo(info *PromptsetInfo, detailed bool) {
+	promptsetName := fmt.Sprintf("%s@%s", info.Name, info.Installation.Version)
+	if info.Manifest.Constraint != "" {
+		promptsetName += fmt.Sprintf(" (%s)", info.Manifest.Constraint)
+	}
+
+	children := []pterm.TreeNode{
+		{Text: fmt.Sprintf("include: %v", info.Manifest.Include)},
+		{Text: fmt.Sprintf("sinks: %v", info.Manifest.Sinks)},
+		{Text: fmt.Sprintf("files: %d installed", len(info.Installation.InstalledPaths))},
+	}
+
+	if len(info.Manifest.Exclude) > 0 {
+		children = append(children, pterm.TreeNode{
+			Text: fmt.Sprintf("exclude: %v", info.Manifest.Exclude),
+		})
+	}
+
+	if detailed && len(info.Installation.InstalledPaths) > 0 {
+		pathNodes := []pterm.TreeNode{}
+		for _, path := range info.Installation.InstalledPaths {
+			pathNodes = append(pathNodes, pterm.TreeNode{Text: path})
+		}
+		children = append(children, pterm.TreeNode{
+			Text:     "installed paths:",
+			Children: pathNodes,
+		})
+	}
+
+	promptsetNode := pterm.TreeNode{
+		Text:     promptsetName,
+		Children: children,
+	}
+
+	tree := pterm.DefaultTree.WithRoot(pterm.TreeNode{
+		Text:     info.Registry,
+		Children: []pterm.TreeNode{promptsetNode},
+	})
+	_ = tree.Render()
+}
+
+// PromptsetInfoGrouped displays multiple promptsets grouped by registry
+func (u *UI) PromptsetInfoGrouped(promptsets []*PromptsetInfo, detailed bool) {
+	if len(promptsets) == 0 {
+		pterm.Info.Println("No promptsets installed")
+		return
+	}
+
+	// Group by registry
+	registryGroups := make(map[string][]*PromptsetInfo)
+	for _, promptset := range promptsets {
+		registryGroups[promptset.Registry] = append(registryGroups[promptset.Registry], promptset)
+	}
+
+	// Display each registry group
+	for registry, groupPromptsets := range registryGroups {
+		promptsetNodes := []pterm.TreeNode{}
+
+		for _, promptset := range groupPromptsets {
+			promptsetName := fmt.Sprintf("%s@%s", promptset.Name, promptset.Installation.Version)
+			if promptset.Manifest.Constraint != "" {
+				promptsetName += fmt.Sprintf(" (%s)", promptset.Manifest.Constraint)
+			}
+
+			children := []pterm.TreeNode{
+				{Text: fmt.Sprintf("include: %v", promptset.Manifest.Include)},
+				{Text: fmt.Sprintf("sinks: %v", promptset.Manifest.Sinks)},
+				{Text: fmt.Sprintf("files: %d installed", len(promptset.Installation.InstalledPaths))},
+			}
+
+			if len(promptset.Manifest.Exclude) > 0 {
+				children = append(children, pterm.TreeNode{
+					Text: fmt.Sprintf("exclude: %v", promptset.Manifest.Exclude),
+				})
+			}
+
+			if detailed && len(promptset.Installation.InstalledPaths) > 0 {
+				pathNodes := []pterm.TreeNode{}
+				for _, path := range promptset.Installation.InstalledPaths {
+					pathNodes = append(pathNodes, pterm.TreeNode{Text: path})
+				}
+				children = append(children, pterm.TreeNode{
+					Text:     "installed paths:",
+					Children: pathNodes,
+				})
+			}
+
+			promptsetNodes = append(promptsetNodes, pterm.TreeNode{
+				Text:     promptsetName,
+				Children: children,
+			})
+		}
+
+		tree := pterm.DefaultTree.WithRoot(pterm.TreeNode{
+			Text:     registry,
+			Children: promptsetNodes,
+		})
+		_ = tree.Render()
+		pterm.Println()
+	}
+}
+
+// PackageInfoGrouped displays both rulesets and promptsets grouped by registry
+func (u *UI) PackageInfoGrouped(rulesets []*RulesetInfo, promptsets []*PromptsetInfo, detailed bool) {
+	if len(rulesets) == 0 && len(promptsets) == 0 {
+		pterm.Info.Println("No packages installed")
+		return
+	}
+
+	// Group by registry
+	registryGroups := make(map[string]struct {
+		rulesets   []*RulesetInfo
+		promptsets []*PromptsetInfo
+	})
+
+	for _, ruleset := range rulesets {
+		group := registryGroups[ruleset.Registry]
+		group.rulesets = append(group.rulesets, ruleset)
+		registryGroups[ruleset.Registry] = group
+	}
+
+	for _, promptset := range promptsets {
+		group := registryGroups[promptset.Registry]
+		group.promptsets = append(group.promptsets, promptset)
+		registryGroups[promptset.Registry] = group
+	}
+
+	// Display each registry group
+	for registry, group := range registryGroups {
+		packageNodes := []pterm.TreeNode{}
+
+		// Add rulesets
+		for _, ruleset := range group.rulesets {
+			rulesetName := fmt.Sprintf("%s@%s (ruleset)", ruleset.Name, ruleset.Installation.Version)
+			if ruleset.Manifest.Constraint != "" {
+				rulesetName += fmt.Sprintf(" (%s)", ruleset.Manifest.Constraint)
+			}
+
+			children := []pterm.TreeNode{
+				{Text: fmt.Sprintf("include: %v", ruleset.Manifest.Include)},
+				{Text: fmt.Sprintf("sinks: %v", ruleset.Manifest.Sinks)},
+				{Text: fmt.Sprintf("priority: %d", ruleset.Manifest.Priority)},
+				{Text: fmt.Sprintf("files: %d installed", len(ruleset.Installation.InstalledPaths))},
+			}
+
+			if len(ruleset.Manifest.Exclude) > 0 {
+				children = append(children, pterm.TreeNode{
+					Text: fmt.Sprintf("exclude: %v", ruleset.Manifest.Exclude),
+				})
+			}
+
+			if detailed && len(ruleset.Installation.InstalledPaths) > 0 {
+				pathNodes := []pterm.TreeNode{}
+				for _, path := range ruleset.Installation.InstalledPaths {
+					pathNodes = append(pathNodes, pterm.TreeNode{Text: path})
+				}
+				children = append(children, pterm.TreeNode{
+					Text:     "installed paths:",
+					Children: pathNodes,
+				})
+			}
+
+			packageNodes = append(packageNodes, pterm.TreeNode{
+				Text:     rulesetName,
+				Children: children,
+			})
+		}
+
+		// Add promptsets
+		for _, promptset := range group.promptsets {
+			promptsetName := fmt.Sprintf("%s@%s (promptset)", promptset.Name, promptset.Installation.Version)
+			if promptset.Manifest.Constraint != "" {
+				promptsetName += fmt.Sprintf(" (%s)", promptset.Manifest.Constraint)
+			}
+
+			children := []pterm.TreeNode{
+				{Text: fmt.Sprintf("include: %v", promptset.Manifest.Include)},
+				{Text: fmt.Sprintf("sinks: %v", promptset.Manifest.Sinks)},
+				{Text: fmt.Sprintf("files: %d installed", len(promptset.Installation.InstalledPaths))},
+			}
+
+			if len(promptset.Manifest.Exclude) > 0 {
+				children = append(children, pterm.TreeNode{
+					Text: fmt.Sprintf("exclude: %v", promptset.Manifest.Exclude),
+				})
+			}
+
+			if detailed && len(promptset.Installation.InstalledPaths) > 0 {
+				pathNodes := []pterm.TreeNode{}
+				for _, path := range promptset.Installation.InstalledPaths {
+					pathNodes = append(pathNodes, pterm.TreeNode{Text: path})
+				}
+				children = append(children, pterm.TreeNode{
+					Text:     "installed paths:",
+					Children: pathNodes,
+				})
+			}
+
+			packageNodes = append(packageNodes, pterm.TreeNode{
+				Text:     promptsetName,
+				Children: children,
+			})
+		}
+
+		tree := pterm.DefaultTree.WithRoot(pterm.TreeNode{
+			Text:     registry,
+			Children: packageNodes,
+		})
+		_ = tree.Render()
+		pterm.Println()
+	}
+}
+
+// OutdatedTable displays outdated packages in specified format
+func (u *UI) OutdatedTable(outdated []OutdatedPackage, outputFormat string) {
 	if len(outdated) == 0 {
-		pterm.Success.Println("All rulesets are up to date!")
+		pterm.Success.Println("All packages are up to date!")
 		return
 	}
 
@@ -363,19 +654,23 @@ func (u *UI) OutdatedTable(outdated []OutdatedRuleset, outputFormat string) {
 			return
 		}
 		fmt.Println(string(jsonData))
+	case "list":
+		for _, pkg := range outdated {
+			fmt.Println(pkg.Package)
+		}
 	default: // table format
 		tableData := [][]string{
-			{"Registry", "Ruleset", "Constraint", "Current", "Wanted", "Latest"},
+			{"Package", "Type", "Constraint", "Current", "Wanted", "Latest"},
 		}
 
-		for _, r := range outdated {
+		for _, pkg := range outdated {
 			tableData = append(tableData, []string{
-				r.RulesetInfo.Registry,
-				r.RulesetInfo.Name,
-				r.RulesetInfo.Manifest.Constraint,
-				r.RulesetInfo.Installation.Version,
-				r.Wanted,
-				r.Latest,
+				pkg.Package,
+				pkg.Type,
+				pkg.Constraint,
+				pkg.Current,
+				pkg.Wanted,
+				pkg.Latest,
 			})
 		}
 

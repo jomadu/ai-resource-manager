@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/jomadu/ai-rules-manager/internal/ui"
 )
 
 func (a *ArmService) ShowVersion() error {
@@ -46,7 +48,9 @@ func (a *ArmService) ShowOutdated(ctx context.Context, outputFormat string, noSp
 		if err != nil {
 			return err
 		}
-		a.ui.OutdatedTable(outdated, outputFormat)
+		// Convert to unified format
+		packages := a.convertOutdatedRulesetsToPackages(outdated)
+		a.ui.OutdatedTable(packages, outputFormat)
 	} else {
 		finishChecking := a.ui.InstallStepWithSpinner("Checking for updates...")
 		outdated, err := a.getOutdatedRulesets(ctx)
@@ -54,7 +58,9 @@ func (a *ArmService) ShowOutdated(ctx context.Context, outputFormat string, noSp
 			return err
 		}
 		finishChecking(fmt.Sprintf("Found %d outdated rulesets", len(outdated)))
-		a.ui.OutdatedTable(outdated, outputFormat)
+		// Convert to unified format
+		packages := a.convertOutdatedRulesetsToPackages(outdated)
+		a.ui.OutdatedTable(packages, outputFormat)
 	}
 	return nil
 }
@@ -73,4 +79,20 @@ func (a *ArmService) ShowList(ctx context.Context, sortByPriority bool) error {
 
 	a.ui.RulesetList(rulesets)
 	return nil
+}
+
+// convertOutdatedRulesetsToPackages converts OutdatedRuleset to OutdatedPackage format
+func (a *ArmService) convertOutdatedRulesetsToPackages(outdated []OutdatedRuleset) []ui.OutdatedPackage {
+	packages := make([]ui.OutdatedPackage, len(outdated))
+	for i, ruleset := range outdated {
+		packages[i] = ui.OutdatedPackage{
+			Package:    fmt.Sprintf("%s/%s", ruleset.RulesetInfo.Registry, ruleset.RulesetInfo.Name),
+			Type:       "ruleset",
+			Constraint: ruleset.RulesetInfo.Manifest.Constraint,
+			Current:    ruleset.RulesetInfo.Installation.Version,
+			Wanted:     ruleset.Wanted,
+			Latest:     ruleset.Latest,
+		}
+	}
+	return packages
 }
