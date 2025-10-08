@@ -13,6 +13,11 @@ log() { echo -e "${BLUE}[INFO]${NC} $1"; }
 success() { echo -e "${GREEN}✓${NC} $1"; }
 pause() { echo ""; read -p "Press Enter to continue..."; echo ""; }
 
+run_arm() {
+    echo -e "${BLUE}$ ./arm $*${NC}"
+    ./arm "$@"
+}
+
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -26,24 +31,24 @@ pause
 
 # Basic compile examples
 log "Compiling rulesets to Cursor format..."
-./arm compile example-rulesets/*.yml --target cursor --output ./cursor-output
+run_arm compile example-rulesets/*.yml --target cursor --output ./cursor-output
 pause
 
 log "Compiling rulesets to multiple targets..."
-./arm compile example-rulesets/clean-code.yml --target cursor,amazonq,copilot --output ./multi-output
+run_arm compile example-rulesets/clean-code.yml --target cursor,amazonq,copilot --output ./multi-output
 pause
 
 log "Compiling with validation only..."
-./arm compile example-rulesets/*.yml --target cursor --validate-only
+run_arm compile example-rulesets/*.yml --target cursor --validate-only
 pause
 
 log "Compiling promptsets..."
-./arm compile example-promptsets/*.yml --target cursor --output ./promptset-output
+run_arm compile example-promptsets/*.yml --target cursor --output ./promptset-output
 pause
 
 log "Demonstrating resource-specific compilation..."
-./arm compile ruleset example-rulesets/clean-code.yml --target cursor --output ./ruleset-specific-output
-./arm compile promptset example-promptsets/code-review.yml --target cursor --output ./promptset-specific-output
+run_arm compile ruleset example-rulesets/clean-code.yml --target cursor --output ./ruleset-specific-output
+run_arm compile promptset example-promptsets/code-review.yml --target cursor --output ./promptset-specific-output
 pause
 
 success "Compile workflow complete! Check outputs:"

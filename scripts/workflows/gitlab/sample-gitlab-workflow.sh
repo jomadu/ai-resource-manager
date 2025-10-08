@@ -13,6 +13,11 @@ log() { echo -e "${BLUE}[INFO]${NC} $1"; }
 success() { echo -e "${GREEN}✓${NC} $1"; }
 error() { echo -e "${RED}✗${NC} $1"; }
 
+run_arm() {
+    echo -e "${BLUE}$ ./arm $*${NC}"
+    ./arm "$@"
+}
+
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -45,9 +50,9 @@ cd "$SCRIPT_DIR/sandbox"
 # Install configured ruleset
 log "Installing $RULESET_NAME..."
 if [ -n "$INCLUDE_PATTERNS" ]; then
-    ./arm install ruleset gitlab-registry/$RULESET_NAME --include "$INCLUDE_PATTERNS" --sinks $SINKS
+    run_arm install ruleset gitlab-registry/$RULESET_NAME --include "$INCLUDE_PATTERNS" --sinks $SINKS
 else
-    ./arm install ruleset gitlab-registry/$RULESET_NAME --sinks $SINKS
+    run_arm install ruleset gitlab-registry/$RULESET_NAME --sinks $SINKS
 fi
 
 success "Setup complete! Try these commands:"
