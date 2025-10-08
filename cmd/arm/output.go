@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/jomadu/ai-rules-manager/internal/arm"
+	"github.com/jomadu/ai-rules-manager/internal/ui"
 	"github.com/jomadu/ai-rules-manager/internal/version"
 )
 
@@ -37,16 +38,20 @@ func FormatInstalledRulesets(rulesets []*arm.RulesetInfo, sortPriority bool) {
 
 // FormatOutdatedRulesets formats outdated rulesets as table or JSON
 func FormatOutdatedRulesets(outdated []arm.OutdatedRuleset, format string) error {
+	// Convert to unified format
+	packages := convertOutdatedRulesetsToPackages(outdated)
 	if format == "json" {
-		return FormatJSON(outdated)
+		return FormatJSON(packages)
 	}
-	uiInstance.OutdatedTable(outdated, format)
+	uiInstance.OutdatedTable(packages, format)
 	return nil
 }
 
 // FormatOutdatedTable formats outdated rulesets as a table
 func FormatOutdatedTable(outdated []arm.OutdatedRuleset) {
-	uiInstance.OutdatedTable(outdated, "table")
+	// Convert to unified format
+	packages := convertOutdatedRulesetsToPackages(outdated)
+	uiInstance.OutdatedTable(packages, "table")
 }
 
 // FormatJSON formats any data structure as JSON
@@ -69,4 +74,20 @@ func WriteError(err error) {
 // WriteErrorf writes a formatted error message to stderr
 func WriteErrorf(format string, args ...interface{}) {
 	uiInstance.Error(fmt.Errorf(format, args...))
+}
+
+// convertOutdatedRulesetsToPackages converts OutdatedRuleset to OutdatedPackage format
+func convertOutdatedRulesetsToPackages(outdated []arm.OutdatedRuleset) []ui.OutdatedPackage {
+	packages := make([]ui.OutdatedPackage, len(outdated))
+	for i, ruleset := range outdated {
+		packages[i] = ui.OutdatedPackage{
+			Package:    fmt.Sprintf("%s/%s", ruleset.RulesetInfo.Registry, ruleset.RulesetInfo.Name),
+			Type:       "ruleset",
+			Constraint: ruleset.RulesetInfo.Manifest.Constraint,
+			Current:    ruleset.RulesetInfo.Installation.Version,
+			Wanted:     ruleset.Wanted,
+			Latest:     ruleset.Latest,
+		}
+	}
+	return packages
 }

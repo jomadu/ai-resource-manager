@@ -277,13 +277,13 @@ This document provides a detailed investigation of the codebase to identify spec
 - [x] Update to handle both resource types
 - [x] Ensure they can discover and serve both rulesets and promptsets
 
-#### 2.9 UI Updates
+#### 2.9 UI Updates ✅ COMPLETED
 **File**: `internal/ui/ui.go`
 
-- [ ] **Align with Design Outputs**: Review design examples and align UI output
-- [ ] **Update Display Methods**: Support both resource types in all display methods
-- [ ] **Add Resource Type Indicators**: Show whether output is for ruleset or promptset
-- [ ] **Update Table Formats**: Support unified and resource-specific table layouts
+- [x] **Align with Design Outputs**: Review design examples and align UI output
+- [x] **Update Display Methods**: Support both resource types in all display methods
+- [x] **Add Resource Type Indicators**: Show whether output is for ruleset or promptset
+- [x] **Update Table Formats**: Support unified and resource-specific table layouts
 
 ### 3. Scripts and Workflows Updates
 
