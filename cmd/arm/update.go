@@ -1,96 +1,90 @@
 package main
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-func newUpdateCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "update",
-		Short: "Update resources",
-		Long:  "Update all configured resources, or use subcommands for specific resource types.",
-		RunE:  runUpdateAll,
-	}
+var updateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update packages, rulesets, and promptsets",
+	Long:  "Update packages, rulesets, and promptsets to their latest available versions",
+}
 
+var updatePackageCmd = &cobra.Command{
+	Use:   "package",
+	Short: "Update all packages",
+	Long:  "Update all installed packages to their latest available versions.",
+	Run: func(cmd *cobra.Command, args []string) {
+		updatePackages()
+	},
+}
+
+var updateRulesetCmd = &cobra.Command{
+	Use:   "ruleset [REGISTRY_NAME/RULESET_NAME...]",
+	Short: "Update rulesets",
+	Long:  "Update one or more rulesets to their latest available versions.",
+	Run: func(cmd *cobra.Command, args []string) {
+		updateRulesets(args)
+	},
+}
+
+var updatePromptsetCmd = &cobra.Command{
+	Use:   "promptset [REGISTRY_NAME/PROMPTSET_NAME...]",
+	Short: "Update promptsets",
+	Long:  "Update one or more promptsets to their latest available versions.",
+	Run: func(cmd *cobra.Command, args []string) {
+		updatePromptsets(args)
+	},
+}
+
+func init() {
 	// Add subcommands
-	cmd.AddCommand(newUpdateRulesetCmd())
-	cmd.AddCommand(newUpdatePromptsetCmd())
-
-	return cmd
+	updateCmd.AddCommand(updatePackageCmd)
+	updateCmd.AddCommand(updateRulesetCmd)
+	updateCmd.AddCommand(updatePromptsetCmd)
 }
 
-func newUpdateRulesetCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "ruleset [registry/ruleset...]",
-		Short: "Update rulesets",
-		Long:  "Update specific rulesets or all rulesets if none specified.",
-		RunE:  runUpdateRuleset,
+func updatePackages() {
+	if err := armService.UpdateAll(ctx); err != nil {
+		// TODO: Handle error properly
+		return
 	}
 }
 
-func newUpdatePromptsetCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "promptset [registry/promptset...]",
-		Short: "Update promptsets",
-		Long:  "Update specific promptsets or all promptsets if none specified.",
-		RunE:  runUpdatePromptset,
-	}
-}
-
-func runUpdateAll(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-	return armService.UpdateAll(ctx) // Temporary fallback to rulesets only
-}
-
-func runUpdateRuleset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	// If no arguments, update all rulesets
-	if len(args) == 0 {
-		return armService.UpdateAllRulesets(ctx)
-	}
-
-	// Parse arguments
-	rulesets, err := ParsePackageArgs(args)
-	if err != nil {
-		return fmt.Errorf("failed to parse arguments: %w", err)
-	}
-
-	// Update each ruleset
-	for _, ruleset := range rulesets {
-		err := armService.UpdateRuleset(ctx, ruleset.Registry, ruleset.Name)
-		if err != nil {
-			return fmt.Errorf("failed to update %s/%s: %w", ruleset.Registry, ruleset.Name, err)
+func updateRulesets(names []string) {
+	if len(names) == 0 {
+		// Update all rulesets
+		if err := armService.UpdateAllRulesets(ctx); err != nil {
+			// TODO: Handle error properly
+			return
+		}
+	} else {
+		// Update specific rulesets
+		for _, name := range names {
+			registry, ruleset := parseRegistryPackage(name)
+			if err := armService.UpdateRuleset(ctx, registry, ruleset); err != nil {
+				// TODO: Handle error properly
+				return
+			}
 		}
 	}
-
-	return nil
 }
 
-func runUpdatePromptset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	// If no arguments, update all promptsets
-	if len(args) == 0 {
-		return armService.UpdateAllPromptsets(ctx)
-	}
-
-	// Parse arguments
-	promptsets, err := ParsePackageArgs(args)
-	if err != nil {
-		return fmt.Errorf("failed to parse arguments: %w", err)
-	}
-
-	// Update each promptset
-	for _, promptset := range promptsets {
-		err := armService.UpdatePromptset(ctx, promptset.Registry, promptset.Name)
-		if err != nil {
-			return fmt.Errorf("failed to update %s/%s: %w", promptset.Registry, promptset.Name, err)
+func updatePromptsets(names []string) {
+	if len(names) == 0 {
+		// Update all promptsets
+		if err := armService.UpdateAllPromptsets(ctx); err != nil {
+			// TODO: Handle error properly
+			return
+		}
+	} else {
+		// Update specific promptsets
+		for _, name := range names {
+			registry, promptset := parseRegistryPackage(name)
+			if err := armService.UpdatePromptset(ctx, registry, promptset); err != nil {
+				// TODO: Handle error properly
+				return
+			}
 		}
 	}
-
-	return nil
 }

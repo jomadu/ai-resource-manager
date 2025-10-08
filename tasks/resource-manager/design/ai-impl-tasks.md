@@ -76,8 +76,8 @@ This document provides a detailed investigation of the codebase to identify spec
 - [x] **Registry Commands**: Already support the new design
 - [x] **Sink Commands**: Already support the new design
 - [x] **Resource Config Commands**:
-  - [x] Create `arm config ruleset set REGISTRY/RULESET KEY VALUE`
-  - [x] Create `arm config promptset set REGISTRY/PROMPTSET KEY VALUE`
+  - [x] Create `arm set ruleset REGISTRY/RULESET KEY VALUE`
+  - [x] Create `arm set promptset REGISTRY/PROMPTSET KEY VALUE`
   - [x] Support keys: `version`, `priority` (rulesets only), `sinks`, `include`, `exclude`
 
 #### 1.5 Utility Commands

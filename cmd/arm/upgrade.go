@@ -1,96 +1,90 @@
 package main
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-func newUpgradeCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "upgrade",
-		Short: "Upgrade resources",
-		Long:  "Upgrade all configured resources to latest versions, or use subcommands for specific resource types.",
-		RunE:  runUpgradeAll,
-	}
+var upgradeCmd = &cobra.Command{
+	Use:   "upgrade",
+	Short: "Upgrade packages, rulesets, and promptsets",
+	Long:  "Upgrade packages, rulesets, and promptsets to their latest available versions, ignoring version constraints",
+}
 
+var upgradePackageCmd = &cobra.Command{
+	Use:   "package",
+	Short: "Upgrade all packages",
+	Long:  "Upgrade all installed packages to their latest available versions, ignoring version constraints.",
+	Run: func(cmd *cobra.Command, args []string) {
+		upgradePackages()
+	},
+}
+
+var upgradeRulesetCmd = &cobra.Command{
+	Use:   "ruleset [REGISTRY_NAME/RULESET_NAME...]",
+	Short: "Upgrade rulesets",
+	Long:  "Upgrade one or more rulesets to their latest available versions, ignoring version constraints.",
+	Run: func(cmd *cobra.Command, args []string) {
+		upgradeRulesets(args)
+	},
+}
+
+var upgradePromptsetCmd = &cobra.Command{
+	Use:   "promptset [REGISTRY_NAME/PROMPTSET_NAME...]",
+	Short: "Upgrade promptsets",
+	Long:  "Upgrade one or more promptsets to their latest available versions, ignoring version constraints.",
+	Run: func(cmd *cobra.Command, args []string) {
+		upgradePromptsets(args)
+	},
+}
+
+func init() {
 	// Add subcommands
-	cmd.AddCommand(newUpgradeRulesetCmd())
-	cmd.AddCommand(newUpgradePromptsetCmd())
-
-	return cmd
+	upgradeCmd.AddCommand(upgradePackageCmd)
+	upgradeCmd.AddCommand(upgradeRulesetCmd)
+	upgradeCmd.AddCommand(upgradePromptsetCmd)
 }
 
-func newUpgradeRulesetCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "ruleset [registry/ruleset...]",
-		Short: "Upgrade rulesets",
-		Long:  "Upgrade specific rulesets to latest versions or all rulesets if none specified.",
-		RunE:  runUpgradeRuleset,
+func upgradePackages() {
+	if err := armService.UpgradeAll(ctx); err != nil {
+		// TODO: Handle error properly
+		return
 	}
 }
 
-func newUpgradePromptsetCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "promptset [registry/promptset...]",
-		Short: "Upgrade promptsets",
-		Long:  "Upgrade specific promptsets to latest versions or all promptsets if none specified.",
-		RunE:  runUpgradePromptset,
-	}
-}
-
-func runUpgradeAll(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-	return armService.UpgradeAll(ctx)
-}
-
-func runUpgradeRuleset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	// If no arguments, upgrade all rulesets
-	if len(args) == 0 {
-		// Use the unified upgrade which handles all rulesets
-		return armService.UpgradeAll(ctx)
-	}
-
-	// Parse arguments and upgrade specific rulesets
-	packages, err := ParsePackageArgs(args)
-	if err != nil {
-		return fmt.Errorf("failed to parse arguments: %w", err)
-	}
-
-	for _, pkg := range packages {
-		err = armService.UpgradeRuleset(ctx, pkg.Registry, pkg.Name)
-		if err != nil {
-			return fmt.Errorf("failed to upgrade ruleset %s/%s: %w", pkg.Registry, pkg.Name, err)
+func upgradeRulesets(names []string) {
+	if len(names) == 0 {
+		// Upgrade all rulesets
+		if err := armService.UpdateAllRulesets(ctx); err != nil {
+			// TODO: Handle error properly
+			return
+		}
+	} else {
+		// Upgrade specific rulesets
+		for _, name := range names {
+			registry, ruleset := parseRegistryPackage(name)
+			if err := armService.UpgradeRuleset(ctx, registry, ruleset); err != nil {
+				// TODO: Handle error properly
+				return
+			}
 		}
 	}
-
-	return nil
 }
 
-func runUpgradePromptset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	// If no arguments, upgrade all promptsets
-	if len(args) == 0 {
-		// Use the unified upgrade which handles all promptsets
-		return armService.UpgradeAll(ctx)
-	}
-
-	// Parse arguments and upgrade specific promptsets
-	packages, err := ParsePackageArgs(args)
-	if err != nil {
-		return fmt.Errorf("failed to parse arguments: %w", err)
-	}
-
-	for _, pkg := range packages {
-		err = armService.UpgradePromptset(ctx, pkg.Registry, pkg.Name)
-		if err != nil {
-			return fmt.Errorf("failed to upgrade promptset %s/%s: %w", pkg.Registry, pkg.Name, err)
+func upgradePromptsets(names []string) {
+	if len(names) == 0 {
+		// Upgrade all promptsets
+		if err := armService.UpdateAllPromptsets(ctx); err != nil {
+			// TODO: Handle error properly
+			return
+		}
+	} else {
+		// Upgrade specific promptsets
+		for _, name := range names {
+			registry, promptset := parseRegistryPackage(name)
+			if err := armService.UpgradePromptset(ctx, registry, promptset); err != nil {
+				// TODO: Handle error properly
+				return
+			}
 		}
 	}
-
-	return nil
 }

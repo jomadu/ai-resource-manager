@@ -160,7 +160,7 @@ arm info registry ai-rules
 
 Update registry configuration:
 ```bash
-arm config registry set ai-rules url https://github.com/myorg/new-rules-repo
+arm set registry ai-rules url https://github.com/myorg/new-rules-repo
 ```
 
 Remove registry:

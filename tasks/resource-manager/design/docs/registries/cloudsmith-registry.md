@@ -150,7 +150,7 @@ arm info registry my-cloudsmith
 
 Update registry configuration:
 ```bash
-arm config registry set my-cloudsmith url https://app.cloudsmith.com
+arm set registry my-cloudsmith url https://app.cloudsmith.com
 ```
 
 Remove registry:
