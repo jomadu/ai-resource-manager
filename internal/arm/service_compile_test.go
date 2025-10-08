@@ -22,8 +22,8 @@ func (m *MockUI) InstallStep(step string) { m.Called(step) }
 func (m *MockUI) InstallStepWithSpinner(step string) func(result string) {
 	return m.Called(step).Get(0).(func(result string))
 }
-func (m *MockUI) InstallComplete(registry, ruleset, version string, sinks []string) {
-	m.Called(registry, ruleset, version, sinks)
+func (m *MockUI) InstallComplete(registry, resource, version, resourceType string, sinks []string) {
+	m.Called(registry, resource, version, resourceType, sinks)
 }
 func (m *MockUI) Success(msg string) { m.Called(msg) }
 func (m *MockUI) Error(err error)    { m.Called(err) }
@@ -31,11 +31,21 @@ func (m *MockUI) Warning(msg string) { m.Called(msg) }
 func (m *MockUI) ConfigList(registries map[string]map[string]interface{}, sinks map[string]manifest.SinkConfig) {
 	m.Called(registries, sinks)
 }
-func (m *MockUI) RulesetList(rulesets []*ui.RulesetInfo) { m.Called(rulesets) }
+func (m *MockUI) RulesetList(rulesets []*ui.RulesetInfo)       { m.Called(rulesets) }
+func (m *MockUI) PromptsetList(promptsets []*ui.PromptsetInfo) { m.Called(promptsets) }
+func (m *MockUI) PackageList(rulesets []*ui.RulesetInfo, promptsets []*ui.PromptsetInfo) {
+	m.Called(rulesets, promptsets)
+}
 func (m *MockUI) RulesetInfoGrouped(rulesets []*ui.RulesetInfo, detailed bool) {
 	m.Called(rulesets, detailed)
 }
-func (m *MockUI) OutdatedTable(outdated []ui.OutdatedRuleset, outputFormat string) {
+func (m *MockUI) PromptsetInfoGrouped(promptsets []*ui.PromptsetInfo, detailed bool) {
+	m.Called(promptsets, detailed)
+}
+func (m *MockUI) PackageInfoGrouped(rulesets []*ui.RulesetInfo, promptsets []*ui.PromptsetInfo, detailed bool) {
+	m.Called(rulesets, promptsets, detailed)
+}
+func (m *MockUI) OutdatedTable(outdated []ui.OutdatedPackage, outputFormat string) {
 	m.Called(outdated, outputFormat)
 }
 func (m *MockUI) VersionInfo(info version.VersionInfo) { m.Called(info) }

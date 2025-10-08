@@ -68,7 +68,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, req *InstallRulesetRequ
 		return err
 	}
 
-	a.ui.InstallComplete(req.Registry, req.Ruleset, resolvedVersion.Display, req.Sinks)
+	a.ui.InstallComplete(req.Registry, req.Ruleset, resolvedVersion.Display, "ruleset", req.Sinks)
 	return nil
 }
 
