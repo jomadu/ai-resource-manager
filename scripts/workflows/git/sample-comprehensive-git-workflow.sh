@@ -200,21 +200,21 @@ pause
 log "=== RULESET CONFIG UPDATES ==="
 
 log "Changing cursor-rules priority to 200..."
-run_arm config ruleset set ai-rules/cursor-rules priority 200
+run_arm set ruleset ai-rules/cursor-rules priority 200
 
 log "Showing updated priority..."
 run_arm info ruleset ai-rules/cursor-rules
 pause
 
 log "Changing cursor-rules version constraint to 1.0..."
-run_arm config ruleset set ai-rules/cursor-rules version 1.0
+run_arm set ruleset ai-rules/cursor-rules version 1.0
 
 log "Showing updated version constraint..."
 run_arm info ruleset ai-rules/cursor-rules
 pause
 
 log "Adding q sink to cursor-rules..."
-run_arm config ruleset set ai-rules/cursor-rules sinks cursor-rules,q-rules
+run_arm set ruleset ai-rules/cursor-rules sinks cursor-rules,q-rules
 
 log "Showing updated sinks..."
 run_arm info ruleset ai-rules/cursor-rules

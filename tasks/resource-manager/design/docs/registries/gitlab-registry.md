@@ -170,7 +170,7 @@ arm info registry my-gitlab
 
 Update registry configuration:
 ```bash
-arm config registry set my-gitlab gitlab_project_id 789
+arm set registry my-gitlab gitlab_project_id 789
 ```
 
 Remove registry:

@@ -1,48 +1,62 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"os"
 
 	"github.com/jomadu/ai-rules-manager/internal/arm"
-	"github.com/jomadu/ai-rules-manager/internal/ui"
 	"github.com/spf13/cobra"
 )
 
 var (
 	armService arm.Service
-	uiInstance *ui.UI
-	debugFlag  bool
+	ctx        context.Context
 )
-
-func main() {
-	uiInstance = ui.New(debugFlag)
-	armService = arm.NewArmService(uiInstance)
-
-	if err := rootCmd.Execute(); err != nil {
-		WriteError(err)
-		os.Exit(1)
-	}
-}
 
 var rootCmd = &cobra.Command{
 	Use:   "arm",
-	Short: "AI Resource Manager - Manage AI resources (rulesets and promptsets)",
-	Long:  "ARM helps you install, manage, and organize AI resources (rulesets and promptsets) from various registries.",
+	Short: "AI Resource Manager - Manage rulesets and promptsets for AI coding assistants",
+	Long: `AI Resource Manager (ARM) is a tool for managing rulesets and promptsets
+for AI coding assistants like Cursor, GitHub Copilot, and Amazon Q.
+
+ARM allows you to:
+- Manage registries (Git, GitLab, Cloudsmith)
+- Configure sinks (output destinations)
+- Install and manage rulesets and promptsets
+- Compile source files to platform-specific formats
+- Clean cache and manage installations
+
+For more information, visit: https://github.com/your-org/ai-rules-manager`,
+	Version: "1.0.0",
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVarP(&debugFlag, "debug", "d", false, "Enable debug logging")
+	// Initialize context
+	ctx = context.Background()
 
-	rootCmd.AddCommand(newInstallCmd())
-	rootCmd.AddCommand(newUninstallCmd())
-	rootCmd.AddCommand(newUpdateCmd())
-	rootCmd.AddCommand(newUpgradeCmd())
-	rootCmd.AddCommand(newOutdatedCmd())
-	rootCmd.AddCommand(newListCmd())
-	rootCmd.AddCommand(newInfoCmd())
-	rootCmd.AddCommand(newConfigCmd())
-	rootCmd.AddCommand(newCacheCmd())
-	rootCmd.AddCommand(newCompileCmd())
-	rootCmd.AddCommand(newVersionCmd())
-	rootCmd.AddCommand(newCleanCmd())
+	// Initialize ARM service
+	armService = arm.NewArmService()
+
+	// Add all subcommands
+	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(removeCmd)
+	rootCmd.AddCommand(setCmd)
+	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(infoCmd)
+	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(uninstallCmd)
+	rootCmd.AddCommand(updateCmd)
+	rootCmd.AddCommand(upgradeCmd)
+	rootCmd.AddCommand(outdatedCmd)
+	rootCmd.AddCommand(cleanCmd)
+	rootCmd.AddCommand(compileCmd)
+}
+
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
 }

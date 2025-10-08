@@ -1,65 +1,100 @@
 package main
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
 )
 
-func newInfoCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "info",
-		Short: "Show resource information",
-		Long:  "Show information about all installed resources, or use subcommands for specific resource types.",
-		RunE:  runInfoAll,
-	}
+var infoCmd = &cobra.Command{
+	Use:   "info",
+	Short: "Show detailed information",
+	Long:  "Show detailed information about registries, sinks, rulesets, promptsets, and packages",
+}
 
+var infoRegistryCmd = &cobra.Command{
+	Use:   "registry [NAME]...",
+	Short: "Show registry information",
+	Long:  "Display detailed information about one or more registries.",
+	Run: func(cmd *cobra.Command, args []string) {
+		infoRegistries(args)
+	},
+}
+
+var infoSinkCmd = &cobra.Command{
+	Use:   "sink [NAME]...",
+	Short: "Show sink information",
+	Long:  "Display detailed information about one or more sinks.",
+	Run: func(cmd *cobra.Command, args []string) {
+		infoSinks(args)
+	},
+}
+
+var infoRulesetCmd = &cobra.Command{
+	Use:   "ruleset [REGISTRY_NAME/RULESET_NAME...]",
+	Short: "Show ruleset information",
+	Long:  "Display detailed information about one or more rulesets.",
+	Run: func(cmd *cobra.Command, args []string) {
+		infoRulesets(args)
+	},
+}
+
+var infoPromptsetCmd = &cobra.Command{
+	Use:   "promptset [REGISTRY_NAME/PROMPTSET_NAME...]",
+	Short: "Show promptset information",
+	Long:  "Display detailed information about one or more promptsets.",
+	Run: func(cmd *cobra.Command, args []string) {
+		infoPromptsets(args)
+	},
+}
+
+var infoPackageCmd = &cobra.Command{
+	Use:   "package",
+	Short: "Show package information",
+	Long:  "Display detailed information about all installed packages.",
+	Run: func(cmd *cobra.Command, args []string) {
+		infoPackages()
+	},
+}
+
+func init() {
 	// Add subcommands
-	cmd.AddCommand(newInfoRulesetCmd())
-	cmd.AddCommand(newInfoPromptsetCmd())
-
-	return cmd
+	infoCmd.AddCommand(infoRegistryCmd)
+	infoCmd.AddCommand(infoSinkCmd)
+	infoCmd.AddCommand(infoRulesetCmd)
+	infoCmd.AddCommand(infoPromptsetCmd)
+	infoCmd.AddCommand(infoPackageCmd)
 }
 
-func newInfoRulesetCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "ruleset [registry/ruleset...]",
-		Short: "Show ruleset information",
-		Long:  "Show information about specific rulesets or all installed rulesets.",
-		RunE:  runInfoRuleset,
+func infoRegistries(names []string) {
+	if err := armService.ShowRegistryInfo(ctx, names); err != nil {
+		// TODO: Handle error properly
+		return
 	}
 }
 
-func newInfoPromptsetCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "promptset [registry/promptset...]",
-		Short: "Show promptset information",
-		Long:  "Show information about specific promptsets or all installed promptsets.",
-		RunE:  runInfoPromptset,
+func infoSinks(names []string) {
+	if err := armService.ShowSinkInfo(ctx, names); err != nil {
+		// TODO: Handle error properly
+		return
 	}
 }
 
-func runInfoAll(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-	return armService.ShowAllInfo(ctx)
+func infoRulesets(names []string) {
+	if err := armService.ShowRulesetInfo(ctx, names); err != nil {
+		// TODO: Handle error properly
+		return
+	}
 }
 
-func runInfoRuleset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	// Convert args to ruleset strings for service
-	var rulesetStrings []string
-	rulesetStrings = append(rulesetStrings, args...)
-
-	return armService.ShowRulesetInfo(ctx, rulesetStrings)
+func infoPromptsets(names []string) {
+	if err := armService.ShowPromptsetInfo(ctx, names); err != nil {
+		// TODO: Handle error properly
+		return
+	}
 }
 
-func runInfoPromptset(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
-
-	// Convert args to promptset strings for service
-	var promptsetStrings []string
-	promptsetStrings = append(promptsetStrings, args...)
-
-	return armService.ShowPromptsetInfo(ctx, promptsetStrings)
+func infoPackages() {
+	if err := armService.ShowAllInfo(ctx); err != nil {
+		// TODO: Handle error properly
+		return
+	}
 }

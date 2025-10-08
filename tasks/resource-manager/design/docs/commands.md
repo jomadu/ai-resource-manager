@@ -10,13 +10,13 @@
   - [Registry Management](#registry-management)
     - [arm add registry](#arm-add-registry)
     - [arm remove registry](#arm-remove-registry)
-    - [arm config registry set](#arm-config-registry-set)
+    - [arm set registry](#arm-set-registry)
     - [arm list registry](#arm-list-registry)
     - [arm info registry](#arm-info-registry)
   - [Sink Management](#sink-management)
     - [arm add sink](#arm-add-sink)
     - [arm remove sink](#arm-remove-sink)
-    - [arm config sink set](#arm-config-sink-set)
+    - [arm set sink](#arm-set-sink)
     - [arm list sink](#arm-list-sink)
     - [arm info sink](#arm-info-sink)
   - [Package Management](#package-management)
@@ -30,7 +30,7 @@
   - [Ruleset Management](#ruleset-management)
     - [arm install ruleset](#arm-install-ruleset)
     - [arm uninstall ruleset](#arm-uninstall-ruleset)
-    - [arm config ruleset set](#arm-config-ruleset-set)
+    - [arm set ruleset](#arm-set-ruleset)
     - [arm list ruleset](#arm-list-ruleset)
     - [arm info ruleset](#arm-info-ruleset)
     - [arm update ruleset](#arm-update-ruleset)
@@ -39,7 +39,7 @@
   - [Promptset Management](#promptset-management)
     - [arm install promptset](#arm-install-promptset)
     - [arm uninstall promptset](#arm-uninstall-promptset)
-    - [arm config promptset set](#arm-config-promptset-set)
+    - [arm set promptset](#arm-set-promptset)
     - [arm list promptset](#arm-list-promptset)
     - [arm info promptset](#arm-info-promptset)
     - [arm update promptset](#arm-update-promptset)
@@ -133,28 +133,28 @@ Remove a registry from the ARM configuration by name. This command removes the s
 $ arm remove registry my-org
 ```
 
-### arm config registry set
+### arm set registry
 
-`arm config registry set NAME KEY VALUE`
+`arm set registry NAME KEY VALUE`
 
 Set configuration values for a specific registry. This command allows you to configure registry-specific settings such as URL endpoints or other registry-specific parameters. The exact configuration keys available depend on the registry type.
 
 **Examples:**
 ```bash
 # Update registry URL
-$ arm config registry set my-org url https://github.com/my-org/new-arm-registry
+$ arm set registry my-org url https://github.com/my-org/new-arm-registry
 
 # Set GitLab group ID
-$ arm config registry set my-gitlab group_id 789
+$ arm set registry my-gitlab group_id 789
 
 # Set GitLab project ID
-$ arm config registry set my-gitlab-project project_id 101
+$ arm set registry my-gitlab-project project_id 101
 
 # Set Cloudsmith owner
-$ arm config registry set cloudsmith-registry owner new-org
+$ arm set registry cloudsmith-registry owner new-org
 
 # Set Cloudsmith repository
-$ arm config registry set cloudsmith-registry repository new-repo
+$ arm set registry cloudsmith-registry repository new-repo
 ```
 
 ### arm list registry
@@ -249,22 +249,22 @@ Remove a sink from the ARM configuration by name. This command removes the speci
 $ arm remove sink cursor-rules
 ```
 
-### arm config sink set
+### arm set sink
 
-`arm config sink set NAME KEY VALUE`
+`arm set sink NAME KEY VALUE`
 
 Set configuration values for a specific sink. This command allows you to configure sink-specific settings. The available configuration keys are `layout` (hierarchical or flat), `directory` (output path), and `compile_target` (md, cursor, amazonq, or copilot).
 
 **Examples:**
 ```bash
 # Change sink layout
-$ arm config sink set cursor-rules layout flat
+$ arm set sink cursor-rules layout flat
 
 # Update sink directory
-$ arm config sink set cursor-rules directory .cursor/new-rules
+$ arm set sink cursor-rules directory .cursor/new-rules
 
 # Change compilation target
-$ arm config sink set cursor-rules compile_target md
+$ arm set sink cursor-rules compile_target md
 ```
 
 ### arm list sink
@@ -483,22 +483,22 @@ Uninstall a specific ruleset from all sinks. This command removes the specified 
 $ arm uninstall ruleset my-org/clean-code-ruleset
 ```
 
-### arm config ruleset set
+### arm set ruleset
 
-`arm config ruleset set REGISTRY_NAME/RULESET_NAME KEY VALUE`
+`arm set ruleset REGISTRY_NAME/RULESET_NAME KEY VALUE`
 
 Set configuration values for a specific ruleset. This command allows you to configure ruleset-specific settings. The available configuration keys are `version`, `priority`, `sinks`, `include`, and `exclude`.
 
 **Examples:**
 ```bash
 # Update version constraint
-$ arm config ruleset set my-org/clean-code-ruleset version ^2.0.0
+$ arm set ruleset my-org/clean-code-ruleset version ^2.0.0
 
 # Change priority
-$ arm config ruleset set my-org/clean-code-ruleset priority 150
+$ arm set ruleset my-org/clean-code-ruleset priority 150
 
 # Update sinks
-$ arm config ruleset set my-org/clean-code-ruleset sinks cursor-rules,q-rules,copilot-rules
+$ arm set ruleset my-org/clean-code-ruleset sinks cursor-rules,q-rules,copilot-rules
 ```
 
 ### arm list ruleset
@@ -650,22 +650,22 @@ Uninstall a specific promptset from all sinks. This command removes the specifie
 $ arm uninstall promptset my-org/code-review-promptset
 ```
 
-### arm config promptset set
+### arm set promptset
 
-`arm config promptset set REGISTRY_NAME/PROMPTSET KEY VALUE`
+`arm set promptset REGISTRY_NAME/PROMPTSET KEY VALUE`
 
 Set configuration values for a specific promptset. This command allows you to configure promptset-specific settings. The available configuration keys are `version`, `sinks`, `include`, and `exclude`.
 
 **Examples:**
 ```bash
 # Update version constraint
-$ arm config promptset set my-org/code-review-promptset version ^2.0.0
+$ arm set promptset my-org/code-review-promptset version ^2.0.0
 
 # Update sinks
-$ arm config promptset set my-org/code-review-promptset sinks cursor-prompts,q-prompts
+$ arm set promptset my-org/code-review-promptset sinks cursor-prompts,q-prompts
 
 # Update include pattern
-$ arm config promptset set my-org/code-review-promptset include "**/*.yml,**/*.yaml"
+$ arm set promptset my-org/code-review-promptset include "**/*.yml,**/*.yaml"
 ```
 
 ### arm list promptset

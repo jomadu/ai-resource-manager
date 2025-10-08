@@ -1,57 +1,53 @@
 package main
 
 import (
-	"context"
-
 	"github.com/jomadu/ai-rules-manager/internal/arm"
 	"github.com/spf13/cobra"
 )
 
-func newCompileCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:          "compile [paths...]",
-		Short:        "Compile resource files to target format",
-		Long:         `Compile resource files (rulesets and promptsets) to specific AI tool formats. Paths can be individual files or directories containing resource files.`,
-		RunE:         runCompile,
-		Args:         cobra.MinimumNArgs(1),
-		SilenceUsage: true,
-	}
+var compileCmd = &cobra.Command{
+	Use:   "compile [--target <md|cursor|amazonq|copilot>] [--force] [--recursive] [--validate-only] [--include GLOB...] [--exclude GLOB...] [--fail-fast] INPUT_PATH... OUTPUT_PATH",
+	Short: "Compile rulesets and promptsets",
+	Long: `Compile rulesets and promptsets from source files. This command compiles source ruleset and promptset files to platform-specific formats.
 
-	cmd.Flags().StringSliceP("target", "t", []string{}, "Target format (cursor, amazonq, markdown, copilot) - supports multiple values")
-	cmd.Flags().StringP("output", "o", ".", "Output directory")
-	cmd.Flags().StringP("namespace", "n", "", "Optional namespace for compiled rules")
-	cmd.Flags().BoolP("force", "f", false, "Overwrite existing files")
-	cmd.Flags().BoolP("recursive", "r", false, "Recursively find resource files in directories")
-	cmd.Flags().BoolP("verbose", "v", false, "Show detailed compilation information")
-	cmd.Flags().Bool("validate-only", false, "Validate resource syntax without compilation")
-	cmd.Flags().StringSlice("include", nil, "Include patterns for file filtering")
-	cmd.Flags().StringSlice("exclude", nil, "Exclude patterns for file filtering")
-	cmd.Flags().Bool("fail-fast", false, "Stop compilation on first error")
-
-	_ = cmd.MarkFlagRequired("target")
-	return cmd
+It supports different target platforms (md, cursor, amazonq, copilot), recursive directory processing, validation-only mode, and various filtering and output options. This is useful for development and testing of rulesets and promptsets before publishing to registries.`,
+	Args: cobra.MinimumNArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		compileFiles(cmd, args)
+	},
 }
 
-func runCompile(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+func init() {
+	// Add compile flags
+	compileCmd.Flags().String("target", "cursor", "Target platform (md, cursor, amazonq, copilot)")
+	compileCmd.Flags().Bool("force", false, "Force overwrite existing files")
+	compileCmd.Flags().Bool("recursive", false, "Process directories recursively")
+	compileCmd.Flags().Bool("validate-only", false, "Validate only (no output files)")
+	compileCmd.Flags().StringSlice("include", []string{"**/*.yml", "**/*.yaml"}, "Include patterns")
+	compileCmd.Flags().StringSlice("exclude", []string{}, "Exclude patterns")
+	compileCmd.Flags().Bool("fail-fast", false, "Stop on first error")
+	compileCmd.Flags().String("namespace", "", "Namespace for compiled files")
+	compileCmd.Flags().Bool("verbose", false, "Verbose output")
+}
 
-	// Parse flags
-	targets, _ := cmd.Flags().GetStringSlice("target")
-	outputDir, _ := cmd.Flags().GetString("output")
-	namespace, _ := cmd.Flags().GetString("namespace")
+func compileFiles(cmd *cobra.Command, args []string) {
+	target, _ := cmd.Flags().GetString("target")
 	force, _ := cmd.Flags().GetBool("force")
 	recursive, _ := cmd.Flags().GetBool("recursive")
-	verbose, _ := cmd.Flags().GetBool("verbose")
 	validateOnly, _ := cmd.Flags().GetBool("validate-only")
 	include, _ := cmd.Flags().GetStringSlice("include")
 	exclude, _ := cmd.Flags().GetStringSlice("exclude")
 	failFast, _ := cmd.Flags().GetBool("fail-fast")
+	namespace, _ := cmd.Flags().GetString("namespace")
+	verbose, _ := cmd.Flags().GetBool("verbose")
 
-	// Create compile request
+	inputPaths := args[:len(args)-1]
+	outputPath := args[len(args)-1]
+
 	req := &arm.CompileRequest{
-		Paths:        args,
-		Targets:      targets,
-		OutputDir:    outputDir,
+		Paths:        inputPaths,
+		Targets:      []string{target},
+		OutputDir:    outputPath,
 		Namespace:    namespace,
 		Force:        force,
 		Recursive:    recursive,
@@ -62,6 +58,8 @@ func runCompile(cmd *cobra.Command, args []string) error {
 		FailFast:     failFast,
 	}
 
-	// Execute compilation
-	return armService.CompileFiles(ctx, req)
+	if err := armService.CompileFiles(ctx, req); err != nil {
+		// TODO: Handle error properly
+		return
+	}
 }
