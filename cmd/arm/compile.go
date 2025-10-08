@@ -9,9 +9,9 @@ import (
 
 func newCompileCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "compile [file...]",
+		Use:          "compile [paths...]",
 		Short:        "Compile resource files to target format",
-		Long:         `Compile resource files (rulesets and promptsets) to specific AI tool formats.`,
+		Long:         `Compile resource files (rulesets and promptsets) to specific AI tool formats. Paths can be individual files or directories containing resource files.`,
 		RunE:         runCompile,
 		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
@@ -49,7 +49,7 @@ func runCompile(cmd *cobra.Command, args []string) error {
 
 	// Create compile request
 	req := &arm.CompileRequest{
-		Files:        args,
+		Paths:        args,
 		Target:       target,
 		OutputDir:    outputDir,
 		Namespace:    namespace,

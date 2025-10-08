@@ -9,3 +9,12 @@ type Ruleset struct {
 	Path      string
 	FilePaths []string
 }
+
+// Promptset represents an installed promptset in a directory.
+type Promptset struct {
+	Registry  string
+	Promptset string
+	Version   string
+	Path      string
+	FilePaths []string
+}

@@ -59,15 +59,20 @@ type Scope struct {
 
 // Parser interface for resource file parsing
 type Parser interface {
-	IsResource(file *types.File) bool
+	IsRuleset(file *types.File) bool
+	IsPromptset(file *types.File) bool
+	IsRulesetFile(path string) bool
+	IsPromptsetFile(path string) bool
 	ParseRuleset(file *types.File) (*Ruleset, error)
 	ParsePromptset(file *types.File) (*Promptset, error)
+	ParseRulesets(dirs []string, recursive bool, include, exclude []string) ([]*Ruleset, error)
+	ParsePromptsets(dirs []string, recursive bool, include, exclude []string) ([]*Promptset, error)
 }
 
 // Compiler interface for compiling resource files to tool-specific formats
 type Compiler interface {
-	CompileRuleset(namespace string, file *types.File) ([]*types.File, error)
-	CompilePromptset(namespace string, file *types.File) ([]*types.File, error)
+	CompileRuleset(namespace string, ruleset *Ruleset) ([]*types.File, error)
+	CompilePromptset(namespace string, promptset *Promptset) ([]*types.File, error)
 }
 
 // CompileTarget represents different AI tool formats

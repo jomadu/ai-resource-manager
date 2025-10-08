@@ -44,95 +44,14 @@ func (m *MockUI) CompileComplete(stats ui.CompileStats, validateOnly bool) {
 	m.Called(stats, validateOnly)
 }
 
-func TestArmService_isResourceFile(t *testing.T) {
-	service := &ArmService{}
-
-	tests := []struct {
-		name     string
-		path     string
-		expected bool
-	}{
-		{"YAML file", "test.yaml", true},
-		{"YML file", "test.yml", true},
-		{"Uppercase YAML", "test.YAML", true},
-		{"Uppercase YML", "test.YML", true},
-		{"JSON file", "test.json", false},
-		{"Text file", "test.txt", false},
-		{"No extension", "test", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := service.isResourceFile(tt.path)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestArmService_discoverFiles(t *testing.T) {
-	// Create temporary directory structure
+func TestArmService_CompileFiles_ValidateOnly(t *testing.T) {
 	tempDir := t.TempDir()
+	mockUI := &MockUI{}
+	service := &ArmService{ui: mockUI}
 
-	// Create test files
-	yamlFile := filepath.Join(tempDir, "test.yaml")
-	ymlFile := filepath.Join(tempDir, "test.yml")
-	txtFile := filepath.Join(tempDir, "test.txt")
-	subDir := filepath.Join(tempDir, "subdir")
-	subYamlFile := filepath.Join(subDir, "sub.yaml")
-
-	err := os.WriteFile(yamlFile, []byte("test"), 0o644)
-	assert.NoError(t, err)
-	err = os.WriteFile(ymlFile, []byte("test"), 0o644)
-	assert.NoError(t, err)
-	err = os.WriteFile(txtFile, []byte("test"), 0o644)
-	assert.NoError(t, err)
-	err = os.MkdirAll(subDir, 0o755)
-	assert.NoError(t, err)
-	err = os.WriteFile(subYamlFile, []byte("test"), 0o644)
-	assert.NoError(t, err)
-
-	service := &ArmService{}
-
-	t.Run("discover single file", func(t *testing.T) {
-		files, err := service.discoverFiles([]string{yamlFile}, false, nil, nil)
-		assert.NoError(t, err)
-		assert.Len(t, files, 1)
-		assert.Contains(t, files, yamlFile)
-	})
-
-	t.Run("discover directory non-recursive", func(t *testing.T) {
-		files, err := service.discoverFiles([]string{tempDir}, false, nil, nil)
-		assert.NoError(t, err)
-		assert.Len(t, files, 2) // test.yaml and test.yml
-		assert.Contains(t, files, yamlFile)
-		assert.Contains(t, files, ymlFile)
-		assert.NotContains(t, files, txtFile)
-		assert.NotContains(t, files, subYamlFile)
-	})
-
-	t.Run("discover directory recursive", func(t *testing.T) {
-		files, err := service.discoverFiles([]string{tempDir}, true, nil, nil)
-		assert.NoError(t, err)
-		assert.Len(t, files, 3) // test.yaml, test.yml, and subdir/sub.yaml
-		assert.Contains(t, files, yamlFile)
-		assert.Contains(t, files, ymlFile)
-		assert.Contains(t, files, subYamlFile)
-		assert.NotContains(t, files, txtFile)
-	})
-
-	t.Run("non-existent file", func(t *testing.T) {
-		_, err := service.discoverFiles([]string{"nonexistent.yaml"}, false, nil, nil)
-		assert.Error(t, err)
-	})
-}
-
-func TestArmService_validateResourceFile(t *testing.T) {
-	tempDir := t.TempDir()
-	service := &ArmService{}
-
-	t.Run("valid resource file", func(t *testing.T) {
-		validResource := `apiVersion: "v1"
-kind: "Ruleset"
+	// Create valid resource file
+	validResource := `apiVersion: v1
+kind: Ruleset
 metadata:
   id: "test-rules"
   name: "Test Rules"
@@ -141,47 +60,6 @@ spec:
     rule1:
       name: "Test Rule"
       body: "This is a test rule"`
-
-		filePath := filepath.Join(tempDir, "valid.yaml")
-		err := os.WriteFile(filePath, []byte(validResource), 0o644)
-		assert.NoError(t, err)
-
-		err = service.validateResourceFile(filePath)
-		assert.NoError(t, err)
-	})
-
-	t.Run("invalid resource file", func(t *testing.T) {
-		invalidURF := `invalid: yaml`
-
-		filePath := filepath.Join(tempDir, "invalid.yaml")
-		err := os.WriteFile(filePath, []byte(invalidURF), 0o644)
-		assert.NoError(t, err)
-
-		err = service.validateResourceFile(filePath)
-		assert.Error(t, err)
-	})
-
-	t.Run("non-existent file", func(t *testing.T) {
-		err := service.validateResourceFile("nonexistent.yaml")
-		assert.Error(t, err)
-	})
-}
-
-func TestArmService_CompileFiles_ValidateOnly(t *testing.T) {
-	tempDir := t.TempDir()
-	mockUI := &MockUI{}
-	service := &ArmService{ui: mockUI}
-
-	// Create valid resource file
-	validResource := `apiVersion: "v1"
-kind: "Ruleset"
-metadata:
-  id: "test-rules"
-  name: "Test Rules"
-rules:
-  rule1:
-    name: "Test Rule"
-    body: "This is a test rule"`
 
 	filePath := filepath.Join(tempDir, "test.yaml")
 	err := os.WriteFile(filePath, []byte(validResource), 0o644)
@@ -193,7 +71,7 @@ rules:
 	mockUI.On("CompileComplete", mock.AnythingOfType("ui.CompileStats"), true).Once()
 
 	req := &CompileRequest{
-		Files:        []string{filePath},
+		Paths:        []string{filePath},
 		Target:       "cursor",
 		ValidateOnly: true,
 		Verbose:      true,
@@ -214,7 +92,7 @@ func TestArmService_CompileFiles_EmptyFiles(t *testing.T) {
 	mockUI.On("Warning", "No resource files found matching the criteria").Once()
 
 	req := &CompileRequest{
-		Files:  []string{tempDir}, // Empty directory
+		Paths:  []string{tempDir}, // Empty directory
 		Target: "cursor",
 	}
 

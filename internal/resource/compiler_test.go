@@ -3,9 +3,6 @@ package resource
 import (
 	"strings"
 	"testing"
-
-	"github.com/jomadu/ai-rules-manager/internal/types"
-	"gopkg.in/yaml.v3"
 )
 
 func TestDefaultCompiler_Compile(t *testing.T) {
@@ -40,19 +37,8 @@ func TestDefaultCompiler_Compile(t *testing.T) {
 	}
 
 	namespace := "ai-rules/test@1.0.0"
-	// Convert ruleset to resource file format
-	resourceContent, err := yaml.Marshal(ruleset)
-	if err != nil {
-		t.Fatalf("Failed to marshal ruleset: %v", err)
-	}
 
-	resourceFile := &types.File{
-		Path:    "test-ruleset.yml",
-		Content: resourceContent,
-		Size:    int64(len(resourceContent)),
-	}
-
-	files, err := compiler.CompileRuleset(namespace, resourceFile)
+	files, err := compiler.CompileRuleset(namespace, ruleset)
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}
@@ -124,19 +110,7 @@ func TestDefaultCompiler_AmazonQTarget(t *testing.T) {
 		},
 	}
 
-	// Convert ruleset to resource file format
-	resourceContent, err := yaml.Marshal(ruleset)
-	if err != nil {
-		t.Fatalf("Failed to marshal ruleset: %v", err)
-	}
-
-	resourceFile := &types.File{
-		Path:    "test-ruleset.yml",
-		Content: resourceContent,
-		Size:    int64(len(resourceContent)),
-	}
-
-	files, err := compiler.CompileRuleset("test-namespace", resourceFile)
+	files, err := compiler.CompileRuleset("test-namespace", ruleset)
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}

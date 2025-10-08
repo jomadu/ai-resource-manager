@@ -32,7 +32,7 @@ type InstallPromptsetRequest struct {
 
 // CompileRequest groups compile parameters following ARM patterns
 type CompileRequest struct {
-	Files        []string
+	Paths        []string
 	Target       string
 	OutputDir    string
 	Namespace    string

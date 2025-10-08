@@ -44,7 +44,7 @@ spec:
 	}), false).Once()
 
 	req := &CompileRequest{
-		Files:     []string{filePath},
+		Paths:     []string{filePath},
 		Target:    "cursor",
 		OutputDir: outputDir,
 		Verbose:   true,
@@ -102,7 +102,7 @@ spec:
 	}), false).Once()
 
 	req := &CompileRequest{
-		Files:     []string{filePath},
+		Paths:     []string{filePath},
 		Target:    "cursor,amazonq",
 		OutputDir: outputDir,
 		Verbose:   true,
