@@ -29,9 +29,12 @@ rm -rf "$SCRIPT_DIR/sandbox"
 mkdir -p "$SCRIPT_DIR/sandbox"
 cp ./bin/arm "$SCRIPT_DIR/sandbox/"
 
-# Copy example rulesets
+# Copy example rulesets and promptsets
 log "Copying example rulesets..."
 cp -r "$SCRIPT_DIR/example-rulesets" "$SCRIPT_DIR/sandbox/" 2>/dev/null || true
+
+log "Copying example promptsets..."
+cp -r "$SCRIPT_DIR/example-promptsets" "$SCRIPT_DIR/sandbox/" 2>/dev/null || true
 
 cd "$SCRIPT_DIR/sandbox"
 
@@ -39,4 +42,7 @@ success "Compile sandbox ready!"
 echo ""
 echo "Try these commands:"
 echo "  ./arm compile example-rulesets/*.yml --target cursor --output ./output"
+echo "  ./arm compile example-promptsets/*.yml --target cursor --output ./output"
+echo "  ./arm compile ruleset example-rulesets/clean-code.yml --target cursor"
+echo "  ./arm compile promptset example-promptsets/code-review.yml --target cursor"
 echo "  ./arm compile --help"

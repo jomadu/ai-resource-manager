@@ -109,16 +109,22 @@ pause
 log "=== INSTALL RULESETS ==="
 
 log "Installing cursor rules to cursor sink..."
-run_arm install ai-rules/cursor-rules --include "rules/cursor/*.mdc" --sinks cursor
+run_arm install ruleset ai-rules/cursor-rules --include "rules/cursor/*.mdc" --sinks cursor
 
 log "Installing Amazon Q rules to q sink..."
-run_arm install ai-rules/amazonq-rules --include "rules/amazonq/*.md" --sinks q
+run_arm install ruleset ai-rules/amazonq-rules --include "rules/amazonq/*.md" --sinks q
 
 log "Installing copilot rules to copilot sink..."
-run_arm install ai-rules/copilot-rules --include "rules/copilot/*.instructions.md" --sinks copilot
+run_arm install ruleset ai-rules/copilot-rules --include "rules/copilot/*.instructions.md" --sinks copilot
 
-log "Installing URF grug-brained-dev ruleset to all sinks..."
-run_arm install ai-rules/grug-brained-dev --include "rulesets/grug-brained-dev.yml" --sinks cursor,q,copilot --priority 150
+log "Installing grug-brained-dev ruleset to all sinks..."
+run_arm install ruleset ai-rules/grug-brained-dev --include "rulesets/grug-brained-dev.yml" --sinks cursor,q,copilot --priority 150
+
+log "Installing code-review promptset to cursor sink..."
+run_arm install promptset ai-rules/code-review --include "promptsets/code-review.yml" --sinks cursor
+
+log "Installing testing promptset to cursor sink..."
+run_arm install promptset ai-rules/testing --include "promptsets/testing.yml" --sinks cursor
 
 show_tree "Project structure after installs"
 pause
@@ -126,26 +132,46 @@ pause
 # === LIST AND INFO ===
 log "=== LIST AND INFO ==="
 
-log "Running arm list..."
+log "Running arm list (all resources)..."
 run_arm list
 pause
 
-log "Running arm info (all rulesets)..."
+log "Running arm list ruleset..."
+run_arm list ruleset
+pause
+
+log "Running arm list promptset..."
+run_arm list promptset
+pause
+
+log "Running arm info (all resources)..."
 run_arm info
 pause
 
 log "Running arm info on cursor ruleset..."
-run_arm info ai-rules/cursor-rules
+run_arm info ruleset ai-rules/cursor-rules
+pause
+
+log "Running arm info on code-review promptset..."
+run_arm info promptset ai-rules/code-review
+pause
+
+log "Running arm info on testing promptset..."
+run_arm info promptset ai-rules/testing
 pause
 
 # === UNINSTALL ALL ===
 log "=== UNINSTALL ALL ==="
 
 log "Uninstalling all rulesets..."
-run_arm uninstall ai-rules/cursor-rules
-run_arm uninstall ai-rules/amazonq-rules
-run_arm uninstall ai-rules/copilot-rules
-run_arm uninstall ai-rules/grug-brained-dev
+run_arm uninstall ruleset ai-rules/cursor-rules
+run_arm uninstall ruleset ai-rules/amazonq-rules
+run_arm uninstall ruleset ai-rules/copilot-rules
+run_arm uninstall ruleset ai-rules/grug-brained-dev
+
+log "Uninstalling all promptsets..."
+run_arm uninstall promptset ai-rules/code-review
+run_arm uninstall promptset ai-rules/testing
 
 log "Showing empty list..."
 run_arm list
@@ -155,10 +181,10 @@ pause
 log "=== INSTALL FROM MAIN BRANCH ==="
 
 log "Installing cursor ruleset from main branch..."
-run_arm install ai-rules/cursor-rules@main --include "rules/cursor/*.mdc" --sinks cursor
+run_arm install ruleset ai-rules/cursor-rules@main --include "rules/cursor/*.mdc" --sinks cursor
 
 log "Showing info for main branch install..."
-run_arm info ai-rules/cursor-rules
+run_arm info ruleset ai-rules/cursor-rules
 pause
 
 # === OUTDATED CHECK ===
@@ -172,48 +198,48 @@ pause
 log "=== RULESET CONFIG UPDATES ==="
 
 log "Changing cursor-rules priority to 200..."
-run_arm config ruleset update ai-rules/cursor-rules priority 200
+run_arm config ruleset set ai-rules/cursor-rules priority 200
 
 log "Showing updated priority..."
-run_arm info ai-rules/cursor-rules
+run_arm info ruleset ai-rules/cursor-rules
 pause
 
 log "Changing cursor-rules version constraint to 1.0..."
-run_arm config ruleset update ai-rules/cursor-rules version 1.0
+run_arm config ruleset set ai-rules/cursor-rules version 1.0
 
 log "Showing updated version constraint..."
-run_arm info ai-rules/cursor-rules
+run_arm info ruleset ai-rules/cursor-rules
 pause
 
 log "Adding q sink to cursor-rules..."
-run_arm config ruleset update ai-rules/cursor-rules sinks cursor,q
+run_arm config ruleset set ai-rules/cursor-rules sinks cursor,q
 
 log "Showing updated sinks..."
-run_arm info ai-rules/cursor-rules
+run_arm info ruleset ai-rules/cursor-rules
 pause
 
 # === VERSION CONSTRAINT DEMOS ===
 log "=== VERSION CONSTRAINT DEMOS ==="
 
 log "Installing cursor ruleset with major version 1 (should resolve to 1.1.0)..."
-run_arm install ai-rules/cursor-rules@1 --include "rules/cursor/*.mdc" --sinks cursor
+run_arm install ruleset ai-rules/cursor-rules@1 --include "rules/cursor/*.mdc" --sinks cursor
 
 log "Showing info (should show 1.1.0)..."
-run_arm info ai-rules/cursor-rules
+run_arm info ruleset ai-rules/cursor-rules
 pause
 
 log "Installing cursor ruleset with minor version 1.0 (should resolve to 1.0.1)..."
-run_arm install ai-rules/cursor-rules@1.0 --include "rules/cursor/*.mdc" --sinks cursor
+run_arm install ruleset ai-rules/cursor-rules@1.0 --include "rules/cursor/*.mdc" --sinks cursor
 
 log "Showing info (should show 1.0.1)..."
-run_arm info ai-rules/cursor-rules
+run_arm info ruleset ai-rules/cursor-rules
 pause
 
 log "Installing cursor ruleset with patch version 1.0.0 (should resolve to 1.0.0)..."
-run_arm install ai-rules/cursor-rules@1.0.0 --include "rules/cursor/*.mdc" --sinks cursor
+run_arm install ruleset ai-rules/cursor-rules@1.0.0 --include "rules/cursor/*.mdc" --sinks cursor
 
 log "Showing info (should show 1.0.0)..."
-run_arm info ai-rules/cursor-rules
+run_arm info ruleset ai-rules/cursor-rules
 pause
 
 # === SINK REMOVAL PROTECTION ===
@@ -231,7 +257,7 @@ pause
 log "=== CLEANUP ==="
 
 log "Removing cursor ruleset..."
-run_arm uninstall ai-rules/cursor-rules
+run_arm uninstall ruleset ai-rules/cursor-rules
 
 log "Now removing cursor sink (should succeed)..."
 run_arm config sink remove cursor
@@ -248,12 +274,13 @@ echo "• Sandbox setup and binary building"
 echo "• Basic help and version commands"
 echo "• Registry configuration"
 echo "• Sink configuration (hierarchical and flat layouts)"
-echo "• Installing rulesets to specific sinks"
-echo "• Listing and getting info about rulesets"
-echo "• Uninstalling rulesets"
+echo "• Installing rulesets and promptsets to specific sinks"
+echo "• Listing and getting info about resources (unified and resource-specific)"
+echo "• Uninstalling rulesets and promptsets"
 echo "• Installing from branches"
-echo "• Checking for outdated rulesets"
-echo "• Ruleset configuration updates (priority, version, sinks)"
+echo "• Checking for outdated resources"
+echo "• Resource configuration updates (priority, version, sinks)"
 echo "• Version constraint resolution (major, minor, patch)"
 echo "• Sink removal protection"
 echo "• Clean teardown"
+echo "• New resource manager command structure with ruleset/promptset subcommands"

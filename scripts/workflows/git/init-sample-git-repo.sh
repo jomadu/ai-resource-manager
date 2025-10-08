@@ -40,7 +40,7 @@ check_dependencies() {
 }
 
 create_version_1_0_0() {
-    mkdir -p rules/cursor rules/amazonq rules/copilot
+    mkdir -p rules/cursor rules/amazonq rules/copilot promptsets
 
     cat > README.md << 'EOF'
 # AI Rules Test Repository
@@ -54,8 +54,9 @@ Test repository for ARM (AI Rules Manager) with grug-brained-dev rules.
 - `rules/amazonq/grug-brained-dev.md` - Amazon Q rules for grug-brained development
 - `rules/copilot/grug-brained-dev.instructions.md` - GitHub Copilot instructions for grug-brained development
 
-### URF Format (v2.x+)
-- `rulesets/grug-brained-dev.yml` - Universal Rule Format specification with grug-brained principles
+### Resource Format (v2.x+)
+- `rulesets/grug-brained-dev.yml` - Ruleset specification with grug-brained principles
+- `promptsets/code-review.yml` - Promptset specification for code review prompts
 
 ## Version History
 
@@ -65,12 +66,13 @@ Test repository for ARM (AI Rules Manager) with grug-brained-dev rules.
 - **v2.0.0** - **BREAKING**: Introduced URF format with structured rules
 - **v2.1.0** - Added clean code rules
 
-## URF Format Benefits
+## Resource Format Benefits
 
-- **Structured Rules**: Consistent metadata and priority system
+- **Structured Resources**: Consistent metadata and priority system for rulesets and promptsets
 - **Multi-tool Support**: Single source compiles to cursor, amazonq, copilot formats
-- **Priority Management**: Rules have explicit priority and enforcement levels
+- **Priority Management**: Rulesets have explicit priority and enforcement levels
 - **Scope Definition**: Rules specify which files they apply to
+- **Unified Management**: Both rulesets and promptsets managed through same interface
 EOF
 
     cat > rules/cursor/grug-brained-dev.mdc << 'EOF'
@@ -128,6 +130,41 @@ description: 'Grug-brained development instructions for GitHub Copilot'
 - Write code that tells story
 - Use names that make sense
 - Small functions better than big functions
+EOF
+
+    cat > promptsets/code-review.yml << 'EOF'
+apiVersion: v1
+kind: Promptset
+metadata:
+  id: "codeReview"
+  name: "Code Review Assistant"
+  description: "Prompts for comprehensive code review analysis"
+spec:
+  prompts:
+    review-analysis:
+      name: "Code Review Analysis"
+      description: "Analyze code for quality, security, and best practices"
+      body: |
+        Please review this code for:
+        1. Code quality and readability
+        2. Security vulnerabilities
+        3. Performance issues
+        4. Best practices adherence
+        5. Potential bugs or edge cases
+
+        Provide specific feedback with line numbers and suggestions for improvement.
+    architecture-review:
+      name: "Architecture Review"
+      description: "Review code architecture and design patterns"
+      body: |
+        Analyze the architecture and design of this code:
+        1. Design patterns used
+        2. Separation of concerns
+        3. Coupling and cohesion
+        4. Scalability considerations
+        5. Maintainability factors
+
+        Suggest architectural improvements if needed.
 EOF
 }
 
@@ -246,6 +283,42 @@ description: 'Task processing instructions for GitHub Copilot'
 - Document blockers and solutions
 - Review completed work
 EOF
+
+    # Add testing promptset
+    cat > promptsets/testing.yml << 'EOF'
+apiVersion: v1
+kind: Promptset
+metadata:
+  id: "testing"
+  name: "Testing Assistant"
+  description: "Prompts for generating and improving test code"
+spec:
+  prompts:
+    test-generation:
+      name: "Test Generation"
+      description: "Generate comprehensive test cases for code"
+      body: |
+        Generate comprehensive test cases for this code:
+        1. Unit tests for all public methods
+        2. Edge cases and boundary conditions
+        3. Error handling scenarios
+        4. Integration test suggestions
+        5. Performance test considerations
+
+        Include test data setup and expected outcomes.
+    test-review:
+      name: "Test Review"
+      description: "Review existing test code for completeness and quality"
+      body: |
+        Review these test cases for:
+        1. Test coverage completeness
+        2. Test quality and clarity
+        3. Missing edge cases
+        4. Test organization and structure
+        5. Mock usage and setup
+
+        Suggest improvements and additional test scenarios.
+EOF
 }
 
 create_version_1_0_1() {
@@ -300,88 +373,89 @@ create_version_2_0_0() {
     # Add URF format file
     mkdir -p rulesets
     cat > rulesets/grug-brained-dev.yml << 'EOF'
-version: "1.0"
+apiVersion: v1
+kind: Ruleset
 metadata:
-  id: "ai-rules-sample"
-  name: "AI Rules Sample Ruleset"
-  version: "2.0.0"
-  description: "Sample URF ruleset for ARM testing with grug-brained development principles"
-rules:
-  grug-simplicity:
-    name: "Grug Simplicity Rule"
-    description: "Keep code simple for grug brain to understand"
-    priority: 100
-    enforcement: "must"
-    scope:
-      - files: ["**/*.js", "**/*.ts", "**/*.py", "**/*.go"]
-    body: |
-      Grug no like complex code. Simple code good, complex code bad.
+  id: "grugBrainedDev"
+  name: "Grug Brained Development"
+  description: "Sample ruleset for ARM testing with grug-brained development principles"
+spec:
+  rules:
+    grug-simplicity:
+      name: "Grug Simplicity Rule"
+      description: "Keep code simple for grug brain to understand"
+      priority: 100
+      enforcement: must
+      scope:
+        - files: ["**/*.js", "**/*.ts", "**/*.py", "**/*.go"]
+      body: |
+        Grug no like complex code. Simple code good, complex code bad.
 
-      ## Rules
-      - If grug no understand, too complex
-      - Use simple names that make sense
-      - Small functions better than big functions
-      - One thing per function
+        ## Rules
+        - If grug no understand, too complex
+        - Use simple names that make sense
+        - Small functions better than big functions
+        - One thing per function
 
-      ## Examples
-      ```javascript
-      // Good - grug understand
-      function addNumbers(a, b) {
-        return a + b;
-      }
-
-      // Bad - grug confused
-      const performArithmeticOperation = (operandA, operandB, operationType) => {
-        return operationType === 'addition' ? operandA + operandB : null;
-      }
-      ```
-  grug-testing:
-    name: "Grug Testing Rule"
-    description: "Test everything before ship to avoid angry users"
-    priority: 90
-    enforcement: "should"
-    scope:
-      - files: ["**/*.test.js", "**/*.spec.ts", "**/*_test.py"]
-    body: |
-      Grug test before ship. Broken code make grug sad.
-
-      ## Rules
-      - Test save grug from angry users
-      - Write test for new code
-      - Test edge cases too
-      - Run tests before commit
-
-      ## Test Types
-      - Unit tests for small parts
-      - Integration tests for big parts
-      - End-to-end tests for whole thing
-  grug-documentation:
-    name: "Grug Documentation Rule"
-    description: "Document why, not what - code should explain what"
-    priority: 70
-    enforcement: "may"
-    scope:
-      - files: ["**/*.md", "**/*.rst", "**/*.txt"]
-    body: |
-      Grug write docs when needed. Code should tell story.
-
-      ## Rules
-      - Comments explain why, not what
-      - README tell how to use
-      - Document complex business logic
-      - Keep docs up to date
-
-      ## Good Comments
-      ```javascript
-      // Retry 3 times because API sometimes flaky
-      for (let i = 0; i < 3; i++) {
-        try {
-          return await apiCall();
-        } catch (error) {
-          if (i === 2) throw error;
+        ## Examples
+        ```javascript
+        // Good - grug understand
+        function addNumbers(a, b) {
+          return a + b;
         }
-      }
-      ```
+
+        // Bad - grug confused
+        const performArithmeticOperation = (operandA, operandB, operationType) => {
+          return operationType === 'addition' ? operandA + operandB : null;
+        }
+        ```
+    grug-testing:
+      name: "Grug Testing Rule"
+      description: "Test everything before ship to avoid angry users"
+      priority: 90
+      enforcement: should
+      scope:
+        - files: ["**/*.test.js", "**/*.spec.ts", "**/*_test.py"]
+      body: |
+        Grug test before ship. Broken code make grug sad.
+
+        ## Rules
+        - Test save grug from angry users
+        - Write test for new code
+        - Test edge cases too
+        - Run tests before commit
+
+        ## Test Types
+        - Unit tests for small parts
+        - Integration tests for big parts
+        - End-to-end tests for whole thing
+    grug-documentation:
+      name: "Grug Documentation Rule"
+      description: "Document why, not what - code should explain what"
+      priority: 70
+      enforcement: may
+      scope:
+        - files: ["**/*.md", "**/*.rst", "**/*.txt"]
+      body: |
+        Grug write docs when needed. Code should tell story.
+
+        ## Rules
+        - Comments explain why, not what
+        - README tell how to use
+        - Document complex business logic
+        - Keep docs up to date
+
+        ## Good Comments
+        ```javascript
+        // Retry 3 times because API sometimes flaky
+        for (let i = 0; i < 3; i++) {
+          try {
+            return await apiCall();
+          } catch (error) {
+            if (i === 2) throw error;
+          }
+        }
+        ```
 EOF
 
     # Breaking changes to task rules

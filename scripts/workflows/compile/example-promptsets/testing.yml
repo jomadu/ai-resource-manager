@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Promptset
+metadata:
+    id: "testing"
+    name: "Testing Assistant"
+    description: "Prompts for generating and improving test code"
+spec:
+    prompts:
+        promptOne:
+            name: "Test Generation"
+            description: "Generate comprehensive test cases for code"
+            body: |
+                Generate comprehensive test cases for this code:
+                1. Unit tests for all public methods
+                2. Edge cases and boundary conditions
+                3. Error handling scenarios
+                4. Integration test suggestions
+                5. Performance test considerations
+
+                Include test data setup and expected outcomes.
+        promptTwo:
+            name: "Test Review"
+            description: "Review existing test code for completeness and quality"
+            body: |
+                Review these test cases for:
+                1. Test coverage completeness
+                2. Test quality and clarity
+                3. Missing edge cases
+                4. Test organization and structure
+                5. Mock usage and setup
+
+                Suggest improvements and additional test scenarios.
