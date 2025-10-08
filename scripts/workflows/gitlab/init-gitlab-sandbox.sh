@@ -53,9 +53,9 @@ EOF
 
 # Configure registry and sinks
 log "Configuring GitLab registry..."
-./arm config registry add gitlab-registry "$GITLAB_URL" --type gitlab --project-id "$GITLAB_PROJECT_ID" --api-version "$GITLAB_API_VERSION"
-./arm config sink add cursor .cursor/rules --type cursor
-./arm config sink add q .amazonq/rules --type amazonq
+./arm add registry --type gitlab --project-id "$GITLAB_PROJECT_ID" --api-version "$GITLAB_API_VERSION" gitlab-registry "$GITLAB_URL"
+./arm add sink --type cursor cursor-rules .cursor/rules
+./arm add sink --type amazonq q-rules .amazonq/rules
 
 success "GitLab sandbox ready!"
 echo ""
@@ -64,5 +64,5 @@ echo "  GitLab URL: $GITLAB_URL"
 echo "  Project ID: $GITLAB_PROJECT_ID"
 echo ""
 echo "Try these commands:"
-echo "  ./arm install gitlab-registry/ai-rules --sinks cursor,q"
+echo "  ./arm install ruleset gitlab-registry/ai-rules cursor-rules q-rules"
 echo "  ./arm list"

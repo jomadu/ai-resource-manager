@@ -41,8 +41,8 @@ func newUninstallPromptsetCmd() *cobra.Command {
 }
 
 func runUninstallAll(cmd *cobra.Command, args []string) error {
-	// TODO: Implement unified uninstall when service interface is updated
-	return fmt.Errorf("unified uninstall not yet implemented - service interface needs to be updated first")
+	ctx := context.Background()
+	return armService.UninstallAll(ctx)
 }
 
 func runUninstallRuleset(cmd *cobra.Command, args []string) error {
@@ -62,11 +62,17 @@ func runUninstallRuleset(cmd *cobra.Command, args []string) error {
 }
 
 func runUninstallPromptset(cmd *cobra.Command, args []string) error {
-	_, err := ParsePackageArg(args[0])
+	ctx := context.Background()
+
+	promptset, err := ParsePackageArg(args[0])
 	if err != nil {
 		return fmt.Errorf("failed to parse promptset: %w", err)
 	}
 
-	// TODO: Implement promptset uninstall when service interface is updated
-	return fmt.Errorf("promptset uninstall not yet implemented - service interface needs to be updated first")
+	err = armService.UninstallPromptset(ctx, promptset.Registry, promptset.Name)
+	if err != nil {
+		return fmt.Errorf("failed to uninstall %s/%s: %w", promptset.Registry, promptset.Name, err)
+	}
+
+	return nil
 }

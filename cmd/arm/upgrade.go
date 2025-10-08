@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -40,28 +41,56 @@ func newUpgradePromptsetCmd() *cobra.Command {
 }
 
 func runUpgradeAll(cmd *cobra.Command, args []string) error {
-	// TODO: Implement unified upgrade when service interface is updated
-	return fmt.Errorf("unified upgrade not yet implemented - service interface needs to be updated first")
+	ctx := context.Background()
+	return armService.UpgradeAll(ctx)
 }
 
 func runUpgradeRuleset(cmd *cobra.Command, args []string) error {
+	ctx := context.Background()
+
 	// If no arguments, upgrade all rulesets
 	if len(args) == 0 {
-		// TODO: Implement upgrade all rulesets when service interface is updated
-		return fmt.Errorf("upgrade all rulesets not yet implemented - service interface needs to be updated first")
+		// Use the unified upgrade which handles all rulesets
+		return armService.UpgradeAll(ctx)
 	}
 
-	// Parse arguments
-	_, err := ParsePackageArgs(args)
+	// Parse arguments and upgrade specific rulesets
+	packages, err := ParsePackageArgs(args)
 	if err != nil {
 		return fmt.Errorf("failed to parse arguments: %w", err)
 	}
 
-	// TODO: Implement individual ruleset upgrade when service interface is updated
-	return fmt.Errorf("individual ruleset upgrade not yet implemented - service interface needs to be updated first")
+	for _, pkg := range packages {
+		err = armService.UpgradeRuleset(ctx, pkg.Registry, pkg.Name)
+		if err != nil {
+			return fmt.Errorf("failed to upgrade ruleset %s/%s: %w", pkg.Registry, pkg.Name, err)
+		}
+	}
+
+	return nil
 }
 
 func runUpgradePromptset(cmd *cobra.Command, args []string) error {
-	// TODO: Implement promptset upgrade when service interface is updated
-	return fmt.Errorf("promptset upgrade not yet implemented - service interface needs to be updated first")
+	ctx := context.Background()
+
+	// If no arguments, upgrade all promptsets
+	if len(args) == 0 {
+		// Use the unified upgrade which handles all promptsets
+		return armService.UpgradeAll(ctx)
+	}
+
+	// Parse arguments and upgrade specific promptsets
+	packages, err := ParsePackageArgs(args)
+	if err != nil {
+		return fmt.Errorf("failed to parse arguments: %w", err)
+	}
+
+	for _, pkg := range packages {
+		err = armService.UpgradePromptset(ctx, pkg.Registry, pkg.Name)
+		if err != nil {
+			return fmt.Errorf("failed to upgrade promptset %s/%s: %w", pkg.Registry, pkg.Name, err)
+		}
+	}
+
+	return nil
 }

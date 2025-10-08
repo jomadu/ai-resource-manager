@@ -4,9 +4,11 @@ import "github.com/jomadu/ai-rules-manager/internal/ui"
 
 // Type aliases to avoid duplication
 type OutdatedRuleset = ui.OutdatedRuleset
+type OutdatedPromptset = ui.OutdatedPromptset
 type ManifestInfo = ui.ManifestInfo
 type InstallationInfo = ui.InstallationInfo
 type RulesetInfo = ui.RulesetInfo
+type PromptsetInfo = ui.PromptsetInfo
 type CompileStats = ui.CompileStats
 
 // InstallRulesetRequest groups ruleset install parameters to avoid repetitive parameter passing.
@@ -33,7 +35,7 @@ type InstallPromptsetRequest struct {
 // CompileRequest groups compile parameters following ARM patterns
 type CompileRequest struct {
 	Paths        []string
-	Target       string
+	Targets      []string
 	OutputDir    string
 	Namespace    string
 	Force        bool

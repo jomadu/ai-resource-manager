@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -30,10 +28,29 @@ var cacheCleanCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 
+		nuke, _ := cmd.Flags().GetBool("nuke")
 		maxAgeStr, _ := cmd.Flags().GetString("max-age")
-		maxAge, err := parseDuration(maxAgeStr)
-		if err != nil {
-			return fmt.Errorf("invalid max-age format: %w", err)
+
+		// Validate mutual exclusivity
+		if nuke && maxAgeStr != "" {
+			return fmt.Errorf("--nuke and --max-age are mutually exclusive")
+		}
+
+		if nuke {
+			return armService.NukeCache(ctx)
+		}
+
+		// Parse duration string to time.Duration
+		var maxAge time.Duration
+		if maxAgeStr != "" {
+			var err error
+			maxAge, err = parseDuration(maxAgeStr)
+			if err != nil {
+				return fmt.Errorf("invalid max-age format: %w", err)
+			}
+		} else {
+			// Default to 7 days if no max-age specified
+			maxAge = 7 * 24 * time.Hour
 		}
 
 		return armService.CleanCacheWithAge(ctx, maxAge)
@@ -50,35 +67,7 @@ var cacheNukeCmd = &cobra.Command{
 	},
 }
 
-// parseDuration extends time.ParseDuration to support days (d)
-func parseDuration(s string) (time.Duration, error) {
-	if strings.HasSuffix(s, "d") {
-		daysStr := strings.TrimSuffix(s, "d")
-		days, err := strconv.Atoi(daysStr)
-		if err != nil {
-			return 0, fmt.Errorf("invalid days value: %s", daysStr)
-		}
-		return time.Duration(days) * 24 * time.Hour, nil
-	}
-	if strings.HasSuffix(s, "h") {
-		hoursStr := strings.TrimSuffix(s, "h")
-		hours, err := strconv.Atoi(hoursStr)
-		if err != nil {
-			return 0, fmt.Errorf("invalid hours value: %s", hoursStr)
-		}
-		return time.Duration(hours) * time.Hour, nil
-	}
-	if strings.HasSuffix(s, "m") {
-		minutesStr := strings.TrimSuffix(s, "m")
-		minutes, err := strconv.Atoi(minutesStr)
-		if err != nil {
-			return 0, fmt.Errorf("invalid minutes value: %s", minutesStr)
-		}
-		return time.Duration(minutes) * time.Minute, nil
-	}
-	return 0, fmt.Errorf("unsupported duration format: %s (use format like 30d, 24h, or 60m)", s)
-}
-
 func init() {
-	cacheCleanCmd.Flags().String("max-age", "30d", "Remove versions not accessed within this duration (e.g., 30d, 7d, 24h)")
+	cacheCleanCmd.Flags().Bool("nuke", false, "Aggressive cleanup (remove all cached data)")
+	cacheCleanCmd.Flags().String("max-age", "", "Remove cached data older than specified duration (e.g., '30m', '2h', '7d')")
 }

@@ -95,22 +95,22 @@ func createGitRegistry(t *testing.T, config registry.GitRegistryConfig) registry
 }
 
 func loadContentSelector() types.ContentSelector {
-	var includes []string
-	var excludes []string
+	var include []string
+	var exclude []string
 
 	if includeStr := os.Getenv("GIT_TEST_INCLUDES"); includeStr != "" {
-		includes = strings.Split(includeStr, ",")
+		include = strings.Split(includeStr, ",")
 	} else {
-		includes = []string{"**/*.yml", "**/*.yaml", "**/*.md"}
+		include = []string{"**/*.yml", "**/*.yaml", "**/*.md"}
 	}
 
 	if excludeStr := os.Getenv("GIT_TEST_EXCLUDES"); excludeStr != "" {
-		excludes = strings.Split(excludeStr, ",")
+		exclude = strings.Split(excludeStr, ",")
 	}
 
 	return types.ContentSelector{
-		Include: includes,
-		Exclude: excludes,
+		Include: include,
+		Exclude: exclude,
 	}
 }
 

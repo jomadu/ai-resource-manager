@@ -36,7 +36,7 @@ SINKS=${SINKS:-"cursor,q"}
 log "=== Simple Git Workflow ==="
 log "Repository: $REPO_URL"
 log "Ruleset: $RULESET_NAME"
-log "Includes: $INCLUDE_PATTERNS"
+log "Include: $INCLUDE_PATTERNS"
 log "Sinks: $SINKS"
 
 # Setup sandbox
@@ -46,13 +46,13 @@ cd "$SCRIPT_DIR/sandbox"
 
 # Configure registry and sinks
 log "Configuring registry and sinks..."
-run_arm config registry add sample-repo "$REPO_URL" --type git
-run_arm config sink add cursor .cursor/rules --type cursor
-run_arm config sink add q .amazonq/rules --type amazonq
+run_arm add registry --type git sample-repo "$REPO_URL"
+run_arm add sink --type cursor cursor-rules .cursor/rules
+run_arm add sink --type amazonq q-rules .amazonq/rules
 
 # Install configured ruleset
 log "Installing $RULESET_NAME..."
-run_arm install ruleset sample-repo/$RULESET_NAME --include "$INCLUDE_PATTERNS" --sinks $SINKS
+run_arm install ruleset sample-repo/$RULESET_NAME cursor-rules q-rules
 
 success "Setup complete! Try these commands:"
 echo ""
@@ -70,11 +70,12 @@ echo "  ./arm update                  # Update all resources"
 echo "  ./arm update ruleset          # Update rulesets only"
 echo ""
 echo "Configuration commands:"
-echo "  ./arm config list             # Show current config"
+echo "  ./arm list registry           # Show configured registries"
+echo "  ./arm list sink               # Show configured sinks"
 echo "  ./arm config ruleset set sample-repo/$RULESET_NAME priority 200"
 echo ""
 echo "Example promptset commands:"
-echo "  ./arm install promptset sample-repo/code-review-promptset --sinks cursor"
+echo "  ./arm install promptset sample-repo/code-review-promptset cursor-rules"
 echo "  ./arm list promptset"
 echo "  ./arm uninstall promptset sample-repo/code-review-promptset"
 echo ""

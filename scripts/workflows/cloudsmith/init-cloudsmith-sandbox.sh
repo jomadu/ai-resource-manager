@@ -54,9 +54,9 @@ EOF
 
 # Configure registry and sinks
 log "Configuring Cloudsmith registry..."
-./arm config registry add cloudsmith-registry "$CLOUDSMITH_APP_URL" --type cloudsmith
-./arm config sink add cursor .cursor/rules --type cursor
-./arm config sink add q .amazonq/rules --type amazonq
+./arm add registry --type cloudsmith --owner "$CLOUDSMITH_OWNER" --repo "$CLOUDSMITH_REPOSITORY" cloudsmith-registry "$CLOUDSMITH_APP_URL"
+./arm add sink --type cursor cursor-rules .cursor/rules
+./arm add sink --type amazonq q-rules .amazonq/rules
 
 success "Cloudsmith sandbox ready!"
 echo ""
@@ -66,5 +66,5 @@ echo "  Owner: $CLOUDSMITH_OWNER"
 echo "  Repository: $CLOUDSMITH_REPOSITORY"
 echo ""
 echo "Try these commands:"
-echo "  ./arm install cloudsmith-registry/ai-rules --sinks cursor,q"
+echo "  ./arm install ruleset cloudsmith-registry/ai-rules cursor-rules q-rules"
 echo "  ./arm list"

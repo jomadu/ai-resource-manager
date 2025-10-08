@@ -96,19 +96,30 @@ func runInstallRuleset(cmd *cobra.Command, args []string) error {
 }
 
 func runInstallPromptset(cmd *cobra.Command, args []string) error {
+	ctx := context.Background()
+
 	// Parse promptset argument
-	_, err := ParsePackageArg(args[0])
+	promptset, err := ParsePackageArg(args[0])
 	if err != nil {
 		return fmt.Errorf("failed to parse promptset: %w", err)
 	}
 
 	// Get sinks from remaining arguments
-	_ = args[1:]
+	sinks := args[1:]
 
 	// Get flags
-	_, _ = cmd.Flags().GetStringSlice("include")
-	_, _ = cmd.Flags().GetStringSlice("exclude")
+	include, _ := cmd.Flags().GetStringSlice("include")
+	exclude, _ := cmd.Flags().GetStringSlice("exclude")
 
-	// TODO: Implement promptset installation when service interface is updated
-	return fmt.Errorf("promptset installation not yet implemented - service interface needs to be updated first")
+	// Install promptset
+	req := &arm.InstallPromptsetRequest{
+		Registry:  promptset.Registry,
+		Promptset: promptset.Name,
+		Version:   promptset.Version,
+		Include:   include,
+		Exclude:   exclude,
+		Sinks:     sinks,
+	}
+
+	return armService.InstallPromptset(ctx, req)
 }
