@@ -290,44 +290,44 @@ This document provides a detailed investigation of the codebase to identify spec
 #### 3.1 Workflow Scripts
 **Directory**: `scripts/workflows/`
 
-- [ ] **Update All Workflow Scripts**:
-  - [ ] `git/sample-git-workflow.sh`: Update to use new command structure
-  - [ ] `gitlab/sample-gitlab-workflow.sh`: Update to use new command structure
-  - [ ] `cloudsmith/sample-cloudsmith-workflow.sh`: Update to use new command structure
-  - [ ] `compile/sample-compile-workflow.sh`: Update to support both resource types
+- [x] **Update All Workflow Scripts**:
+  - [x] `git/sample-git-workflow.sh`: Update to use new command structure
+  - [x] `gitlab/sample-gitlab-workflow.sh`: Update to use new command structure
+  - [x] `cloudsmith/sample-cloudsmith-workflow.sh`: Update to use new command structure
+  - [x] `compile/sample-compile-workflow.sh`: Update to support both resource types
 
-- [ ] **Update Command Examples**:
-  - [ ] Replace `arm install REGISTRY/RULESET` with `arm install ruleset REGISTRY/RULESET`
-  - [ ] Add examples for `arm install promptset REGISTRY/PROMPTSET`
-  - [ ] Update configuration examples to use new structure
-  - [ ] Add examples for unified commands (`arm install`, `arm update`, etc.)
+- [x] **Update Command Examples**:
+  - [x] Replace `arm install REGISTRY/RULESET` with `arm install ruleset REGISTRY/RULESET`
+  - [x] Add examples for `arm install promptset REGISTRY/PROMPTSET`
+  - [x] Update configuration examples to use new structure
+  - [x] Add examples for unified commands (`arm install`, `arm update`, etc.)
 
-- [ ] **Update Sandbox Configurations**:
-  - [ ] Update `arm.json` files to use new `packages` structure
-  - [ ] Update `arm-lock.json` files to include both `rulesets` and `promptsets`
-  - [ ] Add example promptset configurations
+- [x] **Update Sandbox Configurations**:
+  - [x] Update `arm.json` files to use new `packages` structure
+  - [x] Update `arm-lock.json` files to include both `rulesets` and `promptsets`
+  - [x] Add example promptset configurations
 
 #### 3.2 Example Files
 **Directory**: `scripts/workflows/compile/example-rulesets/`
 
-- [ ] **Add Example Promptsets**:
-  - [ ] Create example promptset YAML files
-  - [ ] Add compilation examples for promptsets
-  - [ ] Update workflow scripts to demonstrate both resource types
+- [x] **Add Example Promptsets**:
+  - [x] Create example promptset YAML files
+  - [x] Add compilation examples for promptsets
+  - [x] Update workflow scripts to demonstrate both resource types
 
 ### 4. Testing Updates
 
 #### 4.1 Unit Tests
-- [ ] **Update All Test Files**: Rename `urf` package references to `resource`
-- [ ] **Add Promptset Tests**: Create tests for promptset parsing, compilation, and installation
-- [ ] **Update Existing Tests**: Modify ruleset tests to work with new structure
-- [ ] **Add Integration Tests**: Test unified commands and resource-specific commands
+- [x] **Update All Test Files**: Rename `urf` package references to `resource`
+- [x] **Add Promptset Tests**: Create tests for promptset parsing, compilation, and installation
+- [x] **Update Existing Tests**: Modify ruleset tests to work with new structure
+- [x] **Add Integration Tests**: Test unified commands and resource-specific commands
 
 #### 4.2 Integration Tests
-- [ ] **Update Service Tests**: Test both ruleset and promptset operations
-- [ ] **Update Registry Tests**: Test discovery and serving of both resource types
-- [ ] **Update Cache Tests**: Test caching of both resource types
-- [ ] **Update Installer Tests**: Test installation of both resource types
+- [x] **Update Service Tests**: Test both ruleset and promptset operations
+- [x] **Update Registry Tests**: Test discovery and serving of both resource types
+- [x] **Update Cache Tests**: Test caching of both resource types
+- [x] **Update Installer Tests**: Test installation of both resource types
 
 ### 5. Documentation Updates
 
