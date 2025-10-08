@@ -115,12 +115,12 @@ func (c *CloudsmithRegistry) loadToken() error {
 	return nil
 }
 
-func (c *CloudsmithRegistry) ListVersions(ctx context.Context, ruleset string) ([]types.Version, error) {
+func (c *CloudsmithRegistry) ListVersions(ctx context.Context, packageName string) ([]types.Version, error) {
 	if err := c.loadToken(); err != nil {
 		return nil, err
 	}
 
-	packages, err := c.client.ListPackages(ctx, c.config.Owner, c.config.Repository, ruleset)
+	packages, err := c.client.ListPackages(ctx, c.config.Owner, c.config.Repository, packageName)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (c *CloudsmithRegistry) ListVersions(ctx context.Context, ruleset string) (
 	versionMap := make(map[string]bool)
 	for i := range packages {
 		pkg := &packages[i]
-		if pkg.Format == "raw" && (pkg.Name == ruleset || strings.HasPrefix(pkg.Filename, ruleset)) {
+		if pkg.Format == "raw" && (pkg.Name == packageName || strings.HasPrefix(pkg.Filename, packageName)) {
 			versionMap[pkg.Version] = true
 		}
 	}
@@ -149,13 +149,13 @@ func (c *CloudsmithRegistry) ListVersions(ctx context.Context, ruleset string) (
 	return versions, nil
 }
 
-func (c *CloudsmithRegistry) ResolveVersion(ctx context.Context, ruleset, constraint string) (*resolver.ResolvedVersion, error) {
+func (c *CloudsmithRegistry) ResolveVersion(ctx context.Context, packageName, constraint string) (*resolver.ResolvedVersion, error) {
 	parsedConstraint, err := c.resolver.ParseConstraint(constraint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid version constraint %s: %w", constraint, err)
 	}
 
-	versions, err := c.ListVersions(ctx, ruleset)
+	versions, err := c.ListVersions(ctx, packageName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list versions: %w", err)
 	}
@@ -171,7 +171,7 @@ func (c *CloudsmithRegistry) ResolveVersion(ctx context.Context, ruleset, constr
 	}, nil
 }
 
-func (c *CloudsmithRegistry) GetContent(ctx context.Context, ruleset string, version types.Version, selector types.ContentSelector) ([]types.File, error) {
+func (c *CloudsmithRegistry) GetContent(ctx context.Context, packageName string, version types.Version, selector types.ContentSelector) ([]types.File, error) {
 	// Try cache first
 	files, err := c.cache.GetPackageVersion(ctx, selector, version.Version)
 	if err == nil {
@@ -183,7 +183,7 @@ func (c *CloudsmithRegistry) GetContent(ctx context.Context, ruleset string, ver
 	}
 
 	// Download files from Cloudsmith
-	rawFiles, err := c.client.DownloadPackages(ctx, c.config.Owner, c.config.Repository, ruleset, version.Version)
+	rawFiles, err := c.client.DownloadPackages(ctx, c.config.Owner, c.config.Repository, packageName, version.Version)
 	if err != nil {
 		return nil, err
 	}

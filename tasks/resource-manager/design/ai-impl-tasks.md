@@ -265,17 +265,17 @@ This document provides a detailed investigation of the codebase to identify spec
 - [x] Support processing both rulesets and promptsets
 - [x] Update compilation logic
 
-#### 2.8 Registry Updates
+#### 2.8 Registry Updates ✅ COMPLETED
 **File**: `internal/registry/types.go`
 
-- [ ] **Update Registry Interface**:
-  - [ ] `ListVersions` should work for both rulesets and promptsets
-  - [ ] `ResolveVersion` should work for both resource types
-  - [ ] `GetContent` should work for both resource types
+- [x] **Update Registry Interface**:
+  - [x] `ListVersions` should work for both rulesets and promptsets
+  - [x] `ResolveVersion` should work for both resource types
+  - [x] `GetContent` should work for both resource types
 
 **Files**: All registry implementations (`git_registry.go`, `gitlab_registry.go`, `cloudsmith_registry.go`)
-- [ ] Update to handle both resource types
-- [ ] Ensure they can discover and serve both rulesets and promptsets
+- [x] Update to handle both resource types
+- [x] Ensure they can discover and serve both rulesets and promptsets
 
 #### 2.9 UI Updates
 **File**: `internal/ui/ui.go`
