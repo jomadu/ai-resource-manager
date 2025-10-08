@@ -1,14 +1,11 @@
 package resource
 
 import (
-	"fmt"
-
 	"github.com/jomadu/ai-rules-manager/internal/types"
 )
 
 // DefaultCompiler compiles resource files using generators
 type DefaultCompiler struct {
-	parser      Parser
 	ruleGen     RuleGenerator
 	promptGen   PromptGenerator
 	filenameGen FilenameGenerator
@@ -35,24 +32,14 @@ func NewCompiler(target CompileTarget) (Compiler, error) {
 	}
 
 	return &DefaultCompiler{
-		parser:      NewParser(),
 		ruleGen:     ruleGen,
 		promptGen:   promptGen,
 		filenameGen: filenameGen,
 	}, nil
 }
 
-// CompileRuleset compiles a single ruleset file to the target format
-func (c *DefaultCompiler) CompileRuleset(namespace string, file *types.File) ([]*types.File, error) {
-	if !c.parser.IsResource(file) {
-		return nil, fmt.Errorf("file %s is not a valid resource file", file.Path)
-	}
-
-	ruleset, err := c.parser.ParseRuleset(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse ruleset file %s: %w", file.Path, err)
-	}
-
+// CompileRuleset compiles a ruleset to the target format
+func (c *DefaultCompiler) CompileRuleset(namespace string, ruleset *Ruleset) ([]*types.File, error) {
 	var compiledFiles []*types.File
 	for ruleID, rule := range ruleset.Spec.Rules {
 		filename := c.filenameGen.GenerateFilename(ruleset.Metadata.ID, ruleID)
@@ -67,17 +54,8 @@ func (c *DefaultCompiler) CompileRuleset(namespace string, file *types.File) ([]
 	return compiledFiles, nil
 }
 
-// CompilePromptset compiles a single promptset file to the target format
-func (c *DefaultCompiler) CompilePromptset(namespace string, file *types.File) ([]*types.File, error) {
-	if !c.parser.IsResource(file) {
-		return nil, fmt.Errorf("file %s is not a valid resource file", file.Path)
-	}
-
-	promptset, err := c.parser.ParsePromptset(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse promptset file %s: %w", file.Path, err)
-	}
-
+// CompilePromptset compiles a promptset to the target format
+func (c *DefaultCompiler) CompilePromptset(namespace string, promptset *Promptset) ([]*types.File, error) {
 	var compiledFiles []*types.File
 	for promptID, prompt := range promptset.Spec.Prompts {
 		filename := c.filenameGen.GenerateFilename(promptset.Metadata.ID, promptID)

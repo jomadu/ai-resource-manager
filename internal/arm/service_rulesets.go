@@ -127,7 +127,7 @@ func (a *ArmService) UninstallRuleset(ctx context.Context, registry, ruleset str
 		if sink, exists := sinks[sinkName]; exists {
 			finishUninstalling := a.ui.InstallStepWithSpinner(fmt.Sprintf("Uninstalling from %s...", sinkName))
 			installer := installer.NewInstaller(&sink)
-			if err := installer.Uninstall(ctx, registry, ruleset); err != nil {
+			if err := installer.UninstallRuleset(ctx, registry, ruleset); err != nil {
 				return err
 			}
 			finishUninstalling(fmt.Sprintf("Uninstalled from %s", sinkName))
@@ -193,7 +193,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 	// Check filesystem to see what's actually installed
 	for _, sink := range sinks {
 		installer := installer.NewInstaller(&sink)
-		installed, version, err := installer.IsInstalled(ctx, registryName, rulesetName)
+		installed, version, err := installer.IsRulesetInstalled(ctx, registryName, rulesetName)
 		if err != nil {
 			continue
 		}
@@ -392,7 +392,7 @@ func (a *ArmService) cleanPreviousInstallation(ctx context.Context, registry, ru
 	for _, sinkName := range manifestEntry.Sinks {
 		if sink, exists := sinks[sinkName]; exists {
 			installer := installer.NewInstaller(&sink)
-			if err := installer.Uninstall(ctx, registry, ruleset); err != nil {
+			if err := installer.UninstallRuleset(ctx, registry, ruleset); err != nil {
 				// Continue on cleanup failure
 				_ = err
 			}
@@ -427,7 +427,7 @@ func (a *ArmService) installToSinks(ctx context.Context, req *InstallRulesetRequ
 		finishInstalling := a.ui.InstallStepWithSpinner(fmt.Sprintf("Installing to %s...", sinkName))
 		sink := sinks[sinkName]
 		installer := installer.NewInstaller(&sink)
-		if err := installer.Install(ctx, req.Registry, req.Ruleset, version.Display, req.Priority, files); err != nil {
+		if err := installer.InstallRuleset(ctx, req.Registry, req.Ruleset, version.Display, req.Priority, files); err != nil {
 			return 0, err
 		}
 		finishInstalling(fmt.Sprintf("Installed to %s... %d files", sinkName, len(files)))
@@ -492,7 +492,7 @@ func (a *ArmService) installExactVersion(ctx context.Context, registryName, rule
 		if sink, exists := sinks[sinkName]; exists {
 			installer := installer.NewInstaller(&sink)
 			// Use display version for directory names
-			if err := installer.Install(ctx, registryName, ruleset, lockEntry.Display, *manifestEntry.Priority, files); err != nil {
+			if err := installer.InstallRuleset(ctx, registryName, ruleset, lockEntry.Display, *manifestEntry.Priority, files); err != nil {
 				return err
 			}
 		}
@@ -620,7 +620,7 @@ func (a *ArmService) getRulesetInfo(ctx context.Context, registry, ruleset strin
 	for _, sinkName := range manifestEntry.Sinks {
 		if sink, exists := sinks[sinkName]; exists {
 			installer := installer.NewInstaller(&sink)
-			installations, err := installer.ListInstalled(ctx)
+			installations, err := installer.ListInstalledRulesets(ctx)
 			if err != nil {
 				continue
 			}

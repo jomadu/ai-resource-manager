@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/jomadu/ai-rules-manager/internal/resource"
-	"github.com/jomadu/ai-rules-manager/internal/types"
-	"gopkg.in/yaml.v3"
 )
 
 type IndexManager struct {
@@ -218,19 +216,7 @@ func (m *IndexManager) writeCompiled(data *IndexData) error {
 
 	ruleset := m.generator.CreateRuleset(data)
 
-	// Convert ruleset to resource file format
-	resourceContent, err := yaml.Marshal(ruleset)
-	if err != nil {
-		return fmt.Errorf("failed to marshal ruleset to YAML: %w", err)
-	}
-
-	resourceFile := &types.File{
-		Path:    "arm-rulesets.yml",
-		Content: resourceContent,
-		Size:    int64(len(resourceContent)),
-	}
-
-	files, err := m.compiler.CompileRuleset("arm", resourceFile)
+	files, err := m.compiler.CompileRuleset("arm", ruleset)
 	if err != nil {
 		return err
 	}
