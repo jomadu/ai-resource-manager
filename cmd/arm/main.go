@@ -27,8 +27,7 @@ ARM allows you to:
 - Compile source files to platform-specific formats
 - Clean cache and manage installations
 
-For more information, visit: https://github.com/your-org/ai-rules-manager`,
-	Version: "1.0.0",
+For more information, visit: https://github.com/jomadu/ai-resource-manager`,
 }
 
 func init() {

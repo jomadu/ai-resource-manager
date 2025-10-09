@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
 var removeCmd = &cobra.Command{
 	Use:   "remove",
-	Short: "Remove resources",
+	Short: "Remove registries and sinks",
 	Long:  "Remove registries and sinks from the ARM configuration",
 }
 
@@ -38,14 +41,14 @@ func init() {
 
 func removeRegistry(name string) {
 	if err := armService.RemoveRegistry(ctx, name); err != nil {
-		// TODO: Handle error properly
-		return
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 }
 
 func removeSink(name string) {
 	if err := armService.RemoveSink(ctx, name); err != nil {
-		// TODO: Handle error properly
-		return
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 }

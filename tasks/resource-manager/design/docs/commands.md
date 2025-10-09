@@ -223,7 +223,7 @@ Add a new sink to the ARM configuration. A sink defines where and how compiled r
 $ arm add sink --type cursor cursor-rules .cursor/rules
 
 # Add Cursor prompts sink
-$ arm add sink --type cursor cursor-prompts .cursor/prompts
+$ arm add sink --type cursor cursor-commands .cursor/commands
 
 # Add Amazon Q rules sink
 $ arm add sink --type amazonq q-rules .amazonq/rules
@@ -415,7 +415,7 @@ $ arm list
 $ arm list
 PACKAGE                         VERSION  SINKS
 my-org/clean-code-ruleset       1.1.0    cursor-rules, q-rules
-my-org/code-review-promptset    1.1.0    cursor-prompts, q-prompts
+my-org/code-review-promptset    1.1.0    cursor-commands, q-prompts
 ```
 
 ### arm info
@@ -445,7 +445,7 @@ Package: my-org/code-review-promptset
 Type: Promptset
 Version: 1.1.0
 Constraint: ~1.1.0
-Sinks: cursor-prompts, q-prompts
+Sinks: cursor-commands, q-prompts
 Include: **/*.yml, **/*.yaml
 ```
 
@@ -630,13 +630,13 @@ Install a specific promptset from a registry to one or more sinks. This command 
 **Examples:**
 ```bash
 # Install promptset to single sink
-$ arm install promptset my-org/code-review-promptset cursor-prompts
+$ arm install promptset my-org/code-review-promptset cursor-commands
 
 # Install specific version to multiple sinks
-$ arm install promptset my-org/code-review-promptset@1.0.0 cursor-prompts q-prompts
+$ arm install promptset my-org/code-review-promptset@1.0.0 cursor-commands q-prompts
 
 # Install with include/exclude patterns
-$ arm install promptset --include "**/*.yml" --exclude "**/README.md" my-org/code-review-promptset cursor-prompts
+$ arm install promptset --include "**/*.yml" --exclude "**/README.md" my-org/code-review-promptset cursor-commands
 ```
 
 ### arm uninstall promptset
@@ -662,7 +662,7 @@ Set configuration values for a specific promptset. This command allows you to co
 $ arm set promptset my-org/code-review-promptset version ^2.0.0
 
 # Update sinks
-$ arm set promptset my-org/code-review-promptset sinks cursor-prompts,q-prompts
+$ arm set promptset my-org/code-review-promptset sinks cursor-commands,q-prompts
 
 # Update include pattern
 $ arm set promptset my-org/code-review-promptset include "**/*.yml,**/*.yaml"
@@ -683,8 +683,8 @@ $ arm list promptset
 ```bash
 $ arm list promptset
 PROMPTSET                       VERSION  SINKS
-my-org/code-review-promptset    1.1.0    cursor-prompts, q-prompts
-my-org/testing-promptset        2.0.1    cursor-prompts, q-prompts
+my-org/code-review-promptset    1.1.0    cursor-commands, q-prompts
+my-org/testing-promptset        2.0.1    cursor-commands, q-prompts
 ```
 
 ### arm info promptset
@@ -709,7 +709,7 @@ Package: my-org/code-review-promptset
 Type: promptset
 Version: 1.1.0
 Constraint: ^1.0.0
-Sinks: cursor-prompts, q-prompts
+Sinks: cursor-commands, q-prompts
 Include: **/*.yml, **/*.yaml
 Exclude: none
 ```

@@ -102,6 +102,12 @@ run_arm add sink --type amazonq q-rules .amazonq/rules
 log "Setting up copilot sink (flat)..."
 run_arm add sink --type copilot copilot-rules .github/copilot
 
+log "Setting up cursor prompts sink..."
+run_arm add sink --type cursor cursor-commands .cursor/commands
+
+log "Setting up Amazon Q prompts sink..."
+run_arm add sink --type amazonq q-prompts .amazonq/prompts
+
 log "Showing configuration..."
 run_arm list registry
 run_arm list sink
@@ -122,11 +128,11 @@ run_arm install ruleset ai-rules/copilot-rules --include "rules/copilot/*.instru
 log "Installing grug-brained-dev ruleset to all sinks..."
 run_arm install ruleset --priority 150 ai-rules/grug-brained-dev --include "rulesets/grug-brained-dev.yml" cursor-rules q-rules copilot-rules
 
-log "Installing code-review promptset to cursor sink..."
-run_arm install promptset ai-rules/code-review --include "promptsets/code-review.yml" cursor-rules
+log "Installing code-review promptset to both prompt sinks..."
+run_arm install promptset ai-rules/code-review --include "promptsets/code-review.yml" cursor-commands q-prompts
 
-log "Installing testing promptset to cursor sink..."
-run_arm install promptset ai-rules/testing --include "promptsets/testing.yml" cursor-rules
+log "Installing testing promptset to both prompt sinks..."
+run_arm install promptset ai-rules/testing --include "promptsets/testing.yml" cursor-commands q-prompts
 
 show_tree "Project structure after installs"
 pause
@@ -277,6 +283,7 @@ echo "• Basic help and version commands"
 echo "• Registry configuration"
 echo "• Sink configuration (hierarchical and flat layouts)"
 echo "• Installing rulesets and promptsets to specific sinks"
+echo "• Installing promptsets to multiple sinks (cursor and Amazon Q)"
 echo "• Listing and getting info about resources (unified and resource-specific)"
 echo "• Uninstalling rulesets and promptsets"
 echo "• Installing from branches"
