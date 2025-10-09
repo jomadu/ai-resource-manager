@@ -6,16 +6,10 @@ import (
 
 var outdatedCmd = &cobra.Command{
 	Use:   "outdated",
-	Short: "Check for outdated packages, rulesets, and promptsets",
-	Long:  "Check for outdated packages, rulesets, and promptsets across all configured registries",
-}
-
-var outdatedPackageCmd = &cobra.Command{
-	Use:   "package [--output <table|json|list>]",
-	Short: "Check for outdated packages",
-	Long:  "Check for outdated packages across all configured registries.",
+	Short: "Check for outdated resources",
+	Long:  "Check for outdated rulesets and promptsets across configured registries",
 	Run: func(cmd *cobra.Command, args []string) {
-		checkOutdatedPackages(cmd)
+		checkOutdatedAll(cmd)
 	},
 }
 
@@ -39,17 +33,18 @@ var outdatedPromptsetCmd = &cobra.Command{
 
 func init() {
 	// Add subcommands
-	outdatedCmd.AddCommand(outdatedPackageCmd)
 	outdatedCmd.AddCommand(outdatedRulesetCmd)
 	outdatedCmd.AddCommand(outdatedPromptsetCmd)
 
 	// Add output format flags
-	outdatedPackageCmd.Flags().String("output", "table", "Output format (table, json, list)")
 	outdatedRulesetCmd.Flags().String("output", "table", "Output format (table, json, list)")
 	outdatedPromptsetCmd.Flags().String("output", "table", "Output format (table, json, list)")
+
+	// Add output format flag to main command
+	outdatedCmd.Flags().String("output", "table", "Output format (table, json, list)")
 }
 
-func checkOutdatedPackages(cmd *cobra.Command) {
+func checkOutdatedAll(cmd *cobra.Command) {
 	output, _ := cmd.Flags().GetString("output")
 
 	if err := armService.ShowAllOutdated(ctx, output, false); err != nil {

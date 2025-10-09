@@ -355,20 +355,25 @@ func (a *ArmService) getPromptsetInfo(ctx context.Context, registry, promptset s
 	var resolvedVersion string
 	// Use sinks from manifest entry
 	for _, sinkName := range manifestEntry.Sinks {
-		if sink, exists := sinks[sinkName]; exists {
-			installer := installer.NewInstaller(&sink)
-			installations, err := installer.ListInstalledPromptsets(ctx)
-			if err != nil {
-				continue
-			}
-			for _, installation := range installations {
-				if installation.Registry == registry && installation.Promptset == promptset {
-					installedPaths = append(installedPaths, installation.Path)
-					if resolvedVersion == "" {
-						resolvedVersion = installation.Version
-					}
-					break
+		sink, exists := sinks[sinkName]
+		if !exists {
+			continue
+		}
+		installer := installer.NewInstaller(&sink)
+		if err != nil {
+			continue // Skip sinks with invalid configurations
+		}
+		installations, err := installer.ListInstalledPromptsets(ctx)
+		if err != nil {
+			continue
+		}
+		for _, installation := range installations {
+			if installation.Registry == registry && installation.Promptset == promptset {
+				installedPaths = append(installedPaths, installation.Path)
+				if resolvedVersion == "" {
+					resolvedVersion = installation.Version
 				}
+				break
 			}
 		}
 	}
@@ -417,6 +422,7 @@ func (a *ArmService) ShowPromptsetOutdated(ctx context.Context, outputFormat str
 			return err
 		}
 		finishChecking(fmt.Sprintf("Found %d outdated promptsets", len(outdated)))
+		fmt.Println() // Add spacing between spinner and table
 		// Convert to unified format
 		packages := a.convertOutdatedPromptsetsToPackages(outdated)
 		a.ui.OutdatedTable(packages, outputFormat)
@@ -573,6 +579,9 @@ func (a *ArmService) installPromptsetExactVersion(ctx context.Context, registryN
 	for _, sinkName := range manifestEntry.Sinks {
 		if sink, exists := sinks[sinkName]; exists {
 			installer := installer.NewInstaller(&sink)
+			if err != nil {
+				return fmt.Errorf("failed to create installer for sink %s: %w", sinkName, err)
+			}
 			// Use display version for directory names
 			if err := installer.InstallPromptset(ctx, registryName, promptset, lockEntry.Display, files); err != nil {
 				return err
@@ -601,6 +610,9 @@ func (a *ArmService) cleanPreviousPromptsetInstallation(ctx context.Context, reg
 	for _, sinkName := range manifestEntry.Sinks {
 		if sink, exists := sinks[sinkName]; exists {
 			installer := installer.NewInstaller(&sink)
+			if err != nil {
+				continue // Skip sinks with invalid configurations
+			}
 			if err := installer.UninstallPromptset(ctx, registry, promptset); err != nil {
 				// Continue on cleanup failure
 				_ = err

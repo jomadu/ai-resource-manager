@@ -234,6 +234,7 @@ func (a *ArmService) ShowAllOutdated(ctx context.Context, outputFormat string, n
 	} else {
 		finishChecking := a.ui.InstallStepWithSpinner("Checking for updates...")
 		finishChecking(fmt.Sprintf("Found %d outdated resources", len(allPackages)))
+		fmt.Println() // Add spacing between spinner and table
 		a.ui.OutdatedTable(allPackages, outputFormat)
 	}
 

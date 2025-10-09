@@ -256,7 +256,7 @@ func (u *UI) InstallStep(step string) {
 func (u *UI) InstallStepWithSpinner(step string) func(result string) {
 	spinner, _ := pterm.DefaultSpinner.Start(step)
 	return func(result string) {
-		spinner.Info(result)
+		spinner.Success(result)
 	}
 }
 

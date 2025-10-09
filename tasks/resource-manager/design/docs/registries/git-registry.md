@@ -98,22 +98,22 @@ arm install ruleset --include "rules.tar.gz" ai-rules/clean-code-ruleset cursor-
 
 Install from latest version:
 ```bash
-arm install promptset ai-rules/code-review-promptset cursor-prompts
+arm install promptset ai-rules/code-review-promptset cursor-commands
 ```
 
 Install from specific version:
 ```bash
-arm install promptset ai-rules/code-review-promptset@v1.0.0 cursor-prompts
+arm install promptset ai-rules/code-review-promptset@v1.0.0 cursor-commands
 ```
 
 Install to multiple sinks:
 ```bash
-arm install promptset ai-rules/code-review-promptset cursor-prompts q-prompts
+arm install promptset ai-rules/code-review-promptset cursor-commands q-prompts
 ```
 
 Install specific files:
 ```bash
-arm install promptset --include "review.yml" ai-rules/code-review-promptset cursor-prompts
+arm install promptset --include "review.yml" ai-rules/code-review-promptset cursor-commands
 ```
 
 ## Version Resolution

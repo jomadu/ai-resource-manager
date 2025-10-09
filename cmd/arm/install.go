@@ -9,16 +9,10 @@ import (
 
 var installCmd = &cobra.Command{
 	Use:   "install",
-	Short: "Install packages, rulesets, and promptsets",
-	Long:  "Install packages, rulesets, and promptsets to their assigned sinks",
-}
-
-var installPackageCmd = &cobra.Command{
-	Use:   "package",
-	Short: "Install all configured packages",
-	Long:  "Install all configured packages (rulesets and promptsets) to their assigned sinks.",
+	Short: "Install new or configured resources",
+	Long:  "Install new or already configured rulesets and promptsets to their assigned sinks",
 	Run: func(cmd *cobra.Command, args []string) {
-		installPackages()
+		installAll()
 	},
 }
 
@@ -44,7 +38,6 @@ var installPromptsetCmd = &cobra.Command{
 
 func init() {
 	// Add subcommands
-	installCmd.AddCommand(installPackageCmd)
 	installCmd.AddCommand(installRulesetCmd)
 	installCmd.AddCommand(installPromptsetCmd)
 
@@ -58,7 +51,7 @@ func init() {
 	installPromptsetCmd.Flags().StringSlice("exclude", []string{}, "Exclude patterns")
 }
 
-func installPackages() {
+func installAll() {
 	if err := armService.InstallAll(ctx); err != nil {
 		// TODO: Handle error properly
 		return

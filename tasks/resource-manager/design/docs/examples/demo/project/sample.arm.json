@@ -25,7 +25,7 @@
                 "code-review-promptset": {
                     "version": "^1.0.0",
                     "sinks": [
-                        "cursor-prompts",
+                        "cursor-commands",
                         "amazonq-prompts"
                     ]
                 }
@@ -43,8 +43,8 @@
             "layout": "hierarchical",
             "compile_target": "amazonq"
         },
-        "cursor-prompts": {
-            "directory": ".cursor/prompts",
+        "cursor-commands": {
+            "directory": ".cursor/commands",
             "layout": "hierarchical",
             "compile_target": "cursor"
         },

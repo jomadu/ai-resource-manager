@@ -85,22 +85,22 @@ arm install ruleset my-cloudsmith/clean-code-ruleset my-cloudsmith/security-rule
 
 Install from latest version:
 ```bash
-arm install promptset my-cloudsmith/code-review-promptset cursor-prompts
+arm install promptset my-cloudsmith/code-review-promptset cursor-commands
 ```
 
 Install from specific version:
 ```bash
-arm install promptset my-cloudsmith/code-review-promptset@1.0.0 cursor-prompts
+arm install promptset my-cloudsmith/code-review-promptset@1.0.0 cursor-commands
 ```
 
 Install to multiple sinks:
 ```bash
-arm install promptset my-cloudsmith/code-review-promptset cursor-prompts q-prompts
+arm install promptset my-cloudsmith/code-review-promptset cursor-commands q-prompts
 ```
 
 Install multiple promptsets:
 ```bash
-arm install promptset my-cloudsmith/code-review-promptset my-cloudsmith/testing-promptset cursor-prompts
+arm install promptset my-cloudsmith/code-review-promptset my-cloudsmith/testing-promptset cursor-commands
 ```
 
 ## Version Resolution
@@ -171,7 +171,7 @@ chmod 600 .armrc
 
 # Install rulesets and promptsets
 arm install ruleset cloudsmith/clean-code-ruleset cloudsmith/security-ruleset cursor-rules
-arm install promptset cloudsmith/code-review-promptset cursor-prompts
+arm install promptset cloudsmith/code-review-promptset cursor-commands
 
 # Update to latest versions
 arm update ruleset

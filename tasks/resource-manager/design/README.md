@@ -76,7 +76,7 @@ Configure sinks:
 **Cursor:**
 ```bash
 arm add sink --type cursor cursor-rules .cursor/rules
-arm add sink --type cursor cursor-prompts .cursor/prompts
+arm add sink --type cursor cursor-commands .cursor/commands
 ```
 
 **GitHub Copilot:**
@@ -97,13 +97,13 @@ arm install ruleset ai-rules/clean-code-ruleset cursor-rules
 
 Install promptset:
 ```bash
-arm install promptset ai-rules/code-review-promptset cursor-prompts
+arm install promptset ai-rules/code-review-promptset cursor-commands
 ```
 
 Install to multiple sinks:
 ```bash
 arm install ruleset ai-rules/clean-code-ruleset cursor-rules q-rules
-arm install promptset ai-rules/code-review-promptset cursor-prompts q-prompts
+arm install promptset ai-rules/code-review-promptset cursor-commands q-prompts
 ```
 
 ## Documentation

@@ -6,16 +6,10 @@ import (
 
 var uninstallCmd = &cobra.Command{
 	Use:   "uninstall",
-	Short: "Uninstall packages, rulesets, and promptsets",
-	Long:  "Uninstall packages, rulesets, and promptsets from their assigned sinks",
-}
-
-var uninstallPackageCmd = &cobra.Command{
-	Use:   "package",
-	Short: "Uninstall all packages",
-	Long:  "Uninstall all configured packages from their assigned sinks.",
+	Short: "Uninstall resources",
+	Long:  "Uninstall rulesets and promptsets from their assigned sinks",
 	Run: func(cmd *cobra.Command, args []string) {
-		uninstallPackages()
+		uninstallAll()
 	},
 }
 
@@ -41,12 +35,11 @@ var uninstallPromptsetCmd = &cobra.Command{
 
 func init() {
 	// Add subcommands
-	uninstallCmd.AddCommand(uninstallPackageCmd)
 	uninstallCmd.AddCommand(uninstallRulesetCmd)
 	uninstallCmd.AddCommand(uninstallPromptsetCmd)
 }
 
-func uninstallPackages() {
+func uninstallAll() {
 	if err := armService.UninstallAll(ctx); err != nil {
 		// TODO: Handle error properly
 		return
