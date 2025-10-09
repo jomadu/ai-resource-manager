@@ -655,6 +655,7 @@ func (a *ArmService) ShowRulesetOutdated(ctx context.Context, outputFormat strin
 			return err
 		}
 		finishChecking(fmt.Sprintf("Found %d outdated rulesets", len(outdated)))
+		fmt.Println() // Add spacing between spinner and table
 		// Convert to unified format
 		packages := a.convertOutdatedRulesetsToPackages(outdated)
 		a.ui.OutdatedTable(packages, outputFormat)

@@ -15,8 +15,8 @@ arm install ruleset ai-rules/security-ruleset cursor-rules q-rules
 
 Install specific promptsets:
 ```bash
-arm install promptset ai-rules/code-review-promptset cursor-prompts
-arm install promptset ai-rules/testing-promptset cursor-prompts q-prompts
+arm install promptset ai-rules/code-review-promptset cursor-commands
+arm install promptset ai-rules/testing-promptset cursor-commands q-prompts
 ```
 
 ## Updates

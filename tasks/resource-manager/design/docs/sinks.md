@@ -54,7 +54,7 @@ Available sink configuration keys:
 Add Cursor sinks:
 ```bash
 arm add sink --type cursor cursor-rules .cursor/rules
-arm add sink --type cursor cursor-prompts .cursor/prompts
+arm add sink --type cursor cursor-commands .cursor/commands
 ```
 
 Add Amazon Q sinks:

@@ -6,7 +6,7 @@ import (
 
 var addCmd = &cobra.Command{
 	Use:   "add",
-	Short: "Add resources",
+	Short: "Add registries and sinks",
 	Long:  "Add registries and sinks to the ARM configuration",
 }
 

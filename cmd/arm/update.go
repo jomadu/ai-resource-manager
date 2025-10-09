@@ -6,16 +6,10 @@ import (
 
 var updateCmd = &cobra.Command{
 	Use:   "update",
-	Short: "Update packages, rulesets, and promptsets",
-	Long:  "Update packages, rulesets, and promptsets to their latest available versions",
-}
-
-var updatePackageCmd = &cobra.Command{
-	Use:   "package",
-	Short: "Update all packages",
-	Long:  "Update all installed packages to their latest available versions.",
+	Short: "Update resources",
+	Long:  "Update rulesets and promptsets to their latest available versions",
 	Run: func(cmd *cobra.Command, args []string) {
-		updatePackages()
+		updateAll()
 	},
 }
 
@@ -39,12 +33,11 @@ var updatePromptsetCmd = &cobra.Command{
 
 func init() {
 	// Add subcommands
-	updateCmd.AddCommand(updatePackageCmd)
 	updateCmd.AddCommand(updateRulesetCmd)
 	updateCmd.AddCommand(updatePromptsetCmd)
 }
 
-func updatePackages() {
+func updateAll() {
 	if err := armService.UpdateAll(ctx); err != nil {
 		// TODO: Handle error properly
 		return

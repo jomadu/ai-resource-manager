@@ -473,7 +473,7 @@ func (a *ArmService) getLatestVersions(ctx context.Context, registry, packageNam
 	}
 
 	// Get the latest version (first in sorted list)
-	latest = versions[0].Version
+	latest = versions[0].Display
 
 	// For wanted version, we need to resolve the constraint from manifest
 	// Try to get manifest entry (could be ruleset or promptset)
@@ -501,7 +501,7 @@ func (a *ArmService) getLatestVersions(ctx context.Context, registry, packageNam
 		return "", "", fmt.Errorf("failed to resolve constraint %s for %s/%s: %w", constraint, registry, packageName, err)
 	}
 
-	wanted = resolved.Version.Version
+	wanted = resolved.Version.Display
 	return latest, wanted, nil
 }
 

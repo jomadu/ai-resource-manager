@@ -7,7 +7,10 @@ import (
 var infoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Show detailed information",
-	Long:  "Show detailed information about registries, sinks, rulesets, promptsets, and packages",
+	Long:  "Show detailed information about registries, sinks, rulesets, and promptsets",
+	Run: func(cmd *cobra.Command, args []string) {
+		infoAll()
+	},
 }
 
 var infoRegistryCmd = &cobra.Command{
@@ -46,22 +49,12 @@ var infoPromptsetCmd = &cobra.Command{
 	},
 }
 
-var infoPackageCmd = &cobra.Command{
-	Use:   "package",
-	Short: "Show package information",
-	Long:  "Display detailed information about all installed packages.",
-	Run: func(cmd *cobra.Command, args []string) {
-		infoPackages()
-	},
-}
-
 func init() {
 	// Add subcommands
 	infoCmd.AddCommand(infoRegistryCmd)
 	infoCmd.AddCommand(infoSinkCmd)
 	infoCmd.AddCommand(infoRulesetCmd)
 	infoCmd.AddCommand(infoPromptsetCmd)
-	infoCmd.AddCommand(infoPackageCmd)
 }
 
 func infoRegistries(names []string) {
@@ -92,7 +85,7 @@ func infoPromptsets(names []string) {
 	}
 }
 
-func infoPackages() {
+func infoAll() {
 	if err := armService.ShowAllInfo(ctx); err != nil {
 		// TODO: Handle error properly
 		return

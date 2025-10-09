@@ -7,7 +7,7 @@ import (
 
 var compileCmd = &cobra.Command{
 	Use:   "compile [--target <md|cursor|amazonq|copilot>] [--force] [--recursive] [--validate-only] [--include GLOB...] [--exclude GLOB...] [--fail-fast] INPUT_PATH... OUTPUT_PATH",
-	Short: "Compile rulesets and promptsets",
+	Short: "Compile resources",
 	Long: `Compile rulesets and promptsets from source files. This command compiles source ruleset and promptset files to platform-specific formats.
 
 It supports different target platforms (md, cursor, amazonq, copilot), recursive directory processing, validation-only mode, and various filtering and output options. This is useful for development and testing of rulesets and promptsets before publishing to registries.`,

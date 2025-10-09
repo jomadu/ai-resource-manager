@@ -7,7 +7,10 @@ import (
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List resources",
-	Long:  "List registries, sinks, rulesets, promptsets, and packages",
+	Long:  "List registries, sinks, rulesets, and promptsets",
+	Run: func(cmd *cobra.Command, args []string) {
+		listAll()
+	},
 }
 
 var listRegistryCmd = &cobra.Command{
@@ -46,22 +49,12 @@ var listPromptsetCmd = &cobra.Command{
 	},
 }
 
-var listPackageCmd = &cobra.Command{
-	Use:   "package",
-	Short: "List all packages",
-	Long:  "List all installed packages across all sinks.",
-	Run: func(cmd *cobra.Command, args []string) {
-		listPackages()
-	},
-}
-
 func init() {
 	// Add subcommands
 	listCmd.AddCommand(listRegistryCmd)
 	listCmd.AddCommand(listSinkCmd)
 	listCmd.AddCommand(listRulesetCmd)
 	listCmd.AddCommand(listPromptsetCmd)
-	listCmd.AddCommand(listPackageCmd)
 }
 
 func listRegistries() {
@@ -92,7 +85,7 @@ func listPromptsets() {
 	}
 }
 
-func listPackages() {
+func listAll() {
 	if err := armService.ShowAllList(ctx, false); err != nil {
 		// TODO: Handle error properly
 		return
