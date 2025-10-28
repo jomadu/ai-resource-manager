@@ -7,13 +7,19 @@ GitLab registries use GitLab's Generic Package Registry to store and distribute 
 Add a GitLab registry with project ID:
 
 ```bash
-arm add registry --type gitlab --project-id 123 my-gitlab https://gitlab.example.com
+arm add registry gitlab --project-id 123 my-gitlab
 ```
 
 Add a GitLab registry with group ID:
 
 ```bash
-arm add registry --type gitlab --group-id 456 my-gitlab https://gitlab.example.com
+arm add registry gitlab --group-id 456 my-gitlab
+```
+
+For self-hosted GitLab instances, specify the URL:
+
+```bash
+arm add registry gitlab --url https://gitlab.example.com --project-id 123 my-gitlab
 ```
 
 ## Authentication

@@ -7,7 +7,7 @@ Git registries use Git repositories (GitHub, GitLab, or any Git remote) to store
 Add a Git registry:
 
 ```bash
-arm add registry --type git ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry
+arm add registry git --url https://github.com/jomadu/ai-rules-manager-sample-git-registry ai-rules
 ```
 
 ## Authentication

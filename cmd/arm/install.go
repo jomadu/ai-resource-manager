@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strings"
-
 	"github.com/jomadu/ai-rules-manager/internal/arm"
 	"github.com/spf13/cobra"
 )
@@ -53,8 +51,7 @@ func init() {
 
 func installAll() {
 	if err := armService.InstallAll(ctx); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
@@ -64,21 +61,29 @@ func installRuleset(cmd *cobra.Command, packageName string, sinks []string) {
 	exclude, _ := cmd.Flags().GetStringSlice("exclude")
 
 	// Parse registry/ruleset from packageName
-	registry, ruleset, version := parsePackageName(packageName)
-
-	req := &arm.InstallRulesetRequest{
-		Registry: registry,
-		Ruleset:  ruleset,
-		Version:  version,
-		Priority: priority,
-		Include:  include,
-		Exclude:  exclude,
-		Sinks:    sinks,
+	registry, err := parseRegistry(packageName)
+	if err != nil {
+		handleCommandError(err)
+	}
+	
+	ruleset, err := parsePackage(packageName)
+	if err != nil {
+		handleCommandError(err)
+	}
+	
+	version, err := parseVersion(packageName)
+	if err != nil {
+		handleCommandError(err)
 	}
 
+	// Use constructor and fluent API
+	req := arm.NewInstallRulesetRequest(registry, ruleset, version, sinks).
+		WithPriority(priority).
+		WithInclude(include).
+		WithExclude(exclude)
+
 	if err := armService.InstallRuleset(ctx, req); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
@@ -87,7 +92,20 @@ func installPromptset(cmd *cobra.Command, packageName string, sinks []string) {
 	exclude, _ := cmd.Flags().GetStringSlice("exclude")
 
 	// Parse registry/promptset from packageName
-	registry, promptset, version := parsePackageName(packageName)
+	registry, err := parseRegistry(packageName)
+	if err != nil {
+		handleCommandError(err)
+	}
+	
+	promptset, err := parsePackage(packageName)
+	if err != nil {
+		handleCommandError(err)
+	}
+	
+	version, err := parseVersion(packageName)
+	if err != nil {
+		handleCommandError(err)
+	}
 
 	req := &arm.InstallPromptsetRequest{
 		Registry:  registry,
@@ -99,31 +117,7 @@ func installPromptset(cmd *cobra.Command, packageName string, sinks []string) {
 	}
 
 	if err := armService.InstallPromptset(ctx, req); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
-// parsePackageName parses a package name like "registry/package@version" or "registry/package"
-func parsePackageName(packageName string) (registry, pkgName, version string) {
-	parts := strings.Split(packageName, "/")
-	if len(parts) != 2 {
-		// TODO: Handle error
-		return "", "", ""
-	}
-
-	registry = parts[0]
-	packageWithVersion := parts[1]
-
-	// Check for version
-	if strings.Contains(packageWithVersion, "@") {
-		versionParts := strings.Split(packageWithVersion, "@")
-		pkgName = versionParts[0]
-		version = versionParts[1]
-	} else {
-		pkgName = packageWithVersion
-		version = ""
-	}
-
-	return registry, pkgName, version
-}

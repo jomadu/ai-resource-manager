@@ -89,37 +89,67 @@ $ arm help install
 $ arm install --help
 
 # Show help for subcommands
-$ arm help add registry
-$ arm add registry --help
+$ arm help add registry git
+$ arm add registry git --help
 ```
 
 ## Registry Management
 
-### arm add registry
+### arm add registry git
 
-`arm add registry --type <git|gitlab|cloudsmith> [--branches BRANCH...] [--group-id ID] [--project-id ID] [--api-version VERSION] [--owner OWNER] [--repo REPO] [--force] NAME URL`
+`arm add registry git --url URL [--branches BRANCH...] [--force] NAME`
 
-Add a new registry to the ARM configuration. This command supports different registry types (git, gitlab, cloudsmith) and allows specifying additional parameters like GitLab group and project IDs, or Cloudsmith owner and repository for more precise targeting. The `--force` flag allows overwriting an existing registry with the same name.
+Add a new Git registry to the ARM configuration. Git registries use Git repositories (GitHub, GitLab, or any Git remote) to store and distribute rulesets and promptsets using Git tags and branches for versioning.
 
 **Examples:**
 ```bash
 # Add a Git registry
-$ arm add registry --type git my-org https://github.com/my-org/arm-registry
+$ arm add registry git --url https://github.com/my-org/arm-registry my-org
 
 # Add a Git registry with specific branches
-$ arm add registry --type git --branches main,develop my-org https://github.com/my-org/arm-registry
-
-# Add a GitLab registry with group ID
-$ arm add registry --type gitlab --group-id 123 my-gitlab https://gitlab.example.com
-
-# Add a GitLab registry with project ID
-$ arm add registry --type gitlab --project-id 456 my-gitlab-project https://gitlab.example.com
-
-# Add a Cloudsmith registry
-$ arm add registry --type cloudsmith --owner my-org --repo my-repo cloudsmith-registry https://app.cloudsmith.com
+$ arm add registry git --url https://github.com/my-org/arm-registry --branches main,develop my-org
 
 # Overwrite an existing registry
-$ arm add registry --type git --force my-org https://github.com/my-org/new-arm-registry
+$ arm add registry git --url https://github.com/my-org/new-arm-registry --force my-org
+```
+
+### arm add registry gitlab
+
+`arm add registry gitlab [--url URL] [--group-id ID] [--project-id ID] [--api-version VERSION] [--force] NAME`
+
+Add a new GitLab registry to the ARM configuration. GitLab registries use GitLab's Generic Package Registry for versioned packages. The URL defaults to `https://gitlab.com` if not specified. You must specify either `--group-id` or `--project-id`.
+
+**Examples:**
+```bash
+# Add a GitLab registry with project ID (using default gitlab.com)
+$ arm add registry gitlab --project-id 456 my-gitlab-project
+
+# Add a self-hosted GitLab registry with group ID
+$ arm add registry gitlab --url https://gitlab.example.com --group-id 123 my-gitlab
+
+# Add with custom API version
+$ arm add registry gitlab --url https://gitlab.example.com --project-id 456 --api-version v4 my-gitlab-project
+
+# Overwrite an existing registry
+$ arm add registry gitlab --url https://gitlab.example.com --group-id 123 --force my-gitlab
+```
+
+### arm add registry cloudsmith
+
+`arm add registry cloudsmith [--url URL] --owner OWNER --repo REPO [--force] NAME`
+
+Add a new Cloudsmith registry to the ARM configuration. Cloudsmith registries use Cloudsmith's package repository service for single-file artifacts. The URL defaults to `https://api.cloudsmith.io` if not specified.
+
+**Examples:**
+```bash
+# Add a Cloudsmith registry (using default API URL)
+$ arm add registry cloudsmith --owner my-org --repo my-repo cloudsmith-registry
+
+# Add a self-hosted Cloudsmith instance
+$ arm add registry cloudsmith --url https://cloudsmith.mycompany.com --owner my-org --repo my-repo private-registry
+
+# Overwrite an existing registry
+$ arm add registry cloudsmith --owner my-org --repo my-repo --force cloudsmith-registry
 ```
 
 ### arm remove registry
@@ -168,9 +198,9 @@ List all configured registries. This command displays all registries that have b
 $ arm list registry
 NAME              TYPE        URL                                          CONFIG
 my-org            git         https://github.com/my-org/arm-registry
-my-gitlab         gitlab      https://gitlab.example.com                  group_id=123
-my-gitlab-project gitlab      https://gitlab.example.com                  project_id=101
-cloudsmith-registry cloudsmith  https://app.cloudsmith.com                    owner=my-org, repository=my-repo
+my-gitlab         gitlab      https://gitlab.com                           group_id=123
+my-gitlab-project gitlab      https://gitlab.com                           project_id=101
+cloudsmith-registry cloudsmith  https://api.cloudsmith.io                  owner=my-org, repository=my-repo
 ```
 
 ### arm info registry
@@ -204,7 +234,7 @@ Group Id: 123
 $ arm info registry cloudsmith-registry
 Registry: cloudsmith-registry
 Type: cloudsmith
-URL: https://app.cloudsmith.com
+URL: https://api.cloudsmith.io
 Owner: my-org
 Repository: my-repo
 ```

@@ -39,8 +39,7 @@ func init() {
 
 func upgradeAll() {
 	if err := armService.UpgradeAll(ctx); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
@@ -48,16 +47,23 @@ func upgradeRulesets(names []string) {
 	if len(names) == 0 {
 		// Upgrade all rulesets
 		if err := armService.UpdateAllRulesets(ctx); err != nil {
-			// TODO: Handle error properly
-			return
+			handleCommandError(err)
 		}
 	} else {
 		// Upgrade specific rulesets
 		for _, name := range names {
-			registry, ruleset := parseRegistryPackage(name)
+			registry, err := parseRegistry(name)
+			if err != nil {
+				handleCommandError(err)
+			}
+			
+			ruleset, err := parsePackage(name)
+			if err != nil {
+				handleCommandError(err)
+			}
+			
 			if err := armService.UpgradeRuleset(ctx, registry, ruleset); err != nil {
-				// TODO: Handle error properly
-				return
+				handleCommandError(err)
 			}
 		}
 	}
@@ -67,16 +73,23 @@ func upgradePromptsets(names []string) {
 	if len(names) == 0 {
 		// Upgrade all promptsets
 		if err := armService.UpdateAllPromptsets(ctx); err != nil {
-			// TODO: Handle error properly
-			return
+			handleCommandError(err)
 		}
 	} else {
 		// Upgrade specific promptsets
 		for _, name := range names {
-			registry, promptset := parseRegistryPackage(name)
+			registry, err := parseRegistry(name)
+			if err != nil {
+				handleCommandError(err)
+			}
+			
+			promptset, err := parsePackage(name)
+			if err != nil {
+				handleCommandError(err)
+			}
+			
 			if err := armService.UpgradePromptset(ctx, registry, promptset); err != nil {
-				// TODO: Handle error properly
-				return
+				handleCommandError(err)
 			}
 		}
 	}

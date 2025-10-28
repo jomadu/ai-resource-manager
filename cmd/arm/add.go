@@ -11,13 +11,38 @@ var addCmd = &cobra.Command{
 }
 
 var addRegistryCmd = &cobra.Command{
-	Use:   "registry [--type <git|gitlab|cloudsmith>] [--branches BRANCH...] [--group-id ID] [--project-id ID] [--api-version VERSION] [--owner OWNER] [--repo REPO] [--force] NAME URL",
+	Use:   "registry",
 	Short: "Add a new registry",
-	Long: `Add a new registry to the ARM configuration. This command supports different registry types (git, gitlab, cloudsmith)
-and allows specifying additional parameters like GitLab group and project IDs, or Cloudsmith owner and repository for more precise targeting.`,
-	Args: cobra.ExactArgs(2),
+	Long:  `Add a new registry to the ARM configuration. Use subcommands for different registry types (git, gitlab, cloudsmith).`,
+}
+
+var addRegistryGitCmd = &cobra.Command{
+	Use:   "git --url URL [--branches BRANCH...] [--force] NAME",
+	Short: "Add a new Git registry",
+	Long:  `Add a new Git registry to the ARM configuration. Git registries use Git repositories for storing and versioning rulesets and promptsets.`,
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		addRegistry(cmd, args[0], args[1])
+		addGitRegistry(cmd, args[0])
+	},
+}
+
+var addRegistryGitLabCmd = &cobra.Command{
+	Use:   "gitlab [--url URL] [--group-id ID] [--project-id ID] [--api-version VERSION] [--force] NAME",
+	Short: "Add a new GitLab registry",
+	Long:  `Add a new GitLab registry to the ARM configuration. URL defaults to https://gitlab.com if not specified.`,
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		addGitLabRegistry(cmd, args[0])
+	},
+}
+
+var addRegistryCloudsmithCmd = &cobra.Command{
+	Use:   "cloudsmith [--url URL] [--owner OWNER] [--repo REPO] [--force] NAME",
+	Short: "Add a new Cloudsmith registry",
+	Long:  `Add a new Cloudsmith registry to the ARM configuration. URL defaults to https://api.cloudsmith.io if not specified.`,
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		addCloudsmithRegistry(cmd, args[0])
 	},
 }
 
@@ -36,15 +61,31 @@ func init() {
 	addCmd.AddCommand(addRegistryCmd)
 	addCmd.AddCommand(addSinkCmd)
 
-	// Add registry flags
-	addRegistryCmd.Flags().String("type", "git", "Registry type (git, gitlab, cloudsmith)")
-	addRegistryCmd.Flags().StringSlice("branches", []string{}, "Git branches to track")
-	addRegistryCmd.Flags().String("group-id", "", "GitLab group ID")
-	addRegistryCmd.Flags().String("project-id", "", "GitLab project ID")
-	addRegistryCmd.Flags().String("api-version", "", "API version")
-	addRegistryCmd.Flags().String("owner", "", "Cloudsmith owner")
-	addRegistryCmd.Flags().String("repo", "", "Cloudsmith repository")
-	addRegistryCmd.Flags().Bool("force", false, "Overwrite existing registry")
+	// Add registry type subcommands
+	addRegistryCmd.AddCommand(addRegistryGitCmd)
+	addRegistryCmd.AddCommand(addRegistryGitLabCmd)
+	addRegistryCmd.AddCommand(addRegistryCloudsmithCmd)
+
+	// Git registry flags
+	addRegistryGitCmd.Flags().String("url", "", "Git repository URL (required)")
+	addRegistryGitCmd.MarkFlagRequired("url")
+	addRegistryGitCmd.Flags().StringSlice("branches", []string{}, "Git branches to track")
+	addRegistryGitCmd.Flags().Bool("force", false, "Overwrite existing registry")
+
+	// GitLab registry flags
+	addRegistryGitLabCmd.Flags().String("url", "https://gitlab.com", "GitLab instance URL")
+	addRegistryGitLabCmd.Flags().String("group-id", "", "GitLab group ID")
+	addRegistryGitLabCmd.Flags().String("project-id", "", "GitLab project ID")
+	addRegistryGitLabCmd.Flags().String("api-version", "", "API version (defaults to v4)")
+	addRegistryGitLabCmd.Flags().Bool("force", false, "Overwrite existing registry")
+
+	// Cloudsmith registry flags
+	addRegistryCloudsmithCmd.Flags().String("url", "https://api.cloudsmith.io", "Cloudsmith API URL")
+	addRegistryCloudsmithCmd.Flags().String("owner", "", "Cloudsmith owner (required)")
+	addRegistryCloudsmithCmd.MarkFlagRequired("owner")
+	addRegistryCloudsmithCmd.Flags().String("repo", "", "Cloudsmith repository (required)")
+	addRegistryCloudsmithCmd.MarkFlagRequired("repo")
+	addRegistryCloudsmithCmd.Flags().Bool("force", false, "Overwrite existing registry")
 
 	// Add sink flags
 	addSinkCmd.Flags().String("type", "", "Sink type (cursor, copilot, amazonq)")
@@ -53,21 +94,30 @@ func init() {
 	addSinkCmd.Flags().Bool("force", false, "Overwrite existing sink")
 }
 
-func addRegistry(cmd *cobra.Command, name, url string) {
-	registryType, _ := cmd.Flags().GetString("type")
+func addGitRegistry(cmd *cobra.Command, name string) {
+	url, _ := cmd.Flags().GetString("url")
 	branches, _ := cmd.Flags().GetStringSlice("branches")
-	groupID, _ := cmd.Flags().GetString("group-id")
-	projectID, _ := cmd.Flags().GetString("project-id")
-	apiVersion, _ := cmd.Flags().GetString("api-version")
-	owner, _ := cmd.Flags().GetString("owner")
-	repo, _ := cmd.Flags().GetString("repo")
 	force, _ := cmd.Flags().GetBool("force")
 
-	// Build options map
 	options := make(map[string]interface{})
 	if len(branches) > 0 {
 		options["branches"] = branches
 	}
+
+	if err := armService.AddRegistry(ctx, name, url, "git", options, force); err != nil {
+		cmd.PrintErrln("Error:", err)
+		return
+	}
+}
+
+func addGitLabRegistry(cmd *cobra.Command, name string) {
+	url, _ := cmd.Flags().GetString("url")
+	groupID, _ := cmd.Flags().GetString("group-id")
+	projectID, _ := cmd.Flags().GetString("project-id")
+	apiVersion, _ := cmd.Flags().GetString("api-version")
+	force, _ := cmd.Flags().GetBool("force")
+
+	options := make(map[string]interface{})
 	if groupID != "" {
 		options["group_id"] = groupID
 	}
@@ -77,6 +127,20 @@ func addRegistry(cmd *cobra.Command, name, url string) {
 	if apiVersion != "" {
 		options["api_version"] = apiVersion
 	}
+
+	if err := armService.AddRegistry(ctx, name, url, "gitlab", options, force); err != nil {
+		cmd.PrintErrln("Error:", err)
+		return
+	}
+}
+
+func addCloudsmithRegistry(cmd *cobra.Command, name string) {
+	url, _ := cmd.Flags().GetString("url")
+	owner, _ := cmd.Flags().GetString("owner")
+	repo, _ := cmd.Flags().GetString("repo")
+	force, _ := cmd.Flags().GetBool("force")
+
+	options := make(map[string]interface{})
 	if owner != "" {
 		options["owner"] = owner
 	}
@@ -84,7 +148,7 @@ func addRegistry(cmd *cobra.Command, name, url string) {
 		options["repository"] = repo
 	}
 
-	if err := armService.AddRegistry(ctx, name, url, registryType, options, force); err != nil {
+	if err := armService.AddRegistry(ctx, name, url, "cloudsmith", options, force); err != nil {
 		cmd.PrintErrln("Error:", err)
 		return
 	}
