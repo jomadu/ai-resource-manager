@@ -21,7 +21,11 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 if [ -f "$SCRIPT_DIR/.env" ]; then
     source "$SCRIPT_DIR/.env"
 else
-    error "Environment file not found. Copy .env.cloudsmith.example to .env and configure it."
+    error "Environment file not found. Create $SCRIPT_DIR/.env with:
+  CLOUDSMITH_URL=https://api.cloudsmith.io
+  CLOUDSMITH_OWNER=your-owner-name
+  CLOUDSMITH_REPOSITORY=your-repo-name
+  CLOUDSMITH_TOKEN=your-api-token"
 fi
 
 # Validate required variables

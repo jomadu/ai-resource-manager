@@ -1,17 +1,21 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/jomadu/ai-rules-manager/internal/arm"
 	"github.com/spf13/cobra"
 )
 
 var compileCmd = &cobra.Command{
-	Use:   "compile [--target <md|cursor|amazonq|copilot>] [--force] [--recursive] [--validate-only] [--include GLOB...] [--exclude GLOB...] [--fail-fast] INPUT_PATH... OUTPUT_PATH",
+	Use:   "compile [--target <md|cursor|amazonq|copilot>] [--force] [--recursive] [--validate-only] [--include GLOB...] [--exclude GLOB...] [--fail-fast] INPUT_PATH... [OUTPUT_PATH]",
 	Short: "Compile resources",
 	Long: `Compile rulesets and promptsets from source files. This command compiles source ruleset and promptset files to platform-specific formats.
 
-It supports different target platforms (md, cursor, amazonq, copilot), recursive directory processing, validation-only mode, and various filtering and output options. This is useful for development and testing of rulesets and promptsets before publishing to registries.`,
-	Args: cobra.MinimumNArgs(2),
+It supports different target platforms (md, cursor, amazonq, copilot), recursive directory processing, validation-only mode, and various filtering and output options. This is useful for development and testing of rulesets and promptsets before publishing to registries.
+
+When using --validate-only, OUTPUT_PATH is optional and will be ignored if provided.`,
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		compileFiles(cmd, args)
 	},
@@ -41,8 +45,23 @@ func compileFiles(cmd *cobra.Command, args []string) {
 	namespace, _ := cmd.Flags().GetString("namespace")
 	verbose, _ := cmd.Flags().GetBool("verbose")
 
-	inputPaths := args[:len(args)-1]
-	outputPath := args[len(args)-1]
+	var inputPaths []string
+	var outputPath string
+
+	// Handle arguments based on validate-only mode
+	if validateOnly {
+		// In validate-only mode, all args are input paths
+		inputPaths = args
+		outputPath = "" // Will be ignored
+	} else {
+		// In normal mode, require at least 2 args (input + output)
+		if len(args) < 2 {
+			handleCommandError(fmt.Errorf("compile requires at least 2 arguments: INPUT_PATH... OUTPUT_PATH"))
+			return
+		}
+		inputPaths = args[:len(args)-1]
+		outputPath = args[len(args)-1]
+	}
 
 	req := &arm.CompileRequest{
 		Paths:        inputPaths,
@@ -59,7 +78,7 @@ func compileFiles(cmd *cobra.Command, args []string) {
 	}
 
 	if err := armService.CompileFiles(ctx, req); err != nil {
-		// TODO: Handle error properly
+		handleCommandError(err)
 		return
 	}
 }

@@ -21,7 +21,11 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 if [ -f "$SCRIPT_DIR/.env" ]; then
     source "$SCRIPT_DIR/.env"
 else
-    error "Environment file not found. Copy .env.gitlab.example to .env and configure it."
+    error "Environment file not found. Create $SCRIPT_DIR/.env with:
+  GITLAB_URL=https://gitlab.com
+  GITLAB_PROJECT_ID=your-project-id
+  GITLAB_TOKEN=your-access-token
+  GITLAB_API_VERSION=v4"
 fi
 
 # Validate required variables
