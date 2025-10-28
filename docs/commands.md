@@ -8,7 +8,9 @@
     - [arm version](#arm-version)
     - [arm help](#arm-help)
   - [Registry Management](#registry-management)
-    - [arm add registry](#arm-add-registry)
+    - [arm add registry git](#arm-add-registry-git)
+    - [arm add registry gitlab](#arm-add-registry-gitlab)
+    - [arm add registry cloudsmith](#arm-add-registry-cloudsmith)
     - [arm remove registry](#arm-remove-registry)
     - [arm set registry](#arm-set-registry)
     - [arm list registry](#arm-list-registry)
@@ -875,9 +877,11 @@ $ arm clean sinks --nuke
 
 ### arm compile
 
-`arm compile [--target <md|cursor|amazonq|copilot>] [--force] [--recursive] [--validate-only] [--include GLOB...] [--output GLOB...] [--fail-fast] INPUT_PATH... OUTPUT_PATH`
+`arm compile [--target <md|cursor|amazonq|copilot>] [--force] [--recursive] [--validate-only] [--include GLOB...] [--exclude GLOB...] [--fail-fast] INPUT_PATH... [OUTPUT_PATH]`
 
 Compile rulesets and promptsets from source files. This command compiles source ruleset and promptset files to platform-specific formats. It supports different target platforms (md, cursor, amazonq, copilot), recursive directory processing, validation-only mode, and various filtering and output options. This is useful for development and testing of rulesets and promptsets before publishing to registries.
+
+**Note:** When using `--validate-only`, the OUTPUT_PATH argument is optional and will be ignored if provided. The command will only validate the syntax of the input files without generating any output.
 
 **Examples:**
 ```bash
@@ -887,12 +891,18 @@ $ arm compile --target cursor ruleset.yml ./output/
 # Compile directory recursively to Amazon Q format
 $ arm compile --target amazonq --recursive ./src/ ./build/
 
-# Validate only (no output files)
+# Validate only (no output files) - OUTPUT_PATH is optional
 $ arm compile --validate-only ruleset.yml
+
+# Validate multiple files without output
+$ arm compile --validate-only ./rulesets/*.yml
 
 # Compile with include/exclude patterns
 $ arm compile --target cursor --include "**/*.yml" --exclude "**/README.md" ./src/ ./build/
 
 # Compilation with force overwrite
 $ arm compile --target copilot --force ruleset.yml ./output/
+
+# Validate and fail fast on first error (useful for CI)
+$ arm compile --validate-only --fail-fast ./rulesets/
 ```

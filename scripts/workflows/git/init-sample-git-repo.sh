@@ -596,17 +596,17 @@ create_sample_repo() {
     git commit -m "feat: initial ARM sample repository with grug-brained-dev rules"
     git tag v1.0.0
 
-    # Create v1.1.0 - Enhanced content
-    create_version_1_1_0
-    git add .
-    git commit -m "feat: add task management rules"
-    git tag v1.1.0
-
-    # Create v1.0.1 - Bug fix
+    # Create v1.0.1 - Bug fix (patch release after v1.0.0)
     create_version_1_0_1
     git add .
     git commit -m "fix: bug fix in grug-brained-dev.mdc rule"
     git tag v1.0.1
+
+    # Create v1.1.0 - Enhanced content (minor release after v1.0.1)
+    create_version_1_1_0
+    git add .
+    git commit -m "feat: add task management rules"
+    git tag v1.1.0
 
     # Create v2.0.0-rc.1 - Pre-release with breaking changes
     git checkout -b rc
