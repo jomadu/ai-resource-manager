@@ -328,8 +328,9 @@ pause
 log "=== SINK REMOVAL PROTECTION ==="
 
 log "Attempting to remove cursor sink (should fail because ruleset is installed)..."
-if run_arm remove sink cursor-rules 2>&1; then
+if run_arm remove sink cursor-rules >/dev/null 2>&1; then
     error "Sink removal should have failed!"
+    exit 1
 else
     success "Sink removal correctly blocked due to active ruleset"
 fi

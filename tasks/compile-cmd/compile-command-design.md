@@ -29,6 +29,8 @@ ARM currently compiles URF files during the installation process, converting the
 arm compile [file...] [flags]
 ```
 
+**Note:** When using `--validate-only`, the output directory argument is optional and will be ignored if provided.
+
 ### Feature Flags
 
 | Flag | Short | Type | Default | Description |
@@ -69,8 +71,11 @@ arm compile rules.yaml --target cursor --dry-run --verbose
 # Custom namespace for team rules
 arm compile team_rules.yml --target markdown --namespace "team/standards"
 
-# Validate URF files without compilation
+# Validate URF files without compilation (no output path needed)
 arm compile *.yaml --validate-only
+
+# Validate specific directory
+arm compile ./rules/ --validate-only --recursive
 
 # Compile with filtering and verbose output
 arm compile ./rules/ --target cursor --recursive --include "**/*quality*" --exclude "**/draft/**" --verbose
@@ -233,9 +238,11 @@ func init() {
 ```go
 func newCompileCmd() *cobra.Command {
     cmd := &cobra.Command{
-        Use:   "compile [file...]",
+        Use:   "compile [file...] [output]",
         Short: "Compile URF files to target format",
-        Long:  `Compile Universal Rule Format (URF) files to specific AI tool formats.`,
+        Long:  `Compile Universal Rule Format (URF) files to specific AI tool formats.
+        
+When using --validate-only, the output path is optional and will be ignored if provided.`,
         RunE:  runCompile,
         Args:  cobra.MinimumNArgs(1),
     }
@@ -247,7 +254,7 @@ func newCompileCmd() *cobra.Command {
     cmd.Flags().BoolP("recursive", "r", false, "Recursively find URF files in directories")
     cmd.Flags().Bool("dry-run", false, "Show what would be compiled without writing files")
     cmd.Flags().BoolP("verbose", "v", false, "Show detailed compilation information")
-    cmd.Flags().Bool("validate-only", false, "Validate URF syntax without compilation")
+    cmd.Flags().Bool("validate-only", false, "Validate URF syntax without compilation (output path optional)")
     cmd.Flags().StringSlice("include", nil, "Include patterns for file filtering")
     cmd.Flags().StringSlice("exclude", nil, "Exclude patterns for file filtering")
     cmd.Flags().Bool("fail-fast", false, "Stop compilation on first error")
@@ -272,11 +279,28 @@ func runCompile(cmd *cobra.Command, args []string) error {
     exclude, _ := cmd.Flags().GetStringSlice("exclude")
     failFast, _ := cmd.Flags().GetBool("fail-fast")
 
+    // Handle arguments based on validate-only mode
+    var inputPaths []string
+    var output string
+    
+    if validateOnly {
+        // In validate-only mode, all args are input paths
+        inputPaths = args
+        output = "" // Will be ignored
+    } else {
+        // In normal mode, require at least 2 args (input + output)
+        if len(args) < 2 {
+            return fmt.Errorf("compile requires at least 2 arguments: INPUT_PATH... OUTPUT_PATH")
+        }
+        inputPaths = args[:len(args)-1]
+        output = args[len(args)-1]
+    }
+
     // Create compile request
     req := &arm.CompileRequest{
-        Files:        args,
+        Files:        inputPaths,
         Target:       target,
-        OutputDir:    outputDir,
+        OutputDir:    output,
         Namespace:    namespace,
         Force:        force,
         Recursive:    recursive,
