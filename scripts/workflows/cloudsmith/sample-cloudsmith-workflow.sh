@@ -2,6 +2,27 @@
 
 set -e
 
+# Parse command line arguments
+INTERACTIVE=true
+SHOW_DEBUG=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --non-interactive|-n)
+            INTERACTIVE=false
+            shift
+            ;;
+        --show-debug|-d)
+            SHOW_DEBUG=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [--non-interactive|-n] [--show-debug|-d]"
+            exit 1
+            ;;
+    esac
+done
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -16,6 +37,66 @@ error() { echo -e "${RED}✗${NC} $1"; }
 run_arm() {
     echo -e "${BLUE}$ ./arm $*${NC}"
     ./arm "$@"
+}
+
+show_debug() {
+    if [ "$SHOW_DEBUG" = false ]; then
+        return
+    fi
+    
+    echo ""
+    echo -e "${YELLOW}=== DEBUG OUTPUT ===${NC}"
+    
+    # Directory tree
+    echo -e "${YELLOW}--- Directory Tree ---${NC}"
+    if command -v tree &> /dev/null; then
+        tree -a -I '.git' . || find . -not -path './.git/*' | sort
+    else
+        find . -not -path './.git/*' | sort
+    fi
+    echo ""
+    
+    # Manifest file
+    if [ -f "arm.json" ]; then
+        echo -e "${YELLOW}--- arm.json (Manifest) ---${NC}"
+        cat arm.json
+        echo ""
+    fi
+    
+    # Lock file
+    if [ -f "arm-lock.json" ]; then
+        echo -e "${YELLOW}--- arm-lock.json (Lock File) ---${NC}"
+        cat arm-lock.json
+        echo ""
+    fi
+    
+    # Sink index files
+    for index_file in $(find . -name "arm-index.json" -o -name "arm_index.*" 2>/dev/null); do
+        echo -e "${YELLOW}--- $index_file ---${NC}"
+        cat "$index_file"
+        echo ""
+    done
+    
+    # Cache directory
+    if [ -d "$HOME/.arm/cache" ]; then
+        echo -e "${YELLOW}--- Cache Directory Tree ---${NC}"
+        if command -v tree &> /dev/null; then
+            tree -a "$HOME/.arm/cache" || find "$HOME/.arm/cache" | sort
+        else
+            find "$HOME/.arm/cache" | sort
+        fi
+        echo ""
+        
+        # Cache index files
+        for cache_index in $(find "$HOME/.arm/cache" -name "*index*.json" 2>/dev/null); do
+            echo -e "${YELLOW}--- $cache_index ---${NC}"
+            cat "$cache_index"
+            echo ""
+        done
+    fi
+    
+    echo -e "${YELLOW}=== END DEBUG OUTPUT ===${NC}"
+    echo ""
 }
 
 # Get script directory
@@ -55,6 +136,8 @@ if [ -n "$INCLUDE_PATTERNS" ]; then
 else
     run_arm install ruleset cloudsmith-registry/$RULESET_NAME cursor-rules q-rules
 fi
+
+show_debug
 
 success "Setup complete! Try these commands:"
 echo ""
