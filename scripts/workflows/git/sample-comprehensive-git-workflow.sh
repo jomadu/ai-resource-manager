@@ -4,15 +4,20 @@ set -e
 
 # Parse command line arguments
 INTERACTIVE=true
+SHOW_DEBUG=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --non-interactive|-n)
             INTERACTIVE=false
             shift
             ;;
+        --show-debug|-d)
+            SHOW_DEBUG=true
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [--non-interactive|-n]"
+            echo "Usage: $0 [--non-interactive|-n] [--show-debug|-d]"
             exit 1
             ;;
     esac
@@ -33,6 +38,66 @@ warn() { echo -e "${YELLOW}⚠${NC} $1"; }
 run_arm() {
     echo -e "${BLUE}$ ./arm $*${NC}"
     ./arm "$@"
+}
+
+show_debug() {
+    if [ "$SHOW_DEBUG" = false ]; then
+        return
+    fi
+    
+    echo ""
+    echo -e "${YELLOW}=== DEBUG OUTPUT ===${NC}"
+    
+    # Directory tree
+    echo -e "${YELLOW}--- Directory Tree ---${NC}"
+    if command -v tree &> /dev/null; then
+        tree -a -I '.git' . || find . -not -path './.git/*' | sort
+    else
+        find . -not -path './.git/*' | sort
+    fi
+    echo ""
+    
+    # Manifest file
+    if [ -f "arm.json" ]; then
+        echo -e "${YELLOW}--- arm.json (Manifest) ---${NC}"
+        cat arm.json
+        echo ""
+    fi
+    
+    # Lock file
+    if [ -f "arm-lock.json" ]; then
+        echo -e "${YELLOW}--- arm-lock.json (Lock File) ---${NC}"
+        cat arm-lock.json
+        echo ""
+    fi
+    
+    # Sink index files
+    for index_file in $(find . -name "arm-index.json" -o -name "arm_index.*" 2>/dev/null); do
+        echo -e "${YELLOW}--- $index_file ---${NC}"
+        cat "$index_file"
+        echo ""
+    done
+    
+    # Cache directory
+    if [ -d "$HOME/.arm/cache" ]; then
+        echo -e "${YELLOW}--- Cache Directory Tree ---${NC}"
+        if command -v tree &> /dev/null; then
+            tree -a "$HOME/.arm/cache" || find "$HOME/.arm/cache" | sort
+        else
+            find "$HOME/.arm/cache" | sort
+        fi
+        echo ""
+        
+        # Cache index files
+        for cache_index in $(find "$HOME/.arm/cache" -name "*index*.json" 2>/dev/null); do
+            echo -e "${YELLOW}--- $cache_index ---${NC}"
+            cat "$cache_index"
+            echo ""
+        done
+    fi
+    
+    echo -e "${YELLOW}=== END DEBUG OUTPUT ===${NC}"
+    echo ""
 }
 
 show_tree() {
@@ -135,6 +200,7 @@ log "Installing testing promptset to both prompt sinks..."
 run_arm install promptset ai-rules/testing --include "promptsets/testing.yml" cursor-commands q-prompts
 
 show_tree "Project structure after installs"
+show_debug
 pause
 
 # === LIST AND INFO ===
@@ -183,6 +249,7 @@ run_arm uninstall promptset ai-rules/testing
 
 log "Showing empty list..."
 run_arm list
+show_debug
 pause
 
 # === INSTALL FROM MAIN BRANCH ===
@@ -193,6 +260,7 @@ run_arm install ruleset ai-rules/cursor-rules@main --include "rules/cursor/*.mdc
 
 log "Showing info for main branch install..."
 run_arm info ruleset ai-rules/cursor-rules
+show_debug
 pause
 
 # === OUTDATED CHECK ===
@@ -210,6 +278,7 @@ run_arm set ruleset ai-rules/cursor-rules priority 200
 
 log "Showing updated priority..."
 run_arm info ruleset ai-rules/cursor-rules
+show_debug
 pause
 
 log "Changing cursor-rules version constraint to 1.0..."
@@ -217,6 +286,7 @@ run_arm set ruleset ai-rules/cursor-rules version 1.0
 
 log "Showing updated version constraint..."
 run_arm info ruleset ai-rules/cursor-rules
+show_debug
 pause
 
 log "Adding q sink to cursor-rules..."
@@ -224,6 +294,7 @@ run_arm set ruleset ai-rules/cursor-rules sinks cursor-rules,q-rules
 
 log "Showing updated sinks..."
 run_arm info ruleset ai-rules/cursor-rules
+show_debug
 pause
 
 # === VERSION CONSTRAINT DEMOS ===
@@ -234,6 +305,7 @@ run_arm install ruleset ai-rules/cursor-rules@1 --include "rules/cursor/*.mdc" c
 
 log "Showing info (should show 1.1.0)..."
 run_arm info ruleset ai-rules/cursor-rules
+show_debug
 pause
 
 log "Installing cursor ruleset with minor version 1.0 (should resolve to 1.0.1)..."
@@ -241,6 +313,7 @@ run_arm install ruleset ai-rules/cursor-rules@1.0 --include "rules/cursor/*.mdc"
 
 log "Showing info (should show 1.0.1)..."
 run_arm info ruleset ai-rules/cursor-rules
+show_debug
 pause
 
 log "Installing cursor ruleset with patch version 1.0.0 (should resolve to 1.0.0)..."
@@ -248,6 +321,7 @@ run_arm install ruleset ai-rules/cursor-rules@1.0.0 --include "rules/cursor/*.md
 
 log "Showing info (should show 1.0.0)..."
 run_arm info ruleset ai-rules/cursor-rules
+show_debug
 pause
 
 # === SINK REMOVAL PROTECTION ===
@@ -271,6 +345,7 @@ log "Now removing cursor sink (should succeed)..."
 run_arm remove sink cursor-rules
 
 success "Cleanup complete"
+show_debug
 pause
 
 # === SUMMARY ===
