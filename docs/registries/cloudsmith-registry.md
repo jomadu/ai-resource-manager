@@ -7,7 +7,13 @@ Cloudsmith registries use Cloudsmith's package repository service to store and d
 Add a Cloudsmith registry:
 
 ```bash
-arm add registry --type cloudsmith --owner myorg --repo ai-rules my-cloudsmith https://app.cloudsmith.com
+arm add registry cloudsmith --owner myorg --repo ai-rules my-cloudsmith
+```
+
+For self-hosted Cloudsmith instances, specify the API URL:
+
+```bash
+arm add registry cloudsmith --url https://cloudsmith.mycompany.com --owner myorg --repo ai-rules my-cloudsmith
 ```
 
 ## Authentication
@@ -150,7 +156,7 @@ arm info registry my-cloudsmith
 
 Update registry configuration:
 ```bash
-arm set registry my-cloudsmith url https://app.cloudsmith.com
+arm set registry my-cloudsmith url https://api.cloudsmith.io
 ```
 
 Remove registry:
@@ -161,11 +167,11 @@ arm remove registry my-cloudsmith
 ## Example Workflow
 
 ```bash
-# Add registry
-arm add registry --type cloudsmith --owner myteam --repo rules cloudsmith https://app.cloudsmith.com
+# Add registry (uses default API URL https://api.cloudsmith.io)
+arm add registry cloudsmith --owner myteam --repo rules cloudsmith
 
-# Configure authentication
-echo "[registry https://app.cloudsmith.com/myteam/rules]" >> .armrc
+# Configure authentication (use API URL format)
+echo "[registry https://api.cloudsmith.io/myteam/rules]" >> .armrc
 echo "token = your-token-here" >> .armrc
 chmod 600 .armrc
 

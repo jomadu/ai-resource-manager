@@ -47,19 +47,33 @@ func uninstallAll() {
 }
 
 func uninstallRuleset(packageName string) {
-	registry, ruleset := parseRegistryPackage(packageName)
+	registry, err := parseRegistry(packageName)
+	if err != nil {
+		handleCommandError(err)
+	}
+	
+	ruleset, err := parsePackage(packageName)
+	if err != nil {
+		handleCommandError(err)
+	}
 
 	if err := armService.UninstallRuleset(ctx, registry, ruleset); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
 func uninstallPromptset(packageName string) {
-	registry, promptset := parseRegistryPackage(packageName)
+	registry, err := parseRegistry(packageName)
+	if err != nil {
+		handleCommandError(err)
+	}
+	
+	promptset, err := parsePackage(packageName)
+	if err != nil {
+		handleCommandError(err)
+	}
 
 	if err := armService.UninstallPromptset(ctx, registry, promptset); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }

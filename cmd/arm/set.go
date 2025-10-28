@@ -16,7 +16,7 @@ var setRegistryCmd = &cobra.Command{
 	Long:  "Set configuration values for a specific registry.",
 	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		setRegistry(args[0], args[1], args[2])
+		setRegistry(cmd, args[0], args[1], args[2])
 	},
 }
 
@@ -26,7 +26,7 @@ var setSinkCmd = &cobra.Command{
 	Long:  "Set configuration values for a specific sink.",
 	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		setSink(args[0], args[1], args[2])
+		setSink(cmd, args[0], args[1], args[2])
 	},
 }
 
@@ -36,7 +36,7 @@ var setRulesetCmd = &cobra.Command{
 	Long:  "Set configuration values for a specific ruleset.",
 	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		setRuleset(args[0], args[1], args[2])
+		setRuleset(cmd, args[0], args[1], args[2])
 	},
 }
 
@@ -46,7 +46,7 @@ var setPromptsetCmd = &cobra.Command{
 	Long:  "Set configuration values for a specific promptset.",
 	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		setPromptset(args[0], args[1], args[2])
+		setPromptset(cmd, args[0], args[1], args[2])
 	},
 }
 
@@ -58,40 +58,56 @@ func init() {
 	setCmd.AddCommand(setPromptsetCmd)
 }
 
-func setRegistry(name, key, value string) {
+func setRegistry(cmd *cobra.Command, name, key, value string) {
 	if err := armService.SetRegistryConfig(ctx, name, key, value); err != nil {
-		// TODO: Handle error properly
+		cmd.PrintErrln("Error:", err)
 		return
 	}
 }
 
-func setSink(name, key, value string) {
+func setSink(cmd *cobra.Command, name, key, value string) {
 	if err := armService.SetSinkConfig(ctx, name, key, value); err != nil {
-		// TODO: Handle error properly
+		cmd.PrintErrln("Error:", err)
 		return
 	}
 }
 
-func setRuleset(packageName, key, value string) {
+func setRuleset(cmd *cobra.Command, packageName, key, value string) {
 	// Parse registry/ruleset from packageName
-	// TODO: Implement parsing logic
-	registry := "default"  // Placeholder
-	ruleset := packageName // Placeholder
+	registry, err := parseRegistry(packageName)
+	if err != nil {
+		cmd.PrintErrln("Error:", err)
+		return
+	}
+	
+	ruleset, err := parsePackage(packageName)
+	if err != nil {
+		cmd.PrintErrln("Error:", err)
+		return
+	}
 
 	if err := armService.SetRulesetConfig(ctx, registry, ruleset, key, value); err != nil {
-		// TODO: Handle error properly
+		cmd.PrintErrln("Error:", err)
 		return
 	}
 }
 
-func setPromptset(packageName, key, value string) {
+func setPromptset(cmd *cobra.Command, packageName, key, value string) {
 	// Parse registry/promptset from packageName
-	// TODO: Implement parsing logic
-	registry := "default"    // Placeholder
-	promptset := packageName // Placeholder
+	registry, err := parseRegistry(packageName)
+	if err != nil {
+		cmd.PrintErrln("Error:", err)
+		return
+	}
+	
+	promptset, err := parsePackage(packageName)
+	if err != nil {
+		cmd.PrintErrln("Error:", err)
+		return
+	}
 
 	if err := armService.SetPromptsetConfig(ctx, registry, promptset, key, value); err != nil {
-		// TODO: Handle error properly
+		cmd.PrintErrln("Error:", err)
 		return
 	}
 }

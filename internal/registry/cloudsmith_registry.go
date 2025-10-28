@@ -68,7 +68,7 @@ type CloudsmithPackage struct {
 // NewCloudsmithRegistry creates a new Cloudsmith-based registry
 func NewCloudsmithRegistry(registryName string, config *CloudsmithRegistryConfig, packageCache cache.RegistryPackageCache) *CloudsmithRegistry {
 	client := &CloudsmithClient{
-		baseURL:    "https://api.cloudsmith.io", // Always use API base URL for client
+		baseURL:    config.GetBaseURL(), // Use config URL or default to API base URL
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}
 
@@ -87,7 +87,7 @@ func NewCloudsmithRegistry(registryName string, config *CloudsmithRegistryConfig
 // NewCloudsmithRegistryNoCache creates a new Cloudsmith-based registry without caching for testing
 func NewCloudsmithRegistryNoCache(registryName string, config *CloudsmithRegistryConfig) *CloudsmithRegistry {
 	client := &CloudsmithClient{
-		baseURL:    "https://api.cloudsmith.io", // Always use API base URL for client
+		baseURL:    config.GetBaseURL(), // Use config URL or default to API base URL
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}
 
@@ -106,7 +106,8 @@ func NewCloudsmithRegistryNoCache(registryName string, config *CloudsmithRegistr
 // loadToken loads authentication token from .armrc file
 func (c *CloudsmithRegistry) loadToken() error {
 	// Construct the full URL with owner/repository path for .armrc lookup
-	fullURL := fmt.Sprintf("%s/%s/%s", c.config.URL, c.config.Owner, c.config.Repository)
+	// Use API URL format: https://api.cloudsmith.io/owner/repository
+	fullURL := fmt.Sprintf("%s/%s/%s", c.config.GetBaseURL(), c.config.Owner, c.config.Repository)
 	token, err := c.rcService.GetValue("registry "+fullURL, "token")
 	if err != nil {
 		return fmt.Errorf("failed to load token from .armrc: %w", err)

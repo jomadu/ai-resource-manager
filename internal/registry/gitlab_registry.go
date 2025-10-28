@@ -381,24 +381,58 @@ func (c *GitLabClient) ensureProtocol(baseURL string) string {
 }
 
 // HTTP helpers
-func (c *GitLabClient) listPackages(ctx context.Context, url string) ([]GitLabPackage, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
-	if err != nil {
-		return nil, err
+func (c *GitLabClient) listPackages(ctx context.Context, baseURL string) ([]GitLabPackage, error) {
+	var allPackages []GitLabPackage
+	page := 1
+	perPage := 100 // Use larger page size to minimize API calls
+
+	for {
+		// Build paginated URL
+		paginatedURL := fmt.Sprintf("%s?page=%d&per_page=%d", baseURL, page, perPage)
+		
+		req, err := http.NewRequestWithContext(ctx, "GET", paginatedURL, http.NoBody)
+		if err != nil {
+			return nil, err
+		}
+
+		resp, err := c.makeRequest(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+
+		var packages []GitLabPackage
+		if err := json.NewDecoder(resp.Body).Decode(&packages); err != nil {
+			_ = resp.Body.Close()
+			return nil, err
+		}
+		_ = resp.Body.Close()
+
+		allPackages = append(allPackages, packages...)
+
+		// Check if there are more pages by looking at the response headers
+		totalPages := resp.Header.Get("X-Total-Pages")
+		if totalPages == "" || len(packages) == 0 {
+			// No pagination headers or empty response, we're done
+			break
+		}
+
+		// Parse total pages and check if we need to continue
+		var totalPagesInt int
+		if _, err := fmt.Sscanf(totalPages, "%d", &totalPagesInt); err == nil {
+			if page >= totalPagesInt {
+				break
+			}
+		} else {
+			// Can't parse total pages, check if current page is empty
+			if len(packages) < perPage {
+				break
+			}
+		}
+
+		page++
 	}
 
-	resp, err := c.makeRequest(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	var packages []GitLabPackage
-	if err := json.NewDecoder(resp.Body).Decode(&packages); err != nil {
-		return nil, err
-	}
-
-	return packages, nil
+	return allPackages, nil
 }
 
 func (c *GitLabClient) getPackageFiles(ctx context.Context, url string) ([]GitLabPackageFile, error) {
@@ -444,13 +478,27 @@ func (c *GitLabClient) makeRequest(_ context.Context, req *http.Request) (*http.
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to make request to %s: %w", req.URL.String(), err)
 	}
 
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)
 		_ = resp.Body.Close()
-		return nil, fmt.Errorf("GitLab API error %d: %s", resp.StatusCode, string(body))
+		
+		errorMsg := fmt.Sprintf("GitLab API error %d for %s", resp.StatusCode, req.URL.String())
+		if resp.StatusCode == 401 {
+			errorMsg += " - Authentication failed. Please check your GitLab token in .armrc"
+		} else if resp.StatusCode == 403 {
+			errorMsg += " - Access forbidden. Please ensure your token has 'read_api' and 'read_package_registry' scopes"
+		} else if resp.StatusCode == 404 {
+			errorMsg += " - Resource not found. Please check project/group ID and package name"
+		}
+		
+		if len(body) > 0 {
+			errorMsg += fmt.Sprintf(": %s", string(body))
+		}
+		
+		return nil, fmt.Errorf("%s", errorMsg)
 	}
 
 	return resp, nil

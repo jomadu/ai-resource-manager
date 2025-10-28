@@ -16,10 +16,39 @@ type InstallRulesetRequest struct {
 	Registry string
 	Ruleset  string
 	Version  string
-	Priority int
+	Priority int // Defaults to 100 via constructor
 	Include  []string
 	Exclude  []string
 	Sinks    []string
+}
+
+// NewInstallRulesetRequest creates a new request with default priority of 100
+func NewInstallRulesetRequest(registry, ruleset, version string, sinks []string) *InstallRulesetRequest {
+	return &InstallRulesetRequest{
+		Registry: registry,
+		Ruleset:  ruleset,
+		Version:  version,
+		Priority: 100, // Default priority
+		Sinks:    sinks,
+	}
+}
+
+// WithPriority sets a custom priority (for fluent API)
+func (r *InstallRulesetRequest) WithPriority(priority int) *InstallRulesetRequest {
+	r.Priority = priority
+	return r
+}
+
+// WithInclude sets include patterns (for fluent API)
+func (r *InstallRulesetRequest) WithInclude(include []string) *InstallRulesetRequest {
+	r.Include = include
+	return r
+}
+
+// WithExclude sets exclude patterns (for fluent API)
+func (r *InstallRulesetRequest) WithExclude(exclude []string) *InstallRulesetRequest {
+	r.Exclude = exclude
+	return r
 }
 
 // InstallPromptsetRequest groups promptset install parameters.

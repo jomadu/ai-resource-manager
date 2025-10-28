@@ -40,14 +40,21 @@ func (a *ArmService) InstallAll(ctx context.Context) error {
 		// Install rulesets
 		for registryName, rulesets := range manifestRulesets {
 			for rulesetName, entry := range rulesets {
-				if err := a.InstallRuleset(ctx, &InstallRulesetRequest{
-					Registry: registryName,
-					Ruleset:  rulesetName,
-					Version:  entry.Version,
-					Include:  entry.GetIncludePatterns(),
-					Exclude:  entry.Exclude,
-					Sinks:    entry.Sinks,
-				}); err != nil {
+				priority := 100
+				if entry.Priority != nil {
+					priority = *entry.Priority
+				}
+				
+				req := NewInstallRulesetRequest(
+					registryName,
+					rulesetName,
+					entry.Version,
+					entry.Sinks,
+				).WithPriority(priority).
+					WithInclude(entry.GetIncludePatterns()).
+					WithExclude(entry.Exclude)
+				
+				if err := a.InstallRuleset(ctx, req); err != nil {
 					return err
 				}
 			}
