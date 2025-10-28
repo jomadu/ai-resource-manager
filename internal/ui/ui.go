@@ -744,42 +744,56 @@ func (u *UI) RegistryList(registries map[string]map[string]interface{}) {
 	}
 
 	tableData := [][]string{
-		{"Name", "Type", "URL", "Config"},
+		{"Name", "Type", "Config"},
 	}
 
 	for name, config := range registries {
 		regType := "unknown"
-		url := ""
 		configStr := ""
 
 		if t, ok := config["type"].(string); ok {
 			regType = t
 		}
-		if u, ok := config["url"].(string); ok {
-			url = u
-		}
 
-		// Build config string from registry-specific fields
+		// Build config string from all registry-specific fields
 		var configParts []string
+		
+		// Include URL in config if present
+		if url, ok := config["url"].(string); ok && url != "" {
+			configParts = append(configParts, "url="+url)
+		}
+		
+		// Git-specific config
+		if branches, ok := config["branches"].([]interface{}); ok && len(branches) > 0 {
+			branchStrs := make([]string, len(branches))
+			for i, b := range branches {
+				branchStrs[i] = fmt.Sprintf("%v", b)
+			}
+			configParts = append(configParts, "branches="+fmt.Sprintf("%v", branchStrs))
+		}
+		
+		// GitLab-specific config
 		if groupID, ok := config["group_id"].(string); ok && groupID != "" {
 			configParts = append(configParts, "group_id="+groupID)
 		}
 		if projectID, ok := config["project_id"].(string); ok && projectID != "" {
 			configParts = append(configParts, "project_id="+projectID)
 		}
+		if apiVersion, ok := config["api_version"].(string); ok && apiVersion != "" {
+			configParts = append(configParts, "api_version="+apiVersion)
+		}
+		
+		// Cloudsmith-specific config
 		if owner, ok := config["owner"].(string); ok && owner != "" {
 			configParts = append(configParts, "owner="+owner)
 		}
 		if repo, ok := config["repository"].(string); ok && repo != "" {
 			configParts = append(configParts, "repository="+repo)
 		}
-		if branches, ok := config["branches"].([]string); ok && len(branches) > 0 {
-			configParts = append(configParts, "branches="+fmt.Sprintf("%v", branches))
-		}
 
 		configStr = fmt.Sprintf("%v", configParts)
 
-		tableData = append(tableData, []string{name, regType, url, configStr})
+		tableData = append(tableData, []string{name, regType, configStr})
 	}
 
 	_ = pterm.DefaultTable.WithHasHeader().WithData(tableData).Render()

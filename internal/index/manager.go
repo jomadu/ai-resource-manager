@@ -235,12 +235,23 @@ func (m *IndexManager) getIndexFilePaths() []string {
 }
 
 func (m *IndexManager) sync(data *IndexData) error {
-	if err := m.writeJSON(data); err != nil {
+	hasAnyPackages := len(data.Rulesets) > 0 || len(data.Promptsets) > 0
+	
+	if err := m.writeJSON(data, hasAnyPackages); err != nil {
 		return fmt.Errorf("failed to write JSON: %w", err)
 	}
 	if err := m.writeCompiled(data); err != nil {
 		return fmt.Errorf("failed to write compiled format: %w", err)
 	}
+	
+	// Clean up empty arm directory if no packages remain
+	if !hasAnyPackages && m.layout == "hierarchical" {
+		armDir := filepath.Join(m.sinkDir, "arm")
+		if err := os.RemoveAll(armDir); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to remove arm directory: %w", err)
+		}
+	}
+	
 	return nil
 }
 
@@ -267,7 +278,7 @@ func (m *IndexManager) loadJSON() (*IndexData, error) {
 	return data, err
 }
 
-func (m *IndexManager) writeJSON(data *IndexData) error {
+func (m *IndexManager) writeJSON(data *IndexData, hasPackages bool) error {
 	var jsonPath string
 	if m.layout == "flat" {
 		jsonPath = filepath.Join(m.sinkDir, "arm-index.json")
@@ -275,6 +286,15 @@ func (m *IndexManager) writeJSON(data *IndexData) error {
 		jsonPath = filepath.Join(m.sinkDir, "arm", "arm-index.json")
 	}
 
+	// If no packages remain, delete the JSON index file
+	if !hasPackages {
+		if err := os.Remove(jsonPath); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to remove JSON index: %w", err)
+		}
+		return nil
+	}
+
+	// Write the JSON index file
 	if err := os.MkdirAll(filepath.Dir(jsonPath), 0o755); err != nil {
 		return err
 	}
@@ -288,25 +308,36 @@ func (m *IndexManager) writeJSON(data *IndexData) error {
 func (m *IndexManager) writeCompiled(data *IndexData) error {
 	// Only generate arm_index.* files for rulesets (not promptsets)
 	// This is because promptsets don't have priority conflicts that need resolution
-	if len(data.Rulesets) == 0 {
-		return nil // No rulesets to generate index for
-	}
-
+	
+	// Get the expected compiled index file path
 	ruleset := m.generator.CreateRuleset(data)
-
 	files, err := m.compiler.CompileRuleset("arm", ruleset)
 	if err != nil {
 		return err
 	}
 
-	if len(files) > 0 {
-		var compiledPath string
-		if m.layout == "flat" {
-			compiledPath = filepath.Join(m.sinkDir, files[0].Path)
-		} else {
-			compiledPath = filepath.Join(m.sinkDir, "arm", files[0].Path)
-		}
-		return os.WriteFile(compiledPath, files[0].Content, 0o644)
+	if len(files) == 0 {
+		return nil
 	}
-	return nil
+
+	var compiledPath string
+	if m.layout == "flat" {
+		compiledPath = filepath.Join(m.sinkDir, files[0].Path)
+	} else {
+		compiledPath = filepath.Join(m.sinkDir, "arm", files[0].Path)
+	}
+
+	// If no rulesets remain, delete the compiled index file
+	if len(data.Rulesets) == 0 {
+		if err := os.Remove(compiledPath); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to remove compiled index: %w", err)
+		}
+		return nil
+	}
+
+	// Write the compiled index file
+	if err := os.MkdirAll(filepath.Dir(compiledPath), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(compiledPath, files[0].Content, 0o644)
 }

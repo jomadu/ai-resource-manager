@@ -48,7 +48,7 @@ Each registry maintains an `index.json` file containing:
 ```json
 {
     "registry_metadata": {
-        "url": "https://app.cloudsmith.com",
+        "url": "https://api.cloudsmith.io",
         "type": "cloudsmith",
         "owner": "sample-org",
         "repository": "arm-registry"

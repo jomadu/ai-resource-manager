@@ -30,7 +30,6 @@ fi
 [ -z "$CLOUDSMITH_REPOSITORY" ] && error "CLOUDSMITH_REPOSITORY is required"
 
 CLOUDSMITH_URL=${CLOUDSMITH_URL:-"https://api.cloudsmith.io"}
-CLOUDSMITH_APP_URL="https://app.cloudsmith.com/${CLOUDSMITH_OWNER}/${CLOUDSMITH_REPOSITORY}"
 
 log "=== Cloudsmith Sandbox Setup ==="
 
@@ -48,13 +47,13 @@ cd "$SCRIPT_DIR/sandbox"
 
 # Create .armrc with authentication
 cat > .armrc << EOF
-[registry ${CLOUDSMITH_APP_URL}]
+[registry ${CLOUDSMITH_URL}/${CLOUDSMITH_OWNER}/${CLOUDSMITH_REPOSITORY}]
 token = ${CLOUDSMITH_TOKEN}
 EOF
 
 # Configure registry and sinks
 log "Configuring Cloudsmith registry..."
-./arm add registry --type cloudsmith --owner "$CLOUDSMITH_OWNER" --repo "$CLOUDSMITH_REPOSITORY" cloudsmith-registry "$CLOUDSMITH_APP_URL"
+./arm add registry cloudsmith --url "$CLOUDSMITH_URL" --owner "$CLOUDSMITH_OWNER" --repo "$CLOUDSMITH_REPOSITORY" cloudsmith-registry
 ./arm add sink --type cursor cursor-rules .cursor/rules
 ./arm add sink --type amazonq q-rules .amazonq/rules
 

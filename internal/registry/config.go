@@ -1,11 +1,5 @@
 package registry
 
-import (
-	"fmt"
-	neturl "net/url"
-	"strings"
-)
-
 // RegistryConfig defines base registry configuration.
 type RegistryConfig struct {
 	URL  string `json:"url"`
@@ -49,46 +43,10 @@ type CloudsmithRegistryConfig struct {
 	Repository string `json:"repository"`
 }
 
-// GetBaseURL returns base URL with default if none specified
+// GetBaseURL returns the API base URL with default if none specified
 func (c *CloudsmithRegistryConfig) GetBaseURL() string {
 	if c.URL == "" {
 		return "https://api.cloudsmith.io"
 	}
 	return c.URL
-}
-
-// ParseCloudsmithURL extracts owner and repository from a Cloudsmith URL
-// Expected format: https://app.cloudsmith.com/[owner]/[repository]
-// Returns: owner, repository, error
-func ParseCloudsmithURL(url string) (owner, repository string, err error) {
-	// Parse the URL
-	parsedURL, err := neturl.Parse(url)
-	if err != nil {
-		return "", "", fmt.Errorf("invalid URL format: %w", err)
-	}
-
-	// Check if it's a Cloudsmith URL
-	if parsedURL.Host != "app.cloudsmith.com" {
-		return "", "", fmt.Errorf("expected Cloudsmith URL format: https://app.cloudsmith.com/[owner]/[repository], got: %s", url)
-	}
-
-	// Split the path to extract owner and repository
-	pathParts := strings.Split(strings.Trim(parsedURL.Path, "/"), "/")
-	if len(pathParts) != 2 {
-		return "", "", fmt.Errorf("expected URL format: https://app.cloudsmith.com/[owner]/[repository], got: %s", url)
-	}
-
-	owner = pathParts[0]
-	repository = pathParts[1]
-
-	// Validate non-empty
-	if owner == "" {
-		return "", "", fmt.Errorf("owner cannot be empty in URL: %s", url)
-	}
-	if repository == "" {
-		return "", "", fmt.Errorf("repository cannot be empty in URL: %s", url)
-	}
-
-	// Return owner and repository
-	return owner, repository, nil
 }

@@ -53,7 +53,7 @@ EOF
 
 # Configure registry and sinks
 log "Configuring GitLab registry..."
-./arm add registry --type gitlab --project-id "$GITLAB_PROJECT_ID" --api-version "$GITLAB_API_VERSION" gitlab-registry "$GITLAB_URL"
+./arm add registry gitlab --url "$GITLAB_URL" --project-id "$GITLAB_PROJECT_ID" --api-version "$GITLAB_API_VERSION" gitlab-registry
 ./arm add sink --type cursor cursor-rules .cursor/rules
 ./arm add sink --type amazonq q-rules .amazonq/rules
 

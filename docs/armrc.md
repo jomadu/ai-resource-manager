@@ -77,7 +77,7 @@ token = glpat-group-token-here
 token = glpat-internal-token-here
 
 # Cloudsmith registry
-[registry https://app.cloudsmith.com/myorg/ai-rules]
+[registry https://api.cloudsmith.io/myorg/ai-rules]
 token = ckcy_abc123def456ghi789jkl012mno345pqr678stu901vwx234yz
 ```
 

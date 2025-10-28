@@ -168,13 +168,21 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 
 	if !isCurrentlyInstalled {
 		// Nothing installed, proceed with install
-		return a.InstallRuleset(ctx, &InstallRulesetRequest{
-			Registry: registryName,
-			Ruleset:  rulesetName,
-			Version:  manifestEntry.Version,
-			Include:  manifestEntry.GetIncludePatterns(),
-			Exclude:  manifestEntry.Exclude,
-		})
+		priority := 100
+		if manifestEntry.Priority != nil {
+			priority = *manifestEntry.Priority
+		}
+		
+		req := NewInstallRulesetRequest(
+			registryName,
+			rulesetName,
+			manifestEntry.Version,
+			manifestEntry.Sinks,
+		).WithPriority(priority).
+			WithInclude(manifestEntry.GetIncludePatterns()).
+			WithExclude(manifestEntry.Exclude)
+		
+		return a.InstallRuleset(ctx, req)
 	}
 
 	// Check if installed version matches what we want
@@ -193,14 +201,21 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 	}
 
 	// Version changed or integrity check failed, proceed with update
-	return a.InstallRuleset(ctx, &InstallRulesetRequest{
-		Registry: registryName,
-		Ruleset:  rulesetName,
-		Version:  manifestEntry.Version,
-		Include:  manifestEntry.GetIncludePatterns(),
-		Exclude:  manifestEntry.Exclude,
-		Sinks:    manifestEntry.Sinks,
-	})
+	priority := 100
+	if manifestEntry.Priority != nil {
+		priority = *manifestEntry.Priority
+	}
+	
+	req := NewInstallRulesetRequest(
+		registryName,
+		rulesetName,
+		manifestEntry.Version,
+		manifestEntry.Sinks,
+	).WithPriority(priority).
+		WithInclude(manifestEntry.GetIncludePatterns()).
+		WithExclude(manifestEntry.Exclude)
+	
+	return a.InstallRuleset(ctx, req)
 }
 
 func (a *ArmService) UpdateAllRulesets(ctx context.Context) error {
@@ -286,15 +301,21 @@ func (a *ArmService) SetRulesetConfig(ctx context.Context, registry, ruleset, fi
 	}
 
 	// Trigger reinstall
-	return a.InstallRuleset(ctx, &InstallRulesetRequest{
-		Registry: registry,
-		Ruleset:  ruleset,
-		Version:  entry.Version,
-		Priority: *entry.Priority,
-		Include:  entry.GetIncludePatterns(),
-		Exclude:  entry.Exclude,
-		Sinks:    entry.Sinks,
-	})
+	priority := 100
+	if entry.Priority != nil {
+		priority = *entry.Priority
+	}
+	
+	req := NewInstallRulesetRequest(
+		registry,
+		ruleset,
+		entry.Version,
+		entry.Sinks,
+	).WithPriority(priority).
+		WithInclude(entry.GetIncludePatterns()).
+		WithExclude(entry.Exclude)
+	
+	return a.InstallRuleset(ctx, req)
 }
 
 // Private helper methods
@@ -486,16 +507,21 @@ func (a *ArmService) UpgradeRuleset(ctx context.Context, registry, ruleset strin
 		return fmt.Errorf("ruleset %s/%s not found in manifest", registry, ruleset)
 	}
 
-	// Create install request with "latest" version to ignore constraints
-	req := &InstallRulesetRequest{
-		Registry: registry,
-		Ruleset:  ruleset,
-		Version:  "latest", // This will ignore version constraints
-		Priority: *rulesetConfig.Priority,
-		Include:  rulesetConfig.Include,
-		Exclude:  rulesetConfig.Exclude,
-		Sinks:    rulesetConfig.Sinks,
+	// Get priority value
+	priority := 100
+	if rulesetConfig.Priority != nil {
+		priority = *rulesetConfig.Priority
 	}
+
+	// Create install request with "latest" version to ignore constraints
+	req := NewInstallRulesetRequest(
+		registry,
+		ruleset,
+		"latest",
+		rulesetConfig.Sinks,
+	).WithPriority(priority).
+		WithInclude(rulesetConfig.Include).
+		WithExclude(rulesetConfig.Exclude)
 
 	// Install with latest version
 	return a.InstallRuleset(ctx, req)

@@ -83,7 +83,7 @@ pause
 log "=== REGISTRY SETUP ==="
 
 log "Setting up git registry..."
-run_arm add registry --type git ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry
+run_arm add registry git --url https://github.com/jomadu/ai-rules-manager-sample-git-registry ai-rules
 
 log "Showing configuration..."
 run_arm list registry
