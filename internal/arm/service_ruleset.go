@@ -59,6 +59,12 @@ func (a *ArmService) InstallRuleset(ctx context.Context, req *InstallRulesetRequ
 	}
 	finishDownloading(fmt.Sprintf("Downloaded content... %d files", len(files)))
 
+	// Clean up from previous sink locations BEFORE updating manifest
+	// This ensures we read the OLD sinks from manifest, not the new ones
+	if err := a.cleanPreviousRulesetInstallation(ctx, req.Registry, req.Ruleset); err != nil {
+		return fmt.Errorf("failed to clean up previous installation: %w", err)
+	}
+
 	if err := a.updateRulesetTrackingFiles(ctx, req, resolvedVersion, files); err != nil {
 		return fmt.Errorf("failed to update tracking files: %w", err)
 	}
@@ -353,12 +359,6 @@ func (a *ArmService) updateRulesetTrackingFiles(ctx context.Context, req *Instal
 }
 
 func (a *ArmService) installRulesetToSinks(ctx context.Context, req *InstallRulesetRequest, version types.Version, files []types.File) (int, error) {
-	// First, remove from previous sink locations if this is a reinstall
-	if err := a.cleanPreviousRulesetInstallation(ctx, req.Registry, req.Ruleset); err != nil {
-		// Continue on cleanup failure
-		_ = err
-	}
-
 	sinks, err := a.manifestManager.GetSinks(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get sinks: %w", err)

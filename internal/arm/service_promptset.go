@@ -59,6 +59,12 @@ func (a *ArmService) InstallPromptset(ctx context.Context, req *InstallPromptset
 	}
 	finishDownloading(fmt.Sprintf("Downloaded content... %d files", len(files)))
 
+	// Clean up from previous sink locations BEFORE updating manifest
+	// This ensures we read the OLD sinks from manifest, not the new ones
+	if err := a.cleanPreviousPromptsetInstallation(ctx, req.Registry, req.Promptset); err != nil {
+		return fmt.Errorf("failed to clean up previous installation: %w", err)
+	}
+
 	if err := a.updatePromptsetTrackingFiles(ctx, req, resolvedVersion, files); err != nil {
 		return fmt.Errorf("failed to update tracking files: %w", err)
 	}
@@ -163,12 +169,6 @@ func (a *ArmService) updatePromptsetTrackingFiles(ctx context.Context, req *Inst
 // installPromptsetToSinks installs promptset files to specified sinks
 
 func (a *ArmService) installPromptsetToSinks(ctx context.Context, req *InstallPromptsetRequest, version types.Version, files []types.File) (int, error) {
-	// First, remove from previous sink locations if this is a reinstall
-	if err := a.cleanPreviousPromptsetInstallation(ctx, req.Registry, req.Promptset); err != nil {
-		// Continue on cleanup failure
-		_ = err
-	}
-
 	sinks, err := a.manifestManager.GetSinks(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get sinks: %w", err)

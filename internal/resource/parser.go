@@ -123,14 +123,14 @@ func (p *YAMLParser) ParsePromptset(file *types.File) (*Promptset, error) {
 	return &promptset, nil
 }
 
-// ParseRulesets parses all ruleset files from the given directories
-func (p *YAMLParser) ParseRulesets(dirs []string, recursive bool, include, exclude []string) ([]*Ruleset, error) {
+// ParseRulesets parses all ruleset files from the given file or directory paths
+func (p *YAMLParser) ParseRulesets(paths []string, recursive bool, include, exclude []string) ([]*Ruleset, error) {
 	var rulesets []*Ruleset
 
-	for _, dir := range dirs {
-		files, err := p.discoverFiles(dir, recursive, include, exclude, p.IsRulesetFile)
+	for _, path := range paths {
+		files, err := p.discoverFiles(path, recursive, include, exclude, p.IsRulesetFile)
 		if err != nil {
-			return nil, fmt.Errorf("failed to discover files in %s: %w", dir, err)
+			return nil, fmt.Errorf("failed to discover files in %s: %w", path, err)
 		}
 
 		for _, filePath := range files {
@@ -157,14 +157,14 @@ func (p *YAMLParser) ParseRulesets(dirs []string, recursive bool, include, exclu
 	return rulesets, nil
 }
 
-// ParsePromptsets parses all promptset files from the given directories
-func (p *YAMLParser) ParsePromptsets(dirs []string, recursive bool, include, exclude []string) ([]*Promptset, error) {
+// ParsePromptsets parses all promptset files from the given file or directory paths
+func (p *YAMLParser) ParsePromptsets(paths []string, recursive bool, include, exclude []string) ([]*Promptset, error) {
 	var promptsets []*Promptset
 
-	for _, dir := range dirs {
-		files, err := p.discoverFiles(dir, recursive, include, exclude, p.IsPromptsetFile)
+	for _, path := range paths {
+		files, err := p.discoverFiles(path, recursive, include, exclude, p.IsPromptsetFile)
 		if err != nil {
-			return nil, fmt.Errorf("failed to discover files in %s: %w", dir, err)
+			return nil, fmt.Errorf("failed to discover files in %s: %w", path, err)
 		}
 
 		for _, filePath := range files {
@@ -191,17 +191,32 @@ func (p *YAMLParser) ParsePromptsets(dirs []string, recursive bool, include, exc
 	return promptsets, nil
 }
 
-// discoverFiles discovers files in a directory using the given file type checker
-func (p *YAMLParser) discoverFiles(dir string, recursive bool, include, exclude []string, fileChecker func(string) bool) ([]string, error) {
+// discoverFiles discovers files from a file or directory path using the given file type checker
+func (p *YAMLParser) discoverFiles(path string, recursive bool, include, exclude []string, fileChecker func(string) bool) ([]string, error) {
 	var files []string
 
+	// Check if path exists and whether it's a file or directory
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to access path %s: %w", path, err)
+	}
+
+	// If it's a file, validate it directly
+	if !info.IsDir() {
+		if fileChecker(path) && p.matchesPatterns(path, include, exclude) {
+			files = append(files, path)
+		}
+		return files, nil
+	}
+
+	// If it's a directory, discover files within it
 	if recursive {
-		err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		err := filepath.Walk(path, func(walkPath string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
-			if !info.IsDir() && fileChecker(path) && p.matchesPatterns(path, include, exclude) {
-				files = append(files, path)
+			if !info.IsDir() && fileChecker(walkPath) && p.matchesPatterns(walkPath, include, exclude) {
+				files = append(files, walkPath)
 			}
 			return nil
 		})
@@ -209,15 +224,15 @@ func (p *YAMLParser) discoverFiles(dir string, recursive bool, include, exclude 
 			return nil, err
 		}
 	} else {
-		entries, err := os.ReadDir(dir)
+		entries, err := os.ReadDir(path)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read directory %s: %w", dir, err)
+			return nil, fmt.Errorf("failed to read directory %s: %w", path, err)
 		}
 		for _, entry := range entries {
 			if !entry.IsDir() {
-				path := filepath.Join(dir, entry.Name())
-				if fileChecker(path) && p.matchesPatterns(path, include, exclude) {
-					files = append(files, path)
+				filePath := filepath.Join(path, entry.Name())
+				if fileChecker(filePath) && p.matchesPatterns(filePath, include, exclude) {
+					files = append(files, filePath)
 				}
 			}
 		}
