@@ -486,11 +486,12 @@ func (c *GitLabClient) makeRequest(_ context.Context, req *http.Request) (*http.
 		_ = resp.Body.Close()
 
 		errorMsg := fmt.Sprintf("GitLab API error %d for %s", resp.StatusCode, req.URL.String())
-		if resp.StatusCode == 401 {
+		switch resp.StatusCode {
+		case 401:
 			errorMsg += " - Authentication failed. Please check your GitLab token in .armrc"
-		} else if resp.StatusCode == 403 {
+		case 403:
 			errorMsg += " - Access forbidden. Please ensure your token has 'read_api' and 'read_package_registry' scopes"
-		} else if resp.StatusCode == 404 {
+		case 404:
 			errorMsg += " - Resource not found. Please check project/group ID and package name"
 		}
 
