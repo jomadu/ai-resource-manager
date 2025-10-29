@@ -76,7 +76,8 @@ func (a *ArmService) InstallAll(ctx context.Context) error {
 	}
 
 	// Handle promptsets - install from lockfile if available, otherwise from manifest
-	if manifestPromptsetsErr == nil && lockPromptsetsErr == nil {
+	switch {
+	case manifestPromptsetsErr == nil && lockPromptsetsErr == nil:
 		// Install promptsets from lockfile
 		for registryName, promptsets := range lockPromptsets {
 			for promptsetName, lockEntry := range promptsets {
@@ -85,7 +86,7 @@ func (a *ArmService) InstallAll(ctx context.Context) error {
 				}
 			}
 		}
-	} else {
+	default:
 		// Install promptsets from manifest
 		for registryName, promptsets := range manifestPromptsets {
 			for promptsetName, entry := range promptsets {
