@@ -489,6 +489,8 @@ Include: **/*.yml, **/*.yaml
 
 Install a specific ruleset from a registry to one or more sinks. This command allows you to specify priority (default: 100), include/exclude patterns for filtering rules (default include: all .yml and .yaml files), and target specific sinks. The ruleset can be installed from a specific version or the latest version that satisfies the constraint.
 
+**Important:** When installing a ruleset to specific sinks, ARM will automatically uninstall the ruleset from any previous sinks that are not in the new sink list. This ensures a clean state and prevents orphaned files across your sinks.
+
 **Examples:**
 ```bash
 # Install ruleset to single sink
@@ -497,12 +499,21 @@ $ arm install ruleset my-org/clean-code-ruleset cursor-rules
 # Install specific version to multiple sinks
 $ arm install ruleset my-org/clean-code-ruleset@1.0.0 cursor-rules q-rules
 
+# Reinstall to different sinks (removes from previous sinks)
+# If previously installed to cursor-rules, this will remove it from cursor-rules
+$ arm install ruleset my-org/clean-code-ruleset q-rules copilot-rules
+
 # Install with custom priority
 $ arm install ruleset --priority 200 my-org/clean-code-ruleset cursor-rules
 
 # Install with include/exclude patterns
 $ arm install ruleset --include "**/*.yml" --exclude "**/README.md" my-org/clean-code-ruleset cursor-rules
 ```
+
+**Reinstall Behavior Example:**
+- Initial install to sinks A and B: `arm install ruleset repo/pkg A B`
+- Later install to only sink C: `arm install ruleset repo/pkg C`
+- Result: Package is removed from A and B, only exists in C
 
 ### arm uninstall ruleset
 
@@ -659,6 +670,8 @@ my-org/security-ruleset
 
 Install a specific promptset from a registry to one or more sinks. This command allows you to specify include/exclude patterns for filtering prompts (default include: all .yml and .yaml files), and target specific sinks. The promptset can be installed from a specific version or the latest version that satisfies the constraint.
 
+**Important:** When installing a promptset to specific sinks, ARM will automatically uninstall the promptset from any previous sinks that are not in the new sink list. This ensures a clean state and prevents orphaned files across your sinks.
+
 **Examples:**
 ```bash
 # Install promptset to single sink
@@ -666,6 +679,9 @@ $ arm install promptset my-org/code-review-promptset cursor-commands
 
 # Install specific version to multiple sinks
 $ arm install promptset my-org/code-review-promptset@1.0.0 cursor-commands q-prompts
+
+# Reinstall to different sinks (removes from previous sinks)
+$ arm install promptset my-org/code-review-promptset q-prompts
 
 # Install with include/exclude patterns
 $ arm install promptset --include "**/*.yml" --exclude "**/README.md" my-org/code-review-promptset cursor-commands
@@ -881,15 +897,32 @@ $ arm clean sinks --nuke
 
 Compile rulesets and promptsets from source files. This command compiles source ruleset and promptset files to platform-specific formats. It supports different target platforms (md, cursor, amazonq, copilot), recursive directory processing, validation-only mode, and various filtering and output options. This is useful for development and testing of rulesets and promptsets before publishing to registries.
 
-**Note:** When using `--validate-only`, the OUTPUT_PATH argument is optional and will be ignored if provided. The command will only validate the syntax of the input files without generating any output.
+**INPUT_PATH** accepts both files and directories:
+- **Files**: Directly processes the specified file(s)
+- **Directories**: Discovers files within using `--include`/`--exclude` patterns (non-recursive by default)
+- **Mixed**: Can combine files and directories in the same command
+
+**Note:** Shell glob patterns (e.g., `*.yml`) are expanded to individual file paths by your shell before ARM processes them. When using `--validate-only`, the OUTPUT_PATH argument is optional and will be ignored if provided.
 
 **Examples:**
 ```bash
 # Compile single file to Cursor format
 $ arm compile --target cursor ruleset.yml ./output/
 
+# Compile multiple files
+$ arm compile --target cursor file1.yml file2.yml ./output/
+
+# Compile with shell glob expansion (expands to individual files)
+$ arm compile --target cursor rulesets/*.yml ./output/
+
 # Compile directory recursively to Amazon Q format
 $ arm compile --target amazonq --recursive ./src/ ./build/
+
+# Compile directory non-recursively (default)
+$ arm compile --target cursor ./rulesets/ ./output/
+
+# Mix files and directories
+$ arm compile --target cursor specific.yml ./more-rulesets/ ./output/
 
 # Validate only (no output files) - OUTPUT_PATH is optional
 $ arm compile --validate-only ruleset.yml
