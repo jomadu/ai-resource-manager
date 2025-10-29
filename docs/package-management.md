@@ -144,12 +144,46 @@ arm clean sinks --nuke
 
 ### Compile Resources
 
-Compile resources from source files:
+Compile resources from source files. The compile command accepts both individual files and directories as inputs:
+
+**INPUT_PATH** accepts:
+- **Files**: Directly processes the specified file(s)
+- **Directories**: Discovers files within using `--include`/`--exclude` patterns
+- **Mixed**: Can combine files and directories in the same command
+
+**Note:** Shell glob patterns (e.g., `*.yml`) are expanded to individual files by your shell before ARM processes them.
+
+**Examples:**
 ```bash
-arm compile --target cursor ruleset.yml ./output/
-arm compile --target amazonq --recursive ./src/ ./build/
-arm compile --validate-only ruleset.yml
-arm compile --target copilot --force ruleset.yml ./output/
+# Compile single file
+$ arm compile --target cursor ruleset.yml ./output/
+
+# Compile multiple files
+$ arm compile --target cursor file1.yml file2.yml file3.yml ./output/
+
+# Compile directory (non-recursive by default)
+$ arm compile --target cursor ./rulesets/ ./output/
+
+# Compile directory recursively
+$ arm compile --target amazonq --recursive ./src/ ./build/
+
+# Mix files and directories
+$ arm compile --target cursor specific-file.yml ./more-rulesets/ ./output/
+
+# Use shell glob expansion (expands to individual files)
+$ arm compile --target cursor ./rulesets/*.yml ./output/
+
+# Validate only (no output)
+$ arm compile --validate-only ruleset.yml
+
+# Compile with force overwrite
+$ arm compile --target copilot --force ruleset.yml ./output/
+
+# Compile with include/exclude patterns
+$ arm compile --target cursor --include "**/*.yml" --exclude "**/README.md" ./src/ ./build/
+
+# Validate and fail fast on first error (useful for CI)
+$ arm compile --validate-only --fail-fast ./rulesets/
 ```
 
 Available targets: `md`, `cursor`, `amazonq`, `copilot`
@@ -159,4 +193,5 @@ Compile options:
 - `--validate-only` - Validate without generating output files
 - `--force` - Overwrite existing files
 - `--include <pattern>` - Include files matching pattern
+- `--exclude <pattern>` - Exclude files matching pattern
 - `--fail-fast` - Stop on first error
