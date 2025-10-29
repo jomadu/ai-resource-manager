@@ -31,12 +31,12 @@ func parsePackage(input string) (string, error) {
 	if len(parts) != 2 {
 		return "", fmt.Errorf("invalid format: %s (expected registry/package)", input)
 	}
-	
+
 	pkgWithVersion := parts[1]
 	if pkgWithVersion == "" {
 		return "", fmt.Errorf("package name cannot be empty")
 	}
-	
+
 	// Remove version if present
 	if strings.Contains(pkgWithVersion, "@") {
 		pkg := strings.SplitN(pkgWithVersion, "@", 2)[0]
@@ -45,7 +45,7 @@ func parsePackage(input string) (string, error) {
 		}
 		return pkg, nil
 	}
-	
+
 	return pkgWithVersion, nil
 }
 
@@ -56,16 +56,16 @@ func parseVersion(input string) (string, error) {
 	if !strings.Contains(input, "@") {
 		return "", nil
 	}
-	
+
 	parts := strings.SplitN(input, "@", 2)
 	if len(parts) != 2 {
 		return "", nil
 	}
-	
+
 	version := parts[1]
 	if version == "" {
 		return "", fmt.Errorf("version cannot be empty after @")
 	}
-	
+
 	return version, nil
 }

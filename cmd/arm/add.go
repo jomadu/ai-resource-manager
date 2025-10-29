@@ -68,7 +68,7 @@ func init() {
 
 	// Git registry flags
 	addRegistryGitCmd.Flags().String("url", "", "Git repository URL (required)")
-	addRegistryGitCmd.MarkFlagRequired("url")
+	_ = addRegistryGitCmd.MarkFlagRequired("url")
 	addRegistryGitCmd.Flags().StringSlice("branches", []string{}, "Git branches to track")
 	addRegistryGitCmd.Flags().Bool("force", false, "Overwrite existing registry")
 
@@ -82,9 +82,9 @@ func init() {
 	// Cloudsmith registry flags
 	addRegistryCloudsmithCmd.Flags().String("url", "https://api.cloudsmith.io", "Cloudsmith API URL")
 	addRegistryCloudsmithCmd.Flags().String("owner", "", "Cloudsmith owner (required)")
-	addRegistryCloudsmithCmd.MarkFlagRequired("owner")
+	_ = addRegistryCloudsmithCmd.MarkFlagRequired("owner")
 	addRegistryCloudsmithCmd.Flags().String("repo", "", "Cloudsmith repository (required)")
-	addRegistryCloudsmithCmd.MarkFlagRequired("repo")
+	_ = addRegistryCloudsmithCmd.MarkFlagRequired("repo")
 	addRegistryCloudsmithCmd.Flags().Bool("force", false, "Overwrite existing registry")
 
 	// Add sink flags

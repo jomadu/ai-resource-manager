@@ -236,14 +236,14 @@ func (m *IndexManager) getIndexFilePaths() []string {
 
 func (m *IndexManager) sync(data *IndexData) error {
 	hasAnyPackages := len(data.Rulesets) > 0 || len(data.Promptsets) > 0
-	
+
 	if err := m.writeJSON(data, hasAnyPackages); err != nil {
 		return fmt.Errorf("failed to write JSON: %w", err)
 	}
 	if err := m.writeCompiled(data); err != nil {
 		return fmt.Errorf("failed to write compiled format: %w", err)
 	}
-	
+
 	// Clean up empty arm directory if no packages remain
 	if !hasAnyPackages && m.layout == "hierarchical" {
 		armDir := filepath.Join(m.sinkDir, "arm")
@@ -251,7 +251,7 @@ func (m *IndexManager) sync(data *IndexData) error {
 			return fmt.Errorf("failed to remove arm directory: %w", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -308,7 +308,7 @@ func (m *IndexManager) writeJSON(data *IndexData, hasPackages bool) error {
 func (m *IndexManager) writeCompiled(data *IndexData) error {
 	// Only generate arm_index.* files for rulesets (not promptsets)
 	// This is because promptsets don't have priority conflicts that need resolution
-	
+
 	// Get the expected compiled index file path
 	ruleset := m.generator.CreateRuleset(data)
 	files, err := m.compiler.CompileRuleset("arm", ruleset)

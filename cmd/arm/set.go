@@ -79,7 +79,7 @@ func setRuleset(cmd *cobra.Command, packageName, key, value string) {
 		cmd.PrintErrln("Error:", err)
 		return
 	}
-	
+
 	ruleset, err := parsePackage(packageName)
 	if err != nil {
 		cmd.PrintErrln("Error:", err)
@@ -99,7 +99,7 @@ func setPromptset(cmd *cobra.Command, packageName, key, value string) {
 		cmd.PrintErrln("Error:", err)
 		return
 	}
-	
+
 	promptset, err := parsePackage(packageName)
 	if err != nil {
 		cmd.PrintErrln("Error:", err)

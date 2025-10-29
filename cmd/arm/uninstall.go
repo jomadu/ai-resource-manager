@@ -51,7 +51,7 @@ func uninstallRuleset(packageName string) {
 	if err != nil {
 		handleCommandError(err)
 	}
-	
+
 	ruleset, err := parsePackage(packageName)
 	if err != nil {
 		handleCommandError(err)
@@ -67,7 +67,7 @@ func uninstallPromptset(packageName string) {
 	if err != nil {
 		handleCommandError(err)
 	}
-	
+
 	promptset, err := parsePackage(packageName)
 	if err != nil {
 		handleCommandError(err)
