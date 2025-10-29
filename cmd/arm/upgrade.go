@@ -56,12 +56,12 @@ func upgradeRulesets(names []string) {
 			if err != nil {
 				handleCommandError(err)
 			}
-			
+
 			ruleset, err := parsePackage(name)
 			if err != nil {
 				handleCommandError(err)
 			}
-			
+
 			if err := armService.UpgradeRuleset(ctx, registry, ruleset); err != nil {
 				handleCommandError(err)
 			}
@@ -82,12 +82,12 @@ func upgradePromptsets(names []string) {
 			if err != nil {
 				handleCommandError(err)
 			}
-			
+
 			promptset, err := parsePackage(name)
 			if err != nil {
 				handleCommandError(err)
 			}
-			
+
 			if err := armService.UpgradePromptset(ctx, registry, promptset); err != nil {
 				handleCommandError(err)
 			}

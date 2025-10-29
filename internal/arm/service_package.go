@@ -15,18 +15,33 @@ func (a *ArmService) InstallAll(ctx context.Context) error {
 	manifestPromptsets, manifestPromptsetsErr := a.manifestManager.GetPromptsets(ctx)
 	lockPromptsets, lockPromptsetsErr := a.lockFileManager.GetPromptsets(ctx)
 
-	// Case: No manifest, no lockfile
-	if manifestRulesetsErr != nil && lockRulesetsErr != nil && manifestPromptsetsErr != nil && lockPromptsetsErr != nil {
+	// Determine installation strategy based on available files
+	type installCase int
+	const (
+		noManifestNoLock installCase = iota
+		noManifestWithLock
+		manifestWithLock
+		manifestNoLock
+	)
+
+	var currentCase installCase
+	switch {
+	case manifestRulesetsErr != nil && lockRulesetsErr != nil && manifestPromptsetsErr != nil && lockPromptsetsErr != nil:
+		currentCase = noManifestNoLock
+	case manifestRulesetsErr != nil && lockRulesetsErr == nil:
+		currentCase = noManifestWithLock
+	case manifestRulesetsErr == nil && lockRulesetsErr == nil:
+		currentCase = manifestWithLock
+	default:
+		currentCase = manifestNoLock
+	}
+
+	switch currentCase {
+	case noManifestNoLock:
 		return fmt.Errorf("neither arm.json nor arm-lock.json found")
-	}
-
-	// Case: No manifest, lockfile exists
-	if manifestRulesetsErr != nil && lockRulesetsErr == nil {
+	case noManifestWithLock:
 		return fmt.Errorf("arm.json not found")
-	}
-
-	// Case: Manifest exists, lockfile exists - use exact lockfile versions
-	if manifestRulesetsErr == nil && lockRulesetsErr == nil {
+	case manifestWithLock:
 		// Install rulesets from lockfile
 		for registryName, rulesets := range lockRulesets {
 			for rulesetName, lockEntry := range rulesets {
@@ -35,16 +50,15 @@ func (a *ArmService) InstallAll(ctx context.Context) error {
 				}
 			}
 		}
-	} else {
-		// Case: Manifest exists, no lockfile - resolve from manifest and create lockfile
-		// Install rulesets
+	case manifestNoLock:
+		// Install rulesets from manifest and create lockfile
 		for registryName, rulesets := range manifestRulesets {
 			for rulesetName, entry := range rulesets {
 				priority := 100
 				if entry.Priority != nil {
 					priority = *entry.Priority
 				}
-				
+
 				req := NewInstallRulesetRequest(
 					registryName,
 					rulesetName,
@@ -53,7 +67,7 @@ func (a *ArmService) InstallAll(ctx context.Context) error {
 				).WithPriority(priority).
 					WithInclude(entry.GetIncludePatterns()).
 					WithExclude(entry.Exclude)
-				
+
 				if err := a.InstallRuleset(ctx, req); err != nil {
 					return err
 				}

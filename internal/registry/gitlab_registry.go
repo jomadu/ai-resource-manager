@@ -389,7 +389,7 @@ func (c *GitLabClient) listPackages(ctx context.Context, baseURL string) ([]GitL
 	for {
 		// Build paginated URL
 		paginatedURL := fmt.Sprintf("%s?page=%d&per_page=%d", baseURL, page, perPage)
-		
+
 		req, err := http.NewRequestWithContext(ctx, "GET", paginatedURL, http.NoBody)
 		if err != nil {
 			return nil, err
@@ -484,7 +484,7 @@ func (c *GitLabClient) makeRequest(_ context.Context, req *http.Request) (*http.
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)
 		_ = resp.Body.Close()
-		
+
 		errorMsg := fmt.Sprintf("GitLab API error %d for %s", resp.StatusCode, req.URL.String())
 		if resp.StatusCode == 401 {
 			errorMsg += " - Authentication failed. Please check your GitLab token in .armrc"
@@ -493,11 +493,11 @@ func (c *GitLabClient) makeRequest(_ context.Context, req *http.Request) (*http.
 		} else if resp.StatusCode == 404 {
 			errorMsg += " - Resource not found. Please check project/group ID and package name"
 		}
-		
+
 		if len(body) > 0 {
 			errorMsg += fmt.Sprintf(": %s", string(body))
 		}
-		
+
 		return nil, fmt.Errorf("%s", errorMsg)
 	}
 

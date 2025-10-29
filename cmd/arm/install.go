@@ -65,12 +65,12 @@ func installRuleset(cmd *cobra.Command, packageName string, sinks []string) {
 	if err != nil {
 		handleCommandError(err)
 	}
-	
+
 	ruleset, err := parsePackage(packageName)
 	if err != nil {
 		handleCommandError(err)
 	}
-	
+
 	version, err := parseVersion(packageName)
 	if err != nil {
 		handleCommandError(err)
@@ -96,12 +96,12 @@ func installPromptset(cmd *cobra.Command, packageName string, sinks []string) {
 	if err != nil {
 		handleCommandError(err)
 	}
-	
+
 	promptset, err := parsePackage(packageName)
 	if err != nil {
 		handleCommandError(err)
 	}
-	
+
 	version, err := parseVersion(packageName)
 	if err != nil {
 		handleCommandError(err)
@@ -120,4 +120,3 @@ func installPromptset(cmd *cobra.Command, packageName string, sinks []string) {
 		handleCommandError(err)
 	}
 }
-
