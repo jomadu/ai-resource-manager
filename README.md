@@ -58,17 +58,17 @@ curl -fsSL https://raw.githubusercontent.com/jomadu/ai-rules-manager/main/script
 
 Add Git registry:
 ```bash
-arm add registry --type git ai-rules https://github.com/jomadu/ai-rules-manager-sample-git-registry
+arm add registry git --url https://github.com/jomadu/ai-rules-manager-sample-git-registry ai-rules
 ```
 
 Add GitLab registry:
 ```bash
-arm add registry --type gitlab --project-id 123 my-gitlab https://gitlab.example.com
+arm add registry gitlab --url https://gitlab.example.com --project-id 123 my-gitlab
 ```
 
 Add Cloudsmith registry:
 ```bash
-arm add registry --type cloudsmith --owner myorg --repo ai-rules my-cloudsmith https://app.cloudsmith.com
+arm add registry cloudsmith --owner myorg --repo ai-rules my-cloudsmith
 ```
 
 Configure sinks:
