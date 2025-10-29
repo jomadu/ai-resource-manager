@@ -757,12 +757,12 @@ func (u *UI) RegistryList(registries map[string]map[string]interface{}) {
 
 		// Build config string from all registry-specific fields
 		var configParts []string
-		
+
 		// Include URL in config if present
 		if url, ok := config["url"].(string); ok && url != "" {
 			configParts = append(configParts, "url="+url)
 		}
-		
+
 		// Git-specific config
 		if branches, ok := config["branches"].([]interface{}); ok && len(branches) > 0 {
 			branchStrs := make([]string, len(branches))
@@ -771,7 +771,7 @@ func (u *UI) RegistryList(registries map[string]map[string]interface{}) {
 			}
 			configParts = append(configParts, "branches="+fmt.Sprintf("%v", branchStrs))
 		}
-		
+
 		// GitLab-specific config
 		if groupID, ok := config["group_id"].(string); ok && groupID != "" {
 			configParts = append(configParts, "group_id="+groupID)
@@ -782,7 +782,7 @@ func (u *UI) RegistryList(registries map[string]map[string]interface{}) {
 		if apiVersion, ok := config["api_version"].(string); ok && apiVersion != "" {
 			configParts = append(configParts, "api_version="+apiVersion)
 		}
-		
+
 		// Cloudsmith-specific config
 		if owner, ok := config["owner"].(string); ok && owner != "" {
 			configParts = append(configParts, "owner="+owner)

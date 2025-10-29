@@ -178,7 +178,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 		if manifestEntry.Priority != nil {
 			priority = *manifestEntry.Priority
 		}
-		
+
 		req := NewInstallRulesetRequest(
 			registryName,
 			rulesetName,
@@ -187,7 +187,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 		).WithPriority(priority).
 			WithInclude(manifestEntry.GetIncludePatterns()).
 			WithExclude(manifestEntry.Exclude)
-		
+
 		return a.InstallRuleset(ctx, req)
 	}
 
@@ -211,7 +211,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 	if manifestEntry.Priority != nil {
 		priority = *manifestEntry.Priority
 	}
-	
+
 	req := NewInstallRulesetRequest(
 		registryName,
 		rulesetName,
@@ -220,7 +220,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 	).WithPriority(priority).
 		WithInclude(manifestEntry.GetIncludePatterns()).
 		WithExclude(manifestEntry.Exclude)
-	
+
 	return a.InstallRuleset(ctx, req)
 }
 
@@ -311,7 +311,7 @@ func (a *ArmService) SetRulesetConfig(ctx context.Context, registry, ruleset, fi
 	if entry.Priority != nil {
 		priority = *entry.Priority
 	}
-	
+
 	req := NewInstallRulesetRequest(
 		registry,
 		ruleset,
@@ -320,7 +320,7 @@ func (a *ArmService) SetRulesetConfig(ctx context.Context, registry, ruleset, fi
 	).WithPriority(priority).
 		WithInclude(entry.GetIncludePatterns()).
 		WithExclude(entry.Exclude)
-	
+
 	return a.InstallRuleset(ctx, req)
 }
 
