@@ -20,16 +20,23 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 # Load environment
 if [ -f "$SCRIPT_DIR/.env" ]; then
     source "$SCRIPT_DIR/.env"
-else
-    error "Environment file not found. Create $SCRIPT_DIR/.env with:
+fi
+
+# Try to use CLOUDSMITH_API_KEY from environment if CLOUDSMITH_TOKEN not set
+if [ -z "$CLOUDSMITH_TOKEN" ] && [ -n "$CLOUDSMITH_API_KEY" ]; then
+    CLOUDSMITH_TOKEN="$CLOUDSMITH_API_KEY"
+    log "Using CLOUDSMITH_API_KEY from environment"
+fi
+
+# Validate required variables
+if [ -z "$CLOUDSMITH_TOKEN" ]; then
+    error "CLOUDSMITH_TOKEN is required. Set CLOUDSMITH_API_KEY in your environment or create $SCRIPT_DIR/.env with:
   CLOUDSMITH_URL=https://api.cloudsmith.io
   CLOUDSMITH_OWNER=your-owner-name
   CLOUDSMITH_REPOSITORY=your-repo-name
   CLOUDSMITH_TOKEN=your-api-token"
 fi
 
-# Validate required variables
-[ -z "$CLOUDSMITH_TOKEN" ] && error "CLOUDSMITH_TOKEN is required"
 [ -z "$CLOUDSMITH_OWNER" ] && error "CLOUDSMITH_OWNER is required"
 [ -z "$CLOUDSMITH_REPOSITORY" ] && error "CLOUDSMITH_REPOSITORY is required"
 
@@ -49,11 +56,19 @@ mkdir -p "$SCRIPT_DIR/sandbox"
 cp ./bin/arm "$SCRIPT_DIR/sandbox/"
 cd "$SCRIPT_DIR/sandbox"
 
-# Create .armrc with authentication
-cat > .armrc << EOF
+# Create .armrc with authentication (using environment variable expansion)
+cat > .armrc << 'EOF'
 [registry ${CLOUDSMITH_URL}/${CLOUDSMITH_OWNER}/${CLOUDSMITH_REPOSITORY}]
-token = ${CLOUDSMITH_TOKEN}
+token = ${CLOUDSMITH_API_KEY}
 EOF
+
+# Substitute the URL and owner/repo in the section name
+sed -i.bak "s|\${CLOUDSMITH_URL}|${CLOUDSMITH_URL}|g" .armrc
+sed -i.bak "s|\${CLOUDSMITH_OWNER}|${CLOUDSMITH_OWNER}|g" .armrc
+sed -i.bak "s|\${CLOUDSMITH_REPOSITORY}|${CLOUDSMITH_REPOSITORY}|g" .armrc
+rm -f .armrc.bak
+
+log "Created .armrc with environment variable expansion for token"
 
 # Configure registry and sinks
 log "Configuring Cloudsmith registry..."
