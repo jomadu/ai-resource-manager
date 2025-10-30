@@ -2,7 +2,7 @@
 set -e
 
 # ARM Installation Script
-REPO="jomadu/ai-rules-manager"
+REPO="jomadu/ai-resource-manager"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="arm"
 
