@@ -1,23 +1,32 @@
 ![ARM Header](assets/header.png)
 
-# AI Rules Manager (ARM)
+# AI Resource Manager (ARM)
 
 ## What is ARM?
 
-A package manager for AI rules that treats rulesets and promptsets like code dependencies - with semantic versioning, reproducible installs, and automatic distribution to your AI tools.
+ARM is a package manager for AI resources, designed to treat rulesets and promptsets as code dependencies. It introduces semantic versioning, reproducible installs, and straightforward distribution to your AI tools.
 
-Connect to Git repositories like awesome-cursorrules or your team's rule collections, install versioned resources across projects, and keep them automatically synced with their source of truth.
+Seamlessly connect to Git repositories such as [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules/tree/main) or your team's private collections. Install and manage versioned resources across projects, and keep everything in sync with your source of truth.
 
 ## Why ARM?
 
-AI coding assistants like Cursor and Amazon Q rely on rules and prompts to guide their behavior, but managing these resources is broken:
+Managing rules and prompts for AI coding assistants like Cursor or Amazon Q is cumbersome:
 
-- **Manual copying** severs the connection to the source of truth - once copied, resources are orphaned with no way to get updates
-- **Breaking changes blindness** - when you pull latest resources, you have no idea if they'll break your AI's behavior
-- **Doesn't scale** - managing resources across even 3 projects becomes unmanageable overhead
-- **Format fragmentation** - each AI tool uses different formats, requiring manual conversion
+- **Manual duplication**: Copying resources disconnects them from updates and the original source
+- **Hidden breaking changes**: Updates may unexpectedly alter your AI's behavior
+- **Poor scalability**: Coordinating resources across multiple projects becomes chaotic
+- **Incompatible formats**: Frequent manual conversions between different tool formats. ([Obligatory we need a new standard xkcd link](https://xkcd.com/927/))
 
-ARM solves these problems with a **package manager approach** - semantic versioning, reproducible installs, and automatic distribution keep resources connected to their source of truth. ARM resource definitions provide a unified format that compiles to platform-specific outputs.
+ARM solves these problems with a modern package manager approach.
+
+### Key Features of ARM
+
+- **Consistent, versioned installs** using semantic versioning (except for [git based registry](docs/registries/git-registry.md) without semver tags, which gets a little funky)
+- **Reliable, reproducible environments** through manifest and lock files (similar to npm's `package.json` and `package-lock.json`)
+- **[Unified resource definitions](https://xkcd.com/927/)** that compile to formats needed by any AI tool (the audacity! *clutches pearls*)
+- **Priority-based rule composition** for layering multiple rulesets with clear conflict resolution (your team's standards > internet best practices)
+- **Flexible registry support** for managing resources from Git, GitLab, and Cloudsmith
+- **Automated update workflow:** easily check for updates and apply them across projects ([nice](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTlycTA1ejFwdnZtZHNzOG5tYnVwajF3bDAwYzllcnU1dm5oNWplMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NEvPzZ8bd1V4Y/giphy.gif))
 
 ## Installation
 
@@ -46,7 +55,7 @@ arm version
 arm help
 ```
 
-> **Upgrading from v2?** See the [migration guide](docs/migration-v2-to-v3.md) for breaking changes and upgrade steps.
+> **Upgrading from v2?** See the [migration guide](docs/migration-v2-to-v3.md) for breaking changes and upgrade steps. TL;DR: Sorry, nuke and pave. We made some poor design choices in v1 and v2. Honestly, we've probably made them in v3 too, but hey, better is the enemy of good.
 
 ## Uninstall
 
@@ -104,6 +113,27 @@ Install to multiple sinks:
 ```bash
 arm install ruleset ai-rules/clean-code-ruleset cursor-rules q-rules
 arm install promptset ai-rules/code-review-promptset cursor-commands q-prompts
+```
+
+Install with priority (higher priority rules take precedence):
+```bash
+# Install team rules with high priority
+arm install ruleset --priority 200 ai-rules/team-standards cursor-rules
+
+# Install general rules with default priority (100)
+arm install ruleset ai-rules/clean-code-ruleset cursor-rules
+```
+
+Install specific files from a ruleset (useful for git-based registries):
+```bash
+# Only install TypeScript-related rules
+arm install ruleset --include "**/typescript-*.yml" ai-rules/language-rules cursor-rules
+
+# Install security rules but exclude experimental ones
+arm install ruleset --include "security/**/*.yml" --exclude "**/experimental/**" ai-rules/security-ruleset cursor-rules
+
+# Install only specific prompt files
+arm install promptset --include "review/**/*.yml" --include "refactor/**/*.yml" ai-rules/code-review-promptset cursor-commands
 ```
 
 ## Documentation
