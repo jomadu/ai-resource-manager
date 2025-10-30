@@ -107,6 +107,11 @@ if [ -f "$SCRIPT_DIR/.env" ]; then
     source "$SCRIPT_DIR/.env"
 fi
 
+# Try to use CLOUDSMITH_API_KEY from environment if CLOUDSMITH_TOKEN not set
+if [ -z "$CLOUDSMITH_TOKEN" ] && [ -n "$CLOUDSMITH_API_KEY" ]; then
+    CLOUDSMITH_TOKEN="$CLOUDSMITH_API_KEY"
+fi
+
 # Load configuration from .env
 CLOUDSMITH_URL=${CLOUDSMITH_URL:-"https://api.cloudsmith.io"}
 CLOUDSMITH_OWNER=${CLOUDSMITH_OWNER:-""}
