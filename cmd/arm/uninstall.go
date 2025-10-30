@@ -8,6 +8,7 @@ var uninstallCmd = &cobra.Command{
 	Use:   "uninstall",
 	Short: "Uninstall resources",
 	Long:  "Uninstall rulesets and promptsets from their assigned sinks",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		uninstallAll()
 	},

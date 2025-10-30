@@ -8,6 +8,7 @@ var outdatedCmd = &cobra.Command{
 	Use:   "outdated",
 	Short: "Check for outdated resources",
 	Long:  "Check for outdated rulesets and promptsets across configured registries",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		checkOutdatedAll(cmd)
 	},
