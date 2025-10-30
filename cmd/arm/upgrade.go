@@ -8,6 +8,7 @@ var upgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade resources",
 	Long:  "Upgrade rulesets and promptsets to their latest available versions, ignoring version constraints",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		upgradeAll()
 	},

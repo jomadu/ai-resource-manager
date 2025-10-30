@@ -9,6 +9,7 @@ var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install new or configured resources",
 	Long:  "Install new or already configured rulesets and promptsets to their assigned sinks",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		installAll()
 	},
