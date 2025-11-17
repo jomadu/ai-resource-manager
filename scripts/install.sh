@@ -3,8 +3,9 @@ set -e
 
 # ARM Installation Script
 REPO="jomadu/ai-resource-manager"
-INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="arm"
+LINUX_INSTALL_DIR=/usr/local/bin
+WINDOWS_INSTALL_DIR=~/AppData/Local/Programs/arm
 
 # Colors
 RED='\033[0;31m'
@@ -38,6 +39,43 @@ get_latest_version() {
     curl -sL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | sed 's/^v//'
 }
 
+install_binary_windows() {
+    local platform="$1" version="$2"
+    local binary_name="${BINARY_NAME}-${platform}.exe"
+    local download_url="https://github.com/${REPO}/releases/download/v${version}/${binary_name}.tar.gz"
+    local final_binary_name="${BINARY_NAME}.exe"
+
+    log_info "Downloading ARM v${version} for ${platform}..."
+
+    local temp_dir=$(mktemp -d)
+    cd "$temp_dir"
+
+    # Download and extract
+    curl -sL "$download_url" -o "${binary_name}.tar.gz"
+    
+    # Extract using tar (works on Git Bash/MSYS on Windows)
+    if ! tar -xzf "${binary_name}.tar.gz"; then
+        log_error "Extraction failed."
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+
+    if [ ! -d "$WINDOWS_INSTALL_DIR" ]; then
+        mkdir -p "$WINDOWS_INSTALL_DIR"
+    fi
+
+    if [ -w "$WINDOWS_INSTALL_DIR" ]; then
+        mv "${binary_name}" "${WINDOWS_INSTALL_DIR}/${final_binary_name}"
+    else
+        log_error "Failed to install - install directory is not writable. Please run this script with appropriate permissions or install manually."
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+
+    rm -rf "$temp_dir"
+    log_info "ARM installed to ${WINDOWS_INSTALL_DIR}/${final_binary_name}"    
+}
+
 install_binary() {
     local platform="$1" version="$2"
     local binary_name="${BINARY_NAME}-${platform}"
@@ -51,14 +89,14 @@ install_binary() {
     curl -sL "$download_url" | tar -xz
     chmod +x "${binary_name}"
 
-    if [ -w "$INSTALL_DIR" ]; then
-        mv "${binary_name}" "${INSTALL_DIR}/${BINARY_NAME}"
+    if [ -w "$LINUX_INSTALL_DIR" ]; then
+        mv "${binary_name}" "${LINUX_INSTALL_DIR}/${BINARY_NAME}"
     else
-        sudo mv "${binary_name}" "${INSTALL_DIR}/${BINARY_NAME}"
+        sudo mv "${binary_name}" "${LINUX_INSTALL_DIR}/${BINARY_NAME}"
     fi
 
     rm -rf "$temp_dir"
-    log_info "ARM installed to ${INSTALL_DIR}/${BINARY_NAME}"
+    log_info "ARM installed to ${LINUX_INSTALL_DIR}/${BINARY_NAME}"    
 }
 
 main() {
@@ -77,10 +115,34 @@ main() {
         log_info "Installing latest version: v${version}"
     fi
 
-    install_binary "$platform" "$version"
+    # Install based on OS
+    if [[ "$platform" == windows* ]]; then
+        install_binary_windows "$platform" "$version"
+        local check_name="${BINARY_NAME}.exe"
+        
+        if command -v "$check_name" > /dev/null 2>&1 || command -v "$BINARY_NAME" > /dev/null 2>&1; then
+            log_info "ARM is ready! Run '${BINARY_NAME} help' to get started"
+        else
+            if [ $(basename $SHELL) == "bash" ]; then
+                log_info "Next step: Add ${WINDOWS_INSTALL_DIR} to your PATH:"
+                log_info "   echo 'export PATH=\"${WINDOWS_INSTALL_DIR}:\$PATH\"' >> ~/.bashrc"
+                log_info "   source ~/.bashrc"
+                log_info ""
+            else
+                log_warn "ARM may not be in your PATH. Add it with:"
+                log_warn "  export PATH=\"${WINDOWS_INSTALL_DIR}:\$PATH\""
+                log_warn "Or add it permanently to your shell profile."
+            fi
 
-    if command -v "$BINARY_NAME" > /dev/null 2>&1; then
-        log_info "ARM is ready! Run 'arm help' to get started"
+        fi
+    else
+        install_binary "$platform" "$version"
+        
+        if command -v "$BINARY_NAME" > /dev/null 2>&1; then
+            log_info "ARM is ready! Run '${BINARY_NAME} help' to get started"
+        else
+            log_warn "ARM may not be in your PATH. Add ${LINUX_INSTALL_DIR} to your PATH, or run ARM directly from ${LINUX_INSTALL_DIR}/${BINARY_NAME}"
+        fi
     fi
 }
 
