@@ -17,7 +17,12 @@ func (a *ArmService) AddSink(ctx context.Context, name, directory, layout, compi
 		Layout:        layout,
 		CompileTarget: resource.CompileTarget(compileTarget),
 	}
-	return a.manifestManager.AddSink(ctx, name, sink, force)
+	if err := a.manifestManager.AddSink(ctx, name, sink, force); err != nil {
+		return err
+	}
+
+	a.ui.Success(fmt.Sprintf("Sink %s added", name))
+	return nil
 }
 
 // RemoveSink removes a sink from the ARM configuration
