@@ -115,4 +115,3 @@ func TestContentSelector_Matches_CrossPlatformConsistency(t *testing.T) {
 		t.Error("Expected both paths to match, but they didn't")
 	}
 }
-
