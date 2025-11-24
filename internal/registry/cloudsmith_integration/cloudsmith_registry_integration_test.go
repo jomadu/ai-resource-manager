@@ -99,7 +99,7 @@ func loadCloudsmithRegistryConfig(t *testing.T) *registry.CloudsmithRegistryConf
 }
 
 func createCloudsmithRegistry(t *testing.T, config registry.CloudsmithRegistryConfig) registry.Registry {
-	return registry.NewCloudsmithRegistryNoCache("test-registry", &config)
+	return registry.NewCloudsmithRegistryNoCache(&config)
 }
 
 func getEnvOrDefault(key, defaultValue string) string {

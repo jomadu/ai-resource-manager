@@ -105,7 +105,7 @@ func loadGitLabRegistryConfig(t *testing.T) *registry.GitLabRegistryConfig {
 }
 
 func createGitLabRegistry(t *testing.T, config registry.GitLabRegistryConfig) registry.Registry {
-	return registry.NewGitLabRegistryNoCache("test-registry", &config)
+	return registry.NewGitLabRegistryNoCache(&config)
 }
 
 func getEnvOrDefault(key, defaultValue string) string {
