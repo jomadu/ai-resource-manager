@@ -47,7 +47,7 @@ Each compiled resource includes embedded metadata for priority resolution and re
 Available sink configuration keys:
 - `layout` - Set to `hierarchical` or `flat`
 - `directory` - Output path for the sink
-- `compile_target` - Set to `md`, `cursor`, `amazonq`, or `copilot`
+- `compileTarget` - Set to `md`, `cursor`, `amazonq`, or `copilot`
 
 ## Examples
 

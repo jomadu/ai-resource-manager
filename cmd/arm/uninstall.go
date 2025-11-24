@@ -42,8 +42,7 @@ func init() {
 
 func uninstallAll() {
 	if err := armService.UninstallAll(ctx); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 

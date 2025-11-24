@@ -14,14 +14,14 @@ type Service interface {
 	AddRegistry(ctx context.Context, name, url, regType string, options map[string]interface{}, force bool) error
 	RemoveRegistry(ctx context.Context, name string) error
 	SetRegistryConfig(ctx context.Context, name, field, value string) error
-	ListRegistries(ctx context.Context) error
+	ShowRegistryList(ctx context.Context) error
 	ShowRegistryInfo(ctx context.Context, registries []string) error
 
 	// Sink Management
 	AddSink(ctx context.Context, name, directory, layout, compileTarget string, force bool) error
 	RemoveSink(ctx context.Context, name string) error
 	SetSinkConfig(ctx context.Context, name, field, value string) error
-	ListSinks(ctx context.Context) error
+	ShowSinkList(ctx context.Context) error
 	ShowSinkInfo(ctx context.Context, sinks []string) error
 
 	// Package Management (unified operations)

@@ -197,16 +197,32 @@ func (a *ArmService) UninstallAll(ctx context.Context) error {
 
 // ShowAllInfo shows information about all installed resources (rulesets and promptsets)
 func (a *ArmService) ShowAllInfo(ctx context.Context) error {
-	// Show ruleset info
-	if err := a.ShowRulesetInfo(ctx, []string{}); err != nil {
-		return fmt.Errorf("failed to show ruleset info: %w", err)
+	// Get registries
+	registries, err := a.manifestManager.GetRegistries(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get registries: %w", err)
 	}
 
-	// Show promptset info
-	if err := a.ShowPromptsetInfo(ctx, []string{}); err != nil {
-		return fmt.Errorf("failed to show promptset info: %w", err)
+	// Get sinks
+	sinks, err := a.manifestManager.GetSinks(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get sinks: %w", err)
 	}
 
+	// Get rulesets
+	rulesets, err := a.listInstalledRulesets(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get rulesets: %w", err)
+	}
+
+	// Get promptsets
+	promptsets, err := a.listInstalledPromptsets(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get promptsets: %w", err)
+	}
+
+	// Display all info
+	a.ui.AllInfo(registries, sinks, rulesets, promptsets)
 	return nil
 }
 
@@ -265,15 +281,31 @@ func (a *ArmService) ShowAllOutdated(ctx context.Context, outputFormat string, n
 
 // ShowAllList shows all installed resources (rulesets and promptsets)
 func (a *ArmService) ShowAllList(ctx context.Context, sortByPriority bool) error {
-	// Show rulesets
-	if err := a.ShowRulesetList(ctx, sortByPriority); err != nil {
-		return fmt.Errorf("failed to show ruleset list: %w", err)
+	// Get registries
+	registries, err := a.manifestManager.GetRegistries(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get registries: %w", err)
 	}
 
-	// Show promptsets
-	if err := a.ShowPromptsetList(ctx); err != nil {
-		return fmt.Errorf("failed to show promptset list: %w", err)
+	// Get sinks
+	sinks, err := a.manifestManager.GetSinks(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get sinks: %w", err)
 	}
 
+	// Get rulesets
+	rulesets, err := a.listInstalledRulesets(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get rulesets: %w", err)
+	}
+
+	// Get promptsets
+	promptsets, err := a.listInstalledPromptsets(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get promptsets: %w", err)
+	}
+
+	// Display all list
+	a.ui.AllList(registries, sinks, rulesets, promptsets)
 	return nil
 }

@@ -75,8 +75,8 @@ func (a *ArmService) RemoveRegistry(ctx context.Context, name string) error {
 	return nil
 }
 
-// ListRegistries lists all configured registries
-func (a *ArmService) ListRegistries(ctx context.Context) error {
+// ShowRegistryList lists all configured registries
+func (a *ArmService) ShowRegistryList(ctx context.Context) error {
 	registries, err := a.manifestManager.GetRegistries(ctx)
 	if err != nil {
 		return err

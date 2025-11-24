@@ -56,8 +56,8 @@ func (a *ArmService) SetSinkConfig(ctx context.Context, name, field, value strin
 	return nil
 }
 
-// ListSinks lists all configured sinks
-func (a *ArmService) ListSinks(ctx context.Context) error {
+// ShowSinkList lists all configured sinks
+func (a *ArmService) ShowSinkList(ctx context.Context) error {
 	sinks, err := a.manifestManager.GetSinks(ctx)
 	if err != nil {
 		return err

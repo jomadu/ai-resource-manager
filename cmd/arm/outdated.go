@@ -49,8 +49,7 @@ func checkOutdatedAll(cmd *cobra.Command) {
 	output, _ := cmd.Flags().GetString("output")
 
 	if err := armService.ShowAllOutdated(ctx, output, false); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
@@ -58,8 +57,7 @@ func checkOutdatedRulesets(cmd *cobra.Command) {
 	output, _ := cmd.Flags().GetString("output")
 
 	if err := armService.ShowRulesetOutdated(ctx, output, false); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
@@ -67,7 +65,6 @@ func checkOutdatedPromptsets(cmd *cobra.Command) {
 	output, _ := cmd.Flags().GetString("output")
 
 	if err := armService.ShowPromptsetOutdated(ctx, output, false); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
