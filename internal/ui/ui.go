@@ -106,6 +106,8 @@ type Interface interface {
 	RegistryInfo(name string, config map[string]interface{})
 	SinkList(sinks map[string]manifest.SinkConfig)
 	SinkInfo(name string, config manifest.SinkConfig)
+	AllList(registries map[string]map[string]interface{}, sinks map[string]manifest.SinkConfig, rulesets []*RulesetInfo, promptsets []*PromptsetInfo)
+	AllInfo(registries map[string]map[string]interface{}, sinks map[string]manifest.SinkConfig, rulesets []*RulesetInfo, promptsets []*PromptsetInfo)
 
 	// Compile operations
 	CompileStep(step string)
@@ -277,11 +279,9 @@ func (u *UI) RulesetList(rulesets []*RulesetInfo) {
 	}
 
 	for _, ruleset := range rulesets {
-		pterm.Printf("%s/%s@%s - sinks: %v, priority: %d\n",
+		fmt.Printf("- %s/%s@%s\n",
 			ruleset.Registry, ruleset.Name,
-			ruleset.Installation.Version,
-			ruleset.Manifest.Sinks,
-			ruleset.Manifest.Priority)
+			ruleset.Installation.Version)
 	}
 }
 
@@ -293,10 +293,9 @@ func (u *UI) PromptsetList(promptsets []*PromptsetInfo) {
 	}
 
 	for _, promptset := range promptsets {
-		pterm.Printf("%s/%s@%s - sinks: %v\n",
+		fmt.Printf("- %s/%s@%s\n",
 			promptset.Registry, promptset.Name,
-			promptset.Installation.Version,
-			promptset.Manifest.Sinks)
+			promptset.Installation.Version)
 	}
 }
 
@@ -383,50 +382,35 @@ func (u *UI) RulesetInfoGrouped(rulesets []*RulesetInfo, detailed bool) {
 
 	// Display each registry group
 	for registry, groupRulesets := range registryGroups {
-		rulesetNodes := []pterm.TreeNode{}
+		fmt.Printf("%s:\n", registry)
 
 		for _, ruleset := range groupRulesets {
-			rulesetName := fmt.Sprintf("%s@%s", ruleset.Name, ruleset.Installation.Version)
-			if ruleset.Manifest.Constraint != "" {
-				rulesetName += fmt.Sprintf(" (%s)", ruleset.Manifest.Constraint)
-			}
-
-			children := []pterm.TreeNode{
-				{Text: fmt.Sprintf("include: %v", ruleset.Manifest.Include)},
-				{Text: fmt.Sprintf("sinks: %v", ruleset.Manifest.Sinks)},
-				{Text: fmt.Sprintf("priority: %d", ruleset.Manifest.Priority)},
-				{Text: fmt.Sprintf("files: %d installed", len(ruleset.Installation.InstalledPaths))},
-			}
-
-			if len(ruleset.Manifest.Exclude) > 0 {
-				children = append(children, pterm.TreeNode{
-					Text: fmt.Sprintf("exclude: %v", ruleset.Manifest.Exclude),
-				})
-			}
-
-			if detailed && len(ruleset.Installation.InstalledPaths) > 0 {
-				pathNodes := []pterm.TreeNode{}
-				for _, path := range ruleset.Installation.InstalledPaths {
-					pathNodes = append(pathNodes, pterm.TreeNode{Text: path})
+			fmt.Printf("    %s:\n", ruleset.Name)
+			fmt.Printf("        version: %s\n", ruleset.Installation.Version)
+			fmt.Printf("        constraint: %s\n", ruleset.Manifest.Constraint)
+			fmt.Printf("        priority: %d\n", ruleset.Manifest.Priority)
+			
+			if len(ruleset.Manifest.Sinks) > 0 {
+				fmt.Printf("        sinks:\n")
+				for _, sink := range ruleset.Manifest.Sinks {
+					fmt.Printf("            - %s\n", sink)
 				}
-				children = append(children, pterm.TreeNode{
-					Text:     "installed paths:",
-					Children: pathNodes,
-				})
 			}
-
-			rulesetNodes = append(rulesetNodes, pterm.TreeNode{
-				Text:     rulesetName,
-				Children: children,
-			})
+			
+			if len(ruleset.Manifest.Include) > 0 {
+				fmt.Printf("        include:\n")
+				for _, pattern := range ruleset.Manifest.Include {
+					fmt.Printf("            - %q\n", pattern)
+				}
+			}
+			
+			if len(ruleset.Manifest.Exclude) > 0 {
+				fmt.Printf("        exclude:\n")
+				for _, pattern := range ruleset.Manifest.Exclude {
+					fmt.Printf("            - %q\n", pattern)
+				}
+			}
 		}
-
-		tree := pterm.DefaultTree.WithRoot(pterm.TreeNode{
-			Text:     registry,
-			Children: rulesetNodes,
-		})
-		_ = tree.Render()
-		pterm.Println()
 	}
 }
 
@@ -487,49 +471,34 @@ func (u *UI) PromptsetInfoGrouped(promptsets []*PromptsetInfo, detailed bool) {
 
 	// Display each registry group
 	for registry, groupPromptsets := range registryGroups {
-		promptsetNodes := []pterm.TreeNode{}
+		fmt.Printf("%s:\n", registry)
 
 		for _, promptset := range groupPromptsets {
-			promptsetName := fmt.Sprintf("%s@%s", promptset.Name, promptset.Installation.Version)
-			if promptset.Manifest.Constraint != "" {
-				promptsetName += fmt.Sprintf(" (%s)", promptset.Manifest.Constraint)
-			}
-
-			children := []pterm.TreeNode{
-				{Text: fmt.Sprintf("include: %v", promptset.Manifest.Include)},
-				{Text: fmt.Sprintf("sinks: %v", promptset.Manifest.Sinks)},
-				{Text: fmt.Sprintf("files: %d installed", len(promptset.Installation.InstalledPaths))},
-			}
-
-			if len(promptset.Manifest.Exclude) > 0 {
-				children = append(children, pterm.TreeNode{
-					Text: fmt.Sprintf("exclude: %v", promptset.Manifest.Exclude),
-				})
-			}
-
-			if detailed && len(promptset.Installation.InstalledPaths) > 0 {
-				pathNodes := []pterm.TreeNode{}
-				for _, path := range promptset.Installation.InstalledPaths {
-					pathNodes = append(pathNodes, pterm.TreeNode{Text: path})
+			fmt.Printf("    %s:\n", promptset.Name)
+			fmt.Printf("        version: %s\n", promptset.Installation.Version)
+			fmt.Printf("        constraint: %s\n", promptset.Manifest.Constraint)
+			
+			if len(promptset.Manifest.Sinks) > 0 {
+				fmt.Printf("        sinks:\n")
+				for _, sink := range promptset.Manifest.Sinks {
+					fmt.Printf("            - %s\n", sink)
 				}
-				children = append(children, pterm.TreeNode{
-					Text:     "installed paths:",
-					Children: pathNodes,
-				})
 			}
-
-			promptsetNodes = append(promptsetNodes, pterm.TreeNode{
-				Text:     promptsetName,
-				Children: children,
-			})
+			
+			if len(promptset.Manifest.Include) > 0 {
+				fmt.Printf("        include:\n")
+				for _, pattern := range promptset.Manifest.Include {
+					fmt.Printf("            - %q\n", pattern)
+				}
+			}
+			
+			if len(promptset.Manifest.Exclude) > 0 {
+				fmt.Printf("        exclude:\n")
+				for _, pattern := range promptset.Manifest.Exclude {
+					fmt.Printf("            - %q\n", pattern)
+				}
+			}
 		}
-
-		tree := pterm.DefaultTree.WithRoot(pterm.TreeNode{
-			Text:     registry,
-			Children: promptsetNodes,
-		})
-		_ = tree.Render()
-		pterm.Println()
 	}
 }
 
@@ -743,91 +712,41 @@ func (u *UI) RegistryList(registries map[string]map[string]interface{}) {
 		return
 	}
 
-	tableData := [][]string{
-		{"Name", "Type", "Config"},
+	for name := range registries {
+		fmt.Printf("- %s\n", name)
 	}
-
-	for name, config := range registries {
-		regType := "unknown"
-		configStr := ""
-
-		if t, ok := config["type"].(string); ok {
-			regType = t
-		}
-
-		// Build config string from all registry-specific fields
-		var configParts []string
-
-		// Include URL in config if present
-		if url, ok := config["url"].(string); ok && url != "" {
-			configParts = append(configParts, "url="+url)
-		}
-
-		// Git-specific config
-		if branches, ok := config["branches"].([]interface{}); ok && len(branches) > 0 {
-			branchStrs := make([]string, len(branches))
-			for i, b := range branches {
-				branchStrs[i] = fmt.Sprintf("%v", b)
-			}
-			configParts = append(configParts, "branches="+fmt.Sprintf("%v", branchStrs))
-		}
-
-		// GitLab-specific config
-		if groupID, ok := config["group_id"].(string); ok && groupID != "" {
-			configParts = append(configParts, "group_id="+groupID)
-		}
-		if projectID, ok := config["project_id"].(string); ok && projectID != "" {
-			configParts = append(configParts, "project_id="+projectID)
-		}
-		if apiVersion, ok := config["api_version"].(string); ok && apiVersion != "" {
-			configParts = append(configParts, "api_version="+apiVersion)
-		}
-
-		// Cloudsmith-specific config
-		if owner, ok := config["owner"].(string); ok && owner != "" {
-			configParts = append(configParts, "owner="+owner)
-		}
-		if repo, ok := config["repository"].(string); ok && repo != "" {
-			configParts = append(configParts, "repository="+repo)
-		}
-
-		configStr = fmt.Sprintf("%v", configParts)
-
-		tableData = append(tableData, []string{name, regType, configStr})
-	}
-
-	_ = pterm.DefaultTable.WithHasHeader().WithData(tableData).Render()
 }
 
 // RegistryInfo displays detailed information about a registry
 func (u *UI) RegistryInfo(name string, config map[string]interface{}) {
-	pterm.Info.Printf("Registry: %s\n", name)
+	fmt.Printf("%s:\n", name)
 
 	if regType, ok := config["type"].(string); ok {
-		pterm.Printf("Type: %s\n", regType)
+		fmt.Printf("    type: %s\n", regType)
 	}
 	if url, ok := config["url"].(string); ok {
-		pterm.Printf("URL: %s\n", url)
+		fmt.Printf("    url: %s\n", url)
 	}
 
 	// Display registry-specific configuration
 	if groupID, ok := config["group_id"].(string); ok && groupID != "" {
-		pterm.Printf("Group ID: %s\n", groupID)
+		fmt.Printf("    group_id: %s\n", groupID)
 	}
 	if projectID, ok := config["project_id"].(string); ok && projectID != "" {
-		pterm.Printf("Project ID: %s\n", projectID)
+		fmt.Printf("    project_id: %s\n", projectID)
 	}
 	if owner, ok := config["owner"].(string); ok && owner != "" {
-		pterm.Printf("Owner: %s\n", owner)
+		fmt.Printf("    owner: %s\n", owner)
 	}
 	if repo, ok := config["repository"].(string); ok && repo != "" {
-		pterm.Printf("Repository: %s\n", repo)
+		fmt.Printf("    repository: %s\n", repo)
 	}
-	if branches, ok := config["branches"].([]string); ok && len(branches) > 0 {
-		pterm.Printf("Branches: %v\n", branches)
+	if branches, ok := config["branches"].([]interface{}); ok && len(branches) > 0 {
+		fmt.Printf("    branches:\n")
+		for _, branch := range branches {
+			fmt.Printf("        - %v\n", branch)
+		}
 	}
-
-	fmt.Println() // Add spacing
 }
 
 // SinkList displays a list of sinks
@@ -837,27 +756,191 @@ func (u *UI) SinkList(sinks map[string]manifest.SinkConfig) {
 		return
 	}
 
-	tableData := [][]string{
-		{"Name", "Layout", "Compile Target", "Directory"},
+	for name := range sinks {
+		fmt.Printf("- %s\n", name)
 	}
-
-	for name, config := range sinks {
-		tableData = append(tableData, []string{
-			name,
-			config.Layout,
-			string(config.CompileTarget),
-			config.Directory,
-		})
-	}
-
-	_ = pterm.DefaultTable.WithHasHeader().WithData(tableData).Render()
 }
 
 // SinkInfo displays detailed information about a sink
 func (u *UI) SinkInfo(name string, config manifest.SinkConfig) {
-	pterm.Info.Printf("Sink: %s\n", name)
-	pterm.Printf("Layout: %s\n", config.Layout)
-	pterm.Printf("Compile Target: %s\n", string(config.CompileTarget))
-	pterm.Printf("Directory: %s\n", config.Directory)
-	fmt.Println() // Add spacing
+	fmt.Printf("%s:\n", name)
+	fmt.Printf("    directory: %s\n", config.Directory)
+	fmt.Printf("    layout: %s\n", config.Layout)
+	fmt.Printf("    compileTarget: %s\n", string(config.CompileTarget))
 }
+
+// AllList displays all configured entities (registries, sinks, rulesets, promptsets)
+func (u *UI) AllList(registries map[string]map[string]interface{}, sinks map[string]manifest.SinkConfig, rulesets []*RulesetInfo, promptsets []*PromptsetInfo) {
+	// Display registries
+	if len(registries) > 0 {
+		fmt.Println("registries:")
+		for name := range registries {
+			fmt.Printf("    - %s\n", name)
+		}
+	}
+
+	// Display sinks
+	if len(sinks) > 0 {
+		fmt.Println("sinks:")
+		for name := range sinks {
+			fmt.Printf("    - %s\n", name)
+		}
+	}
+
+	// Display rulesets
+	if len(rulesets) > 0 {
+		fmt.Println("rulesets:")
+		for _, ruleset := range rulesets {
+			fmt.Printf("    - %s/%s@%s\n", ruleset.Registry, ruleset.Name, ruleset.Installation.Version)
+		}
+	}
+
+	// Display promptsets
+	if len(promptsets) > 0 {
+		fmt.Println("promptsets:")
+		for _, promptset := range promptsets {
+			fmt.Printf("    - %s/%s@%s\n", promptset.Registry, promptset.Name, promptset.Installation.Version)
+		}
+	}
+
+	// If nothing is configured
+	if len(registries) == 0 && len(sinks) == 0 && len(rulesets) == 0 && len(promptsets) == 0 {
+		pterm.Info.Println("No resources configured")
+	}
+}
+
+// AllInfo displays comprehensive information about all configured entities
+func (u *UI) AllInfo(registries map[string]map[string]interface{}, sinks map[string]manifest.SinkConfig, rulesets []*RulesetInfo, promptsets []*PromptsetInfo) {
+	// Display registries
+	if len(registries) > 0 {
+		fmt.Println("registries:")
+		for name, config := range registries {
+			fmt.Printf("    %s:\n", name)
+			if regType, ok := config["type"].(string); ok {
+				fmt.Printf("        type: %s\n", regType)
+			}
+			if url, ok := config["url"].(string); ok {
+				fmt.Printf("        url: %s\n", url)
+			}
+			if groupID, ok := config["group_id"].(string); ok && groupID != "" {
+				fmt.Printf("        group_id: %s\n", groupID)
+			}
+			if projectID, ok := config["project_id"].(string); ok && projectID != "" {
+				fmt.Printf("        project_id: %s\n", projectID)
+			}
+			if owner, ok := config["owner"].(string); ok && owner != "" {
+				fmt.Printf("        owner: %s\n", owner)
+			}
+			if repo, ok := config["repository"].(string); ok && repo != "" {
+				fmt.Printf("        repository: %s\n", repo)
+			}
+			if branches, ok := config["branches"].([]interface{}); ok && len(branches) > 0 {
+				fmt.Printf("        branches:\n")
+				for _, branch := range branches {
+					fmt.Printf("            - %v\n", branch)
+				}
+			}
+		}
+	}
+
+	// Display sinks
+	if len(sinks) > 0 {
+		fmt.Println("sinks:")
+		for name, config := range sinks {
+			fmt.Printf("    %s:\n", name)
+			fmt.Printf("        directory: %s\n", config.Directory)
+			fmt.Printf("        layout: %s\n", config.Layout)
+			fmt.Printf("        compileTarget: %s\n", string(config.CompileTarget))
+		}
+	}
+
+	// Display packages (rulesets and promptsets)
+	if len(rulesets) > 0 || len(promptsets) > 0 {
+		fmt.Println("packages:")
+
+		// Group rulesets by registry
+		if len(rulesets) > 0 {
+			fmt.Println("    rulesets:")
+			rulesetGroups := make(map[string][]*RulesetInfo)
+			for _, ruleset := range rulesets {
+				rulesetGroups[ruleset.Registry] = append(rulesetGroups[ruleset.Registry], ruleset)
+			}
+
+			for registry, groupRulesets := range rulesetGroups {
+				fmt.Printf("        %s:\n", registry)
+				for _, ruleset := range groupRulesets {
+					fmt.Printf("            %s:\n", ruleset.Name)
+					fmt.Printf("                version: %s\n", ruleset.Installation.Version)
+					fmt.Printf("                constraint: %s\n", ruleset.Manifest.Constraint)
+					fmt.Printf("                priority: %d\n", ruleset.Manifest.Priority)
+					
+					if len(ruleset.Manifest.Sinks) > 0 {
+						fmt.Printf("                sinks:\n")
+						for _, sink := range ruleset.Manifest.Sinks {
+							fmt.Printf("                    - %s\n", sink)
+						}
+					}
+					
+					if len(ruleset.Manifest.Include) > 0 {
+						fmt.Printf("                include:\n")
+						for _, pattern := range ruleset.Manifest.Include {
+							fmt.Printf("                    - %q\n", pattern)
+						}
+					}
+					
+					if len(ruleset.Manifest.Exclude) > 0 {
+						fmt.Printf("                exclude:\n")
+						for _, pattern := range ruleset.Manifest.Exclude {
+							fmt.Printf("                    - %q\n", pattern)
+						}
+					}
+				}
+			}
+		}
+
+		// Group promptsets by registry
+		if len(promptsets) > 0 {
+			fmt.Println("    promptsets:")
+			promptsetGroups := make(map[string][]*PromptsetInfo)
+			for _, promptset := range promptsets {
+				promptsetGroups[promptset.Registry] = append(promptsetGroups[promptset.Registry], promptset)
+			}
+
+			for registry, groupPromptsets := range promptsetGroups {
+				fmt.Printf("        %s:\n", registry)
+				for _, promptset := range groupPromptsets {
+					fmt.Printf("            %s:\n", promptset.Name)
+					fmt.Printf("                version: %s\n", promptset.Installation.Version)
+					fmt.Printf("                constraint: %s\n", promptset.Manifest.Constraint)
+					
+					if len(promptset.Manifest.Sinks) > 0 {
+						fmt.Printf("                sinks:\n")
+						for _, sink := range promptset.Manifest.Sinks {
+							fmt.Printf("                    - %s\n", sink)
+						}
+					}
+					
+					if len(promptset.Manifest.Include) > 0 {
+						fmt.Printf("                include:\n")
+						for _, pattern := range promptset.Manifest.Include {
+							fmt.Printf("                    - %q\n", pattern)
+						}
+					}
+					
+					if len(promptset.Manifest.Exclude) > 0 {
+						fmt.Printf("                exclude:\n")
+						for _, pattern := range promptset.Manifest.Exclude {
+							fmt.Printf("                    - %q\n", pattern)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// If nothing is configured
+	if len(registries) == 0 && len(sinks) == 0 && len(rulesets) == 0 && len(promptsets) == 0 {
+		pterm.Info.Println("No resources configured")
+	}
+}
+

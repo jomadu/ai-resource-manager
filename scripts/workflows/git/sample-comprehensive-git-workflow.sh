@@ -206,19 +206,19 @@ pause
 # === LIST AND INFO ===
 log "=== LIST AND INFO ==="
 
-log "Running arm list (all resources)..."
+log "Running arm list (shows all entities: registries, sinks, rulesets, promptsets)..."
 run_arm list
 pause
 
-log "Running arm list ruleset..."
+log "Running arm list ruleset (shows only rulesets)..."
 run_arm list ruleset
 pause
 
-log "Running arm list promptset..."
+log "Running arm list promptset (shows only promptsets)..."
 run_arm list promptset
 pause
 
-log "Running arm info (all resources)..."
+log "Running arm info (detailed info for all entities)..."
 run_arm info
 pause
 
@@ -247,8 +247,16 @@ log "Uninstalling all promptsets..."
 run_arm uninstall promptset ai-rules/code-review
 run_arm uninstall promptset ai-rules/testing
 
-log "Showing empty list..."
+log "Showing list after uninstall (registries and sinks still present, but no rulesets/promptsets)..."
 run_arm list
+pause
+
+log "Showing ruleset list (should be empty)..."
+run_arm list ruleset
+pause
+
+log "Showing promptset list (should be empty)..."
+run_arm list promptset
 show_debug
 pause
 
@@ -360,7 +368,11 @@ echo "• Registry configuration"
 echo "• Sink configuration (hierarchical and flat layouts)"
 echo "• Installing rulesets and promptsets to specific sinks"
 echo "• Installing promptsets to multiple sinks (cursor and Amazon Q)"
-echo "• Listing and getting info about resources (unified and resource-specific)"
+echo "• Listing and getting info about resources"
+echo "  - arm list: shows all entities (registries, sinks, rulesets, promptsets)"
+echo "  - arm list ruleset: shows only rulesets"
+echo "  - arm list promptset: shows only promptsets"
+echo "  - arm info: shows detailed information for all entities"
 echo "• Uninstalling rulesets and promptsets"
 echo "• Installing from branches"
 echo "• Checking for outdated resources"

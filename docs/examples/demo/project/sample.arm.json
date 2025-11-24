@@ -36,22 +36,22 @@
         "cursor-rules": {
             "directory": ".cursor/rules",
             "layout": "hierarchical",
-            "compile_target": "cursor"
+            "compileTarget": "cursor"
         },
         "amazonq-rules": {
             "directory": ".amazonq/rules",
             "layout": "hierarchical",
-            "compile_target": "amazonq"
+            "compileTarget": "amazonq"
         },
         "cursor-commands": {
             "directory": ".cursor/commands",
             "layout": "hierarchical",
-            "compile_target": "cursor"
+            "compileTarget": "cursor"
         },
         "amazonq-prompts": {
             "directory": ".amazonq/prompts",
             "layout": "hierarchical",
-            "compile_target": "amazonq"
+            "compileTarget": "amazonq"
         }
     }
 }

@@ -59,35 +59,30 @@ func init() {
 
 func infoRegistries(names []string) {
 	if err := armService.ShowRegistryInfo(ctx, names); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
 func infoSinks(names []string) {
 	if err := armService.ShowSinkInfo(ctx, names); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
 func infoRulesets(names []string) {
 	if err := armService.ShowRulesetInfo(ctx, names); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
 func infoPromptsets(names []string) {
 	if err := armService.ShowPromptsetInfo(ctx, names); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
 func infoAll() {
 	if err := armService.ShowAllInfo(ctx); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }

@@ -58,36 +58,31 @@ func init() {
 }
 
 func listRegistries() {
-	if err := armService.ListRegistries(ctx); err != nil {
-		// TODO: Handle error properly
-		return
+	if err := armService.ShowRegistryList(ctx); err != nil {
+		handleCommandError(err)
 	}
 }
 
 func listSinks() {
-	if err := armService.ListSinks(ctx); err != nil {
-		// TODO: Handle error properly
-		return
+	if err := armService.ShowSinkList(ctx); err != nil {
+		handleCommandError(err)
 	}
 }
 
 func listRulesets() {
 	if err := armService.ShowRulesetList(ctx, false); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
 func listPromptsets() {
 	if err := armService.ShowPromptsetList(ctx); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }
 
 func listAll() {
 	if err := armService.ShowAllList(ctx, false); err != nil {
-		// TODO: Handle error properly
-		return
+		handleCommandError(err)
 	}
 }

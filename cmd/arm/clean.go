@@ -55,20 +55,17 @@ func cleanCache(cmd *cobra.Command) {
 
 	if nuke {
 		if err := armService.NukeCache(ctx); err != nil {
-			// TODO: Handle error properly
-			return
+			handleCommandError(err)
 		}
 	} else {
 		// Parse duration
 		maxAge, err := time.ParseDuration(maxAgeStr)
 		if err != nil {
-			// TODO: Handle error properly
-			return
+			handleCommandError(err)
 		}
 
 		if err := armService.CleanCacheWithAge(ctx, maxAge); err != nil {
-			// TODO: Handle error properly
-			return
+			handleCommandError(err)
 		}
 	}
 }
@@ -78,13 +75,11 @@ func cleanSinks(cmd *cobra.Command) {
 
 	if nuke {
 		if err := armService.NukeSinks(ctx); err != nil {
-			// TODO: Handle error properly
-			return
+			handleCommandError(err)
 		}
 	} else {
 		if err := armService.CleanSinks(ctx); err != nil {
-			// TODO: Handle error properly
-			return
+			handleCommandError(err)
 		}
 	}
 }

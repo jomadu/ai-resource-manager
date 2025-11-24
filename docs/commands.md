@@ -193,16 +193,16 @@ $ arm set registry cloudsmith-registry repository new-repo
 
 `arm list registry`
 
-List all configured registries. This command displays all registries that have been added to the ARM configuration, showing their names, types, and basic information in a tabular format.
+List all configured registries. This command displays all registries that have been added to the ARM configuration as a simple list.
 
 **Example:**
+
 ```bash
 $ arm list registry
-NAME              TYPE        URL                                          CONFIG
-my-org            git         https://github.com/my-org/arm-registry
-my-gitlab         gitlab      https://gitlab.com                           group_id=123
-my-gitlab-project gitlab      https://gitlab.com                           project_id=101
-cloudsmith-registry cloudsmith  https://api.cloudsmith.io                  owner=my-org, repository=my-repo
+- my-org
+- my-gitlab
+- my-gitlab-project
+- cloudsmith-registry
 ```
 
 ### arm info registry
@@ -212,33 +212,28 @@ cloudsmith-registry cloudsmith  https://api.cloudsmith.io                  owner
 Display detailed information about one or more registries. This command shows comprehensive details about the specified registries, including configuration settings, available packages, and status information. If no names are provided, it shows information for all configured registries.
 
 **Examples:**
+
 ```bash
 # Show info for all registries
 $ arm info registry
+my-org:
+    type: git
+    url: https://github.com/my-org/arm-registry
+my-gitlab:
+    type: gitlab
+    url: https://gitlab.example.com
+    group_id: 123
+cloudsmith-registry:
+    type: cloudsmith
+    url: https://api.cloudsmith.io
+    owner: my-org
+    repository: my-repo
 
 # Show info for specific registries
-$ arm info registry my-org cloudsmith-registry
-```
-
-**Sample output:**
-```bash
 $ arm info registry my-org
-Registry: my-org
-Type: git
-URL: https://github.com/my-org/arm-registry
-
-$ arm info registry my-gitlab
-Registry: my-gitlab
-Type: gitlab
-URL: https://gitlab.example.com
-Group Id: 123
-
-$ arm info registry cloudsmith-registry
-Registry: cloudsmith-registry
-Type: cloudsmith
-URL: https://api.cloudsmith.io
-Owner: my-org
-Repository: my-repo
+my-org:
+    type: git
+    url: https://github.com/my-org/arm-registry
 ```
 
 ## Sink Management
@@ -285,7 +280,7 @@ $ arm remove sink cursor-rules
 
 `arm set sink NAME KEY VALUE`
 
-Set configuration values for a specific sink. This command allows you to configure sink-specific settings. The available configuration keys are `layout` (hierarchical or flat), `directory` (output path), and `compile_target` (md, cursor, amazonq, or copilot).
+Set configuration values for a specific sink. This command allows you to configure sink-specific settings. The available configuration keys are `layout` (hierarchical or flat), `directory` (output path), and `compileTarget` (md, cursor, amazonq, or copilot).
 
 **Examples:**
 ```bash
@@ -296,22 +291,22 @@ $ arm set sink cursor-rules layout flat
 $ arm set sink cursor-rules directory .cursor/new-rules
 
 # Change compilation target
-$ arm set sink cursor-rules compile_target md
+$ arm set sink cursor-rules compileTarget md
 ```
 
 ### arm list sink
 
 `arm list sink`
 
-List all configured sinks. This command displays all sinks that have been added to the ARM configuration, showing their names, types, output directories, and basic configuration in a tabular format.
+List all configured sinks. This command displays all sinks that have been added to the ARM configuration as a simple list.
 
 **Example:**
+
 ```bash
 $ arm list sink
-NAME           LAYOUT        COMPILE_TARGET  DIRECTORY
-cursor-rules   hierarchical  cursor          .cursor/rules
-q-rules        hierarchical  md              .amazonq/rules
-copilot-rules  flat          copilot         .github/copilot
+- cursor-rules
+- q-rules
+- copilot-rules
 ```
 
 ### arm info sink
@@ -321,21 +316,29 @@ copilot-rules  flat          copilot         .github/copilot
 Display detailed information about one or more sinks. This command shows comprehensive details about the specified sinks, including configuration settings, output directories, layout preferences, and status information. If no names are provided, it shows information for all configured sinks.
 
 **Examples:**
+
 ```bash
 # Show info for all sinks
 $ arm info sink
+cursor-rules:
+    directory: .cursor/rules
+    layout: hierarchical
+    compileTarget: cursor
+q-rules:
+    directory: .amazonq/rules
+    layout: hierarchical
+    compileTarget: md
+copilot-rules:
+    directory: .github/copilot
+    layout: flat
+    compileTarget: copilot
 
 # Show info for specific sinks
-$ arm info sink cursor-rules q-rules
-```
-
-**Sample output:**
-```bash
 $ arm info sink cursor-rules
-Sink: cursor-rules
-Layout: hierarchical
-Compile Target: cursor
-Directory: .cursor/rules
+cursor-rules:
+    directory: .cursor/rules
+    layout: hierarchical
+    compileTarget: cursor
 ```
 
 ## Package Management
@@ -434,51 +437,96 @@ $ arm uninstall
 
 `arm list`
 
-List all installed packages across all sinks. This command displays all currently installed rulesets and promptsets, showing their names, versions, source registries, and which sinks they are installed to. It provides a comprehensive overview of the current installation state.
+List all configured entities in the ARM environment. This command provides a comprehensive overview showing all registries, sinks, and installed packages (rulesets and promptsets), grouped by category.
 
 **Example:**
-```bash
-# List all installed packages
-$ arm list
-```
 
-**Sample output:**
 ```bash
 $ arm list
-PACKAGE                         VERSION  SINKS
-my-org/clean-code-ruleset       1.1.0    cursor-rules, q-rules
-my-org/code-review-promptset    1.1.0    cursor-commands, q-prompts
+registries:
+    - my-org
+    - cloudsmith-registry
+sinks:
+    - cursor-rules
+    - q-rules
+    - cursor-commands
+    - q-prompts
+rulesets:
+    - my-org/clean-code-ruleset@1.1.0
+    - my-org/security-ruleset@2.1.0
+promptsets:
+    - my-org/code-review-promptset@1.1.0
+    - my-org/testing-promptset@2.0.1
 ```
 
 ### arm info
 
 `arm info`
 
-Display detailed information about all installed packages. This command shows comprehensive details about all currently installed rulesets and promptsets, including their metadata, configuration, dependencies, and status information. It provides a detailed overview of the entire installation state.
+Display detailed information about all configured entities in the ARM environment. This command shows comprehensive details about all registries, sinks, and installed packages (rulesets and promptsets), including their metadata, configuration, dependencies, and status information. It provides a complete hierarchical view of the entire ARM environment.
 
 **Example:**
-```bash
-# Show detailed info for all installed packages
-$ arm info
-```
 
-**Sample output:**
 ```bash
 $ arm info
-Package: my-org/clean-code-ruleset
-Type: Ruleset
-Version: 1.1.0
-Constraint: ^1.0.0
-Priority: 100
-Sinks: cursor-rules, q-rules
-Include: **/*.yml, **/*.yaml
-
-Package: my-org/code-review-promptset
-Type: Promptset
-Version: 1.1.0
-Constraint: ~1.1.0
-Sinks: cursor-commands, q-prompts
-Include: **/*.yml, **/*.yaml
+registries:
+    my-org:
+        type: git
+        url: https://github.com/my-org/arm-registry
+    cloudsmith-registry:
+        type: cloudsmith
+        url: https://api.cloudsmith.io
+        owner: my-org
+        repository: my-repo
+sinks:
+    cursor-rules:
+        directory: .cursor/rules
+        layout: hierarchical
+        compileTarget: cursor
+    q-rules:
+        directory: .amazonq/rules
+        layout: hierarchical
+        compileTarget: md
+    cursor-commands:
+        directory: .cursor/commands
+        layout: hierarchical
+        compileTarget: cursor
+    q-prompts:
+        directory: .amazonq/prompts
+        layout: hierarchical
+        compileTarget: md
+packages:
+    rulesets:
+        my-org:
+            clean-code-ruleset:
+                version: 1.1.0
+                constraint: ^1.0.0
+                priority: 100
+                sinks:
+                    - cursor-rules
+                    - q-rules
+                include:
+                    - "**/*.yml"
+                    - "**/*.yaml"
+            security-ruleset:
+                version: 2.1.0
+                constraint: ~2.1.0
+                priority: 200
+                sinks:
+                    - cursor-rules
+                include:
+                    - "**/*.yml"
+    promptsets:
+        my-org:
+            code-review-promptset:
+                version: 1.1.0
+                constraint: ^1.0.0
+                sinks:
+                    - cursor-commands
+                    - q-prompts
+                include:
+                    - "**/*.yml"
+                    - "**/*.yaml"
 ```
 
 ## Ruleset Management
@@ -548,46 +596,63 @@ $ arm set ruleset my-org/clean-code-ruleset sinks cursor-rules,q-rules,copilot-r
 
 `arm list ruleset`
 
-List all installed rulesets. This command displays all currently installed rulesets in list format, showing their names, versions, source registries, priority, and which sinks they are installed to.
+List all installed rulesets. This command displays all currently installed rulesets in a simple list format, showing their registry, name, and version.
 
 **Example:**
-```bash
-$ arm list ruleset
-```
 
-**Sample output:**
 ```bash
 $ arm list ruleset
-RULESET                         VERSION  PRIORITY  SINKS
-my-org/clean-code-ruleset       1.0.1    100       cursor-rules, q-rules
-my-org/security-ruleset         2.1.0    200       cursor-rules, q-rules, copilot-rules
+- my-org/clean-code-ruleset@1.0.1
+- my-org/security-ruleset@2.1.0
 ```
 
 ### arm info ruleset
 
 `arm info ruleset [REGISTRY_NAME/RULESET_NAME...]`
 
-Display detailed information about one or more rulesets. This command shows comprehensive details about the specified rulesets, including registry, name, version constraint, resolved version, include, exclude, sinks, and directories where it's installed. If no names are provided, it shows information for all installed rulesets.
+Display detailed information about one or more rulesets. This command shows comprehensive details about the specified rulesets, including registry, name, version constraint, resolved version, include, exclude, priority, sinks, and directories where it's installed. Rulesets are grouped by registry in a hierarchical format. If no names are provided, it shows information for all installed rulesets.
 
 **Examples:**
+
 ```bash
 # Show info for all rulesets
 $ arm info ruleset
+my-org:
+    clean-code-ruleset:
+        version: 1.0.1
+        constraint: ^1.0.0
+        priority: 100
+        sinks:
+            - cursor-rules
+            - q-rules
+        include:
+            - "**/*.yml"
+            - "**/*.yaml"
+    security-ruleset:
+        version: 2.1.0
+        constraint: ~2.1.0
+        priority: 200
+        sinks:
+            - cursor-rules
+            - q-rules
+            - copilot-rules
+        include:
+            - "**/*.yml"
+            - "**/*.yaml"
 
 # Show info for specific rulesets
-$ arm info ruleset my-org/clean-code-ruleset my-org/security-ruleset
-```
-
-**Sample output:**
-```bash
 $ arm info ruleset my-org/clean-code-ruleset
-Package: my-org/clean-code-ruleset
-Type: ruleset
-Version: 1.0.1
-Constraint: ^1.0.0
-Priority: 100
-Sinks: cursor-rules, q-rules
-Include: **/*.yml, **/*.yaml
+my-org:
+    clean-code-ruleset:
+        version: 1.0.1
+        constraint: ^1.0.0
+        priority: 100
+        sinks:
+            - cursor-rules
+            - q-rules
+        include:
+            - "**/*.yml"
+            - "**/*.yaml"
 ```
 
 ### arm update ruleset
@@ -720,46 +785,59 @@ $ arm set promptset my-org/code-review-promptset include "**/*.yml,**/*.yaml"
 
 `arm list promptset`
 
-List all installed promptsets. This command displays all currently installed promptsets in list format, showing their names, versions, source registries, and which sinks they are installed to.
+List all installed promptsets. This command displays all currently installed promptsets in a simple list format, showing their registry, name, and version.
 
 **Example:**
-```bash
-$ arm list promptset
-```
 
-**Sample output:**
 ```bash
 $ arm list promptset
-PROMPTSET                       VERSION  SINKS
-my-org/code-review-promptset    1.1.0    cursor-commands, q-prompts
-my-org/testing-promptset        2.0.1    cursor-commands, q-prompts
+- my-org/code-review-promptset@1.1.0
+- my-org/testing-promptset@2.0.1
 ```
 
 ### arm info promptset
 
 `arm info promptset [REGISTRY_NAME/PROMPTSET...]`
 
-Display detailed information about one or more promptsets. This command shows comprehensive details about the specified promptsets, including registry, name, version constraint, resolved version, include, exclude, sinks, and directories where it's installed. If no names are provided, it shows information for all installed promptsets.
+Display detailed information about one or more promptsets. This command shows comprehensive details about the specified promptsets, including registry, name, version constraint, resolved version, include, exclude, sinks, and directories where it's installed. Promptsets are grouped by registry in a hierarchical format. If no names are provided, it shows information for all installed promptsets.
 
 **Examples:**
+
 ```bash
 # Show info for all promptsets
 $ arm info promptset
+my-org:
+    code-review-promptset:
+        version: 1.1.0
+        constraint: ^1.0.0
+        sinks:
+            - cursor-commands
+            - q-prompts
+        include:
+            - "**/*.yml"
+            - "**/*.yaml"
+    testing-promptset:
+        version: 2.0.1
+        constraint: ~2.0.0
+        sinks:
+            - cursor-commands
+            - q-prompts
+        include:
+            - "**/*.yml"
+            - "**/*.yaml"
 
 # Show info for specific promptsets
-$ arm info promptset my-org/code-review-promptset my-org/testing-promptset
-```
-
-**Sample output:**
-```bash
 $ arm info promptset my-org/code-review-promptset
-Package: my-org/code-review-promptset
-Type: promptset
-Version: 1.1.0
-Constraint: ^1.0.0
-Sinks: cursor-commands, q-prompts
-Include: **/*.yml, **/*.yaml
-Exclude: none
+my-org:
+    code-review-promptset:
+        version: 1.1.0
+        constraint: ^1.0.0
+        sinks:
+            - cursor-commands
+            - q-prompts
+        include:
+            - "**/*.yml"
+            - "**/*.yaml"
 ```
 
 ### arm update promptset
