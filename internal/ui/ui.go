@@ -389,21 +389,21 @@ func (u *UI) RulesetInfoGrouped(rulesets []*RulesetInfo, detailed bool) {
 			fmt.Printf("        version: %s\n", ruleset.Installation.Version)
 			fmt.Printf("        constraint: %s\n", ruleset.Manifest.Constraint)
 			fmt.Printf("        priority: %d\n", ruleset.Manifest.Priority)
-			
+
 			if len(ruleset.Manifest.Sinks) > 0 {
 				fmt.Printf("        sinks:\n")
 				for _, sink := range ruleset.Manifest.Sinks {
 					fmt.Printf("            - %s\n", sink)
 				}
 			}
-			
+
 			if len(ruleset.Manifest.Include) > 0 {
 				fmt.Printf("        include:\n")
 				for _, pattern := range ruleset.Manifest.Include {
 					fmt.Printf("            - %q\n", pattern)
 				}
 			}
-			
+
 			if len(ruleset.Manifest.Exclude) > 0 {
 				fmt.Printf("        exclude:\n")
 				for _, pattern := range ruleset.Manifest.Exclude {
@@ -477,21 +477,21 @@ func (u *UI) PromptsetInfoGrouped(promptsets []*PromptsetInfo, detailed bool) {
 			fmt.Printf("    %s:\n", promptset.Name)
 			fmt.Printf("        version: %s\n", promptset.Installation.Version)
 			fmt.Printf("        constraint: %s\n", promptset.Manifest.Constraint)
-			
+
 			if len(promptset.Manifest.Sinks) > 0 {
 				fmt.Printf("        sinks:\n")
 				for _, sink := range promptset.Manifest.Sinks {
 					fmt.Printf("            - %s\n", sink)
 				}
 			}
-			
+
 			if len(promptset.Manifest.Include) > 0 {
 				fmt.Printf("        include:\n")
 				for _, pattern := range promptset.Manifest.Include {
 					fmt.Printf("            - %q\n", pattern)
 				}
 			}
-			
+
 			if len(promptset.Manifest.Exclude) > 0 {
 				fmt.Printf("        exclude:\n")
 				for _, pattern := range promptset.Manifest.Exclude {
@@ -873,21 +873,21 @@ func (u *UI) AllInfo(registries map[string]map[string]interface{}, sinks map[str
 					fmt.Printf("                version: %s\n", ruleset.Installation.Version)
 					fmt.Printf("                constraint: %s\n", ruleset.Manifest.Constraint)
 					fmt.Printf("                priority: %d\n", ruleset.Manifest.Priority)
-					
+
 					if len(ruleset.Manifest.Sinks) > 0 {
 						fmt.Printf("                sinks:\n")
 						for _, sink := range ruleset.Manifest.Sinks {
 							fmt.Printf("                    - %s\n", sink)
 						}
 					}
-					
+
 					if len(ruleset.Manifest.Include) > 0 {
 						fmt.Printf("                include:\n")
 						for _, pattern := range ruleset.Manifest.Include {
 							fmt.Printf("                    - %q\n", pattern)
 						}
 					}
-					
+
 					if len(ruleset.Manifest.Exclude) > 0 {
 						fmt.Printf("                exclude:\n")
 						for _, pattern := range ruleset.Manifest.Exclude {
@@ -912,21 +912,21 @@ func (u *UI) AllInfo(registries map[string]map[string]interface{}, sinks map[str
 					fmt.Printf("            %s:\n", promptset.Name)
 					fmt.Printf("                version: %s\n", promptset.Installation.Version)
 					fmt.Printf("                constraint: %s\n", promptset.Manifest.Constraint)
-					
+
 					if len(promptset.Manifest.Sinks) > 0 {
 						fmt.Printf("                sinks:\n")
 						for _, sink := range promptset.Manifest.Sinks {
 							fmt.Printf("                    - %s\n", sink)
 						}
 					}
-					
+
 					if len(promptset.Manifest.Include) > 0 {
 						fmt.Printf("                include:\n")
 						for _, pattern := range promptset.Manifest.Include {
 							fmt.Printf("                    - %q\n", pattern)
 						}
 					}
-					
+
 					if len(promptset.Manifest.Exclude) > 0 {
 						fmt.Printf("                exclude:\n")
 						for _, pattern := range promptset.Manifest.Exclude {
@@ -943,4 +943,3 @@ func (u *UI) AllInfo(registries map[string]map[string]interface{}, sinks map[str
 		pterm.Info.Println("No resources configured")
 	}
 }
-
