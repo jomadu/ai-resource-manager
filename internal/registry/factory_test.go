@@ -60,7 +60,7 @@ func TestNewRegistry_GitLab(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewRegistry("test", tt.rawConfig)
+			got, err := NewRegistry(tt.rawConfig)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewRegistry() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -123,7 +123,7 @@ func TestNewGitLabRegistry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := newGitLabRegistry("test", tt.rawConfig)
+			_, err := newGitLabRegistry(tt.rawConfig)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("newGitLabRegistry() error = %v, wantErr %v", err, tt.wantErr)
 			}

@@ -20,14 +20,13 @@ import (
 
 // CloudsmithRegistry implements the Registry interface for Cloudsmith package registries
 type CloudsmithRegistry struct {
-	cache        cache.RegistryPackageCache
-	config       CloudsmithRegistryConfig
-	resolver     resolver.ConstraintResolver
-	client       *CloudsmithClient
-	registryName string
-	semver       *common.SemverHelper
-	rcService    *rcfile.Service
-	extractor    *archive.Extractor
+	cache     cache.RegistryPackageCache
+	config    CloudsmithRegistryConfig
+	resolver  resolver.ConstraintResolver
+	client    *CloudsmithClient
+	semver    *common.SemverHelper
+	rcService *rcfile.Service
+	extractor *archive.Extractor
 }
 
 // CloudsmithClient handles HTTP communication with Cloudsmith API
@@ -66,40 +65,38 @@ type CloudsmithPackage struct {
 // We'll handle this in the parsing logic
 
 // NewCloudsmithRegistry creates a new Cloudsmith-based registry
-func NewCloudsmithRegistry(registryName string, config *CloudsmithRegistryConfig, packageCache cache.RegistryPackageCache) *CloudsmithRegistry {
+func NewCloudsmithRegistry(config *CloudsmithRegistryConfig, packageCache cache.RegistryPackageCache) *CloudsmithRegistry {
 	client := &CloudsmithClient{
 		baseURL:    config.GetBaseURL(), // Use config URL or default to API base URL
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}
 
 	return &CloudsmithRegistry{
-		cache:        packageCache,
-		config:       *config,
-		resolver:     resolver.NewGitConstraintResolver(),
-		client:       client,
-		registryName: registryName,
-		semver:       common.NewSemverHelper(),
-		rcService:    rcfile.NewService(),
-		extractor:    archive.NewExtractor(),
+		cache:     packageCache,
+		config:    *config,
+		resolver:  resolver.NewGitConstraintResolver(),
+		client:    client,
+		semver:    common.NewSemverHelper(),
+		rcService: rcfile.NewService(),
+		extractor: archive.NewExtractor(),
 	}
 }
 
 // NewCloudsmithRegistryNoCache creates a new Cloudsmith-based registry without caching for testing
-func NewCloudsmithRegistryNoCache(registryName string, config *CloudsmithRegistryConfig) *CloudsmithRegistry {
+func NewCloudsmithRegistryNoCache(config *CloudsmithRegistryConfig) *CloudsmithRegistry {
 	client := &CloudsmithClient{
 		baseURL:    config.GetBaseURL(), // Use config URL or default to API base URL
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}
 
 	return &CloudsmithRegistry{
-		cache:        cache.NewNoopRegistryPackageCache(),
-		config:       *config,
-		resolver:     resolver.NewGitConstraintResolver(),
-		client:       client,
-		registryName: registryName,
-		semver:       common.NewSemverHelper(),
-		rcService:    rcfile.NewService(),
-		extractor:    archive.NewExtractor(),
+		cache:     cache.NewNoopRegistryPackageCache(),
+		config:    *config,
+		resolver:  resolver.NewGitConstraintResolver(),
+		client:    client,
+		semver:    common.NewSemverHelper(),
+		rcService: rcfile.NewService(),
+		extractor: archive.NewExtractor(),
 	}
 }
 

@@ -20,14 +20,13 @@ import (
 
 // GitLabRegistry implements the Registry interface for GitLab package registries
 type GitLabRegistry struct {
-	cache        cache.RegistryPackageCache
-	config       GitLabRegistryConfig
-	resolver     resolver.ConstraintResolver
-	client       *GitLabClient
-	registryName string
-	semver       *common.SemverHelper
-	rcService    *rcfile.Service
-	extractor    *archive.Extractor
+	cache     cache.RegistryPackageCache
+	config    GitLabRegistryConfig
+	resolver  resolver.ConstraintResolver
+	client    *GitLabClient
+	semver    *common.SemverHelper
+	rcService *rcfile.Service
+	extractor *archive.Extractor
 }
 
 // GitLabClient handles HTTP communication with GitLab API
@@ -65,7 +64,7 @@ type GitLabPackageFile struct {
 }
 
 // NewGitLabRegistry creates a new GitLab-based registry
-func NewGitLabRegistry(registryName string, config *GitLabRegistryConfig, packageCache cache.RegistryPackageCache) *GitLabRegistry {
+func NewGitLabRegistry(config *GitLabRegistryConfig, packageCache cache.RegistryPackageCache) *GitLabRegistry {
 	client := &GitLabClient{
 		baseURL:    config.URL,
 		apiVersion: config.GetAPIVersion(),
@@ -73,19 +72,18 @@ func NewGitLabRegistry(registryName string, config *GitLabRegistryConfig, packag
 	}
 
 	return &GitLabRegistry{
-		cache:        packageCache,
-		config:       *config,
-		resolver:     resolver.NewGitConstraintResolver(),
-		client:       client,
-		registryName: registryName,
-		semver:       common.NewSemverHelper(),
-		rcService:    rcfile.NewService(),
-		extractor:    archive.NewExtractor(),
+		cache:     packageCache,
+		config:    *config,
+		resolver:  resolver.NewGitConstraintResolver(),
+		client:    client,
+		semver:    common.NewSemverHelper(),
+		rcService: rcfile.NewService(),
+		extractor: archive.NewExtractor(),
 	}
 }
 
 // NewGitLabRegistryNoCache creates a new GitLab-based registry without caching for testing
-func NewGitLabRegistryNoCache(registryName string, config *GitLabRegistryConfig) *GitLabRegistry {
+func NewGitLabRegistryNoCache(config *GitLabRegistryConfig) *GitLabRegistry {
 	client := &GitLabClient{
 		baseURL:    config.URL,
 		apiVersion: config.GetAPIVersion(),
@@ -93,14 +91,13 @@ func NewGitLabRegistryNoCache(registryName string, config *GitLabRegistryConfig)
 	}
 
 	return &GitLabRegistry{
-		cache:        cache.NewNoopRegistryPackageCache(),
-		config:       *config,
-		resolver:     resolver.NewGitConstraintResolver(),
-		client:       client,
-		registryName: registryName,
-		semver:       common.NewSemverHelper(),
-		rcService:    rcfile.NewService(),
-		extractor:    archive.NewExtractor(),
+		cache:     cache.NewNoopRegistryPackageCache(),
+		config:    *config,
+		resolver:  resolver.NewGitConstraintResolver(),
+		client:    client,
+		semver:    common.NewSemverHelper(),
+		rcService: rcfile.NewService(),
+		extractor: archive.NewExtractor(),
 	}
 }
 

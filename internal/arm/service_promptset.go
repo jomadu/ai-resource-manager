@@ -34,7 +34,7 @@ func (a *ArmService) InstallPromptset(ctx context.Context, req *InstallPromptset
 	// Resolve version
 	finishResolving := a.ui.InstallStepWithSpinner("Resolving version...")
 	registryConfig := registries[req.Registry]
-	registryClient, err := registry.NewRegistry(req.Registry, registryConfig)
+	registryClient, err := registry.NewRegistry(registryConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
@@ -553,7 +553,7 @@ func (a *ArmService) installPromptsetExactVersion(ctx context.Context, registryN
 		return fmt.Errorf("failed to get manifest entry: %w", err)
 	}
 
-	registryClient, err := registry.NewRegistry(registryName, registryConfig)
+	registryClient, err := registry.NewRegistry(registryConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create registry: %w", err)
 	}

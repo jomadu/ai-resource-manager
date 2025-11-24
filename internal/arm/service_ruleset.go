@@ -34,7 +34,7 @@ func (a *ArmService) InstallRuleset(ctx context.Context, req *InstallRulesetRequ
 	// Resolve version
 	finishResolving := a.ui.InstallStepWithSpinner("Resolving version...")
 	registryConfig := registries[req.Registry]
-	registryClient, err := registry.NewRegistry(req.Registry, registryConfig)
+	registryClient, err := registry.NewRegistry(registryConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
@@ -133,7 +133,7 @@ func (a *ArmService) UpdateRuleset(ctx context.Context, registryName, rulesetNam
 		return fmt.Errorf("registry %s not configured", registryName)
 	}
 
-	registryClient, err := registry.NewRegistry(registryName, registryConfig)
+	registryClient, err := registry.NewRegistry(registryConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
@@ -573,7 +573,7 @@ func (a *ArmService) installExactRulesetVersion(ctx context.Context, registryNam
 		return fmt.Errorf("failed to get manifest entry: %w", err)
 	}
 
-	registryClient, err := registry.NewRegistry(registryName, registryConfig)
+	registryClient, err := registry.NewRegistry(registryConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create registry: %w", err)
 	}

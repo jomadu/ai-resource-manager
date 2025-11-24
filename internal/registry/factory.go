@@ -9,7 +9,7 @@ import (
 
 // NewRegistry creates a registry instance based on the registry configuration type.
 // Accepts raw config data and handles type-specific parsing internally.
-func NewRegistry(name string, rawConfig map[string]interface{}) (Registry, error) {
+func NewRegistry(rawConfig map[string]interface{}) (Registry, error) {
 	registryType, ok := rawConfig["type"].(string)
 	if !ok {
 		return nil, fmt.Errorf("missing or invalid registry type")
@@ -19,9 +19,9 @@ func NewRegistry(name string, rawConfig map[string]interface{}) (Registry, error
 	case "git":
 		return newGitRegistry(rawConfig)
 	case "gitlab":
-		return newGitLabRegistry(name, rawConfig)
+		return newGitLabRegistry(rawConfig)
 	case "cloudsmith":
-		return newCloudsmithRegistry(name, rawConfig)
+		return newCloudsmithRegistry(rawConfig)
 	default:
 		return nil, fmt.Errorf("unsupported registry type: %s", registryType)
 	}
@@ -57,7 +57,7 @@ func newGitRegistry(rawConfig map[string]interface{}) (*GitRegistry, error) {
 	return NewGitRegistry(gitConfig, packageCache, repoCache), nil
 }
 
-func newGitLabRegistry(name string, rawConfig map[string]interface{}) (*GitLabRegistry, error) {
+func newGitLabRegistry(rawConfig map[string]interface{}) (*GitLabRegistry, error) {
 	// Parse raw config into GitLabRegistryConfig
 	configBytes, err := json.Marshal(rawConfig)
 	if err != nil {
@@ -86,10 +86,10 @@ func newGitLabRegistry(name string, rawConfig map[string]interface{}) (*GitLabRe
 		return nil, err
 	}
 
-	return NewGitLabRegistry(name, &gitlabConfig, packageCache), nil
+	return NewGitLabRegistry(&gitlabConfig, packageCache), nil
 }
 
-func newCloudsmithRegistry(name string, rawConfig map[string]interface{}) (*CloudsmithRegistry, error) {
+func newCloudsmithRegistry(rawConfig map[string]interface{}) (*CloudsmithRegistry, error) {
 	// Parse raw config into CloudsmithRegistryConfig
 	configBytes, err := json.Marshal(rawConfig)
 	if err != nil {
@@ -114,5 +114,5 @@ func newCloudsmithRegistry(name string, rawConfig map[string]interface{}) (*Clou
 		return nil, err
 	}
 
-	return NewCloudsmithRegistry(name, &cloudsmithConfig, packageCache), nil
+	return NewCloudsmithRegistry(&cloudsmithConfig, packageCache), nil
 }

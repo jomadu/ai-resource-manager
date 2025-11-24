@@ -519,7 +519,7 @@ func (a *ArmService) getRegistryInstance(ctx context.Context, registryName strin
 	}
 
 	// Create registry instance
-	registryInstance, err := registry.NewRegistry(registryName, registryConfig)
+	registryInstance, err := registry.NewRegistry(registryConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create registry %s: %w", registryName, err)
 	}
