@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+
+	"github.com/jomadu/ai-rules-manager/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -16,9 +19,20 @@ This information is useful for:
 - Reporting issues with precise version context
 - Understanding when the binary was built (useful for troubleshooting time-sensitive issues)`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := armService.ShowVersion(); err != nil {
-			cmd.PrintErrln("Error:", err)
-			return
-		}
+		info := version.GetVersionInfo()
+		printVersionInfo(info)
 	},
+}
+
+func printVersionInfo(info version.VersionInfo) {
+	fmt.Printf("arm %s\n", info.Version)
+	if info.Commit != "" {
+		fmt.Printf("commit: %s\n", info.Commit)
+	}
+	if info.Arch != "" {
+		fmt.Printf("arch: %s\n", info.Arch)
+	}
+	if info.Timestamp != "" {
+		fmt.Printf("timestamp: %s\n", info.Timestamp)
+	}
 }

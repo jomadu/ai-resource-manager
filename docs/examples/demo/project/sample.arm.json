@@ -1,4 +1,5 @@
 {
+    "version": "1.0.0",
     "registries": {
         "sample-registry": {
             "url": "https://api.cloudsmith.io",
@@ -8,29 +9,25 @@
         }
     },
     "packages": {
-        "rulesets": {
             "sample-registry": {
                 "clean-code-ruleset": {
                     "version": "^1.0.0",
+                    "resourceType": "ruleset",
                     "priority": 100,
                     "sinks": [
                         "cursor-rules",
                         "amazonq-rules"
                     ]
-                }
-            }
-        },
-        "promptsets": {
-            "sample-registry": {
+                },
                 "code-review-promptset": {
                     "version": "^1.0.0",
+                    "resourceType": "promptset",
                     "sinks": [
                         "cursor-commands",
                         "amazonq-prompts"
                     ]
                 }
             }
-        }
     },
     "sinks": {
         "cursor-rules": {

@@ -22,7 +22,6 @@ func (a *ArmService) CleanCacheWithAge(ctx context.Context, maxAge time.Duration
 	entries, err := os.ReadDir(cacheDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			a.ui.Success("No cache directory found - nothing to clean")
 			return nil
 		}
 		return fmt.Errorf("failed to read cache directory: %w", err)
@@ -63,7 +62,6 @@ func (a *ArmService) CleanCacheWithAge(ctx context.Context, maxAge time.Duration
 		cleanedCount++
 	}
 
-	a.ui.Success(fmt.Sprintf("Cache cleaned: processed %d registries, removed versions older than %v", cleanedCount, maxAge))
 	return nil
 }
 
@@ -73,7 +71,6 @@ func (a *ArmService) NukeCache(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to remove cache directory: %w", err)
 	}
-	a.ui.Success("Cache directory removed successfully")
 	return nil
 }
 
@@ -115,7 +112,6 @@ func (a *ArmService) CleanSinks(ctx context.Context) error {
 		cleanedCount += cleaned
 	}
 
-	a.ui.Success(fmt.Sprintf("Sink cleanup completed: processed %d sinks, removed %d orphaned files", len(sinks), cleanedCount))
 	return nil
 }
 
@@ -137,7 +133,6 @@ func (a *ArmService) NukeSinks(ctx context.Context) error {
 		removedCount++
 	}
 
-	a.ui.Success(fmt.Sprintf("Sink nuke completed: removed %d sink directories", removedCount))
 	return nil
 }
 
@@ -264,7 +259,6 @@ func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) erro
 	}
 
 	if len(rulesets) == 0 && len(promptsets) == 0 {
-		a.ui.Warning("No resource files found matching the criteria")
 		return nil
 	}
 
@@ -276,21 +270,9 @@ func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) erro
 	for _, ruleset := range rulesets {
 		stats.FilesProcessed++
 
-		if req.Verbose {
-			a.ui.CompileStep(fmt.Sprintf("Processing ruleset %s", ruleset.Metadata.ID))
-		}
-
-		if req.ValidateOnly {
-			if req.Verbose {
-				a.ui.Success(fmt.Sprintf("✓ ruleset %s validated", ruleset.Metadata.ID))
-			}
-			continue
-		}
-
 		compiled, err := a.compileRuleset(ruleset, targets, req)
 		if err != nil {
-			a.ui.Error(fmt.Errorf("compilation failed for ruleset %s: %w", ruleset.Metadata.ID, err))
-			errors = append(errors, err)
+			errors = append(errors, fmt.Errorf("compilation failed for ruleset %s: %w", ruleset.Metadata.ID, err))
 			stats.Errors++
 			if req.FailFast {
 				return err
@@ -305,21 +287,13 @@ func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) erro
 	for _, promptset := range promptsets {
 		stats.FilesProcessed++
 
-		if req.Verbose {
-			a.ui.CompileStep(fmt.Sprintf("Processing promptset %s", promptset.Metadata.ID))
-		}
-
 		if req.ValidateOnly {
-			if req.Verbose {
-				a.ui.Success(fmt.Sprintf("✓ promptset %s validated", promptset.Metadata.ID))
-			}
 			continue
 		}
 
 		compiled, err := a.compilePromptset(promptset, targets, req)
 		if err != nil {
-			a.ui.Error(fmt.Errorf("compilation failed for promptset %s: %w", promptset.Metadata.ID, err))
-			errors = append(errors, err)
+			errors = append(errors, fmt.Errorf("compilation failed for promptset %s: %w", promptset.Metadata.ID, err))
 			stats.Errors++
 			if req.FailFast {
 				return err
@@ -329,9 +303,6 @@ func (a *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) erro
 		stats.FilesCompiled++
 		stats.RulesGenerated += compiled
 	}
-
-	// 4. Display results
-	a.ui.CompileComplete(stats, req.ValidateOnly)
 
 	if len(errors) > 0 {
 		return fmt.Errorf("compilation completed with %d errors", len(errors))
@@ -385,9 +356,6 @@ func (a *ArmService) compileRuleset(ruleset *resource.Ruleset, targets []string,
 			if err := os.WriteFile(outputPath, compiledFile.Content, 0o644); err != nil {
 				return 0, fmt.Errorf("failed to write output file %s: %w", outputPath, err)
 			}
-			if req.Verbose {
-				a.ui.CompileStep(fmt.Sprintf("Wrote %s", outputPath))
-			}
 		}
 
 		totalRules += len(compiledFiles)
@@ -440,9 +408,6 @@ func (a *ArmService) compilePromptset(promptset *resource.Promptset, targets []s
 
 			if err := os.WriteFile(outputPath, compiledFile.Content, 0o644); err != nil {
 				return 0, fmt.Errorf("failed to write output file %s: %w", outputPath, err)
-			}
-			if req.Verbose {
-				a.ui.CompileStep(fmt.Sprintf("Wrote %s", outputPath))
 			}
 		}
 
@@ -539,3 +504,4 @@ func expandVersionShorthand(constraint string) string {
 	}
 	return constraint
 }
+

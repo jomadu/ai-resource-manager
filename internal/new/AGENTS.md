@@ -1,0 +1,1 @@
+If you are an agent, recognize that the code under this folder is "new" refactored code, representing a major version change from the "old" code in internal/old.

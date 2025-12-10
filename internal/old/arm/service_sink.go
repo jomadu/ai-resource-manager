@@ -127,3 +127,8 @@ func (a *ArmService) syncRemovedSink(ctx context.Context, removedSink *manifest.
 		}
 	}
 }
+
+// GetSinks returns all configured sinks
+func (a *ArmService) GetSinks(ctx context.Context) (map[string]manifest.SinkConfig, error) {
+	return a.manifestManager.GetSinks(ctx)
+}

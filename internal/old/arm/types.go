@@ -1,16 +1,56 @@
 package arm
 
-import "github.com/jomadu/ai-rules-manager/internal/ui"
+type OutdatedPackage struct {
+	Package    string `json:"package"`
+	Type       string `json:"type"` // "ruleset" or "promptset"
+	Constraint string `json:"constraint"`
+	Current    string `json:"current"`
+	Wanted     string `json:"wanted"`
+	Latest     string `json:"latest"`
+}
 
-// Type aliases to avoid duplication
-type OutdatedRuleset = ui.OutdatedRuleset
-type OutdatedPromptset = ui.OutdatedPromptset
-type ManifestInfo = ui.ManifestInfo
-type InstallationInfo = ui.InstallationInfo
-type RulesetInfo = ui.RulesetInfo
-type PromptsetInfo = ui.PromptsetInfo
-type CompileStats = ui.CompileStats
+type ManifestInfo struct {
+	Constraint string   `json:"constraint"`
+	Priority   int      `json:"priority"`
+	Include    []string `json:"include"`
+	Exclude    []string `json:"exclude"`
+	Sinks      []string `json:"sinks"`
+}
 
+type InstallationInfo struct {
+	Version        string   `json:"version"`
+	InstalledPaths []string `json:"installedPaths"`
+}
+
+type RulesetInfo struct {
+	Registry     string           `json:"registry"`
+	Name         string           `json:"name"`
+	Manifest     ManifestInfo     `json:"manifest"`
+	Installation InstallationInfo `json:"installation"`
+}
+
+type PromptsetInfo struct {
+	Registry     string                `json:"registry"`
+	Name         string                `json:"name"`
+	Manifest     PromptsetManifestInfo `json:"manifest"`
+	Installation InstallationInfo      `json:"installation"`
+}
+
+type PromptsetManifestInfo struct {
+	Constraint string   `json:"constraint"`
+	Include    []string `json:"include"`
+	Exclude    []string `json:"exclude"`
+	Sinks      []string `json:"sinks"`
+}
+
+// CompileStats tracks compilation statistics
+type CompileStats struct {
+	FilesProcessed int `json:"filesProcessed"`
+	FilesCompiled  int `json:"filesCompiled"`
+	FilesSkipped   int `json:"filesSkipped"`
+	RulesGenerated int `json:"rulesGenerated"`
+	Errors         int `json:"errors"`
+}
 // InstallRulesetRequest groups ruleset install parameters to avoid repetitive parameter passing.
 type InstallRulesetRequest struct {
 	Registry string

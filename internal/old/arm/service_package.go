@@ -3,8 +3,6 @@ package arm
 import (
 	"context"
 	"fmt"
-
-	"github.com/jomadu/ai-rules-manager/internal/ui"
 )
 
 // InstallAll installs all configured packages (rulesets and promptsets)
@@ -154,8 +152,6 @@ func (a *ArmService) UpgradeAll(ctx context.Context) error {
 			}
 		}
 	}
-
-	a.ui.Success("All resources upgraded to latest versions")
 	return nil
 }
 
@@ -191,61 +187,25 @@ func (a *ArmService) UninstallAll(ctx context.Context) error {
 		}
 	}
 
-	a.ui.Success("All resources uninstalled successfully")
 	return nil
 }
 
-// ShowAllInfo shows information about all installed resources (rulesets and promptsets)
-func (a *ArmService) ShowAllInfo(ctx context.Context) error {
-	// Get registries
-	registries, err := a.manifestManager.GetRegistries(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get registries: %w", err)
-	}
-
-	// Get sinks
-	sinks, err := a.manifestManager.GetSinks(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get sinks: %w", err)
-	}
-
-	// Get rulesets
-	rulesets, err := a.listInstalledRulesets(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get rulesets: %w", err)
-	}
-
-	// Get promptsets
-	promptsets, err := a.listInstalledPromptsets(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get promptsets: %w", err)
-	}
-
-	// Display all info
-	a.ui.AllInfo(registries, sinks, rulesets, promptsets)
-	return nil
-}
-
-// ShowAllOutdated shows outdated resources (rulesets and promptsets)
-func (a *ArmService) ShowAllOutdated(ctx context.Context, outputFormat string, noSpinner bool) error {
-	// Get outdated rulesets
+// GetOutdatedPackages returns all outdated packages (rulesets and promptsets)
+func (a *ArmService) GetOutdatedPackages(ctx context.Context) ([]*OutdatedPackage, error) {
 	rulesetOutdated, err := a.getOutdatedRulesets(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get outdated rulesets: %w", err)
+		return nil, fmt.Errorf("failed to get outdated rulesets: %w", err)
 	}
 
-	// Get outdated promptsets
 	promptsetOutdated, err := a.getOutdatedPromptsets(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get outdated promptsets: %w", err)
+		return nil, fmt.Errorf("failed to get outdated promptsets: %w", err)
 	}
 
-	// Convert to unified format
-	var allPackages []ui.OutdatedPackage
+	var allPackages []*OutdatedPackage
 
-	// Add rulesets
 	for _, ruleset := range rulesetOutdated {
-		allPackages = append(allPackages, ui.OutdatedPackage{
+		allPackages = append(allPackages, &OutdatedPackage{
 			Package:    fmt.Sprintf("%s/%s", ruleset.RulesetInfo.Registry, ruleset.RulesetInfo.Name),
 			Type:       "ruleset",
 			Constraint: ruleset.RulesetInfo.Manifest.Constraint,
@@ -255,9 +215,8 @@ func (a *ArmService) ShowAllOutdated(ctx context.Context, outputFormat string, n
 		})
 	}
 
-	// Add promptsets
 	for _, promptset := range promptsetOutdated {
-		allPackages = append(allPackages, ui.OutdatedPackage{
+		allPackages = append(allPackages, &OutdatedPackage{
 			Package:    fmt.Sprintf("%s/%s", promptset.PromptsetInfo.Registry, promptset.PromptsetInfo.Name),
 			Type:       "promptset",
 			Constraint: promptset.PromptsetInfo.Manifest.Constraint,
@@ -267,45 +226,5 @@ func (a *ArmService) ShowAllOutdated(ctx context.Context, outputFormat string, n
 		})
 	}
 
-	if noSpinner || outputFormat == "json" {
-		a.ui.OutdatedTable(allPackages, outputFormat)
-	} else {
-		finishChecking := a.ui.InstallStepWithSpinner("Checking for updates...")
-		finishChecking(fmt.Sprintf("Found %d outdated resources", len(allPackages)))
-		fmt.Println() // Add spacing between spinner and table
-		a.ui.OutdatedTable(allPackages, outputFormat)
-	}
-
-	return nil
-}
-
-// ShowAllList shows all installed resources (rulesets and promptsets)
-func (a *ArmService) ShowAllList(ctx context.Context, sortByPriority bool) error {
-	// Get registries
-	registries, err := a.manifestManager.GetRegistries(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get registries: %w", err)
-	}
-
-	// Get sinks
-	sinks, err := a.manifestManager.GetSinks(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get sinks: %w", err)
-	}
-
-	// Get rulesets
-	rulesets, err := a.listInstalledRulesets(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get rulesets: %w", err)
-	}
-
-	// Get promptsets
-	promptsets, err := a.listInstalledPromptsets(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get promptsets: %w", err)
-	}
-
-	// Display all list
-	a.ui.AllList(registries, sinks, rulesets, promptsets)
-	return nil
+	return allPackages, nil
 }

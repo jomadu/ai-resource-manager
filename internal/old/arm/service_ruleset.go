@@ -689,7 +689,7 @@ func (a *ArmService) ShowRulesetOutdated(ctx context.Context, outputFormat strin
 	return nil
 }
 
-// convertOutdatedRulesetsToPackages converts OutdatedRuleset to OutdatedPackage format
+// convertOutdatedRulesetsToPackages converts OutdatedRuleset to OutdatedPackage format (for old UI interface)
 func (a *ArmService) convertOutdatedRulesetsToPackages(outdated []OutdatedRuleset) []ui.OutdatedPackage {
 	packages := make([]ui.OutdatedPackage, len(outdated))
 	for i, ruleset := range outdated {
@@ -703,4 +703,26 @@ func (a *ArmService) convertOutdatedRulesetsToPackages(outdated []OutdatedRulese
 		}
 	}
 	return packages
+}
+
+// GetRulesets returns all installed rulesets
+func (a *ArmService) GetRulesets(ctx context.Context) ([]*RulesetInfo, error) {
+	return a.listInstalledRulesets(ctx)
+}
+
+// GetRulesetsByNames returns ruleset info for specific rulesets
+func (a *ArmService) GetRulesetsByNames(ctx context.Context, rulesets []string) ([]*RulesetInfo, error) {
+	var infos []*RulesetInfo
+	for _, rulesetArg := range rulesets {
+		parts := strings.Split(rulesetArg, "/")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid ruleset format: %s (expected registry/ruleset)", rulesetArg)
+		}
+		info, err := a.getRulesetInfo(ctx, parts[0], parts[1])
+		if err != nil {
+			return nil, err
+		}
+		infos = append(infos, info)
+	}
+	return infos, nil
 }

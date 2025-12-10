@@ -31,8 +31,6 @@ func (a *ArmService) InstallPromptset(ctx context.Context, req *InstallPromptset
 		return fmt.Errorf("registry %s not configured", req.Registry)
 	}
 
-	// Resolve version
-	finishResolving := a.ui.InstallStepWithSpinner("Resolving version...")
 	registryConfig := registries[req.Registry]
 	registryClient, err := registry.NewRegistry(registryConfig)
 	if err != nil {
@@ -48,16 +46,13 @@ func (a *ArmService) InstallPromptset(ctx context.Context, req *InstallPromptset
 		return fmt.Errorf("failed to resolve version: %w", err)
 	}
 	resolvedVersion := resolvedVersionResult.Version
-	finishResolving(fmt.Sprintf("Version resolved... %s (from %s)", resolvedVersion.Display, versionStr))
 
 	// Download content
-	finishDownloading := a.ui.InstallStepWithSpinner("Downloading content...")
 	selector := types.ContentSelector{Include: req.Include, Exclude: req.Exclude}
 	files, err := registryClient.GetContent(ctx, req.Promptset, resolvedVersion, selector)
 	if err != nil {
 		return fmt.Errorf("failed to download content: %w", err)
 	}
-	finishDownloading(fmt.Sprintf("Downloaded content... %d files", len(files)))
 
 	// Clean up from previous sink locations BEFORE updating manifest
 	// This ensures we read the OLD sinks from manifest, not the new ones
@@ -74,7 +69,6 @@ func (a *ArmService) InstallPromptset(ctx context.Context, req *InstallPromptset
 		return fmt.Errorf("failed to install to sinks: %w", err)
 	}
 
-	a.ui.InstallComplete(req.Registry, req.Promptset, resolvedVersion.Display, "promptset", req.Sinks)
 	return nil
 }
 
@@ -519,22 +513,6 @@ func (a *ArmService) UpdateAllPromptsets(ctx context.Context) error {
 	return nil
 }
 
-// convertOutdatedPromptsetsToPackages converts OutdatedPromptset to OutdatedPackage format
-func (a *ArmService) convertOutdatedPromptsetsToPackages(outdated []OutdatedPromptset) []ui.OutdatedPackage {
-	packages := make([]ui.OutdatedPackage, len(outdated))
-	for i, promptset := range outdated {
-		packages[i] = ui.OutdatedPackage{
-			Package:    fmt.Sprintf("%s/%s", promptset.PromptsetInfo.Registry, promptset.PromptsetInfo.Name),
-			Type:       "promptset",
-			Constraint: promptset.PromptsetInfo.Manifest.Constraint,
-			Current:    promptset.PromptsetInfo.Installation.Version,
-			Wanted:     promptset.Wanted,
-			Latest:     promptset.Latest,
-		}
-	}
-	return packages
-}
-
 // installPromptsetExactVersion installs a promptset from lockfile with exact version and checksum verification
 func (a *ArmService) installPromptsetExactVersion(ctx context.Context, registryName, promptset string, lockEntry *lockfile.Entry) error {
 	// Get registry config from manifest
@@ -621,4 +599,26 @@ func (a *ArmService) cleanPreviousPromptsetInstallation(ctx context.Context, reg
 	}
 
 	return nil
+}
+
+// GetPromptsets returns all installed promptsets
+func (a *ArmService) GetPromptsets(ctx context.Context) ([]*PromptsetInfo, error) {
+	return a.listInstalledPromptsets(ctx)
+}
+
+// GetPromptsetsByNames returns promptset info for specific promptsets
+func (a *ArmService) GetPromptsetsByNames(ctx context.Context, promptsets []string) ([]*PromptsetInfo, error) {
+	var infos []*PromptsetInfo
+	for _, promptsetArg := range promptsets {
+		parts := strings.Split(promptsetArg, "/")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid promptset format: %s (expected registry/promptset)", promptsetArg)
+		}
+		info, err := a.getPromptsetInfo(ctx, parts[0], parts[1])
+		if err != nil {
+			return nil, err
+		}
+		infos = append(infos, info)
+	}
+	return infos, nil
 }

@@ -1,0 +1,1 @@
+If you are an agent, recognize that the code under this folder is old code, meant to be decommissioned in favor of the new code in internal/new/.

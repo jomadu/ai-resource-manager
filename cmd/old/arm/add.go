@@ -99,12 +99,7 @@ func addGitRegistry(cmd *cobra.Command, name string) {
 	branches, _ := cmd.Flags().GetStringSlice("branches")
 	force, _ := cmd.Flags().GetBool("force")
 
-	options := make(map[string]interface{})
-	if len(branches) > 0 {
-		options["branches"] = branches
-	}
-
-	if err := armService.AddRegistry(ctx, name, url, "git", options, force); err != nil {
+	if err := armService.AddGitRegistry(ctx, name, url, branches, force); err != nil {
 		cmd.PrintErrln("Error:", err)
 		return
 	}
@@ -117,18 +112,7 @@ func addGitLabRegistry(cmd *cobra.Command, name string) {
 	apiVersion, _ := cmd.Flags().GetString("api-version")
 	force, _ := cmd.Flags().GetBool("force")
 
-	options := make(map[string]interface{})
-	if groupID != "" {
-		options["group_id"] = groupID
-	}
-	if projectID != "" {
-		options["project_id"] = projectID
-	}
-	if apiVersion != "" {
-		options["api_version"] = apiVersion
-	}
-
-	if err := armService.AddRegistry(ctx, name, url, "gitlab", options, force); err != nil {
+	if err := armService.AddGitLabRegistry(ctx, name, url, projectID, groupID, apiVersion, force); err != nil {
 		cmd.PrintErrln("Error:", err)
 		return
 	}
@@ -140,15 +124,7 @@ func addCloudsmithRegistry(cmd *cobra.Command, name string) {
 	repo, _ := cmd.Flags().GetString("repo")
 	force, _ := cmd.Flags().GetBool("force")
 
-	options := make(map[string]interface{})
-	if owner != "" {
-		options["owner"] = owner
-	}
-	if repo != "" {
-		options["repository"] = repo
-	}
-
-	if err := armService.AddRegistry(ctx, name, url, "cloudsmith", options, force); err != nil {
+	if err := armService.AddCloudsmithRegistry(ctx, name, url, owner, repo, force); err != nil {
 		cmd.PrintErrln("Error:", err)
 		return
 	}
