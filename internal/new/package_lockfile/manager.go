@@ -16,11 +16,12 @@ type PackageLockInfo struct {
 
 type Manager interface {
 	GetPackageLockInfo(ctx context.Context, registryName, packageName string) (*PackageLockInfo, error)
-	GetPackagesLockInfo(ctx context.Context) (map[string]map[string]*PackageLockInfo, error)
-	AddPackageLockInfo(ctx context.Context, registryName, packageName string, lockInfo *PackageLockInfo) error
-	UpdatePackageLockInfoName(ctx context.Context, registryName, packageName, newPackageName string) error
-	UpdatePackageLockInfo(ctx context.Context, registryName, packageName string, lockInfo *PackageLockInfo) error
+	GetPackageLockfile(ctx context.Context) (*PackageLockfile, error)
+	SetPackageLockInfo(ctx context.Context, registryName, packageName string, lockInfo *PackageLockInfo) error
+	UpdatePackageName(ctx context.Context, registryName, packageName, newPackageName string) error
 	RemovePackageLockInfo(ctx context.Context, registryName, packageName string) error
+	UpdateRegistryName(ctx context.Context, oldName, newName string) error
+	UpdatePackageLockfileVersion(ctx context.Context, version string) error
 }
 
 type FileManager struct {
