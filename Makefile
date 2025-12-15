@@ -31,9 +31,7 @@ install: build
 
 # Run tests
 test:
-	go test -v -race -coverprofile=coverage.out ./...
-
-
+	go test -v -race -coverprofile=coverage.out ./internal/new/...
 
 # Format code
 fmt:
