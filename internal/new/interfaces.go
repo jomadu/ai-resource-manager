@@ -124,32 +124,6 @@ type SinkManager interface {
 
 // Manifest File
 
-type ManifestFileManager interface {
-	// Registry operations
-	GetAllRegistriesConfig(ctx context.Context) (map[string]map[string]interface{}, error)
-	GetRegistryConfig(ctx context.Context, name string) (map[string]interface{}, error)
-	AddRegistryConfig(ctx context.Context, name string, config map[string]interface{}) error
-	UpdateRegistryConfigName(ctx context.Context, name string, newName string) error
-	UpdateRegistryConfig(ctx context.Context, name string, config map[string]interface{}) error
-	RemoveRegistryConfig(ctx context.Context, name string) error
-
-	// Sink operations
-	GetAllSinksConfig(ctx context.Context) (map[string]*SinkConfig, error)
-	GetSinkConfig(ctx context.Context, name string) (*SinkConfig, error)
-	AddSinkConfig(ctx context.Context, name string, config *SinkConfig) error
-	UpdateSinkConfigName(ctx context.Context, name string, newName string) error
-	UpdateSinkConfig(ctx context.Context, name string, config *SinkConfig) error
-	RemoveSinkConfig(ctx context.Context, name string) error
-
-	// Package operations
-	GetAllPackagesConfig(ctx context.Context) (map[string]map[string]interface{}, error)
-	GetPackageConfig(ctx context.Context, registryName, packageName string) (map[string]interface{}, error)
-	AddPackageConfig(ctx context.Context, registryName, packageName string, config map[string]interface{}) error
-	UpdatePackageConfigName(ctx context.Context, registryName, packageName string, newPackageName string) error
-	UpdatePackageConfig(ctx context.Context, registryName, packageName string, config map[string]interface{}) error
-	RemovePackageConfig(ctx context.Context, registryName, packageName string) error
-}
-
 type RCFileManager interface {
 	GetAllSections(ctx context.Context) (map[string]string, error)
 	GetSection(ctx context.Context, section string) (map[string]string, error)

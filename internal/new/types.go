@@ -3,58 +3,7 @@ package new
 
 
 
-type Manifest struct {
-	Version string `json:"version"`
-	Registries map[string]map[string]interface{} `json:"registries,omitempty"`
-	Sinks      map[string]SinkConfig             `json:"sinks,omitempty"`
-	Packages   map[string]map[string]interface{} `json:"packages"`
-}
 
-type SinkConfig struct {
-	Directory string `json:"directory"`
-	Layout string `json:"layout,omitempty"`
-	CompileTarget string `json:"compileTarget"`
-}
-
-type PackageConfig struct {
-	Version string `json:"version"`
-	Include []string `json:"include,omitempty"`
-	Exclude []string `json:"exclude,omitempty"`
-	Sinks []string `json:"sinks"`
-	ResourceType ResourceType `json:"resourceType,omitempty"`
-}
-
-type RulesetConfig struct {
-	PackageConfig
-	Priority int `json:"priority,omitempty"`
-}
-
-type PromptsetConfig struct {
-	PackageConfig
-}
-
-type RegistryConfig struct {
-	URL string `json:"url"`
-	Type string `json:"type"`
-}
-
-type GitRegistryConfig struct {
-	RegistryConfig
-	Branches []string `json:"branches,omitempty"`
-}
-
-type GitLabRegistryConfig struct {
-	RegistryConfig
-	ProjectID string `json:"projectId,omitempty"`
-	GroupID string `json:"groupId,omitempty"`
-	APIVersion string `json:"apiVersion,omitempty"`
-}
-
-type CloudsmithRegistryConfig struct {
-	RegistryConfig
-	Owner string `json:"owner"`
-	Repository string `json:"repository"`
-}
 
 type BuildInfo struct {
 	Arch      string
