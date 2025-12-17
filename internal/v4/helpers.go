@@ -1,4 +1,4 @@
-package new
+package v4
 
 import "errors"
 

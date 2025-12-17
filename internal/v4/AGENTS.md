@@ -1,0 +1,1 @@
+If you are an agent, recognize that the code under this folder is v4 refactored code, representing a major version change from the v3 code in internal/v3.

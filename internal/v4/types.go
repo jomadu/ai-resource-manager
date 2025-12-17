@@ -1,4 +1,4 @@
-package new
+package v4
 
 
 
@@ -152,5 +152,26 @@ const (
 	TargetAmazonQ  CompileTarget = "amazonq"
 	TargetCopilot  CompileTarget = "copilot"
 )
+
+// CompileRequest groups compile parameters following ARM patterns
+type CompileRequest struct {
+	Paths        []string
+	Targets      []string
+	OutputDir    string
+	Namespace    string
+	Force        bool
+	Recursive    bool
+	Verbose      bool
+	ValidateOnly bool
+	Include      []string
+	Exclude      []string
+	FailFast     bool
+}
+
+// PackageLockInfo represents lock information for a package
+type PackageLockInfo struct {
+	Version  string `json:"version"`
+	Checksum string `json:"checksum"`
+}
 
 

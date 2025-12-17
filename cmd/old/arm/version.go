@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/jomadu/ai-rules-manager/internal/version"
+	"github.com/jomadu/ai-rules-manager/internal/v3/version"
 	"github.com/spf13/cobra"
 )
 

@@ -1,10 +1,10 @@
-package new
+package v4
 
 import (
 	"context"
 	"time"
 
-	"github.com/jomadu/ai-rules-manager/internal/manifest"
+	"github.com/jomadu/ai-rules-manager/internal/v4/manifest"
 )
 
 // ARM
@@ -105,7 +105,7 @@ type ArmService interface {
 	NukeSinks(ctx context.Context) error
 
 	// Compile
-	CompileFiles(ctx context.Context, req *compiler.CompileRequest) error
+	CompileFiles(ctx context.Context, req *CompileRequest) error
 }
 
 // Sink Manager

@@ -1,9 +1,26 @@
-package new
+package v4
 
 // Compare returns -1 if v is older than other, 0 if equal, 1 if newer
 func (v Version) Compare(other Version) int {
-    // Compare Major, Minor, Patch
-    // Handle prerelease/build metadata if needed
+	if v.Major < other.Major {
+		return -1
+	}
+	if v.Major > other.Major {
+		return 1
+	}
+	if v.Minor < other.Minor {
+		return -1
+	}
+	if v.Minor > other.Minor {
+		return 1
+	}
+	if v.Patch < other.Patch {
+		return -1
+	}
+	if v.Patch > other.Patch {
+		return 1
+	}
+	return 0
 }
 
 // IsNewerThan returns true if v is newer than other
