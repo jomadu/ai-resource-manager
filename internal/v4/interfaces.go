@@ -110,13 +110,7 @@ type ArmService interface {
 
 // Sink Manager
 
-type SinkManager interface {
-	InstallRuleset(ctx context.Context, ruleset *Package, priority int) error
-	InstallPromptset(ctx context.Context, promptset *Package) error
-	UninstallPackage(ctx context.Context, packageMetaData *PackageMetadata) error
-	ListInstalledPackages(ctx context.Context) ([]*PackageInstallation, error)
-	IsPackageInstalled(ctx context.Context, packageMetaData *PackageMetadata) (bool, error)
-}
+
 
 // Package Lockfile
 

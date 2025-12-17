@@ -12,40 +12,7 @@ type BuildInfo struct {
 	BuildTime string
 }
 
-type File struct {
-	Path    string
-	Content []byte
-	Size    int64
-}
 
-type Version struct {
-	Major int
-	Minor int
-	Patch int
-	Prerelease string
-	Build string
-	Version string
-}
-
-type RegistryId struct {
-	ID string
-	Name string
-}
-type PackageId struct {
-	ID string
-	Name string
-}
-
-type PackageMetadata struct {
-	PackageId PackageId
-	RegistryId RegistryId
-	Version Version
-}
-
-type Package struct {
-	Metadata PackageMetadata
-	Files []File
-}
 
 type OutdatedPackage struct {
 	Current PackageMetadata
@@ -54,18 +21,7 @@ type OutdatedPackage struct {
 	Latest PackageMetadata
 }
 
-type ResourceType string
 
-const (
-	ResourceTypeRuleset ResourceType = "ruleset"
-	ResourceTypePromptset ResourceType = "promptset"
-)
-
-type PackageInstallation struct {
-	Metadata PackageMetadata
-	ResourceType ResourceType
-	FilePaths []string
-}
 
 type PackageInfo struct {
 	Installation PackageInstallation
