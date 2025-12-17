@@ -124,11 +124,6 @@ type SinkManager interface {
 
 // Manifest File
 
-type RCFileManager interface {
-	GetAllSections(ctx context.Context) (map[string]string, error)
-	GetSection(ctx context.Context, section string) (map[string]string, error)
-	GetValue(ctx context.Context, section, key string) (string, error)
-}
 
 type Registry interface {
 	ListPackages(ctx context.Context) ([]*PackageMetadata, error)
