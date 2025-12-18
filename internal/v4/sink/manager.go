@@ -2,7 +2,8 @@ package sink
 
 import (
 	"context"
-	"core"
+
+	"github.com/jomadu/ai-resource-manager/internal/v4/core"
 )
 
 type ResourceType string

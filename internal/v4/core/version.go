@@ -33,10 +33,6 @@ func (v Version) IsOlderThan(other Version) bool {
 	return v.Compare(other) < 0
 }
 
-import (
-	"runtime"
-)
-
 // Build-time variables set by ldflags
 var (
 	VersionString = "dev"
