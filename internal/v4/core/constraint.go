@@ -1,6 +1,5 @@
-package v4
+package core
 
-// IsSatisfiedBy checks if a version satisfies the constraint.
 func (c *Constraint) IsSatisfiedBy(version Version) bool {
 	if c == nil {
 		return false

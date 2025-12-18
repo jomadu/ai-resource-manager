@@ -1,3 +1,12 @@
+package core
+
+type BuildInfo struct {
+	Arch      string
+	Version   Version
+	Commit    string
+	BuildTime string
+}
+
 type File struct {
 	Path    string
 	Content []byte
@@ -5,30 +14,45 @@ type File struct {
 }
 
 type Version struct {
-	Major int
-	Minor int
-	Patch int
+	Major      int
+	Minor      int
+	Patch      int
 	Prerelease string
-	Build string
-	Version string
+	Build      string
+	Version    string
 }
 
 type RegistryId struct {
-	ID string
+	ID   string
 	Name string
 }
 type PackageId struct {
-	ID string
+	ID   string
 	Name string
 }
 
 type PackageMetadata struct {
-	PackageId PackageId
+	PackageId  PackageId
 	RegistryId RegistryId
-	Version Version
+	Version    Version
 }
 
 type Package struct {
 	Metadata PackageMetadata
-	Files []File
+	Files    []File
+}
+
+type ConstraintType string
+
+const (
+	Exact      ConstraintType = "exact"
+	Major      ConstraintType = "major"
+	Minor      ConstraintType = "minor"
+	BranchHead ConstraintType = "branch-head"
+	Latest     ConstraintType = "latest"
+)
+
+type Constraint struct {
+	Type    ConstraintType
+	Version *Version
 }

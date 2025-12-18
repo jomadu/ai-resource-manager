@@ -1,11 +1,27 @@
-package v4
+package service
 
 import (
 	"context"
 	"time"
 
-	"github.com/jomadu/ai-rules-manager/internal/v4/manifest"
+	"github.com/jomadu/ai-resource-manager/internal/v4/core"
+	"github.com/jomadu/ai-resource-manager/internal/v4/manifest"
+	"github.com/jomadu/ai-resource-manager/internal/v4/packagelockfile"
+	"github.com/jomadu/ai-resource-manager/internal/v4/sink"
 )
+
+type PackageInfo struct {
+	Installation sink.PackageInstallation
+	LockInfo     packagelockfile.PackageLockInfo
+	Config       map[string]interface{}
+}
+
+type OutdatedPackage struct {
+	Current    core.PackageMetadata
+	Constraint string
+	Wanted     core.PackageMetadata
+	Latest     core.PackageMetadata
+}
 
 // ARM
 type ArmService interface {
@@ -30,7 +46,7 @@ type ArmService interface {
 	SetGitLabRegistryAPIVersion(ctx context.Context, name string, apiVersion string) error
 	SetCloudsmithRegistryOwner(ctx context.Context, name string, owner string) error
 	SetCloudsmithRegistryRepository(ctx context.Context, name string, repository string) error
-	
+
 	// ---------------
 	// Sink Management
 	// ---------------
@@ -76,8 +92,8 @@ type ArmService interface {
 	SetRulesetPriority(ctx context.Context, registry, ruleset, priority int) error
 	SetRulesetInclude(ctx context.Context, registry, ruleset string, include []string) error
 	SetRulesetExclude(ctx context.Context, registry, ruleset string, exclude []string) error
-	SetRulesetSinks(ctx context.Context,  registry, ruleset string, sinks []string) error
-	
+	SetRulesetSinks(ctx context.Context, registry, ruleset string, sinks []string) error
+
 	// --------------------
 	// Promptset Management
 	// --------------------
@@ -93,8 +109,8 @@ type ArmService interface {
 	SetPromptsetVersion(ctx context.Context, registry, ruleset, version string) error
 	SetPromptsetInclude(ctx context.Context, registry, ruleset string, include []string) error
 	SetPromptsetExclude(ctx context.Context, registry, ruleset string, exclude []string) error
-	SetPromptsetSinks(ctx context.Context,  registry, ruleset string, sinks []string) error
-	
+	SetPromptsetSinks(ctx context.Context, registry, ruleset string, sinks []string) error
+
 	// --------
 	// Cleaning
 	// --------
@@ -106,86 +122,4 @@ type ArmService interface {
 
 	// Compile
 	CompileFiles(ctx context.Context, req *CompileRequest) error
-}
-
-// Sink Manager
-
-
-
-// Package Lockfile
-
-
-
-// Manifest File
-
-
-type Registry interface {
-	ListPackages(ctx context.Context) ([]*PackageMetadata, error)
-	ListPackageVersions(ctx context.Context, packageName string) ([]Version, error)
-	GetPackage(ctx context.Context, packageName, version Version, include []string, exclude []string) (*Package, error)
-}
-
-// Cache
-
-type PackageRegistryCacheManager interface {
-	ListPackageVersions(ctx context.Context, key string) ([]Version, error)
-	GetPackageVersion(ctx context.Context, key string, version Version) ([]*File, error)
-	SetPackageVersion(ctx context.Context, key string, version Version, files []*File) error
-	RemoveOldPackagesVersions(ctx context.Context, maxAge time.Duration) error
-	RemoveUnusedPackagesVersions(ctx context.Context, maxTimeSinceLastAccess time.Duration) error
-}
-
-type ResourceParser interface {
-	IsRuleset(file *File) bool
-	IsPromptset(file *File) bool
-	IsRulesetFile(path string) bool
-	IsPromptsetFile(path string) bool
-	ParseRuleset(file *File) (*RulesetResource, error)
-	ParsePromptset(file *File) (*PromptsetResource, error)
-	ParseRulesets(dirs []string, recursive bool, include, exclude []string) ([]*RulesetResource, error)
-	ParsePromptsets(dirs []string, recursive bool, include, exclude []string) ([]*PromptsetResource, error)
-} 
-
-type ResourceCompilerFactory interface {
-	NewResourceCompiler(target CompileTarget) (ResourceCompiler, error)
-}
-
-type ResourceCompiler interface {
-	CompileRuleset(namespace string, ruleset *RulesetResource) ([]*File, error)
-	CompilePromptset(namespace string, promptset *PromptsetResource) ([]*File, error)
-}
-
-// RuleGenerator interface for generating tool-specific rule files
-type RuleGenerator interface {
-	GenerateRule(namespace string, ruleset *RulesetResource, ruleID string) string
-}
-
-// PromptGenerator interface for generating tool-specific prompt files
-type PromptGenerator interface {
-	GeneratePrompt(namespace string, promptset *PromptsetResource, promptID string) string
-}
-
-// RuleGeneratorFactory interface for creating rule generators
-type RuleGeneratorFactory interface {
-	NewRuleGenerator(target CompileTarget) (RuleGenerator, error)
-}
-
-// PromptGeneratorFactory interface for creating prompt generators
-type PromptGeneratorFactory interface {
-	NewPromptGenerator(target CompileTarget) (PromptGenerator, error)
-}
-
-// FilenameGenerator interface for generating filenames
-type FilenameGenerator interface {
-	GenerateFilename(rulesetID, ruleID string) string
-}
-
-// FilenameGeneratorFactory interface for creating filename generators
-type FilenameGeneratorFactory interface {
-	NewFilenameGenerator(target CompileTarget) (FilenameGenerator, error)
-}
-
-// RuleMetadataGenerator interface for generating metadata blocks
-type RuleMetadataGenerator interface {
-	GenerateRuleMetadata(namespace string, ruleset *RulesetResource, ruleID string, rule *Rule) string
 }

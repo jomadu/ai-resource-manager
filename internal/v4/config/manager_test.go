@@ -1,4 +1,4 @@
-package rc
+package config
 
 import (
 	"context"
@@ -335,7 +335,7 @@ api_version = v4
 			},
 			section: "registry https://gitlab.example.com/project/123",
 			want: map[string]string{
-				"token":      "project-token-123",
+				"token":       "project-token-123",
 				"api_version": "v4",
 			},
 			wantErr: false,
@@ -634,4 +634,3 @@ func TestFileManager_NewFileManagerWithPaths(t *testing.T) {
 		t.Errorf("NewFileManagerWithPaths() userHomeDir = %v, want %v", fm.userHomeDir, userHomeDir)
 	}
 }
-
