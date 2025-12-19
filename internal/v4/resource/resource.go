@@ -29,13 +29,13 @@ type PromptsetSpec struct {
 // Metadata contains ruleset metadata
 type ResourceMetadata struct {
 	ID          string `yaml:"id" validate:"required"`
-	Name        string `yaml:"name" validate:"required"`
+	Name        string `yaml:"name,omitempty"`
 	Description string `yaml:"description,omitempty"`
 }
 
 // Rule represents a single rule within a resource file
 type Rule struct {
-	Name        string  `yaml:"name" validate:"required"`
+	Name        string  `yaml:"name,omitempty"`
 	Description string  `yaml:"description,omitempty"`
 	Priority    int     `yaml:"priority,omitempty"`
 	Enforcement string  `yaml:"enforcement,omitempty" validate:"omitempty,oneof=may should must"`
@@ -45,7 +45,7 @@ type Rule struct {
 
 // Prompt represents a single prompt within a promptset
 type Prompt struct {
-	Name        string `yaml:"name" validate:"required"`
+	Name        string `yaml:"name,omitempty"`
 	Description string `yaml:"description,omitempty"`
 	Body        string `yaml:"body" validate:"required"`
 }
