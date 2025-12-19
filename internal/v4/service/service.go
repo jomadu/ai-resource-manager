@@ -400,8 +400,23 @@ func (s *ArmService) NukeSinks(ctx context.Context) error {
 	return nil
 }
 
+// CompileRequest groups compile parameters following ARM patterns
+type CompileRequest struct {
+	Paths        []string
+	Targets      []string
+	OutputDir    string
+	Namespace    string
+	Force        bool
+	Recursive    bool
+	Verbose      bool
+	ValidateOnly bool
+	Include      []string
+	Exclude      []string
+	FailFast     bool
+}
+
 // CompileFiles compiles files
-func (s *ArmService) CompileFiles(ctx context.Context, req *compiler.CompileRequest) error {
+func (s *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) error {
 	// TODO: implement
 	return nil
 }
