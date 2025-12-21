@@ -1,29 +1,30 @@
-# Cache System
+# Storage System
 
 ## Purpose
 
-The cache stores previously downloaded package versions to avoid redundant network requests. When a project requests a version that exists in cache, ARM serves it locally instead of downloading from the registry.
+The storage system stores previously downloaded package versions to avoid redundant network requests. When a project requests a version that exists in storage, ARM serves it locally instead of downloading from the registry.
 
 ## Location
 
-Cache directory: `~/.arm/registries`
+Storage directory: `~/.arm/storage`
 
 ## Directory Structure
 
 ```txt
-~/.arm/registries/
-    <registry-key>/
-        metadata.json           # Registry metadata and timestamps
-        repo/                   # Git repositories only
-            .git/
-            # Repository files
-        packages/               # Cached package versions
-            <package-key>/
-                metadata.json   # Package metadata and timestamps
-                <version>/
-                    metadata.json # Version timestamps
-                    files/      # Package files
-                        # Actual package content
+~/.arm/storage/
+    registries/
+        <registry-key>/
+            metadata.json           # Registry metadata and timestamps
+            repo/                   # Git repositories only
+                .git/
+                # Repository files
+            packages/               # Cached package versions
+                <package-key>/
+                    metadata.json   # Package metadata and timestamps
+                    <version>/
+                        metadata.json # Version timestamps
+                        files/      # Package files
+                            # Actual package content
 ```
 
 ## Key Generation
@@ -95,7 +96,7 @@ Git-based registries include a `repo/` directory containing a local clone of the
 - Fast update checks using Git operations
 - Offline access to previously cached content
 
-## Cache Benefits
+## Storage Benefits
 
 - **Performance**: Eliminates redundant downloads
 - **Reliability**: Reduces dependency on network availability

@@ -1,6 +1,6 @@
 # ARM Registry Structure
 
-This directory mimics the structure and contents of the ARM registries located at `~/.arm/registries/`.
+This directory mimics the structure and contents of the ARM storage located at `~/.arm/storage/registries/`.
 
 ## Purpose
 
@@ -52,4 +52,4 @@ This sample registry structure demonstrates:
 - Version-specific caching strategies
 - Integration with different registry types (Git, Cloudsmith, etc.)
 
-For production use, the actual registries are located at `~/.arm/registries/` and are managed entirely by the ARM tool.
+For production use, the actual storage is located at `~/.arm/storage/` and is managed entirely by the ARM tool.
