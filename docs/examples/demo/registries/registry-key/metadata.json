@@ -1,0 +1,11 @@
+{
+    "metadata": {
+        "url": "https://api.cloudsmith.io",
+        "type": "cloudsmith",
+        "owner": "sample-org",
+        "repository": "arm-registry"
+    },
+    "created_on": "2025-01-08T23:10:43.984784Z",
+    "last_updated_on": "2025-01-08T23:10:43.984784Z",
+    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+}

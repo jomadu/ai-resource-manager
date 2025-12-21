@@ -6,21 +6,24 @@ The cache stores previously downloaded package versions to avoid redundant netwo
 
 ## Location
 
-Cache directory: `~/.arm/cache`
+Cache directory: `~/.arm/registries`
 
 ## Directory Structure
 
 ```txt
-~/.arm/cache/registries/
+~/.arm/registries/
     <registry-key>/
-        index.json              # Registry metadata and package index
-        packages/               # Cached package versions
-            <package-key>/
-                <version>/
-                    # Package files
-        repository/             # Git repositories only
+        metadata.json           # Registry metadata and timestamps
+        repo/                   # Git repositories only
             .git/
             # Repository files
+        packages/               # Cached package versions
+            <package-key>/
+                metadata.json   # Package metadata and timestamps
+                <version>/
+                    metadata.json # Version timestamps
+                    files/      # Package files
+                        # Actual package content
 ```
 
 ## Key Generation
@@ -36,18 +39,18 @@ Unique hash identifying a package based on:
 - **Git registries**: Normalized includes/excludes patterns
 - **Non-git registries**: Package name
 
-## Index Structure
+## Metadata Structure
 
-Each registry maintains an `index.json` file containing:
-- Registry metadata for key generation
-- Package metadata and version tracking
-- Timestamp information for cache management
+The cache uses a three-level metadata structure for efficient management:
+- Registry metadata for key generation and registry-level timestamps
+- Package metadata for key generation and package-level timestamps  
+- Version metadata for version-level timestamps
 
-### Example: Cloudsmith Registry Index
+### Registry Metadata (`metadata.json`)
 
 ```json
 {
-    "registry_metadata": {
+    "metadata": {
         "url": "https://api.cloudsmith.io",
         "type": "cloudsmith",
         "owner": "sample-org",
@@ -55,30 +58,39 @@ Each registry maintains an `index.json` file containing:
     },
     "created_on": "2025-01-08T23:10:43.984784Z",
     "last_updated_on": "2025-01-08T23:10:43.984784Z",
-    "last_accessed_on": "2025-01-08T23:10:43.984784Z",
-    "packages": {
-        "<package-key>": {
-            "package_metadata": {
-                "name": "clean-code-ruleset"
-            },
-            "created_on": "2025-01-08T23:10:43.984784Z",
-            "last_updated_on": "2025-01-08T23:10:43.984784Z",
-            "last_accessed_on": "2025-01-08T23:10:43.984784Z",
-            "versions": {
-                "1.0.0": {
-                    "created_on": "2025-01-08T23:10:43.984784Z",
-                    "last_updated_on": "2025-01-08T23:10:43.984784Z",
-                    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
-                }
-            }
-        }
-    }
+    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+}
+```
+
+### Package Metadata (`packages/<package-key>/metadata.json`)
+
+```json
+{
+    "metadata": {
+        "name": "clean-code-ruleset",
+        "description": "Clean code best practices",
+        "includes": ["**/*.yml"],
+        "excludes": ["**/test/**"]
+    },
+    "created_on": "2025-01-08T23:10:43.984784Z",
+    "last_updated_on": "2025-01-08T23:10:43.984784Z",
+    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+}
+```
+
+### Version Metadata (`packages/<package-key>/<version>/metadata.json`)
+
+```json
+{
+    "created_on": "2025-01-08T23:10:43.984784Z",
+    "last_updated_on": "2025-01-08T23:10:43.984784Z",
+    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
 }
 ```
 
 ## Git Repository Caching
 
-Git-based registries include a `repository/` directory containing a local clone of the remote repository. This enables:
+Git-based registries include a `repo/` directory containing a local clone of the remote repository. This enables:
 - Efficient file access without API rate limits
 - Fast update checks using Git operations
 - Offline access to previously cached content
