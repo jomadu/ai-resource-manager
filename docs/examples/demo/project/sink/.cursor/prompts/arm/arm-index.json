@@ -1,9 +1,10 @@
 {
-    "promptsets": {
+    "packages": {
         "sample-registry": {
             "code-review-promptset": {
                 "version": "1.1.0",
-                "file_paths": [
+                "resourceType": "promptset",
+                "files": [
                     "arm/sample-registry/code-review-promptset/1.1.0/code-review_securityReview.md",
                     "arm/sample-registry/code-review-promptset/1.1.0/code-review_performanceReview.md",
                     "arm/sample-registry/code-review-promptset/1.1.0/code-review_codeQualityReview.md",

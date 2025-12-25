@@ -1,10 +1,11 @@
 {
-    "rulesets": {
+    "packages": {
         "sample-registry": {
             "clean-code-ruleset": {
                 "version": "1.1.0",
+                "resourceType": "ruleset",
                 "priority": 100,
-                "file_paths": [
+                "files": [
                     "arm/sample-registry/clean-code-ruleset/1.1.0/cleanCode_meaningfulNames.md",
                     "arm/sample-registry/clean-code-ruleset/1.1.0/cleanCode_smallFunctions.md",
                     "arm/sample-registry/clean-code-ruleset/1.1.0/cleanCode_avoidComments.md",

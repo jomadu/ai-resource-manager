@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
 	"github.com/jomadu/ai-resource-manager/internal/v4/core"
 	"github.com/jomadu/ai-resource-manager/internal/v4/manifest"
 	"github.com/jomadu/ai-resource-manager/internal/v4/packagelockfile"

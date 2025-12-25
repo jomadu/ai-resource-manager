@@ -6,7 +6,7 @@ ARM uses four key files to manage your AI resources:
 
 - **`arm.json`** - Team-shared project manifest with registries, rulesets, promptsets, and sinks
 - **`arm-lock.json`** - Team-shared locked versions for reproducible installs
-- **`arm-index.json`** - Local sink inventory tracking what ARM has installed in that sink, used to generate the `arm_index.*` file
+- **`arm-index.json`** - Local sink inventory tracking installed packages with resolved versions and file paths, used to generate the `arm_index.*` file
 - **`arm_index.*`** - Generated priority rule that helps AI tools resolve conflicts between rulesets
 
 ## Resources
