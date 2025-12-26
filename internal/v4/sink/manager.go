@@ -1,6 +1,7 @@
 package sink
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -9,27 +10,30 @@ import (
 )
 
 type Manager struct {
-	directory     string
-	compileTarget string
-	indexPath     string
-	armDir        string
+	directory            string
+	compileTarget        string
+	armDir               string
+	indexPath            string
+	rulesetIndexRulePath string
 }
 
 type Index struct {
 	Packages map[string]map[string]interface{} `json:"packages"`
 }
 
-type RulesetEntry struct {
+type PackageEntry struct {
 	Version      string   `json:"version"`
 	ResourceType string   `json:"resourceType"`
-	Priority     int      `json:"priority"`
 	Files        []string `json:"files"`
 }
 
+type RulesetEntry struct {
+	PackageEntry
+	Priority int `json:"priority"`
+}
+
 type PromptsetEntry struct {
-	Version      string   `json:"version"`
-	ResourceType string   `json:"resourceType"`
-	Files        []string `json:"files"`
+	PackageEntry
 }
 
 // NewManager creates a new sink manager
