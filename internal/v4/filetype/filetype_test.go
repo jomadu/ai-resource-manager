@@ -245,3 +245,93 @@ spec:
 		})
 	}
 }
+
+func TestIsResourceFile(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		content  string
+		want     bool
+	}{
+		{
+			name:     "ruleset file",
+			filename: "test.yml",
+			content: `apiVersion: v1
+kind: Ruleset
+metadata:
+  id: "test"
+  name: "Test"
+spec:
+  rules:
+    rule1:
+      name: "Rule 1"
+      body: "test rule"`,
+			want: true,
+		},
+		{
+			name:     "promptset file",
+			filename: "test.yml",
+			content: `apiVersion: v1
+kind: Promptset
+metadata:
+  id: "test"
+  name: "Test"
+spec:
+  prompts:
+    prompt1:
+      name: "Prompt 1"
+      body: "test prompt"`,
+			want: true,
+		},
+		{
+			name:     "regular yaml file",
+			filename: "config.yml",
+			content:  `database:
+  host: localhost
+  port: 5432`,
+			want:     false,
+		},
+		{
+			name:     "non-yaml file",
+			filename: "readme.md",
+			content:  `# README
+This is a readme file.`,
+			want:     false,
+		},
+		{
+			name:     "invalid yaml",
+			filename: "invalid.yml",
+			content:  `invalid: yaml: content:`,
+			want:     false,
+		},
+		{
+			name:     "file does not exist",
+			filename: "nonexistent.yml",
+			content:  "",
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var testFile string
+			if tt.content != "" && tt.filename != "nonexistent.yml" {
+				// Create temp file
+				tmpDir := t.TempDir()
+				testFile = filepath.Join(tmpDir, tt.filename)
+				err := os.WriteFile(testFile, []byte(tt.content), 0644)
+				if err != nil {
+					t.Fatalf("failed to create test file: %v", err)
+				}
+			} else if tt.filename == "nonexistent.yml" {
+				// Use non-existent path
+				testFile = filepath.Join(t.TempDir(), "nonexistent.yml")
+			}
+
+			got := IsResourceFile(testFile)
+			if got != tt.want {
+				t.Errorf("IsResourceFile() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

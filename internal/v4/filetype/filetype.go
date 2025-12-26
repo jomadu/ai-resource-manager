@@ -12,6 +12,11 @@ import (
 
 var validate = validator.New()
 
+// IsResourceFile checks if file is any ARM resource type
+func IsResourceFile(path string) bool {
+	return IsRulesetFile(path) || IsPromptsetFile(path)
+}
+
 // IsRulesetFile checks extension and validates file content as RulesetResource
 func IsRulesetFile(path string) bool {
 	if !hasYAMLExtension(path) {
