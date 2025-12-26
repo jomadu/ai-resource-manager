@@ -9,6 +9,11 @@ import (
 	"github.com/jomadu/ai-resource-manager/internal/v4/core"
 )
 
+type PackageInstallation struct {
+	Metadata core.PackageMetadata
+	Sinks    []string
+}
+
 type Manager struct {
 	directory            string
 	compileTarget        string
