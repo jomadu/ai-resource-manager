@@ -5,7 +5,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
+
+// packageKey creates a package key from registry and package names
+func packageKey(registryName, packageName string) string {
+	return registryName + "/" + packageName
+}
+
+// parsePackageKey splits a package key into registry and package names
+func parsePackageKey(key string) (registryName, packageName string) {
+	parts := strings.SplitN(key, "/", 2)
+	if len(parts) != 2 {
+		return "", ""
+	}
+	return parts[0], parts[1]
+}
 
 type ResourceType string
 
@@ -18,7 +33,7 @@ type Manifest struct {
 	Version string `json:"version"`
 	Registries map[string]map[string]interface{} `json:"registries,omitempty"`
 	Sinks      map[string]SinkConfig             `json:"sinks,omitempty"`
-	Packages   map[string]map[string]interface{} `json:"packages"`
+	Packages   map[string]interface{}            `json:"packages"`
 }
 
 type SinkConfig struct {
@@ -65,42 +80,6 @@ type CloudsmithRegistryConfig struct {
 	RegistryConfig
 	Owner string `json:"owner"`
 	Repository string `json:"repository"`
-}
-type Manager interface {
-	// Registry operations
-	GetAllRegistriesConfig(ctx context.Context) (map[string]map[string]interface{}, error)
-	GetRegistryConfig(ctx context.Context, name string) (map[string]interface{}, error)
-	UpdateRegistryConfigName(ctx context.Context, name string, newName string) error
-	RemoveRegistryConfig(ctx context.Context, name string) error
-	GetGitRegistryConfig(ctx context.Context, name string) (*GitRegistryConfig, error)
-	GetGitLabRegistryConfig(ctx context.Context, name string) (*GitLabRegistryConfig, error)
-	GetCloudsmithRegistryConfig(ctx context.Context, name string) (*CloudsmithRegistryConfig, error)
-	AddGitRegistryConfig(ctx context.Context, name string, config *GitRegistryConfig) error
-	AddGitLabRegistryConfig(ctx context.Context, name string, config *GitLabRegistryConfig) error
-	AddCloudsmithRegistryConfig(ctx context.Context, name string, config *CloudsmithRegistryConfig) error
-	UpdateGitRegistryConfig(ctx context.Context, name string, config *GitRegistryConfig) error
-	UpdateGitLabRegistryConfig(ctx context.Context, name string, config *GitLabRegistryConfig) error
-	UpdateCloudsmithRegistryConfig(ctx context.Context, name string, config *CloudsmithRegistryConfig) error
-
-	// Sink operations
-	GetAllSinksConfig(ctx context.Context) (map[string]*SinkConfig, error)
-	GetSinkConfig(ctx context.Context, name string) (*SinkConfig, error)
-	AddSinkConfig(ctx context.Context, name string, config *SinkConfig) error
-	UpdateSinkConfigName(ctx context.Context, name string, newName string) error
-	UpdateSinkConfig(ctx context.Context, name string, config *SinkConfig) error
-	RemoveSinkConfig(ctx context.Context, name string) error
-
-	// Package operations
-	GetAllPackagesConfig(ctx context.Context) (map[string]map[string]interface{}, error)
-	GetPackageConfig(ctx context.Context, registryName, packageName string) (map[string]interface{}, error)
-	UpdatePackageConfigName(ctx context.Context, registryName, packageName string, newPackageName string) error
-	RemovePackageConfig(ctx context.Context, registryName, packageName string) error
-	GetRulesetConfig(ctx context.Context, registryName, packageName string) (*RulesetConfig, error)
-	GetPromptsetConfig(ctx context.Context, registryName, packageName string) (*PromptsetConfig, error)
-	AddRulesetConfig(ctx context.Context, registryName, packageName string, config *RulesetConfig) error
-	AddPromptsetConfig(ctx context.Context, registryName, packageName string, config *PromptsetConfig) error
-	UpdateRulesetConfig(ctx context.Context, registryName, packageName string, config *RulesetConfig) error
-	UpdatePromptsetConfig(ctx context.Context, registryName, packageName string, config *PromptsetConfig) error
 }
 
 // FileManager implements file-based manifest management.
@@ -165,10 +144,14 @@ func (f *FileManager) UpdateRegistryConfigName(ctx context.Context, name string,
 	manifest.Registries[newName] = manifest.Registries[name]
 	delete(manifest.Registries, name)
 
-	// Move all packages from old registry to new registry
-	if packages, exists := manifest.Packages[name]; exists {
-		manifest.Packages[newName] = packages
-		delete(manifest.Packages, name)
+	// Update package keys from "oldName/package" to "newName/package"
+	for key, packageConfig := range manifest.Packages {
+		regName, pkgName := parsePackageKey(key)
+		if regName == name {
+			newKey := packageKey(newName, pkgName)
+			manifest.Packages[newKey] = packageConfig
+			delete(manifest.Packages, key)
+		}
 	}
 
 	return f.saveManifest(manifest)
@@ -187,6 +170,15 @@ func (f *FileManager) RemoveRegistryConfig(ctx context.Context, name string) err
 	}
 
 	delete(manifest.Registries, name)
+	
+	// Remove all packages from this registry
+	for key := range manifest.Packages {
+		regName, _ := parsePackageKey(key)
+		if regName == name {
+			delete(manifest.Packages, key)
+		}
+	}
+	
 	return f.saveManifest(manifest)
 }
 
@@ -446,7 +438,7 @@ func (f *FileManager) RemoveSinkConfig(ctx context.Context, name string) error {
 
 // Package operations (generic)
 
-func (f *FileManager) GetAllPackagesConfig(ctx context.Context) (map[string]map[string]interface{}, error) {
+func (f *FileManager) GetAllPackagesConfig(ctx context.Context) (map[string]interface{}, error) {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return nil, err
@@ -460,47 +452,42 @@ func (f *FileManager) GetPackageConfig(ctx context.Context, registryName, packag
 		return nil, err
 	}
 
-	registry, exists := manifest.Packages[registryName]
+	key := packageKey(registryName, packageName)
+	configInterface, exists := manifest.Packages[key]
 	if !exists {
-		return nil, fmt.Errorf("registry %s not found", registryName)
-	}
-
-	configInterface, exists := registry[packageName]
-	if !exists {
-		return nil, fmt.Errorf("package %s not found in registry %s", packageName, registryName)
+		return nil, fmt.Errorf("package %s not found", key)
 	}
 
 	config, ok := configInterface.(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("package %s/%s has invalid config format", registryName, packageName)
+		return nil, fmt.Errorf("package %s has invalid config format", key)
 	}
 
 	return config, nil
 }
 
-
-
-func (f *FileManager) UpdatePackageConfigName(ctx context.Context, registryName, packageName string, newPackageName string) error {
+func (f *FileManager) UpdatePackageConfigName(ctx context.Context, registryName, packageName string, newRegistryName, newPackageName string) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
 	}
 
-	if err := f.ensurePackageExists(manifest, registryName, packageName); err != nil {
-		return err
+	oldKey := packageKey(registryName, packageName)
+	newKey := packageKey(newRegistryName, newPackageName)
+
+	if _, exists := manifest.Packages[oldKey]; !exists {
+		return fmt.Errorf("package %s not found", oldKey)
 	}
 
-	if _, exists := manifest.Packages[registryName][newPackageName]; exists {
-		return fmt.Errorf("package %s already exists in registry %s", newPackageName, registryName)
+	if _, exists := manifest.Packages[newKey]; exists {
+		return fmt.Errorf("package %s already exists", newKey)
 	}
 
-	manifest.Packages[registryName][newPackageName] = manifest.Packages[registryName][packageName]
-	delete(manifest.Packages[registryName], packageName)
+	manifest.Packages[newKey] = manifest.Packages[oldKey]
+	delete(manifest.Packages, oldKey)
 
 	return f.saveManifest(manifest)
 }
-
-
 
 func (f *FileManager) RemovePackageConfig(ctx context.Context, registryName, packageName string) error {
 	manifest, err := f.loadManifest()
@@ -508,17 +495,12 @@ func (f *FileManager) RemovePackageConfig(ctx context.Context, registryName, pac
 		return err
 	}
 
-	if err := f.ensurePackageExists(manifest, registryName, packageName); err != nil {
-		return err
+	key := packageKey(registryName, packageName)
+	if _, exists := manifest.Packages[key]; !exists {
+		return fmt.Errorf("package %s not found", key)
 	}
 
-	delete(manifest.Packages[registryName], packageName)
-
-	// Remove empty registry
-	if len(manifest.Packages[registryName]) == 0 {
-		delete(manifest.Packages, registryName)
-	}
-
+	delete(manifest.Packages, key)
 	return f.saveManifest(manifest)
 }
 
@@ -533,7 +515,8 @@ func (f *FileManager) GetRulesetConfig(ctx context.Context, registryName, packag
 	// Check resource type
 	resourceType, ok := rawConfig["resourceType"].(string)
 	if !ok || resourceType != string(ResourceTypeRuleset) {
-		return nil, fmt.Errorf("package %s/%s is not a ruleset", registryName, packageName)
+		key := packageKey(registryName, packageName)
+		return nil, fmt.Errorf("package %s is not a ruleset", key)
 	}
 
 	return convertMapToRulesetConfig(rawConfig)
@@ -548,7 +531,8 @@ func (f *FileManager) GetPromptsetConfig(ctx context.Context, registryName, pack
 	// Check resource type
 	resourceType, ok := rawConfig["resourceType"].(string)
 	if !ok || resourceType != string(ResourceTypePromptset) {
-		return nil, fmt.Errorf("package %s/%s is not a promptset", registryName, packageName)
+		key := packageKey(registryName, packageName)
+		return nil, fmt.Errorf("package %s is not a promptset", key)
 	}
 
 	return convertMapToPromptsetConfig(rawConfig)
@@ -560,12 +544,9 @@ func (f *FileManager) AddRulesetConfig(ctx context.Context, registryName, packag
 		return err
 	}
 
-	if manifest.Packages[registryName] == nil {
-		manifest.Packages[registryName] = make(map[string]interface{})
-	}
-
-	if _, exists := manifest.Packages[registryName][packageName]; exists {
-		return fmt.Errorf("package %s already exists in registry %s", packageName, registryName)
+	key := packageKey(registryName, packageName)
+	if _, exists := manifest.Packages[key]; exists {
+		return fmt.Errorf("package %s already exists", key)
 	}
 
 	configMap, err := convertRegistryToMap(config)
@@ -573,7 +554,7 @@ func (f *FileManager) AddRulesetConfig(ctx context.Context, registryName, packag
 		return err
 	}
 
-	manifest.Packages[registryName][packageName] = configMap
+	manifest.Packages[key] = configMap
 	return f.saveManifest(manifest)
 }
 
@@ -583,12 +564,9 @@ func (f *FileManager) AddPromptsetConfig(ctx context.Context, registryName, pack
 		return err
 	}
 
-	if manifest.Packages[registryName] == nil {
-		manifest.Packages[registryName] = make(map[string]interface{})
-	}
-
-	if _, exists := manifest.Packages[registryName][packageName]; exists {
-		return fmt.Errorf("package %s already exists in registry %s", packageName, registryName)
+	key := packageKey(registryName, packageName)
+	if _, exists := manifest.Packages[key]; exists {
+		return fmt.Errorf("package %s already exists", key)
 	}
 
 	configMap, err := convertRegistryToMap(config)
@@ -596,7 +574,7 @@ func (f *FileManager) AddPromptsetConfig(ctx context.Context, registryName, pack
 		return err
 	}
 
-	manifest.Packages[registryName][packageName] = configMap
+	manifest.Packages[key] = configMap
 	return f.saveManifest(manifest)
 }
 
@@ -606,8 +584,9 @@ func (f *FileManager) UpdateRulesetConfig(ctx context.Context, registryName, pac
 		return err
 	}
 
-	if err := f.ensurePackageExists(manifest, registryName, packageName); err != nil {
-		return err
+	key := packageKey(registryName, packageName)
+	if _, exists := manifest.Packages[key]; !exists {
+		return fmt.Errorf("package %s not found", key)
 	}
 
 	configMap, err := convertRegistryToMap(config)
@@ -615,7 +594,7 @@ func (f *FileManager) UpdateRulesetConfig(ctx context.Context, registryName, pac
 		return err
 	}
 
-	manifest.Packages[registryName][packageName] = configMap
+	manifest.Packages[key] = configMap
 	return f.saveManifest(manifest)
 }
 
@@ -625,8 +604,9 @@ func (f *FileManager) UpdatePromptsetConfig(ctx context.Context, registryName, p
 		return err
 	}
 
-	if err := f.ensurePackageExists(manifest, registryName, packageName); err != nil {
-		return err
+	key := packageKey(registryName, packageName)
+	if _, exists := manifest.Packages[key]; !exists {
+		return fmt.Errorf("package %s not found", key)
 	}
 
 	configMap, err := convertRegistryToMap(config)
@@ -634,7 +614,7 @@ func (f *FileManager) UpdatePromptsetConfig(ctx context.Context, registryName, p
 		return err
 	}
 
-	manifest.Packages[registryName][packageName] = configMap
+	manifest.Packages[key] = configMap
 	return f.saveManifest(manifest)
 }
 
@@ -663,7 +643,7 @@ func (f *FileManager) loadManifest() (*Manifest, error) {
 		manifest.Registries = make(map[string]map[string]interface{})
 	}
 	if manifest.Packages == nil {
-		manifest.Packages = make(map[string]map[string]interface{})
+		manifest.Packages = make(map[string]interface{})
 	}
 	if manifest.Sinks == nil {
 		manifest.Sinks = make(map[string]SinkConfig)
@@ -678,7 +658,7 @@ func (f *FileManager) newEmptyManifest() *Manifest {
 	return &Manifest{
 		Version:    "1.0.0",
 		Registries: make(map[string]map[string]interface{}),
-		Packages:   make(map[string]map[string]interface{}),
+		Packages:   make(map[string]interface{}),
 		Sinks:      make(map[string]SinkConfig),
 	}
 }
@@ -800,18 +780,6 @@ func convertMapToPromptsetConfig(m map[string]interface{}) (*PromptsetConfig, er
 func (f *FileManager) ensureRegistryExists(manifest *Manifest, name string) error {
 	if _, exists := manifest.Registries[name]; !exists {
 		return fmt.Errorf("registry %s not found", name)
-	}
-	return nil
-}
-
-// ensurePackageExists ensures a package exists in the manifest, returns error if not.
-func (f *FileManager) ensurePackageExists(manifest *Manifest, registryName, packageName string) error {
-	registry, exists := manifest.Packages[registryName]
-	if !exists {
-		return fmt.Errorf("registry %s not found", registryName)
-	}
-	if _, exists := registry[packageName]; !exists {
-		return fmt.Errorf("package %s not found in registry %s", packageName, registryName)
 	}
 	return nil
 }

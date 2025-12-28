@@ -9,25 +9,23 @@
         }
     },
     "packages": {
-            "sample-registry": {
-                "clean-code-ruleset": {
-                    "version": "^1.0.0",
-                    "resourceType": "ruleset",
-                    "priority": 100,
-                    "sinks": [
-                        "cursor-rules",
-                        "amazonq-rules"
-                    ]
-                },
-                "code-review-promptset": {
-                    "version": "^1.0.0",
-                    "resourceType": "promptset",
-                    "sinks": [
-                        "cursor-commands",
-                        "amazonq-prompts"
-                    ]
-                }
-            }
+        "sample-registry/clean-code-ruleset": {
+            "version": "^1.0.0",
+            "resourceType": "ruleset",
+            "priority": 100,
+            "sinks": [
+                "cursor-rules",
+                "amazonq-rules"
+            ]
+        },
+        "sample-registry/code-review-promptset": {
+            "version": "^1.0.0",
+            "resourceType": "promptset",
+            "sinks": [
+                "cursor-commands",
+                "amazonq-prompts"
+            ]
+        }
     },
     "sinks": {
         "cursor-rules": {
