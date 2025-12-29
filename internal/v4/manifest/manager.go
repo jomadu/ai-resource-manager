@@ -5,22 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
+
+	"github.com/jomadu/ai-resource-manager/internal/v4/core"
 )
-
-// packageKey creates a package key from registry and package names
-func packageKey(registryName, packageName string) string {
-	return registryName + "/" + packageName
-}
-
-// parsePackageKey splits a package key into registry and package names
-func parsePackageKey(key string) (registryName, packageName string) {
-	parts := strings.SplitN(key, "/", 2)
-	if len(parts) != 2 {
-		return "", ""
-	}
-	return parts[0], parts[1]
-}
 
 type ResourceType string
 
@@ -146,9 +133,9 @@ func (f *FileManager) UpdateRegistryConfigName(ctx context.Context, name string,
 
 	// Update package keys from "oldName/package" to "newName/package"
 	for key, packageConfig := range manifest.Packages {
-		regName, pkgName := parsePackageKey(key)
+		regName, pkgName := core.ParsePackageKey(key)
 		if regName == name {
-			newKey := packageKey(newName, pkgName)
+			newKey := core.PackageKey(newName, pkgName)
 			manifest.Packages[newKey] = packageConfig
 			delete(manifest.Packages, key)
 		}
@@ -173,7 +160,7 @@ func (f *FileManager) RemoveRegistryConfig(ctx context.Context, name string) err
 	
 	// Remove all packages from this registry
 	for key := range manifest.Packages {
-		regName, _ := parsePackageKey(key)
+		regName, _ := core.ParsePackageKey(key)
 		if regName == name {
 			delete(manifest.Packages, key)
 		}
@@ -452,7 +439,7 @@ func (f *FileManager) GetPackageConfig(ctx context.Context, registryName, packag
 		return nil, err
 	}
 
-	key := packageKey(registryName, packageName)
+	key := core.PackageKey(registryName, packageName)
 	configInterface, exists := manifest.Packages[key]
 	if !exists {
 		return nil, fmt.Errorf("package %s not found", key)
@@ -472,8 +459,8 @@ func (f *FileManager) UpdatePackageConfigName(ctx context.Context, registryName,
 		return err
 	}
 
-	oldKey := packageKey(registryName, packageName)
-	newKey := packageKey(newRegistryName, newPackageName)
+	oldKey := core.PackageKey(registryName, packageName)
+	newKey := core.PackageKey(newRegistryName, newPackageName)
 
 	if _, exists := manifest.Packages[oldKey]; !exists {
 		return fmt.Errorf("package %s not found", oldKey)
@@ -495,7 +482,7 @@ func (f *FileManager) RemovePackageConfig(ctx context.Context, registryName, pac
 		return err
 	}
 
-	key := packageKey(registryName, packageName)
+	key := core.PackageKey(registryName, packageName)
 	if _, exists := manifest.Packages[key]; !exists {
 		return fmt.Errorf("package %s not found", key)
 	}
@@ -515,7 +502,7 @@ func (f *FileManager) GetRulesetConfig(ctx context.Context, registryName, packag
 	// Check resource type
 	resourceType, ok := rawConfig["resourceType"].(string)
 	if !ok || resourceType != string(ResourceTypeRuleset) {
-		key := packageKey(registryName, packageName)
+		key := core.PackageKey(registryName, packageName)
 		return nil, fmt.Errorf("package %s is not a ruleset", key)
 	}
 
@@ -531,7 +518,7 @@ func (f *FileManager) GetPromptsetConfig(ctx context.Context, registryName, pack
 	// Check resource type
 	resourceType, ok := rawConfig["resourceType"].(string)
 	if !ok || resourceType != string(ResourceTypePromptset) {
-		key := packageKey(registryName, packageName)
+		key := core.PackageKey(registryName, packageName)
 		return nil, fmt.Errorf("package %s is not a promptset", key)
 	}
 
@@ -544,7 +531,7 @@ func (f *FileManager) AddRulesetConfig(ctx context.Context, registryName, packag
 		return err
 	}
 
-	key := packageKey(registryName, packageName)
+	key := core.PackageKey(registryName, packageName)
 	if _, exists := manifest.Packages[key]; exists {
 		return fmt.Errorf("package %s already exists", key)
 	}
@@ -564,7 +551,7 @@ func (f *FileManager) AddPromptsetConfig(ctx context.Context, registryName, pack
 		return err
 	}
 
-	key := packageKey(registryName, packageName)
+	key := core.PackageKey(registryName, packageName)
 	if _, exists := manifest.Packages[key]; exists {
 		return fmt.Errorf("package %s already exists", key)
 	}
@@ -584,7 +571,7 @@ func (f *FileManager) UpdateRulesetConfig(ctx context.Context, registryName, pac
 		return err
 	}
 
-	key := packageKey(registryName, packageName)
+	key := core.PackageKey(registryName, packageName)
 	if _, exists := manifest.Packages[key]; !exists {
 		return fmt.Errorf("package %s not found", key)
 	}
@@ -604,7 +591,7 @@ func (f *FileManager) UpdatePromptsetConfig(ctx context.Context, registryName, p
 		return err
 	}
 
-	key := packageKey(registryName, packageName)
+	key := core.PackageKey(registryName, packageName)
 	if _, exists := manifest.Packages[key]; !exists {
 		return fmt.Errorf("package %s not found", key)
 	}

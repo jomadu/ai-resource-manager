@@ -1,6 +1,23 @@
 package core
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
+
+// PackageKey creates a package key from registry and package names
+func PackageKey(registryName, packageName string) string {
+	return registryName + "/" + packageName
+}
+
+// ParsePackageKey splits a package key into registry and package names
+func ParsePackageKey(key string) (registryName, packageName string) {
+	parts := strings.SplitN(key, "/", 2)
+	if len(parts) != 2 {
+		return "", ""
+	}
+	return parts[0], parts[1]
+}
 
 func GetBestMatching(versions []Version, constraint Constraint) (*Version, error) {
 	if len(versions) == 0 {
