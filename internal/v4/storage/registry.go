@@ -16,10 +16,11 @@ type RegistryMetadata struct {
 	LastAccessedOn time.Time   `json:"last_accessed_on"`
 }
 
-// Registry handles registry directory and metadata
+// Registry handles registry directory and metadata with cross-process locking
 type Registry struct {
 	registryKey interface{}
 	registryDir string
+	lock        *FileLock // Protects metadata.json operations
 }
 
 // NewRegistry creates registry directory and metadata.json
@@ -67,6 +68,7 @@ func NewRegistryWithPath(baseDir string, registryKey interface{}) (*Registry, er
 	return &Registry{
 		registryKey: registryKey,
 		registryDir: registryDir,
+		lock:        NewFileLock(registryDir),
 	}, nil
 }
 
@@ -87,11 +89,21 @@ func (r *Registry) GetPackagesDir() string {
 
 // UpdateAccessTime updates registry metadata access time
 func (r *Registry) UpdateAccessTime(ctx context.Context) error {
+	if err := r.lock.Lock(ctx); err != nil {
+		return err
+	}
+	defer r.lock.Unlock()
+	
 	return r.updateTimestamp("last_accessed_on")
 }
 
 // UpdateUpdatedTime updates registry metadata updated time
 func (r *Registry) UpdateUpdatedTime(ctx context.Context) error {
+	if err := r.lock.Lock(ctx); err != nil {
+		return err
+	}
+	defer r.lock.Unlock()
+	
 	return r.updateTimestamp("last_updated_on")
 }
 

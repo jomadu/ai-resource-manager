@@ -19,18 +19,27 @@ type RepoInterface interface {
 	GetFilesFromCommit(ctx context.Context, url, commit string) ([]*core.File, error)
 }
 
-// Repo implements git operations using system git commands
+// Repo implements git operations using system git commands with cross-process locking
 type Repo struct {
 	repoDir string
+	lock    *FileLock // Protects git operations
 }
 
 // NewRepo creates new repo instance
 func NewRepo(repoDir string) RepoInterface {
-	return &Repo{repoDir: repoDir}
+	return &Repo{
+		repoDir: repoDir,
+		lock:    NewFileLock(repoDir),
+	}
 }
 
 // GetTags returns all git tags
 func (r *Repo) GetTags(ctx context.Context, url string) ([]string, error) {
+	if err := r.lock.Lock(ctx); err != nil {
+		return nil, err
+	}
+	defer r.lock.Unlock()
+	
 	if err := r.ensureCloned(ctx, url); err != nil {
 		return nil, err
 	}
@@ -51,6 +60,11 @@ func (r *Repo) GetTags(ctx context.Context, url string) ([]string, error) {
 
 // GetBranches returns all git branches
 func (r *Repo) GetBranches(ctx context.Context, url string) ([]string, error) {
+	if err := r.lock.Lock(ctx); err != nil {
+		return nil, err
+	}
+	defer r.lock.Unlock()
+	
 	if err := r.ensureCloned(ctx, url); err != nil {
 		return nil, err
 	}
@@ -79,6 +93,11 @@ func (r *Repo) GetBranches(ctx context.Context, url string) ([]string, error) {
 
 // GetBranchHeadCommitHash returns commit hash for branch head
 func (r *Repo) GetBranchHeadCommitHash(ctx context.Context, url, branch string) (string, error) {
+	if err := r.lock.Lock(ctx); err != nil {
+		return "", err
+	}
+	defer r.lock.Unlock()
+	
 	if err := r.ensureCloned(ctx, url); err != nil {
 		return "", err
 	}
@@ -101,6 +120,11 @@ func (r *Repo) GetBranchHeadCommitHash(ctx context.Context, url, branch string) 
 
 // GetTagCommitHash returns commit hash for tag
 func (r *Repo) GetTagCommitHash(ctx context.Context, url, tag string) (string, error) {
+	if err := r.lock.Lock(ctx); err != nil {
+		return "", err
+	}
+	defer r.lock.Unlock()
+	
 	if err := r.ensureCloned(ctx, url); err != nil {
 		return "", err
 	}
@@ -117,6 +141,11 @@ func (r *Repo) GetTagCommitHash(ctx context.Context, url, tag string) (string, e
 
 // GetFilesFromCommit returns all files from specific commit
 func (r *Repo) GetFilesFromCommit(ctx context.Context, url, commit string) ([]*core.File, error) {
+	if err := r.lock.Lock(ctx); err != nil {
+		return nil, err
+	}
+	defer r.lock.Unlock()
+	
 	if err := r.ensureCloned(ctx, url); err != nil {
 		return nil, err
 	}

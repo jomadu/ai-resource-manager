@@ -24,9 +24,16 @@ import (
 //                         └── files/
 //                             └── extracted-files...
 //
-// Storage provides two main components:
+// CONCURRENCY PROTECTION:
+// Cross-process file locking prevents concurrent access issues:
+// - Registry: locks {registry-dir}.lock for metadata operations
+// - Repo: locks {repo-dir}.lock for git operations
+// - PackageCache: locks {package-dir}.lock per package for file operations
+//
+// Storage provides three main components:
 // - Registry: manages registry directory structure and metadata
-// - PackageCache: manages package file storage within registry
+// - Repo: manages git repository operations with locking
+// - PackageCache: manages package file storage with per-package locking
 
 // GenerateKey creates a hash from any object for use as directory name
 func GenerateKey(obj interface{}) (string, error) {

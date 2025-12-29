@@ -12,7 +12,7 @@ import (
 	"github.com/jomadu/ai-resource-manager/internal/v4/core"
 )
 
-// PackageCache handles package storage within a registry
+// PackageCache handles package storage within a registry with per-package locking
 type PackageCache struct {
 	packagesDir string
 }
@@ -22,14 +22,34 @@ func NewPackageCache(packagesDir string) *PackageCache {
 	return &PackageCache{packagesDir: packagesDir}
 }
 
+// getPackageLock returns cross-process lock for specific package directory
+func (p *PackageCache) getPackageLock(packageKey interface{}) (*FileLock, error) {
+	hashedKey, err := GenerateKey(packageKey)
+	if err != nil {
+		return nil, err
+	}
+	packageDir := filepath.Join(p.packagesDir, hashedKey)
+	return NewFileLock(packageDir), nil
+}
+
 // Package operations
 func (p *PackageCache) SetPackageVersion(ctx context.Context, packageKey interface{}, version core.Version, files []*core.File) error {
+	lock, err := p.getPackageLock(packageKey)
+	if err != nil {
+		return err
+	}
+	if err := lock.Lock(ctx); err != nil {
+		return err
+	}
+	defer lock.Unlock()
+
 	hashedKey, err := GenerateKey(packageKey)
 	if err != nil {
 		return err
 	}
 
 	packageDir := filepath.Join(p.packagesDir, hashedKey)
+
 	versionDir := filepath.Join(packageDir, fmt.Sprintf("v%d.%d.%d", version.Major, version.Minor, version.Patch))
 	filesDir := filepath.Join(versionDir, "files")
 
@@ -72,12 +92,23 @@ func (p *PackageCache) SetPackageVersion(ctx context.Context, packageKey interfa
 }
 
 func (p *PackageCache) GetPackageVersion(ctx context.Context, packageKey interface{}, version core.Version) ([]*core.File, error) {
+	lock, err := p.getPackageLock(packageKey)
+	if err != nil {
+		return nil, err
+	}
+	if err := lock.Lock(ctx); err != nil {
+		return nil, err
+	}
+	defer lock.Unlock()
+
 	hashedKey, err := GenerateKey(packageKey)
 	if err != nil {
 		return nil, err
 	}
 
-	versionDir := filepath.Join(p.packagesDir, hashedKey, fmt.Sprintf("v%d.%d.%d", version.Major, version.Minor, version.Patch))
+	packageDir := filepath.Join(p.packagesDir, hashedKey)
+
+	versionDir := filepath.Join(packageDir, fmt.Sprintf("v%d.%d.%d", version.Major, version.Minor, version.Patch))
 	filesDir := filepath.Join(versionDir, "files")
 
 	if _, err := os.Stat(filesDir); os.IsNotExist(err) {
@@ -168,22 +199,43 @@ func (p *PackageCache) ListPackages(ctx context.Context) ([]interface{}, error) 
 
 // Cleanup operations
 func (p *PackageCache) RemovePackageVersion(ctx context.Context, packageKey interface{}, version core.Version) error {
-	hashedKey, err := GenerateKey(packageKey)
+	lock, err := p.getPackageLock(packageKey)
 	if err != nil {
 		return err
 	}
+	if err := lock.Lock(ctx); err != nil {
+		return err
+	}
+	defer lock.Unlock()
 
-	versionDir := filepath.Join(p.packagesDir, hashedKey, fmt.Sprintf("v%d.%d.%d", version.Major, version.Minor, version.Patch))
-	return os.RemoveAll(versionDir)
-}
-
-func (p *PackageCache) RemovePackage(ctx context.Context, packageKey interface{}) error {
 	hashedKey, err := GenerateKey(packageKey)
 	if err != nil {
 		return err
 	}
 
 	packageDir := filepath.Join(p.packagesDir, hashedKey)
+
+	versionDir := filepath.Join(packageDir, fmt.Sprintf("v%d.%d.%d", version.Major, version.Minor, version.Patch))
+	return os.RemoveAll(versionDir)
+}
+
+func (p *PackageCache) RemovePackage(ctx context.Context, packageKey interface{}) error {
+	lock, err := p.getPackageLock(packageKey)
+	if err != nil {
+		return err
+	}
+	if err := lock.Lock(ctx); err != nil {
+		return err
+	}
+	defer lock.Unlock()
+
+	hashedKey, err := GenerateKey(packageKey)
+	if err != nil {
+		return err
+	}
+
+	packageDir := filepath.Join(p.packagesDir, hashedKey)
+
 	return os.RemoveAll(packageDir)
 }
 
