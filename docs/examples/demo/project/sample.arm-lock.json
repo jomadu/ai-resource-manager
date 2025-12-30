@@ -1,13 +1,13 @@
 {
-    "version": "1.0.0",
-    "packages": {
-        "sample-registry/clean-code-ruleset": {
-            "version": "1.1.0",
-            "checksum": "sha256:a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
-        },
-        "sample-registry/code-review-promptset": {
-            "version": "1.1.0",
-            "checksum": "sha256:fedcba0987654321098765432109876543210fedcba098765432109876543210"
+    "version": 1,
+    "rulesets": {
+        "sample-registry/clean-code-ruleset@1.1.0": {
+            "integrity": "sha256-a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
+        }
+    },
+    "promptsets": {
+        "sample-registry/code-review-promptset@1.1.0": {
+            "integrity": "sha256-fedcba0987654321098765432109876543210fedcba098765432109876543210"
         }
     }
 }

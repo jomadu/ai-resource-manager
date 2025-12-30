@@ -1,16 +1,13 @@
 {
-    "packages": {
-        "sample-registry": {
-            "code-review-promptset": {
-                "version": "1.1.0",
-                "resourceType": "promptset",
-                "files": [
-                    "arm/sample-registry/code-review-promptset/1.1.0/code-review_securityReview.md",
-                    "arm/sample-registry/code-review-promptset/1.1.0/code-review_performanceReview.md",
-                    "arm/sample-registry/code-review-promptset/1.1.0/code-review_codeQualityReview.md",
-                    "arm/sample-registry/code-review-promptset/1.1.0/code-review_accessibilityReview.md"
-                ]
-            }
+    "version": 1,
+    "promptsets": {
+        "sample-registry/code-review-promptset@1.1.0": {
+            "files": [
+                "arm/sample-registry/code-review-promptset/1.1.0/code-review_securityReview.md",
+                "arm/sample-registry/code-review-promptset/1.1.0/code-review_performanceReview.md",
+                "arm/sample-registry/code-review-promptset/1.1.0/code-review_codeQualityReview.md",
+                "arm/sample-registry/code-review-promptset/1.1.0/code-review_accessibilityReview.md"
+            ]
         }
     }
 }

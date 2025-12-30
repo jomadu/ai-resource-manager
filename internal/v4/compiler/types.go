@@ -4,17 +4,15 @@ import (
 	"github.com/jomadu/ai-resource-manager/internal/v4/resource"
 )
 
-// CompileTarget represents different AI tool formats
-type CompileTarget string
+// Tool represents different AI tool formats
+type Tool string
 
 const (
-	TargetCursor   CompileTarget = "cursor"
-	TargetMarkdown CompileTarget = "markdown"
-	TargetAmazonQ  CompileTarget = "amazonq"
-	TargetCopilot  CompileTarget = "copilot"
+	Cursor   Tool = "cursor"
+	Markdown Tool = "markdown"
+	AmazonQ  Tool = "amazonq"
+	Copilot  Tool = "copilot"
 )
-
-
 
 // RuleGenerator interface for generating tool-specific rule files
 type RuleGenerator interface {
@@ -38,21 +36,21 @@ type PromptFilenameGenerator interface {
 
 // RuleGeneratorFactory interface for creating rule generators
 type RuleGeneratorFactory interface {
-	NewRuleGenerator(target CompileTarget) (RuleGenerator, error)
+	NewRuleGenerator(tool Tool) (RuleGenerator, error)
 }
 
 // PromptGeneratorFactory interface for creating prompt generators
 type PromptGeneratorFactory interface {
-	NewPromptGenerator(target CompileTarget) (PromptGenerator, error)
+	NewPromptGenerator(tool Tool) (PromptGenerator, error)
 }
 
 // RuleFilenameGeneratorFactory interface for creating rule filename generators
 type RuleFilenameGeneratorFactory interface {
-	NewRuleFilenameGenerator(target CompileTarget) (RuleFilenameGenerator, error)
+	NewRuleFilenameGenerator(tool Tool) (RuleFilenameGenerator, error)
 }
 
 // PromptFilenameGeneratorFactory interface for creating prompt filename generators
 type PromptFilenameGeneratorFactory interface {
-	NewPromptFilenameGenerator(target CompileTarget) (PromptFilenameGenerator, error)
+	NewPromptFilenameGenerator(tool Tool) (PromptFilenameGenerator, error)
 }
 

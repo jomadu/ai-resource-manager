@@ -25,8 +25,8 @@ type Manifest struct {
 
 type SinkConfig struct {
 	Directory string `json:"directory"`
-	Layout string `json:"layout,omitempty"`
-	CompileTarget string `json:"compileTarget"`
+	Layout    string `json:"layout,omitempty"`
+	Tool      string `json:"tool"`
 }
 
 type PackageConfig struct {

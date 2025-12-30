@@ -9,18 +9,18 @@ func NewRuleGeneratorFactory() RuleGeneratorFactory {
 	return &DefaultRuleGeneratorFactory{}
 }
 
-func (f *DefaultRuleGeneratorFactory) NewRuleGenerator(target CompileTarget) (RuleGenerator, error) {
-	switch target {
-	case TargetCursor:
+func (f *DefaultRuleGeneratorFactory) NewRuleGenerator(tool Tool) (RuleGenerator, error) {
+	switch tool {
+	case Cursor:
 		return &CursorRuleGenerator{}, nil
-	case TargetMarkdown:
+	case Markdown:
 		return &MarkdownRuleGenerator{}, nil
-	case TargetAmazonQ:
+	case AmazonQ:
 		return &AmazonQRuleGenerator{}, nil
-	case TargetCopilot:
+	case Copilot:
 		return &CopilotRuleGenerator{}, nil
 	default:
-		return nil, fmt.Errorf("unsupported compile target: %s", target)
+		return nil, fmt.Errorf("unsupported tool: %s", tool)
 	}
 }
 
@@ -31,18 +31,18 @@ func NewPromptGeneratorFactory() PromptGeneratorFactory {
 	return &DefaultPromptGeneratorFactory{}
 }
 
-func (f *DefaultPromptGeneratorFactory) NewPromptGenerator(target CompileTarget) (PromptGenerator, error) {
-	switch target {
-	case TargetCursor:
+func (f *DefaultPromptGeneratorFactory) NewPromptGenerator(tool Tool) (PromptGenerator, error) {
+	switch tool {
+	case Cursor:
 		return &CursorPromptGenerator{}, nil
-	case TargetMarkdown:
+	case Markdown:
 		return &MarkdownPromptGenerator{}, nil
-	case TargetAmazonQ:
+	case AmazonQ:
 		return &AmazonQPromptGenerator{}, nil
-	case TargetCopilot:
+	case Copilot:
 		return &CopilotPromptGenerator{}, nil
 	default:
-		return nil, fmt.Errorf("unsupported compile target: %s", target)
+		return nil, fmt.Errorf("unsupported tool: %s", tool)
 	}
 }
 
@@ -53,18 +53,18 @@ func NewRuleFilenameGeneratorFactory() RuleFilenameGeneratorFactory {
 	return &DefaultRuleFilenameGeneratorFactory{}
 }
 
-func (f *DefaultRuleFilenameGeneratorFactory) NewRuleFilenameGenerator(target CompileTarget) (RuleFilenameGenerator, error) {
-	switch target {
-	case TargetCursor:
+func (f *DefaultRuleFilenameGeneratorFactory) NewRuleFilenameGenerator(tool Tool) (RuleFilenameGenerator, error) {
+	switch tool {
+	case Cursor:
 		return &CursorRuleFilenameGenerator{}, nil
-	case TargetMarkdown:
+	case Markdown:
 		return &MarkdownRuleFilenameGenerator{}, nil
-	case TargetAmazonQ:
+	case AmazonQ:
 		return &AmazonQRuleFilenameGenerator{}, nil
-	case TargetCopilot:
+	case Copilot:
 		return &CopilotRuleFilenameGenerator{}, nil
 	default:
-		return nil, fmt.Errorf("unsupported rule filename target: %s", target)
+		return nil, fmt.Errorf("unsupported rule filename tool: %s", tool)
 	}
 }
 
@@ -75,17 +75,17 @@ func NewPromptFilenameGeneratorFactory() PromptFilenameGeneratorFactory {
 	return &DefaultPromptFilenameGeneratorFactory{}
 }
 
-func (f *DefaultPromptFilenameGeneratorFactory) NewPromptFilenameGenerator(target CompileTarget) (PromptFilenameGenerator, error) {
-	switch target {
-	case TargetCursor:
+func (f *DefaultPromptFilenameGeneratorFactory) NewPromptFilenameGenerator(tool Tool) (PromptFilenameGenerator, error) {
+	switch tool {
+	case Cursor:
 		return &CursorPromptFilenameGenerator{}, nil
-	case TargetMarkdown:
+	case Markdown:
 		return &MarkdownPromptFilenameGenerator{}, nil
-	case TargetAmazonQ:
+	case AmazonQ:
 		return &AmazonQPromptFilenameGenerator{}, nil
-	case TargetCopilot:
+	case Copilot:
 		return &CopilotPromptFilenameGenerator{}, nil
 	default:
-		return nil, fmt.Errorf("unsupported prompt filename target: %s", target)
+		return nil, fmt.Errorf("unsupported prompt filename tool: %s", tool)
 	}
 }

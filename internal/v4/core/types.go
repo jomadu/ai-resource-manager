@@ -23,8 +23,9 @@ type Version struct {
 }
 
 type PackageMetadata struct {
-	Name    string
-	Version Version
+	RegistryName string
+	Name         string
+	Version      Version
 }
 
 type Package struct {

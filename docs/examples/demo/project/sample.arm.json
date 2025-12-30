@@ -1,52 +1,53 @@
 {
-    "version": "1.0.0",
+    "version": 1,
     "registries": {
         "sample-registry": {
-            "url": "https://api.cloudsmith.io",
             "type": "cloudsmith",
+            "url": "https://api.cloudsmith.io",
             "owner": "sample-org",
             "repository": "arm-registry"
-        }
-    },
-    "packages": {
-        "sample-registry/clean-code-ruleset": {
-            "version": "^1.0.0",
-            "resourceType": "ruleset",
-            "priority": 100,
-            "sinks": [
-                "cursor-rules",
-                "amazonq-rules"
-            ]
-        },
-        "sample-registry/code-review-promptset": {
-            "version": "^1.0.0",
-            "resourceType": "promptset",
-            "sinks": [
-                "cursor-commands",
-                "amazonq-prompts"
-            ]
         }
     },
     "sinks": {
         "cursor-rules": {
             "directory": ".cursor/rules",
-            "layout": "hierarchical",
-            "compileTarget": "cursor"
+            "tool": "cursor"
         },
         "amazonq-rules": {
             "directory": ".amazonq/rules",
-            "layout": "hierarchical",
-            "compileTarget": "amazonq"
+            "tool": "amazonq"
         },
         "cursor-commands": {
             "directory": ".cursor/commands",
-            "layout": "hierarchical",
-            "compileTarget": "cursor"
+            "tool": "cursor"
         },
         "amazonq-prompts": {
             "directory": ".amazonq/prompts",
-            "layout": "hierarchical",
-            "compileTarget": "amazonq"
+            "tool": "amazonq"
+        }
+    },
+    "dependencies": {
+        "rulesets": {
+            "sample-registry/clean-code-ruleset": {
+                "version": "^1.0.0",
+                "priority": 100,
+                "sinks": [
+                    "cursor-rules",
+                    "amazonq-rules"
+                ],
+                "include": ["**/*.yml"],
+                "exclude": ["**/experimental/**"]
+            }
+        },
+        "promptsets": {
+            "sample-registry/code-review-promptset": {
+                "version": "^1.0.0",
+                "sinks": [
+                    "cursor-commands",
+                    "amazonq-prompts"
+                ],
+                "include": ["review/**/*.yml"]
+            }
         }
     }
 }

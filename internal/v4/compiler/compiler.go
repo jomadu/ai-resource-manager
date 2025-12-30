@@ -8,8 +8,8 @@ import (
 	"github.com/jomadu/ai-resource-manager/internal/v4/resource"
 )
 
-// CompileRuleset compiles a ruleset to the target format
-func CompileRuleset(target CompileTarget, namespace string, ruleset *resource.RulesetResource) ([]*core.File, error) {
+// CompileRuleset compiles a ruleset to the tool format
+func CompileRuleset(tool Tool, namespace string, ruleset *resource.RulesetResource) ([]*core.File, error) {
 	var compiledFiles []*core.File
 
 	// Sort rule IDs for consistent ordering
@@ -21,14 +21,14 @@ func CompileRuleset(target CompileTarget, namespace string, ruleset *resource.Ru
 
 	// Create rule filename generator
 	ruleFilenameFactory := NewRuleFilenameGeneratorFactory()
-	ruleFilenameGen, err := ruleFilenameFactory.NewRuleFilenameGenerator(target)
+	ruleFilenameGen, err := ruleFilenameFactory.NewRuleFilenameGenerator(tool)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule filename generator: %w", err)
 	}
 
 	// Create rule generator
 	ruleFactory := NewRuleGeneratorFactory()
-	ruleGen, err := ruleFactory.NewRuleGenerator(target)
+	ruleGen, err := ruleFactory.NewRuleGenerator(tool)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule generator: %w", err)
 	}
@@ -56,8 +56,8 @@ func CompileRuleset(target CompileTarget, namespace string, ruleset *resource.Ru
 	return compiledFiles, nil
 }
 
-// CompilePromptset compiles a promptset to the target format
-func CompilePromptset(target CompileTarget, namespace string, promptset *resource.PromptsetResource) ([]*core.File, error) {
+// CompilePromptset compiles a promptset to the tool format
+func CompilePromptset(tool Tool, namespace string, promptset *resource.PromptsetResource) ([]*core.File, error) {
 	var compiledFiles []*core.File
 
 	// Sort prompt IDs for consistent ordering
@@ -69,14 +69,14 @@ func CompilePromptset(target CompileTarget, namespace string, promptset *resourc
 
 	// Create prompt filename generator
 	promptFilenameFactory := NewPromptFilenameGeneratorFactory()
-	promptFilenameGen, err := promptFilenameFactory.NewPromptFilenameGenerator(target)
+	promptFilenameGen, err := promptFilenameFactory.NewPromptFilenameGenerator(tool)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create prompt filename generator: %w", err)
 	}
 
 	// Create prompt generator
 	promptFactory := NewPromptGeneratorFactory()
-	promptGen, err := promptFactory.NewPromptGenerator(target)
+	promptGen, err := promptFactory.NewPromptGenerator(tool)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create prompt generator: %w", err)
 	}

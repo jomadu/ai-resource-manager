@@ -126,7 +126,7 @@ func (s *ArmService) SetCloudsmithRegistryRepository(ctx context.Context, name s
 // ---------------
 
 // AddSink adds a sink
-func (s *ArmService) AddSink(ctx context.Context, name, directory, layout, compileTarget string, force bool) error {
+func (s *ArmService) AddSink(ctx context.Context, name, directory, layout, tool string, force bool) error {
 	// TODO: implement
 	return nil
 }
@@ -179,8 +179,8 @@ func (s *ArmService) SetSinkLayout(ctx context.Context, name string, layout stri
 	return nil
 }
 
-// SetSinkCompileTarget sets sink compile target
-func (s *ArmService) SetSinkCompileTarget(ctx context.Context, name string, compileTarget string) error {
+// SetSinkTool sets sink tool
+func (s *ArmService) SetSinkTool(ctx context.Context, name string, tool string) error {
 	// TODO: implement
 	return nil
 }
@@ -402,7 +402,7 @@ func (s *ArmService) NukeSinks(ctx context.Context) error {
 // CompileRequest groups compile parameters following ARM patterns
 type CompileRequest struct {
 	Paths        []string
-	Targets      []string
+	Tools        []string
 	OutputDir    string
 	Namespace    string
 	Force        bool

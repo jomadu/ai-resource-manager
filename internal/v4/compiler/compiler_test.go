@@ -35,7 +35,7 @@ func TestCompileRuleset(t *testing.T) {
 
 	namespace := "sample-registry"
 
-	files, err := CompileRuleset(TargetCursor, namespace, ruleset)
+	files, err := CompileRuleset(Cursor, namespace, ruleset)
 	if err != nil {
 		t.Fatalf("Compilation failed: %v", err)
 	}
@@ -75,19 +75,19 @@ func TestCompileRuleset(t *testing.T) {
 	}
 }
 
-func TestCompileRuleset_DifferentTargets(t *testing.T) {
+func TestCompileRuleset_DifferentTools(t *testing.T) {
 	testCases := []struct {
-		target    CompileTarget
+		tool      Tool
 		extension string
 	}{
-		{TargetCursor, ".mdc"},
-		{TargetAmazonQ, ".md"},
-		{TargetCopilot, ".instructions.md"},
-		{TargetMarkdown, ".md"},
+		{Cursor, ".mdc"},
+		{AmazonQ, ".md"},
+		{Copilot, ".instructions.md"},
+		{Markdown, ".md"},
 	}
 
 	for _, tc := range testCases {
-		t.Run(string(tc.target), func(t *testing.T) {
+		t.Run(string(tc.tool), func(t *testing.T) {
 			ruleset := &resource.RulesetResource{
 				APIVersion: "v1",
 				Kind:       "Ruleset",
@@ -105,18 +105,18 @@ func TestCompileRuleset_DifferentTargets(t *testing.T) {
 				},
 			}
 
-			files, err := CompileRuleset(tc.target, "test-namespace", ruleset)
+			files, err := CompileRuleset(tc.tool, "test-namespace", ruleset)
 			if err != nil {
-				t.Fatalf("Compilation failed for %s: %v", tc.target, err)
+				t.Fatalf("Compilation failed for %s: %v", tc.tool, err)
 			}
 
 			if len(files) != 1 {
-				t.Fatalf("Expected 1 file for %s, got %d", tc.target, len(files))
+				t.Fatalf("Expected 1 file for %s, got %d", tc.tool, len(files))
 			}
 
 			expectedFilename := "test-ruleset_rule1" + tc.extension
 			if files[0].Path != expectedFilename {
-				t.Errorf("Expected filename %s for %s, got %s", expectedFilename, tc.target, files[0].Path)
+				t.Errorf("Expected filename %s for %s, got %s", expectedFilename, tc.tool, files[0].Path)
 			}
 		})
 	}
@@ -148,7 +148,7 @@ func TestCompilePromptset(t *testing.T) {
 
 	namespace := "sample-registry"
 
-	files, err := CompilePromptset(TargetCursor, namespace, promptset)
+	files, err := CompilePromptset(Cursor, namespace, promptset)
 	if err != nil {
 		t.Fatalf("Promptset compilation failed: %v", err)
 	}
@@ -184,11 +184,11 @@ func TestCompilePromptset(t *testing.T) {
 	}
 }
 
-func TestCompilePromptset_AllTargets(t *testing.T) {
-	targets := []CompileTarget{TargetCursor, TargetAmazonQ, TargetMarkdown, TargetCopilot}
+func TestCompilePromptset_AllTools(t *testing.T) {
+	tools := []Tool{Cursor, AmazonQ, Markdown, Copilot}
 
-	for _, target := range targets {
-		t.Run(string(target), func(t *testing.T) {
+	for _, tool := range tools {
+		t.Run(string(tool), func(t *testing.T) {
 			promptset := &resource.PromptsetResource{
 				APIVersion: "v1",
 				Kind:       "Promptset",
@@ -206,30 +206,30 @@ func TestCompilePromptset_AllTargets(t *testing.T) {
 				},
 			}
 
-			files, err := CompilePromptset(target, "test-namespace", promptset)
+			files, err := CompilePromptset(tool, "test-namespace", promptset)
 			if err != nil {
-				t.Fatalf("Promptset compilation failed for %s: %v", target, err)
+				t.Fatalf("Promptset compilation failed for %s: %v", tool, err)
 			}
 
 			if len(files) != 1 {
-				t.Fatalf("Expected 1 file for %s, got %d", target, len(files))
+				t.Fatalf("Expected 1 file for %s, got %d", tool, len(files))
 			}
 
-			// All promptset targets should use .md extension
+			// All promptset tools should use .md extension
 			if !strings.HasSuffix(files[0].Path, ".md") {
-				t.Errorf("Expected .md extension for %s promptset, got %s", target, files[0].Path)
+				t.Errorf("Expected .md extension for %s promptset, got %s", tool, files[0].Path)
 			}
 
-			// All promptset targets should produce content-only files (no metadata)
+			// All promptset tools should produce content-only files (no metadata)
 			content := string(files[0].Content)
 			if strings.Contains(content, "namespace:") {
-				t.Errorf("Promptset should not contain metadata for %s target", target)
+				t.Errorf("Promptset should not contain metadata for %s tool", tool)
 			}
 			if strings.Contains(content, "alwaysApply:") {
-				t.Errorf("Promptset should not contain rule metadata for %s target", target)
+				t.Errorf("Promptset should not contain rule metadata for %s tool", tool)
 			}
 			if !strings.Contains(content, "Prompt content") {
-				t.Errorf("Expected prompt body in %s output", target)
+				t.Errorf("Expected prompt body in %s output", tool)
 			}
 		})
 	}
