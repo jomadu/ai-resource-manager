@@ -17,33 +17,35 @@ const (
 )
 
 type Manifest struct {
-	Version string `json:"version"`
-	Registries map[string]map[string]interface{} `json:"registries,omitempty"`
-	Sinks      map[string]SinkConfig             `json:"sinks,omitempty"`
-	Packages   map[string]interface{}            `json:"packages"`
+	Version      int                               `json:"version"`
+	Registries   map[string]map[string]interface{} `json:"registries,omitempty"`
+	Sinks        map[string]SinkConfig             `json:"sinks,omitempty"`
+	Dependencies Dependencies                      `json:"dependencies"`
+}
+
+type Dependencies struct {
+	Rulesets   map[string]RulesetConfig   `json:"rulesets,omitempty"`
+	Promptsets map[string]PromptsetConfig `json:"promptsets,omitempty"`
 }
 
 type SinkConfig struct {
 	Directory string `json:"directory"`
-	Layout    string `json:"layout,omitempty"`
 	Tool      string `json:"tool"`
 }
 
-type PackageConfig struct {
-	Version string `json:"version"`
-	Include []string `json:"include,omitempty"`
-	Exclude []string `json:"exclude,omitempty"`
-	Sinks []string `json:"sinks"`
-	ResourceType ResourceType `json:"resourceType,omitempty"`
-}
-
 type RulesetConfig struct {
-	PackageConfig
-	Priority int `json:"priority,omitempty"`
+	Version  string   `json:"version"`
+	Priority int      `json:"priority,omitempty"`
+	Sinks    []string `json:"sinks"`
+	Include  []string `json:"include,omitempty"`
+	Exclude  []string `json:"exclude,omitempty"`
 }
 
 type PromptsetConfig struct {
-	PackageConfig
+	Version string   `json:"version"`
+	Sinks   []string `json:"sinks"`
+	Include []string `json:"include,omitempty"`
+	Exclude []string `json:"exclude,omitempty"`
 }
 
 type RegistryConfig struct {
@@ -132,12 +134,21 @@ func (f *FileManager) UpdateRegistryConfigName(ctx context.Context, name string,
 	delete(manifest.Registries, name)
 
 	// Update package keys from "oldName/package" to "newName/package"
-	for key, packageConfig := range manifest.Packages {
+	for key, rulesetConfig := range manifest.Dependencies.Rulesets {
 		regName, pkgName := core.ParsePackageKey(key)
 		if regName == name {
 			newKey := core.PackageKey(newName, pkgName)
-			manifest.Packages[newKey] = packageConfig
-			delete(manifest.Packages, key)
+			manifest.Dependencies.Rulesets[newKey] = rulesetConfig
+			delete(manifest.Dependencies.Rulesets, key)
+		}
+	}
+
+	for key, promptsetConfig := range manifest.Dependencies.Promptsets {
+		regName, pkgName := core.ParsePackageKey(key)
+		if regName == name {
+			newKey := core.PackageKey(newName, pkgName)
+			manifest.Dependencies.Promptsets[newKey] = promptsetConfig
+			delete(manifest.Dependencies.Promptsets, key)
 		}
 	}
 
@@ -159,10 +170,17 @@ func (f *FileManager) RemoveRegistryConfig(ctx context.Context, name string) err
 	delete(manifest.Registries, name)
 	
 	// Remove all packages from this registry
-	for key := range manifest.Packages {
+	for key := range manifest.Dependencies.Rulesets {
 		regName, _ := core.ParsePackageKey(key)
 		if regName == name {
-			delete(manifest.Packages, key)
+			delete(manifest.Dependencies.Rulesets, key)
+		}
+	}
+	
+	for key := range manifest.Dependencies.Promptsets {
+		regName, _ := core.ParsePackageKey(key)
+		if regName == name {
+			delete(manifest.Dependencies.Promptsets, key)
 		}
 	}
 	
@@ -423,186 +441,148 @@ func (f *FileManager) RemoveSinkConfig(ctx context.Context, name string) error {
 	return f.saveManifest(manifest)
 }
 
-// Package operations (generic)
+// Package operations
 
-func (f *FileManager) GetAllPackagesConfig(ctx context.Context) (map[string]interface{}, error) {
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return nil, err
-	}
-	return manifest.Packages, nil
-}
-
-func (f *FileManager) GetPackageConfig(ctx context.Context, registryName, packageName string) (map[string]interface{}, error) {
+func (f *FileManager) GetRulesetConfig(ctx context.Context, packageKey string) (*RulesetConfig, error) {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return nil, err
 	}
 
-	key := core.PackageKey(registryName, packageName)
-	configInterface, exists := manifest.Packages[key]
+	config, exists := manifest.Dependencies.Rulesets[packageKey]
 	if !exists {
-		return nil, fmt.Errorf("package %s not found", key)
+		return nil, fmt.Errorf("ruleset %s not found", packageKey)
 	}
 
-	config, ok := configInterface.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("package %s has invalid config format", key)
-	}
-
-	return config, nil
+	return &config, nil
 }
 
-func (f *FileManager) UpdatePackageConfigName(ctx context.Context, registryName, packageName string, newRegistryName, newPackageName string) error {
+func (f *FileManager) GetPromptsetConfig(ctx context.Context, packageKey string) (*PromptsetConfig, error) {
 	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-
-	oldKey := core.PackageKey(registryName, packageName)
-	newKey := core.PackageKey(newRegistryName, newPackageName)
-
-	if _, exists := manifest.Packages[oldKey]; !exists {
-		return fmt.Errorf("package %s not found", oldKey)
-	}
-
-	if _, exists := manifest.Packages[newKey]; exists {
-		return fmt.Errorf("package %s already exists", newKey)
-	}
-
-	manifest.Packages[newKey] = manifest.Packages[oldKey]
-	delete(manifest.Packages, oldKey)
-
-	return f.saveManifest(manifest)
-}
-
-func (f *FileManager) RemovePackageConfig(ctx context.Context, registryName, packageName string) error {
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-
-	key := core.PackageKey(registryName, packageName)
-	if _, exists := manifest.Packages[key]; !exists {
-		return fmt.Errorf("package %s not found", key)
-	}
-
-	delete(manifest.Packages, key)
-	return f.saveManifest(manifest)
-}
-
-// Package operations (type-safe helpers)
-
-func (f *FileManager) GetRulesetConfig(ctx context.Context, registryName, packageName string) (*RulesetConfig, error) {
-	rawConfig, err := f.GetPackageConfig(ctx, registryName, packageName)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check resource type
-	resourceType, ok := rawConfig["resourceType"].(string)
-	if !ok || resourceType != string(ResourceTypeRuleset) {
-		key := core.PackageKey(registryName, packageName)
-		return nil, fmt.Errorf("package %s is not a ruleset", key)
+	config, exists := manifest.Dependencies.Promptsets[packageKey]
+	if !exists {
+		return nil, fmt.Errorf("promptset %s not found", packageKey)
 	}
 
-	return convertMapToRulesetConfig(rawConfig)
+	return &config, nil
 }
 
-func (f *FileManager) GetPromptsetConfig(ctx context.Context, registryName, packageName string) (*PromptsetConfig, error) {
-	rawConfig, err := f.GetPackageConfig(ctx, registryName, packageName)
+func (f *FileManager) AddRulesetConfig(ctx context.Context, packageKey string, config *RulesetConfig) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := manifest.Dependencies.Rulesets[packageKey]; exists {
+		return fmt.Errorf("ruleset %s already exists", packageKey)
+	}
+
+	manifest.Dependencies.Rulesets[packageKey] = *config
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) AddPromptsetConfig(ctx context.Context, packageKey string, config *PromptsetConfig) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := manifest.Dependencies.Promptsets[packageKey]; exists {
+		return fmt.Errorf("promptset %s already exists", packageKey)
+	}
+
+	manifest.Dependencies.Promptsets[packageKey] = *config
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) UpdateRulesetConfig(ctx context.Context, packageKey string, config *RulesetConfig) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := manifest.Dependencies.Rulesets[packageKey]; !exists {
+		return fmt.Errorf("ruleset %s not found", packageKey)
+	}
+
+	manifest.Dependencies.Rulesets[packageKey] = *config
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) UpdatePromptsetConfig(ctx context.Context, packageKey string, config *PromptsetConfig) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := manifest.Dependencies.Promptsets[packageKey]; !exists {
+		return fmt.Errorf("promptset %s not found", packageKey)
+	}
+
+	manifest.Dependencies.Promptsets[packageKey] = *config
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) RemoveRulesetConfig(ctx context.Context, packageKey string) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := manifest.Dependencies.Rulesets[packageKey]; !exists {
+		return fmt.Errorf("ruleset %s not found", packageKey)
+	}
+
+	delete(manifest.Dependencies.Rulesets, packageKey)
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) RemovePromptsetConfig(ctx context.Context, packageKey string) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := manifest.Dependencies.Promptsets[packageKey]; !exists {
+		return fmt.Errorf("promptset %s not found", packageKey)
+	}
+
+	delete(manifest.Dependencies.Promptsets, packageKey)
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) GetAllRulesets(ctx context.Context) (map[string]*RulesetConfig, error) {
+	manifest, err := f.loadManifest()
 	if err != nil {
 		return nil, err
 	}
 
-	// Check resource type
-	resourceType, ok := rawConfig["resourceType"].(string)
-	if !ok || resourceType != string(ResourceTypePromptset) {
-		key := core.PackageKey(registryName, packageName)
-		return nil, fmt.Errorf("package %s is not a promptset", key)
+	result := make(map[string]*RulesetConfig)
+	for key, config := range manifest.Dependencies.Rulesets {
+		configCopy := config
+		result[key] = &configCopy
 	}
 
-	return convertMapToPromptsetConfig(rawConfig)
+	return result, nil
 }
 
-func (f *FileManager) AddRulesetConfig(ctx context.Context, registryName, packageName string, config *RulesetConfig) error {
+func (f *FileManager) GetAllPromptsets(ctx context.Context) (map[string]*PromptsetConfig, error) {
 	manifest, err := f.loadManifest()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	key := core.PackageKey(registryName, packageName)
-	if _, exists := manifest.Packages[key]; exists {
-		return fmt.Errorf("package %s already exists", key)
+	result := make(map[string]*PromptsetConfig)
+	for key, config := range manifest.Dependencies.Promptsets {
+		configCopy := config
+		result[key] = &configCopy
 	}
 
-	configMap, err := convertRegistryToMap(config)
-	if err != nil {
-		return err
-	}
-
-	manifest.Packages[key] = configMap
-	return f.saveManifest(manifest)
-}
-
-func (f *FileManager) AddPromptsetConfig(ctx context.Context, registryName, packageName string, config *PromptsetConfig) error {
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-
-	key := core.PackageKey(registryName, packageName)
-	if _, exists := manifest.Packages[key]; exists {
-		return fmt.Errorf("package %s already exists", key)
-	}
-
-	configMap, err := convertRegistryToMap(config)
-	if err != nil {
-		return err
-	}
-
-	manifest.Packages[key] = configMap
-	return f.saveManifest(manifest)
-}
-
-func (f *FileManager) UpdateRulesetConfig(ctx context.Context, registryName, packageName string, config *RulesetConfig) error {
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-
-	key := core.PackageKey(registryName, packageName)
-	if _, exists := manifest.Packages[key]; !exists {
-		return fmt.Errorf("package %s not found", key)
-	}
-
-	configMap, err := convertRegistryToMap(config)
-	if err != nil {
-		return err
-	}
-
-	manifest.Packages[key] = configMap
-	return f.saveManifest(manifest)
-}
-
-func (f *FileManager) UpdatePromptsetConfig(ctx context.Context, registryName, packageName string, config *PromptsetConfig) error {
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-
-	key := core.PackageKey(registryName, packageName)
-	if _, exists := manifest.Packages[key]; !exists {
-		return fmt.Errorf("package %s not found", key)
-	}
-
-	configMap, err := convertRegistryToMap(config)
-	if err != nil {
-		return err
-	}
-
-	manifest.Packages[key] = configMap
-	return f.saveManifest(manifest)
+	return result, nil
 }
 
 // Helper functions for FileManager implementation
@@ -629,11 +609,14 @@ func (f *FileManager) loadManifest() (*Manifest, error) {
 	if manifest.Registries == nil {
 		manifest.Registries = make(map[string]map[string]interface{})
 	}
-	if manifest.Packages == nil {
-		manifest.Packages = make(map[string]interface{})
-	}
 	if manifest.Sinks == nil {
 		manifest.Sinks = make(map[string]SinkConfig)
+	}
+	if manifest.Dependencies.Rulesets == nil {
+		manifest.Dependencies.Rulesets = make(map[string]RulesetConfig)
+	}
+	if manifest.Dependencies.Promptsets == nil {
+		manifest.Dependencies.Promptsets = make(map[string]PromptsetConfig)
 	}
 
 	return &manifest, nil
@@ -643,10 +626,13 @@ func (f *FileManager) loadManifest() (*Manifest, error) {
 // Used when manifest file doesn't exist yet.
 func (f *FileManager) newEmptyManifest() *Manifest {
 	return &Manifest{
-		Version:    "1.0.0",
+		Version:    1,
 		Registries: make(map[string]map[string]interface{}),
-		Packages:   make(map[string]interface{}),
 		Sinks:      make(map[string]SinkConfig),
+		Dependencies: Dependencies{
+			Rulesets:   make(map[string]RulesetConfig),
+			Promptsets: make(map[string]PromptsetConfig),
+		},
 	}
 }
 
@@ -657,11 +643,11 @@ func (f *FileManager) saveManifest(manifest *Manifest) error {
 	if len(manifest.Registries) == 0 {
 		manifest.Registries = nil
 	}
-	if len(manifest.Packages) == 0 {
-		manifest.Packages = nil
-	}
 	if len(manifest.Sinks) == 0 {
 		manifest.Sinks = nil
+	}
+	if len(manifest.Dependencies.Rulesets) == 0 && len(manifest.Dependencies.Promptsets) == 0 {
+		manifest.Dependencies = Dependencies{}
 	}
 
 	data, err := json.MarshalIndent(manifest, "", "  ")
@@ -726,36 +712,6 @@ func convertMapToCloudsmithRegistry(m map[string]interface{}) (*CloudsmithRegist
 	}
 
 	var config CloudsmithRegistryConfig
-	if err := json.Unmarshal(configBytes, &config); err != nil {
-		return nil, err
-	}
-
-	return &config, nil
-}
-
-// convertMapToRulesetConfig converts map[string]interface{} to RulesetConfig.
-func convertMapToRulesetConfig(m map[string]interface{}) (*RulesetConfig, error) {
-	configBytes, err := json.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-
-	var config RulesetConfig
-	if err := json.Unmarshal(configBytes, &config); err != nil {
-		return nil, err
-	}
-
-	return &config, nil
-}
-
-// convertMapToPromptsetConfig converts map[string]interface{} to PromptsetConfig.
-func convertMapToPromptsetConfig(m map[string]interface{}) (*PromptsetConfig, error) {
-	configBytes, err := json.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-
-	var config PromptsetConfig
 	if err := json.Unmarshal(configBytes, &config); err != nil {
 		return nil, err
 	}
