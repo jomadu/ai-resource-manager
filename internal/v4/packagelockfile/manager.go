@@ -11,13 +11,13 @@ import (
 )
 
 type PackageLockfile struct {
-	Version string `json:"version"`
-	Packages map[string]*PackageLockInfo `json:"packages"`
+	Version    int                            `json:"version"`
+	Rulesets   map[string]*PackageLockInfo   `json:"rulesets,omitempty"`
+	Promptsets map[string]*PackageLockInfo   `json:"promptsets,omitempty"`
 }
 
 type PackageLockInfo struct {
-	Version  string `json:"version"`
-	Checksum string `json:"checksum"`
+	Integrity string `json:"integrity"`
 }
 
 type FileManager struct {
@@ -32,16 +32,29 @@ func NewFileManagerWithPath(lockPath string) *FileManager {
 	return &FileManager{lockPath: lockPath}
 }
 
-func (f *FileManager) GetPackageLockInfo(ctx context.Context, registryName, packageName string) (*PackageLockInfo, error) {
+func (f *FileManager) GetRulesetLockInfo(ctx context.Context, packageKey string) (*PackageLockInfo, error) {
 	lockfile, err := f.readLockFile()
 	if err != nil {
 		return nil, err
 	}
 
-	key := core.PackageKey(registryName, packageName)
-	lockInfo, exists := lockfile.Packages[key]
+	lockInfo, exists := lockfile.Rulesets[packageKey]
 	if !exists {
-		return nil, errors.New("package not found")
+		return nil, errors.New("ruleset not found")
+	}
+
+	return lockInfo, nil
+}
+
+func (f *FileManager) GetPromptsetLockInfo(ctx context.Context, packageKey string) (*PackageLockInfo, error) {
+	lockfile, err := f.readLockFile()
+	if err != nil {
+		return nil, err
+	}
+
+	lockInfo, exists := lockfile.Promptsets[packageKey]
+	if !exists {
+		return nil, errors.New("promptset not found")
 	}
 
 	return lockInfo, nil
@@ -51,7 +64,7 @@ func (f *FileManager) GetPackageLockfile(ctx context.Context) (*PackageLockfile,
 	return f.readLockFile()
 }
 
-func (f *FileManager) UpsertPackageLockInfo(ctx context.Context, registryName, packageName string, lockInfo *PackageLockInfo) error {
+func (f *FileManager) UpsertRulesetLockInfo(ctx context.Context, packageKey string, lockInfo *PackageLockInfo) error {
 	var lockfile *PackageLockfile
 	var err error
 
@@ -61,62 +74,83 @@ func (f *FileManager) UpsertPackageLockInfo(ctx context.Context, registryName, p
 		// If file doesn't exist, create new lockfile
 		if os.IsNotExist(err) {
 			lockfile = &PackageLockfile{
-				Version:  "1.0.0",
-				Packages: make(map[string]*PackageLockInfo),
+				Version:    1,
+				Rulesets:   make(map[string]*PackageLockInfo),
+				Promptsets: make(map[string]*PackageLockInfo),
 			}
 		} else {
 			return err
 		}
 	}
 
-	// Upsert the package (create or update)
-	key := core.PackageKey(registryName, packageName)
-	lockfile.Packages[key] = lockInfo
+	// Upsert the ruleset
+	lockfile.Rulesets[packageKey] = lockInfo
 
 	// Write lockfile back to disk
 	return f.writeLockFile(lockfile)
 }
 
-func (f *FileManager) UpdatePackageName(ctx context.Context, registryName, packageName, newPackageName string) error {
+func (f *FileManager) UpsertPromptsetLockInfo(ctx context.Context, packageKey string, lockInfo *PackageLockInfo) error {
+	var lockfile *PackageLockfile
+	var err error
+
+	// Try to read existing lockfile
+	lockfile, err = f.readLockFile()
+	if err != nil {
+		// If file doesn't exist, create new lockfile
+		if os.IsNotExist(err) {
+			lockfile = &PackageLockfile{
+				Version:    1,
+				Rulesets:   make(map[string]*PackageLockInfo),
+				Promptsets: make(map[string]*PackageLockInfo),
+			}
+		} else {
+			return err
+		}
+	}
+
+	// Upsert the promptset
+	lockfile.Promptsets[packageKey] = lockInfo
+
+	// Write lockfile back to disk
+	return f.writeLockFile(lockfile)
+}
+
+func (f *FileManager) RemoveRulesetLockInfo(ctx context.Context, packageKey string) error {
 	lockfile, err := f.readLockFile()
 	if err != nil {
 		return err
 	}
 
-	oldKey := core.PackageKey(registryName, packageName)
-	newKey := core.PackageKey(registryName, newPackageName)
-
-	lockInfo, exists := lockfile.Packages[oldKey]
+	_, exists := lockfile.Rulesets[packageKey]
 	if !exists {
-		return errors.New("package not found")
+		return errors.New("ruleset not found")
 	}
 
-	// Check if new package name already exists
-	if _, exists := lockfile.Packages[newKey]; exists {
-		return errors.New("package already exists")
-	}
+	// Remove the ruleset
+	delete(lockfile.Rulesets, packageKey)
 
-	// Rename the package
-	lockfile.Packages[newKey] = lockInfo
-	delete(lockfile.Packages, oldKey)
+	// Delete lockfile if empty
+	if f.isLockfileEmpty(lockfile) {
+		return f.deleteLockFile()
+	}
 
 	return f.writeLockFile(lockfile)
 }
 
-func (f *FileManager) RemovePackageLockInfo(ctx context.Context, registryName, packageName string) error {
+func (f *FileManager) RemovePromptsetLockInfo(ctx context.Context, packageKey string) error {
 	lockfile, err := f.readLockFile()
 	if err != nil {
 		return err
 	}
 
-	key := core.PackageKey(registryName, packageName)
-	_, exists := lockfile.Packages[key]
+	_, exists := lockfile.Promptsets[packageKey]
 	if !exists {
-		return errors.New("package not found")
+		return errors.New("promptset not found")
 	}
 
-	// Remove the package
-	delete(lockfile.Packages, key)
+	// Remove the promptset
+	delete(lockfile.Promptsets, packageKey)
 
 	// Delete lockfile if empty
 	if f.isLockfileEmpty(lockfile) {
@@ -132,38 +166,23 @@ func (f *FileManager) UpdateRegistryName(ctx context.Context, oldName, newName s
 		return err
 	}
 
-	oldPrefix := oldName + "/"
-	newPrefix := newName + "/"
-	found := false
-
-	// Check if any packages exist for old registry
-	for key := range lockfile.Packages {
-		if strings.HasPrefix(key, oldPrefix) {
-			found = true
-			break
+	// Update rulesets
+	for key, lockInfo := range lockfile.Rulesets {
+		regName, pkgName := core.ParsePackageKey(key)
+		if regName == oldName {
+			newKey := core.PackageKey(newName, pkgName)
+			lockfile.Rulesets[newKey] = lockInfo
+			delete(lockfile.Rulesets, key)
 		}
 	}
 
-	if !found {
-		return errors.New("registry not found")
-	}
-
-	// Check if new registry name already exists
-	for key := range lockfile.Packages {
-		if strings.HasPrefix(key, newPrefix) {
-			return errors.New("registry already exists")
-		}
-	}
-
-	// Rename all packages from old registry to new registry
-	for key, lockInfo := range lockfile.Packages {
-		if strings.HasPrefix(key, oldPrefix) {
-			regName, pkgName := core.ParsePackageKey(key)
-			if regName == oldName {
-				newKey := core.PackageKey(newName, pkgName)
-				lockfile.Packages[newKey] = lockInfo
-				delete(lockfile.Packages, key)
-			}
+	// Update promptsets
+	for key, lockInfo := range lockfile.Promptsets {
+		regName, pkgName := core.ParsePackageKey(key)
+		if regName == oldName {
+			newKey := core.PackageKey(newName, pkgName)
+			lockfile.Promptsets[newKey] = lockInfo
+			delete(lockfile.Promptsets, key)
 		}
 	}
 
@@ -185,8 +204,11 @@ func (f *FileManager) readLockFile() (*PackageLockfile, error) {
 	}
 
 	// Initialize nil maps
-	if lockfile.Packages == nil {
-		lockfile.Packages = make(map[string]*PackageLockInfo)
+	if lockfile.Rulesets == nil {
+		lockfile.Rulesets = make(map[string]*PackageLockInfo)
+	}
+	if lockfile.Promptsets == nil {
+		lockfile.Promptsets = make(map[string]*PackageLockInfo)
 	}
 
 	return &lockfile, nil
@@ -203,7 +225,7 @@ func (f *FileManager) writeLockFile(lockfile *PackageLockfile) error {
 
 // isLockfileEmpty checks if the lockfile has no packages
 func (f *FileManager) isLockfileEmpty(lockfile *PackageLockfile) bool {
-	return len(lockfile.Packages) == 0
+	return len(lockfile.Rulesets) == 0 && len(lockfile.Promptsets) == 0
 }
 
 // deleteLockFile removes the lockfile from disk
