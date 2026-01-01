@@ -166,12 +166,12 @@ func (m *Manager) IsInstalled(metadata core.PackageMetadata) bool {
 }
 
 // ListRulesets returns all installed rulesets
-func (m *Manager) ListRulesets() (*InstalledRuleset[], error) {
+func (m *Manager) ListRulesets() ([]*InstalledRuleset, error) {
 	return nil, nil // TODO
 }
 
 // ListPromptsets returns all installed promptsets
-func (m *Manager) ListPromptsets() (*InstalledPromptset[], error) {
+func (m *Manager) ListPromptsets() ([]*InstalledPromptset, error) {
 	return nil, nil // TODO
 }
 

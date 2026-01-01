@@ -12,7 +12,7 @@ import (
 
 type PackageInfo struct {
 	Installation sink.PackageInstallation
-	LockInfo     packagelockfile.PackageLockInfo
+	LockInfo     packagelockfile.DependencyLockConfig
 	Config       map[string]interface{}
 }
 

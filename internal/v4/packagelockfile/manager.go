@@ -6,17 +6,14 @@ import (
 	"errors"
 	"os"
 	"strings"
-
-	"github.com/jomadu/ai-resource-manager/internal/v4/core"
 )
 
-type PackageLockfile struct {
-	Version    int                            `json:"version"`
-	Rulesets   map[string]*PackageLockInfo   `json:"rulesets,omitempty"`
-	Promptsets map[string]*PackageLockInfo   `json:"promptsets,omitempty"`
+type LockFile struct {
+	Version      int                              `json:"version"`
+	Dependencies map[string]DependencyLockConfig `json:"dependencies,omitempty"`
 }
 
-type PackageLockInfo struct {
+type DependencyLockConfig struct {
 	Integrity string `json:"integrity"`
 }
 
@@ -32,40 +29,26 @@ func NewFileManagerWithPath(lockPath string) *FileManager {
 	return &FileManager{lockPath: lockPath}
 }
 
-func (f *FileManager) GetRulesetLockInfo(ctx context.Context, packageKey string) (*PackageLockInfo, error) {
+func (f *FileManager) GetDependencyLock(ctx context.Context, key string) (*DependencyLockConfig, error) {
 	lockfile, err := f.readLockFile()
 	if err != nil {
 		return nil, err
 	}
 
-	lockInfo, exists := lockfile.Rulesets[packageKey]
+	lockInfo, exists := lockfile.Dependencies[key]
 	if !exists {
-		return nil, errors.New("ruleset not found")
+		return nil, errors.New("dependency not found")
 	}
 
-	return lockInfo, nil
+	return &lockInfo, nil
 }
 
-func (f *FileManager) GetPromptsetLockInfo(ctx context.Context, packageKey string) (*PackageLockInfo, error) {
-	lockfile, err := f.readLockFile()
-	if err != nil {
-		return nil, err
-	}
-
-	lockInfo, exists := lockfile.Promptsets[packageKey]
-	if !exists {
-		return nil, errors.New("promptset not found")
-	}
-
-	return lockInfo, nil
-}
-
-func (f *FileManager) GetPackageLockfile(ctx context.Context) (*PackageLockfile, error) {
+func (f *FileManager) GetLockFile(ctx context.Context) (*LockFile, error) {
 	return f.readLockFile()
 }
 
-func (f *FileManager) UpsertRulesetLockInfo(ctx context.Context, packageKey string, lockInfo *PackageLockInfo) error {
-	var lockfile *PackageLockfile
+func (f *FileManager) UpsertDependencyLock(ctx context.Context, key string, config *DependencyLockConfig) error {
+	var lockfile *LockFile
 	var err error
 
 	// Try to read existing lockfile
@@ -73,84 +56,35 @@ func (f *FileManager) UpsertRulesetLockInfo(ctx context.Context, packageKey stri
 	if err != nil {
 		// If file doesn't exist, create new lockfile
 		if os.IsNotExist(err) {
-			lockfile = &PackageLockfile{
-				Version:    1,
-				Rulesets:   make(map[string]*PackageLockInfo),
-				Promptsets: make(map[string]*PackageLockInfo),
+			lockfile = &LockFile{
+				Version:      1,
+				Dependencies: make(map[string]DependencyLockConfig),
 			}
 		} else {
 			return err
 		}
 	}
 
-	// Upsert the ruleset
-	lockfile.Rulesets[packageKey] = lockInfo
+	// Upsert the dependency
+	lockfile.Dependencies[key] = *config
 
 	// Write lockfile back to disk
 	return f.writeLockFile(lockfile)
 }
 
-func (f *FileManager) UpsertPromptsetLockInfo(ctx context.Context, packageKey string, lockInfo *PackageLockInfo) error {
-	var lockfile *PackageLockfile
-	var err error
-
-	// Try to read existing lockfile
-	lockfile, err = f.readLockFile()
-	if err != nil {
-		// If file doesn't exist, create new lockfile
-		if os.IsNotExist(err) {
-			lockfile = &PackageLockfile{
-				Version:    1,
-				Rulesets:   make(map[string]*PackageLockInfo),
-				Promptsets: make(map[string]*PackageLockInfo),
-			}
-		} else {
-			return err
-		}
-	}
-
-	// Upsert the promptset
-	lockfile.Promptsets[packageKey] = lockInfo
-
-	// Write lockfile back to disk
-	return f.writeLockFile(lockfile)
-}
-
-func (f *FileManager) RemoveRulesetLockInfo(ctx context.Context, packageKey string) error {
+func (f *FileManager) RemoveDependencyLock(ctx context.Context, key string) error {
 	lockfile, err := f.readLockFile()
 	if err != nil {
 		return err
 	}
 
-	_, exists := lockfile.Rulesets[packageKey]
+	_, exists := lockfile.Dependencies[key]
 	if !exists {
-		return errors.New("ruleset not found")
+		return errors.New("dependency not found")
 	}
 
-	// Remove the ruleset
-	delete(lockfile.Rulesets, packageKey)
-
-	// Delete lockfile if empty
-	if f.isLockfileEmpty(lockfile) {
-		return f.deleteLockFile()
-	}
-
-	return f.writeLockFile(lockfile)
-}
-
-func (f *FileManager) RemovePromptsetLockInfo(ctx context.Context, packageKey string) error {
-	lockfile, err := f.readLockFile()
-	if err != nil {
-		return err
-	}
-
-	_, exists := lockfile.Promptsets[packageKey]
-	if !exists {
-		return errors.New("promptset not found")
-	}
-
-	// Remove the promptset
-	delete(lockfile.Promptsets, packageKey)
+	// Remove the dependency
+	delete(lockfile.Dependencies, key)
 
 	// Delete lockfile if empty
 	if f.isLockfileEmpty(lockfile) {
@@ -166,23 +100,12 @@ func (f *FileManager) UpdateRegistryName(ctx context.Context, oldName, newName s
 		return err
 	}
 
-	// Update rulesets
-	for key, lockInfo := range lockfile.Rulesets {
-		regName, pkgName := core.ParsePackageKey(key)
-		if regName == oldName {
-			newKey := core.PackageKey(newName, pkgName)
-			lockfile.Rulesets[newKey] = lockInfo
-			delete(lockfile.Rulesets, key)
-		}
-	}
-
-	// Update promptsets
-	for key, lockInfo := range lockfile.Promptsets {
-		regName, pkgName := core.ParsePackageKey(key)
-		if regName == oldName {
-			newKey := core.PackageKey(newName, pkgName)
-			lockfile.Promptsets[newKey] = lockInfo
-			delete(lockfile.Promptsets, key)
+	// Update dependencies with new registry name
+	for key, lockInfo := range lockfile.Dependencies {
+		if strings.HasPrefix(key, oldName+"/") {
+			newKey := newName + key[len(oldName):]
+			lockfile.Dependencies[newKey] = lockInfo
+			delete(lockfile.Dependencies, key)
 		}
 	}
 
@@ -190,32 +113,29 @@ func (f *FileManager) UpdateRegistryName(ctx context.Context, oldName, newName s
 }
 
 // readLockFile reads and parses the lockfile from disk
-func (f *FileManager) readLockFile() (*PackageLockfile, error) {
+func (f *FileManager) readLockFile() (*LockFile, error) {
 	data, err := os.ReadFile(f.lockPath)
 	if err != nil {
 		// Return error if file doesn't exist (no auto-create)
 		return nil, err
 	}
 
-	var lockfile PackageLockfile
+	var lockfile LockFile
 	err = json.Unmarshal(data, &lockfile)
 	if err != nil {
 		return nil, err
 	}
 
-	// Initialize nil maps
-	if lockfile.Rulesets == nil {
-		lockfile.Rulesets = make(map[string]*PackageLockInfo)
-	}
-	if lockfile.Promptsets == nil {
-		lockfile.Promptsets = make(map[string]*PackageLockInfo)
+	// Initialize nil map
+	if lockfile.Dependencies == nil {
+		lockfile.Dependencies = make(map[string]DependencyLockConfig)
 	}
 
 	return &lockfile, nil
 }
 
 // writeLockFile writes the lockfile to disk
-func (f *FileManager) writeLockFile(lockfile *PackageLockfile) error {
+func (f *FileManager) writeLockFile(lockfile *LockFile) error {
 	data, err := json.MarshalIndent(lockfile, "", "  ")
 	if err != nil {
 		return err
@@ -224,8 +144,8 @@ func (f *FileManager) writeLockFile(lockfile *PackageLockfile) error {
 }
 
 // isLockfileEmpty checks if the lockfile has no packages
-func (f *FileManager) isLockfileEmpty(lockfile *PackageLockfile) bool {
-	return len(lockfile.Rulesets) == 0 && len(lockfile.Promptsets) == 0
+func (f *FileManager) isLockfileEmpty(lockfile *LockFile) bool {
+	return len(lockfile.Dependencies) == 0
 }
 
 // deleteLockFile removes the lockfile from disk
