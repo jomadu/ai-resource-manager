@@ -5,320 +5,12 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"reflect"
-	"strings"
 	"testing"
+
+	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
 )
 
-// Package operation tests
-
-func TestFileManager_GetAllRulesets(t *testing.T) {
-	ctx := context.Background()
-
-	tests := []struct {
-		name      string
-		setupFile func(t *testing.T) string
-		want      map[string]*RulesetConfig
-		wantErr   bool
-	}{
-		{
-			name: "success - file exists with rulesets",
-			setupFile: func(t *testing.T) string {
-				manifest := &Manifest{
-					Version:    1,
-					Registries: make(map[string]map[string]interface{}),
-					Dependencies: Dependencies{
-						Rulesets: map[string]RulesetConfig{
-							"registry1/ruleset1": {
-								Version: "1.0.0",
-								Sinks:   []string{"sink1"},
-							},
-						},
-					},
-					Sinks: make(map[string]SinkConfig),
-				}
-				return createTestManifest(t, manifest)
-			},
-			want: map[string]*RulesetConfig{
-				"registry1/ruleset1": {
-					Version: "1.0.0",
-					Sinks:   []string{"sink1"},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "success - file doesn't exist, returns empty map",
-			setupFile: func(t *testing.T) string {
-				return filepath.Join(t.TempDir(), "nonexistent.json")
-			},
-			want:    make(map[string]*RulesetConfig),
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			manifestPath := tt.setupFile(t)
-			fm := NewFileManagerWithPath(manifestPath)
-
-			got, err := fm.GetAllRulesets(ctx)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetAllRulesets() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if !tt.wantErr {
-				if len(got) != len(tt.want) {
-					t.Errorf("GetAllRulesets() length = %v, want %v", len(got), len(tt.want))
-				}
-				for key, wantConfig := range tt.want {
-					gotConfig, exists := got[key]
-					if !exists {
-						t.Errorf("GetAllRulesets() ruleset %v not found", key)
-						continue
-					}
-					if !reflect.DeepEqual(gotConfig, wantConfig) {
-						t.Errorf("GetAllRulesets() ruleset %v = %v, want %v", key, gotConfig, wantConfig)
-					}
-				}
-			}
-		})
-	}
-}
-
-func TestFileManager_GetRulesetConfig(t *testing.T) {
-	ctx := context.Background()
-
-	tests := []struct {
-		name        string
-		setupFile   func(t *testing.T) string
-		packageKey  string
-		want        *RulesetConfig
-		wantErr     bool
-		errContains string
-	}{
-		{
-			name: "success - ruleset exists",
-			setupFile: func(t *testing.T) string {
-				manifest := &Manifest{
-					Version:    1,
-					Registries: make(map[string]map[string]interface{}),
-					Dependencies: Dependencies{
-						Rulesets: map[string]RulesetConfig{
-							"registry1/ruleset1": {
-								Version:  "1.0.0",
-								Priority: 100,
-								Sinks:    []string{"sink1"},
-							},
-						},
-					},
-					Sinks: make(map[string]SinkConfig),
-				}
-				return createTestManifest(t, manifest)
-			},
-			packageKey: "registry1/ruleset1",
-			want: &RulesetConfig{
-				Version:  "1.0.0",
-				Priority: 100,
-				Sinks:    []string{"sink1"},
-			},
-			wantErr: false,
-		},
-		{
-			name: "error - ruleset not found",
-			setupFile: func(t *testing.T) string {
-				manifest := &Manifest{
-					Version:      1,
-					Registries:   make(map[string]map[string]interface{}),
-					Dependencies: Dependencies{},
-					Sinks:        make(map[string]SinkConfig),
-				}
-				return createTestManifest(t, manifest)
-			},
-			packageKey:  "registry1/nonexistent",
-			want:        nil,
-			wantErr:     true,
-			errContains: "not found",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			manifestPath := tt.setupFile(t)
-			fm := NewFileManagerWithPath(manifestPath)
-
-			got, err := fm.GetRulesetConfig(ctx, tt.packageKey)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetRulesetConfig() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("GetRulesetConfig() expected error but got nil")
-				} else if tt.errContains != "" && !contains(err.Error(), tt.errContains) {
-					t.Errorf("GetRulesetConfig() error = %v, should contain %v", err, tt.errContains)
-				}
-				return
-			}
-
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetRulesetConfig() = %+v, want %+v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestFileManager_AddRulesetConfig(t *testing.T) {
-	ctx := context.Background()
-
-	tests := []struct {
-		name        string
-		setupFile   func(t *testing.T) string
-		packageKey  string
-		config      *RulesetConfig
-		wantErr     bool
-		errContains string
-	}{
-		{
-			name: "success - add ruleset",
-			setupFile: func(t *testing.T) string {
-				return filepath.Join(t.TempDir(), "empty.json")
-			},
-			packageKey: "registry1/ruleset1",
-			config: &RulesetConfig{
-				Version:  "1.0.0",
-				Priority: 100,
-				Sinks:    []string{"sink1"},
-			},
-			wantErr: false,
-		},
-		{
-			name: "error - ruleset already exists",
-			setupFile: func(t *testing.T) string {
-				manifest := &Manifest{
-					Version:    1,
-					Registries: make(map[string]map[string]interface{}),
-					Dependencies: Dependencies{
-						Rulesets: map[string]RulesetConfig{
-							"registry1/ruleset1": {
-								Version: "1.0.0",
-							},
-						},
-					},
-					Sinks: make(map[string]SinkConfig),
-				}
-				return createTestManifest(t, manifest)
-			},
-			packageKey: "registry1/ruleset1",
-			config: &RulesetConfig{
-				Version: "2.0.0",
-			},
-			wantErr:     true,
-			errContains: "already exists",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			manifestPath := tt.setupFile(t)
-			fm := NewFileManagerWithPath(manifestPath)
-
-			err := fm.AddRulesetConfig(ctx, tt.packageKey, tt.config)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("AddRulesetConfig() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("AddRulesetConfig() expected error but got nil")
-				} else if tt.errContains != "" && !contains(err.Error(), tt.errContains) {
-					t.Errorf("AddRulesetConfig() error = %v, should contain %v", err, tt.errContains)
-				}
-			}
-		})
-	}
-}
-
-func TestFileManager_RemoveRulesetConfig(t *testing.T) {
-	ctx := context.Background()
-
-	tests := []struct {
-		name        string
-		setupFile   func(t *testing.T) string
-		packageKey  string
-		wantErr     bool
-		errContains string
-	}{
-		{
-			name: "success - remove ruleset",
-			setupFile: func(t *testing.T) string {
-				manifest := &Manifest{
-					Version:    1,
-					Registries: make(map[string]map[string]interface{}),
-					Dependencies: Dependencies{
-						Rulesets: map[string]RulesetConfig{
-							"registry1/ruleset1": {
-								Version: "1.0.0",
-							},
-							"registry1/ruleset2": {
-								Version: "2.0.0",
-							},
-						},
-					},
-					Sinks: make(map[string]SinkConfig),
-				}
-				return createTestManifest(t, manifest)
-			},
-			packageKey: "registry1/ruleset1",
-			wantErr:    false,
-		},
-		{
-			name: "error - ruleset not found",
-			setupFile: func(t *testing.T) string {
-				manifest := &Manifest{
-					Version:      1,
-					Registries:   make(map[string]map[string]interface{}),
-					Dependencies: Dependencies{},
-					Sinks:        make(map[string]SinkConfig),
-				}
-				return createTestManifest(t, manifest)
-			},
-			packageKey:  "registry1/nonexistent",
-			wantErr:     true,
-			errContains: "not found",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			manifestPath := tt.setupFile(t)
-			fm := NewFileManagerWithPath(manifestPath)
-
-			err := fm.RemoveRulesetConfig(ctx, tt.packageKey)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("RemoveRulesetConfig() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("RemoveRulesetConfig() expected error but got nil")
-				} else if tt.errContains != "" && !contains(err.Error(), tt.errContains) {
-					t.Errorf("RemoveRulesetConfig() error = %v, should contain %v", err, tt.errContains)
-				}
-			}
-		})
-	}
-}
-
-// Helper functions
+// Test helper functions
 
 func createTestManifest(t *testing.T, manifest *Manifest) string {
 	tmpDir := t.TempDir()
@@ -337,6 +29,538 @@ func createTestManifest(t *testing.T, manifest *Manifest) string {
 	return manifestPath
 }
 
-func contains(s, substr string) bool {
-	return strings.Contains(s, substr)
+func newTestManifest() *Manifest {
+	return &Manifest{
+		Version:      1,
+		Registries:   make(map[string]map[string]interface{}),
+		Sinks:        make(map[string]SinkConfig),
+		Dependencies: make(map[string]map[string]interface{}),
+	}
+}
+
+// Registry tests
+
+func TestFileManager_GetAllRegistriesConfig(t *testing.T) {
+	ctx := context.Background()
+	
+	manifest := newTestManifest()
+	manifest.Registries["test-reg"] = map[string]interface{}{
+		"type": "git",
+		"url":  "https://github.com/test/repo",
+	}
+	
+	manifestPath := createTestManifest(t, manifest)
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	registries, err := fm.GetAllRegistriesConfig(ctx)
+	if err != nil {
+		t.Fatalf("GetAllRegistriesConfig() error = %v", err)
+	}
+	
+	if len(registries) != 1 {
+		t.Errorf("Expected 1 registry, got %d", len(registries))
+	}
+	
+	if registries["test-reg"]["type"] != "git" {
+		t.Errorf("Expected git registry type")
+	}
+}
+
+func TestFileManager_UpsertGitRegistryConfig(t *testing.T) {
+	ctx := context.Background()
+	manifestPath := filepath.Join(t.TempDir(), "empty.json")
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	config := &GitRegistryConfig{
+		RegistryConfig: RegistryConfig{
+			Type: "git",
+			URL:  "https://github.com/test/repo",
+		},
+		Branches: []string{"main"},
+	}
+	
+	err := fm.UpsertGitRegistryConfig(ctx, "test-reg", config)
+	if err != nil {
+		t.Fatalf("UpsertGitRegistryConfig() error = %v", err)
+	}
+	
+	// Verify it was added
+	retrieved, err := fm.GetGitRegistryConfig(ctx, "test-reg")
+	if err != nil {
+		t.Fatalf("GetGitRegistryConfig() error = %v", err)
+	}
+	
+	if retrieved.URL != config.URL {
+		t.Errorf("Expected URL %s, got %s", config.URL, retrieved.URL)
+	}
+	
+	// Test upsert (update existing)
+	config.URL = "https://github.com/test/updated"
+	err = fm.UpsertGitRegistryConfig(ctx, "test-reg", config)
+	if err != nil {
+		t.Fatalf("UpsertGitRegistryConfig() update error = %v", err)
+	}
+	
+	retrieved, _ = fm.GetGitRegistryConfig(ctx, "test-reg")
+	if retrieved.URL != "https://github.com/test/updated" {
+		t.Errorf("Expected updated URL")
+	}
+}
+
+func TestFileManager_UpsertGitLabRegistryConfig(t *testing.T) {
+	ctx := context.Background()
+	manifestPath := filepath.Join(t.TempDir(), "empty.json")
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	config := &GitLabRegistryConfig{
+		RegistryConfig: RegistryConfig{
+			Type: "gitlab",
+			URL:  "https://gitlab.example.com",
+		},
+		ProjectID: "123",
+		GroupID:   "456",
+	}
+	
+	err := fm.UpsertGitLabRegistryConfig(ctx, "gitlab-reg", config)
+	if err != nil {
+		t.Fatalf("UpsertGitLabRegistryConfig() error = %v", err)
+	}
+	
+	retrieved, err := fm.GetGitLabRegistryConfig(ctx, "gitlab-reg")
+	if err != nil {
+		t.Fatalf("GetGitLabRegistryConfig() error = %v", err)
+	}
+	
+	if retrieved.ProjectID != config.ProjectID {
+		t.Errorf("Expected ProjectID %s, got %s", config.ProjectID, retrieved.ProjectID)
+	}
+}
+
+func TestFileManager_UpsertCloudsmithRegistryConfig(t *testing.T) {
+	ctx := context.Background()
+	manifestPath := filepath.Join(t.TempDir(), "empty.json")
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	config := &CloudsmithRegistryConfig{
+		RegistryConfig: RegistryConfig{
+			Type: "cloudsmith",
+			URL:  "https://api.cloudsmith.io",
+		},
+		Owner:      "myorg",
+		Repository: "ai-rules",
+	}
+	
+	err := fm.UpsertCloudsmithRegistryConfig(ctx, "cloudsmith-reg", config)
+	if err != nil {
+		t.Fatalf("UpsertCloudsmithRegistryConfig() error = %v", err)
+	}
+	
+	retrieved, err := fm.GetCloudsmithRegistryConfig(ctx, "cloudsmith-reg")
+	if err != nil {
+		t.Fatalf("GetCloudsmithRegistryConfig() error = %v", err)
+	}
+	
+	if retrieved.Owner != config.Owner {
+		t.Errorf("Expected Owner %s, got %s", config.Owner, retrieved.Owner)
+	}
+	
+	if retrieved.Repository != config.Repository {
+		t.Errorf("Expected Repository %s, got %s", config.Repository, retrieved.Repository)
+	}
+}
+
+func TestFileManager_RemoveRegistryConfig(t *testing.T) {
+	ctx := context.Background()
+	
+	manifest := newTestManifest()
+	manifest.Registries["test-reg"] = map[string]interface{}{
+		"type": "git",
+		"url":  "https://github.com/test/repo",
+	}
+	manifest.Dependencies["test-reg/package1"] = map[string]interface{}{
+		"type":    "ruleset",
+		"version": "1.0.0",
+		"sinks":   []string{"sink1"},
+	}
+	
+	manifestPath := createTestManifest(t, manifest)
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	err := fm.RemoveRegistryConfig(ctx, "test-reg")
+	if err != nil {
+		t.Fatalf("RemoveRegistryConfig() error = %v", err)
+	}
+	
+	// Verify registry and dependencies are removed
+	registries, _ := fm.GetAllRegistriesConfig(ctx)
+	if len(registries) != 0 {
+		t.Errorf("Expected 0 registries after removal, got %d", len(registries))
+	}
+	
+	deps, _ := fm.GetAllDependenciesConfig(ctx)
+	if len(deps) != 0 {
+		t.Errorf("Expected 0 dependencies after registry removal, got %d", len(deps))
+	}
+}
+
+// Sink tests
+
+func TestFileManager_UpsertSinkConfig(t *testing.T) {
+	ctx := context.Background()
+	manifestPath := filepath.Join(t.TempDir(), "empty.json")
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	config := &SinkConfig{
+		Directory: ".cursor/rules",
+		Tool:      compiler.Cursor,
+	}
+	
+	err := fm.UpsertSinkConfig(ctx, "cursor-rules", config)
+	if err != nil {
+		t.Fatalf("UpsertSinkConfig() error = %v", err)
+	}
+	
+	// Verify it was added
+	retrieved, err := fm.GetSinkConfig(ctx, "cursor-rules")
+	if err != nil {
+		t.Fatalf("GetSinkConfig() error = %v", err)
+	}
+	
+	if retrieved.Directory != config.Directory {
+		t.Errorf("Expected directory %s, got %s", config.Directory, retrieved.Directory)
+	}
+	
+	// Test upsert (update existing)
+	config.Directory = ".cursor/updated"
+	config.Tool = compiler.AmazonQ
+	
+	err = fm.UpsertSinkConfig(ctx, "cursor-rules", config)
+	if err != nil {
+		t.Fatalf("UpsertSinkConfig() update error = %v", err)
+	}
+	
+	retrieved, _ = fm.GetSinkConfig(ctx, "cursor-rules")
+	if retrieved.Directory != ".cursor/updated" {
+		t.Errorf("Expected updated directory")
+	}
+	
+	if retrieved.Tool != compiler.AmazonQ {
+		t.Errorf("Expected updated tool")
+	}
+}
+
+func TestFileManager_RemoveSinkConfig(t *testing.T) {
+	ctx := context.Background()
+	
+	manifest := newTestManifest()
+	manifest.Sinks["test-sink"] = SinkConfig{
+		Directory: ".cursor/rules",
+		Tool:      compiler.Cursor,
+	}
+	
+	manifestPath := createTestManifest(t, manifest)
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	err := fm.RemoveSinkConfig(ctx, "test-sink")
+	if err != nil {
+		t.Fatalf("RemoveSinkConfig() error = %v", err)
+	}
+	
+	// Verify it was removed
+	_, err = fm.GetSinkConfig(ctx, "test-sink")
+	if err == nil {
+		t.Errorf("Expected error when getting removed sink")
+	}
+}
+
+// Dependency tests
+
+func TestFileManager_UpsertRulesetDependencyConfig(t *testing.T) {
+	ctx := context.Background()
+	manifestPath := filepath.Join(t.TempDir(), "empty.json")
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	config := &RulesetDependencyConfig{
+		BaseDependencyConfig: BaseDependencyConfig{
+			Version: "1.0.0",
+			Sinks:   []string{"cursor-rules"},
+		},
+		Priority: 100,
+	}
+	
+	err := fm.UpsertRulesetDependencyConfig(ctx, "test-reg/ruleset1", config)
+	if err != nil {
+		t.Fatalf("UpsertRulesetDependencyConfig() error = %v", err)
+	}
+	
+	// Verify it was added
+	retrieved, err := fm.GetRulesetDependencyConfig(ctx, "test-reg/ruleset1")
+	if err != nil {
+		t.Fatalf("GetRulesetDependencyConfig() error = %v", err)
+	}
+	
+	if retrieved.Version != config.Version {
+		t.Errorf("Expected version %s, got %s", config.Version, retrieved.Version)
+	}
+	
+	if retrieved.Priority != config.Priority {
+		t.Errorf("Expected priority %d, got %d", config.Priority, retrieved.Priority)
+	}
+	
+	if retrieved.Type != ResourceTypeRuleset {
+		t.Errorf("Expected type %s, got %s", ResourceTypeRuleset, retrieved.Type)
+	}
+}
+
+func TestFileManager_UpsertPromptsetDependencyConfig(t *testing.T) {
+	ctx := context.Background()
+	manifestPath := filepath.Join(t.TempDir(), "empty.json")
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	config := &PromptsetDependencyConfig{
+		BaseDependencyConfig: BaseDependencyConfig{
+			Version: "2.0.0",
+			Sinks:   []string{"cursor-commands"},
+			Include: []string{"*.yml"},
+		},
+	}
+	
+	err := fm.UpsertPromptsetDependencyConfig(ctx, "test-reg/promptset1", config)
+	if err != nil {
+		t.Fatalf("UpsertPromptsetDependencyConfig() error = %v", err)
+	}
+	
+	// Verify it was added
+	retrieved, err := fm.GetPromptsetDependencyConfig(ctx, "test-reg/promptset1")
+	if err != nil {
+		t.Fatalf("GetPromptsetDependencyConfig() error = %v", err)
+	}
+	
+	if retrieved.Version != config.Version {
+		t.Errorf("Expected version %s, got %s", config.Version, retrieved.Version)
+	}
+	
+	if retrieved.Type != ResourceTypePromptset {
+		t.Errorf("Expected type %s, got %s", ResourceTypePromptset, retrieved.Type)
+	}
+}
+
+func TestFileManager_RemoveDependencyConfig(t *testing.T) {
+	ctx := context.Background()
+	
+	manifest := newTestManifest()
+	manifest.Dependencies["test-reg/package1"] = map[string]interface{}{
+		"type":    "ruleset",
+		"version": "1.0.0",
+		"sinks":   []string{"sink1"},
+	}
+	
+	manifestPath := createTestManifest(t, manifest)
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	err := fm.RemoveDependencyConfig(ctx, "test-reg/package1")
+	if err != nil {
+		t.Fatalf("RemoveDependencyConfig() error = %v", err)
+	}
+	
+	// Verify it was removed
+	_, err = fm.GetDependencyConfig(ctx, "test-reg/package1")
+	if err == nil {
+		t.Errorf("Expected error when getting removed dependency")
+	}
+}
+
+// Error cases
+
+func TestFileManager_GetRegistryConfig_NotFound(t *testing.T) {
+	ctx := context.Background()
+	manifestPath := filepath.Join(t.TempDir(), "empty.json")
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	_, err := fm.GetRegistryConfig(ctx, "nonexistent")
+	if err == nil {
+		t.Errorf("Expected error for nonexistent registry")
+	}
+}
+
+func TestFileManager_GetRulesetDependencyConfig_WrongType(t *testing.T) {
+	ctx := context.Background()
+	
+	manifest := newTestManifest()
+	manifest.Dependencies["test-reg/package1"] = map[string]interface{}{
+		"type":    "promptset", // Wrong type
+		"version": "1.0.0",
+	}
+	
+	manifestPath := createTestManifest(t, manifest)
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	_, err := fm.GetRulesetDependencyConfig(ctx, "test-reg/package1")
+	if err == nil {
+		t.Errorf("Expected error for wrong dependency type")
+	}
+}
+
+func TestFileManager_UpdateRegistryConfigName_WithDependencies(t *testing.T) {
+	ctx := context.Background()
+	
+	manifest := newTestManifest()
+	manifest.Registries["old-reg"] = map[string]interface{}{
+		"type": "git",
+		"url":  "https://github.com/test/repo",
+	}
+	manifest.Dependencies["old-reg/package1"] = map[string]interface{}{
+		"type":    "ruleset",
+		"version": "1.0.0",
+	}
+	manifest.Dependencies["old-reg/package2"] = map[string]interface{}{
+		"type":    "promptset",
+		"version": "2.0.0",
+	}
+	
+	manifestPath := createTestManifest(t, manifest)
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	err := fm.UpdateRegistryConfigName(ctx, "old-reg", "new-reg")
+	if err != nil {
+		t.Fatalf("UpdateRegistryConfigName() error = %v", err)
+	}
+	
+	// Verify registry was renamed
+	_, err = fm.GetRegistryConfig(ctx, "new-reg")
+	if err != nil {
+		t.Errorf("Expected new registry to exist")
+	}
+	
+	// Verify old registry is gone
+	_, err = fm.GetRegistryConfig(ctx, "old-reg")
+	if err == nil {
+		t.Errorf("Expected old registry to be removed")
+	}
+	
+	// Verify dependencies were updated
+	deps, _ := fm.GetAllDependenciesConfig(ctx)
+	if _, exists := deps["new-reg/package1"]; !exists {
+		t.Errorf("Expected dependency to be renamed to new-reg/package1")
+	}
+	if _, exists := deps["new-reg/package2"]; !exists {
+		t.Errorf("Expected dependency to be renamed to new-reg/package2")
+	}
+	if _, exists := deps["old-reg/package1"]; exists {
+		t.Errorf("Expected old dependency key to be removed")
+	}
+}
+
+func TestFileManager_LoadManifest_FileNotExists(t *testing.T) {
+	ctx := context.Background()
+	manifestPath := filepath.Join(t.TempDir(), "nonexistent.json")
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	// Should return empty manifest, not error
+	registries, err := fm.GetAllRegistriesConfig(ctx)
+	if err != nil {
+		t.Fatalf("Expected no error for nonexistent file, got %v", err)
+	}
+	
+	if len(registries) != 0 {
+		t.Errorf("Expected empty registries map, got %d entries", len(registries))
+	}
+}
+
+func TestFileManager_UpsertDependency_Overwrite(t *testing.T) {
+	ctx := context.Background()
+	
+	manifest := newTestManifest()
+	manifest.Dependencies["test-reg/package1"] = map[string]interface{}{
+		"type":     "ruleset",
+		"version":  "1.0.0",
+		"priority": 50,
+	}
+	
+	manifestPath := createTestManifest(t, manifest)
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	// Update with new config
+	newConfig := &RulesetDependencyConfig{
+		BaseDependencyConfig: BaseDependencyConfig{
+			Version: "2.0.0",
+			Sinks:   []string{"new-sink"},
+		},
+		Priority: 200,
+	}
+	
+	err := fm.UpsertRulesetDependencyConfig(ctx, "test-reg/package1", newConfig)
+	if err != nil {
+		t.Fatalf("UpsertRulesetDependencyConfig() error = %v", err)
+	}
+	
+	// Verify it was updated
+	retrieved, err := fm.GetRulesetDependencyConfig(ctx, "test-reg/package1")
+	if err != nil {
+		t.Fatalf("GetRulesetDependencyConfig() error = %v", err)
+	}
+	
+	if retrieved.Version != "2.0.0" {
+		t.Errorf("Expected version 2.0.0, got %s", retrieved.Version)
+	}
+	
+	if retrieved.Priority != 200 {
+		t.Errorf("Expected priority 200, got %d", retrieved.Priority)
+	}
+}
+
+// Registry type validation tests
+
+func TestFileManager_GetGitRegistryConfig_WrongType(t *testing.T) {
+	ctx := context.Background()
+	
+	manifest := newTestManifest()
+	manifest.Registries["test-reg"] = map[string]interface{}{
+		"type": "gitlab", // Wrong type
+		"url":  "https://gitlab.example.com",
+	}
+	
+	manifestPath := createTestManifest(t, manifest)
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	_, err := fm.GetGitRegistryConfig(ctx, "test-reg")
+	if err == nil {
+		t.Errorf("Expected error for wrong registry type")
+	}
+}
+
+func TestFileManager_GetGitLabRegistryConfig_WrongType(t *testing.T) {
+	ctx := context.Background()
+	
+	manifest := newTestManifest()
+	manifest.Registries["test-reg"] = map[string]interface{}{
+		"type": "cloudsmith", // Wrong type
+		"url":  "https://api.cloudsmith.io",
+	}
+	
+	manifestPath := createTestManifest(t, manifest)
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	_, err := fm.GetGitLabRegistryConfig(ctx, "test-reg")
+	if err == nil {
+		t.Errorf("Expected error for wrong registry type")
+	}
+}
+
+func TestFileManager_GetCloudsmithRegistryConfig_WrongType(t *testing.T) {
+	ctx := context.Background()
+	
+	manifest := newTestManifest()
+	manifest.Registries["test-reg"] = map[string]interface{}{
+		"type": "git", // Wrong type
+		"url":  "https://github.com/test/repo",
+	}
+	
+	manifestPath := createTestManifest(t, manifest)
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	_, err := fm.GetCloudsmithRegistryConfig(ctx, "test-reg")
+	if err == nil {
+		t.Errorf("Expected error for wrong registry type")
+	}
 }

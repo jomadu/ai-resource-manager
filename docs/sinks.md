@@ -27,7 +27,7 @@ Places all files in single directory with hash-prefixed names:
 
 ```
 .github/copilot/
-├── 183791a9_cleanCode_ruleOne.instructions.md
+├── arm_183791a9_cleanCode_ruleOne.instructions.md
 ├── arm_index.instructions.md
 └── arm-index.json
 ```
@@ -45,9 +45,8 @@ Each compiled resource includes embedded metadata for priority resolution and re
 ## Configuration
 
 Available sink configuration keys:
-- `layout` - Set to `hierarchical` or `flat`
 - `directory` - Output path for the sink
-- `compileTarget` - Set to `md`, `cursor`, `amazonq`, or `copilot`
+- `tool` - Set to `cursor`, `amazonq`, or `copilot`
 
 ## Examples
 
@@ -70,5 +69,5 @@ arm add sink --type copilot copilot-rules .github/copilot
 
 Change sink layout:
 ```bash
-arm set sink cursor-rules layout flat
+arm set sink cursor-rules tool amazonq
 ```

@@ -156,37 +156,37 @@ Compile resources from source files. The compile command accepts both individual
 **Examples:**
 ```bash
 # Compile single file
-$ arm compile --target cursor ruleset.yml ./output/
+$ arm compile --tool cursor ruleset.yml ./output/
 
 # Compile multiple files
-$ arm compile --target cursor file1.yml file2.yml file3.yml ./output/
+$ arm compile --tool cursor file1.yml file2.yml file3.yml ./output/
 
 # Compile directory (non-recursive by default)
-$ arm compile --target cursor ./rulesets/ ./output/
+$ arm compile --tool cursor ./rulesets/ ./output/
 
 # Compile directory recursively
-$ arm compile --target amazonq --recursive ./src/ ./build/
+$ arm compile --tool amazonq --recursive ./src/ ./build/
 
 # Mix files and directories
-$ arm compile --target cursor specific-file.yml ./more-rulesets/ ./output/
+$ arm compile --tool cursor specific-file.yml ./more-rulesets/ ./output/
 
 # Use shell glob expansion (expands to individual files)
-$ arm compile --target cursor ./rulesets/*.yml ./output/
+$ arm compile --tool cursor ./rulesets/*.yml ./output/
 
 # Validate only (no output)
 $ arm compile --validate-only ruleset.yml
 
 # Compile with force overwrite
-$ arm compile --target copilot --force ruleset.yml ./output/
+$ arm compile --tool copilot --force ruleset.yml ./output/
 
 # Compile with include/exclude patterns
-$ arm compile --target cursor --include "**/*.yml" --exclude "**/README.md" ./src/ ./build/
+$ arm compile --tool cursor --include "**/*.yml" --exclude "**/README.md" ./src/ ./build/
 
 # Validate and fail fast on first error (useful for CI)
 $ arm compile --validate-only --fail-fast ./rulesets/
 ```
 
-Available targets: `md`, `cursor`, `amazonq`, `copilot`
+Available tools: `md`, `cursor`, `amazonq`, `copilot`
 
 Compile options:
 - `--recursive` - Process directories recursively

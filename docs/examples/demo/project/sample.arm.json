@@ -27,27 +27,25 @@
         }
     },
     "dependencies": {
-        "rulesets": {
-            "sample-registry/clean-code-ruleset": {
-                "version": "^1.0.0",
-                "priority": 100,
-                "sinks": [
-                    "cursor-rules",
-                    "amazonq-rules"
-                ],
-                "include": ["**/*.yml"],
-                "exclude": ["**/experimental/**"]
-            }
+        "sample-registry/clean-code-ruleset": {
+            "type": "ruleset",
+            "version": "^1.0.0",
+            "priority": 100,
+            "sinks": [
+                "cursor-rules",
+                "amazonq-rules"
+            ],
+            "include": ["**/*.yml"],
+            "exclude": ["**/experimental/**"]
         },
-        "promptsets": {
-            "sample-registry/code-review-promptset": {
-                "version": "^1.0.0",
-                "sinks": [
-                    "cursor-commands",
-                    "amazonq-prompts"
-                ],
-                "include": ["review/**/*.yml"]
-            }
+        "sample-registry/code-review-promptset": {
+            "type": "promptset",
+            "version": "^1.0.0",
+            "sinks": [
+                "cursor-commands",
+                "amazonq-prompts"
+            ],
+            "include": ["review/**/*.yml"]
         }
     }
 }
