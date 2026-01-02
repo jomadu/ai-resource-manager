@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
 	"github.com/jomadu/ai-resource-manager/internal/v4/core"
@@ -134,9 +135,9 @@ func (f *FileManager) UpdateRegistryConfigName(ctx context.Context, name string,
 
 	// Update package keys from "oldName/package" to "newName/package"
 	for key, depConfig := range manifest.Dependencies {
-		regName, pkgName := core.ParsePackageKey(key)
+		regName, pkgName := parseDependencyKey(key)
 		if regName == name {
-			newKey := core.PackageKey(newName, pkgName)
+			newKey := dependencyKey(newName, pkgName)
 			manifest.Dependencies[newKey] = depConfig
 			delete(manifest.Dependencies, key)
 		}
@@ -161,7 +162,7 @@ func (f *FileManager) RemoveRegistryConfig(ctx context.Context, name string) err
 	
 	// Remove all packages from this registry
 	for key := range manifest.Dependencies {
-		regName, _ := core.ParsePackageKey(key)
+		regName, _ := parseDependencyKey(key)
 		if regName == name {
 			delete(manifest.Dependencies, key)
 		}
@@ -652,4 +653,20 @@ func (f *FileManager) ensureSinkExists(manifest *Manifest, name string) error {
 		return fmt.Errorf("sink %s not found", name)
 	}
 	return nil
+}
+
+// Local dependency key helpers (manifest uses registry/package format without version)
+
+// dependencyKey creates a dependency key in format "registry/package"
+func dependencyKey(registry, packageName string) string {
+	return fmt.Sprintf("%s/%s", registry, packageName)
+}
+
+// parseDependencyKey parses a dependency key and returns registry, package name
+func parseDependencyKey(key string) (registry, packageName string) {
+	parts := strings.Split(key, "/")
+	if len(parts) != 2 {
+		return "", "" // Invalid format
+	}
+	return parts[0], parts[1]
 }
