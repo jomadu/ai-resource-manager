@@ -170,7 +170,7 @@ func (m *Manager) Uninstall(metadata core.PackageMetadata) error {
 		return err
 	}
 
-	packageID := core.PackageID(metadata.Registry, metadata.Name, metadata.Version)
+	packageID := core.PackageID(metadata.RegistryName, metadata.Name, metadata.Version.Version)
 
 	// Remove files for rulesets
 	if entry, exists := index.Rulesets[packageID]; exists {
@@ -200,7 +200,7 @@ func (m *Manager) IsInstalled(metadata core.PackageMetadata) bool {
 		return false
 	}
 
-	packageID := core.PackageID(metadata.Registry, metadata.Name, metadata.Version)
+	packageID := core.PackageID(metadata.RegistryName, metadata.Name, metadata.Version.Version)
 	_, rulesetExists := index.Rulesets[packageID]
 	_, promptsetExists := index.Promptsets[packageID]
 	return rulesetExists || promptsetExists
@@ -222,9 +222,9 @@ func (m *Manager) ListRulesets() ([]*InstalledRuleset, error) {
 
 		rulesets = append(rulesets, &InstalledRuleset{
 			Metadata: core.PackageMetadata{
-				Registry: registry,
-				Name:     name,
-				Version:  version,
+				RegistryName: registry,
+				Name:         name,
+				Version:      core.Version{Version: version},
 			},
 			Priority: entry.Priority,
 			Files:    entry.Files,
@@ -250,9 +250,9 @@ func (m *Manager) ListPromptsets() ([]*InstalledPromptset, error) {
 
 		promptsets = append(promptsets, &InstalledPromptset{
 			Metadata: core.PackageMetadata{
-				Registry: registry,
-				Name:     name,
-				Version:  version,
+				RegistryName: registry,
+				Name:         name,
+				Version:      core.Version{Version: version},
 			},
 			Files: entry.Files,
 		})

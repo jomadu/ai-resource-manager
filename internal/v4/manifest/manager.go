@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
-	"github.com/jomadu/ai-resource-manager/internal/v4/core"
+	"github.com/jomadu/ai-resource-manager/internal/v4/registry"
 )
 
 type ResourceType string
@@ -46,29 +46,6 @@ type RulesetDependencyConfig struct {
 
 type PromptsetDependencyConfig struct {
 	BaseDependencyConfig
-}
-
-type RegistryConfig struct {
-	URL string `json:"url"`
-	Type string `json:"type"`
-}
-
-type GitRegistryConfig struct {
-	RegistryConfig
-	Branches []string `json:"branches,omitempty"`
-}
-
-type GitLabRegistryConfig struct {
-	RegistryConfig
-	ProjectID string `json:"projectId,omitempty"`
-	GroupID string `json:"groupId,omitempty"`
-	APIVersion string `json:"apiVersion,omitempty"`
-}
-
-type CloudsmithRegistryConfig struct {
-	RegistryConfig
-	Owner string `json:"owner"`
-	Repository string `json:"repository"`
 }
 
 // FileManager implements file-based manifest management.
@@ -173,7 +150,7 @@ func (f *FileManager) RemoveRegistryConfig(ctx context.Context, name string) err
 
 // Registry operations (type-safe helpers)
 
-func (f *FileManager) GetGitRegistryConfig(ctx context.Context, name string) (*GitRegistryConfig, error) {
+func (f *FileManager) GetGitRegistryConfig(ctx context.Context, name string) (*registry.GitRegistryConfig, error) {
 	rawConfig, err := f.GetRegistryConfig(ctx, name)
 	if err != nil {
 		return nil, err
@@ -188,7 +165,7 @@ func (f *FileManager) GetGitRegistryConfig(ctx context.Context, name string) (*G
 	return convertMapToGitRegistry(rawConfig)
 }
 
-func (f *FileManager) GetGitLabRegistryConfig(ctx context.Context, name string) (*GitLabRegistryConfig, error) {
+func (f *FileManager) GetGitLabRegistryConfig(ctx context.Context, name string) (*registry.GitLabRegistryConfig, error) {
 	rawConfig, err := f.GetRegistryConfig(ctx, name)
 	if err != nil {
 		return nil, err
@@ -203,7 +180,7 @@ func (f *FileManager) GetGitLabRegistryConfig(ctx context.Context, name string) 
 	return convertMapToGitLabRegistry(rawConfig)
 }
 
-func (f *FileManager) GetCloudsmithRegistryConfig(ctx context.Context, name string) (*CloudsmithRegistryConfig, error) {
+func (f *FileManager) GetCloudsmithRegistryConfig(ctx context.Context, name string) (*registry.CloudsmithRegistryConfig, error) {
 	rawConfig, err := f.GetRegistryConfig(ctx, name)
 	if err != nil {
 		return nil, err
@@ -218,7 +195,7 @@ func (f *FileManager) GetCloudsmithRegistryConfig(ctx context.Context, name stri
 	return convertMapToCloudsmithRegistry(rawConfig)
 }
 
-func (f *FileManager) UpsertGitRegistryConfig(ctx context.Context, name string, config *GitRegistryConfig) error {
+func (f *FileManager) UpsertGitRegistryConfig(ctx context.Context, name string, config *registry.GitRegistryConfig) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -233,7 +210,7 @@ func (f *FileManager) UpsertGitRegistryConfig(ctx context.Context, name string, 
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) UpsertGitLabRegistryConfig(ctx context.Context, name string, config *GitLabRegistryConfig) error {
+func (f *FileManager) UpsertGitLabRegistryConfig(ctx context.Context, name string, config *registry.GitLabRegistryConfig) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -248,7 +225,7 @@ func (f *FileManager) UpsertGitLabRegistryConfig(ctx context.Context, name strin
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) UpsertCloudsmithRegistryConfig(ctx context.Context, name string, config *CloudsmithRegistryConfig) error {
+func (f *FileManager) UpsertCloudsmithRegistryConfig(ctx context.Context, name string, config *registry.CloudsmithRegistryConfig) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -564,14 +541,14 @@ func convertDependencyToMap(config interface{}) (map[string]interface{}, error) 
 	return result, nil
 }
 
-// convertMapToGitRegistry converts map[string]interface{} to GitRegistryConfig.
-func convertMapToGitRegistry(m map[string]interface{}) (*GitRegistryConfig, error) {
+// convertMapToGitRegistry converts map[string]interface{} to registry.GitRegistryConfig.
+func convertMapToGitRegistry(m map[string]interface{}) (*registry.GitRegistryConfig, error) {
 	configBytes, err := json.Marshal(m)
 	if err != nil {
 		return nil, err
 	}
 
-	var config GitRegistryConfig
+	var config registry.GitRegistryConfig
 	if err := json.Unmarshal(configBytes, &config); err != nil {
 		return nil, err
 	}
@@ -579,14 +556,14 @@ func convertMapToGitRegistry(m map[string]interface{}) (*GitRegistryConfig, erro
 	return &config, nil
 }
 
-// convertMapToGitLabRegistry converts map[string]interface{} to GitLabRegistryConfig.
-func convertMapToGitLabRegistry(m map[string]interface{}) (*GitLabRegistryConfig, error) {
+// convertMapToGitLabRegistry converts map[string]interface{} to registry.GitLabRegistryConfig.
+func convertMapToGitLabRegistry(m map[string]interface{}) (*registry.GitLabRegistryConfig, error) {
 	configBytes, err := json.Marshal(m)
 	if err != nil {
 		return nil, err
 	}
 
-	var config GitLabRegistryConfig
+	var config registry.GitLabRegistryConfig
 	if err := json.Unmarshal(configBytes, &config); err != nil {
 		return nil, err
 	}
@@ -594,14 +571,14 @@ func convertMapToGitLabRegistry(m map[string]interface{}) (*GitLabRegistryConfig
 	return &config, nil
 }
 
-// convertMapToCloudsmithRegistry converts map[string]interface{} to CloudsmithRegistryConfig.
-func convertMapToCloudsmithRegistry(m map[string]interface{}) (*CloudsmithRegistryConfig, error) {
+// convertMapToCloudsmithRegistry converts map[string]interface{} to registry.CloudsmithRegistryConfig.
+func convertMapToCloudsmithRegistry(m map[string]interface{}) (*registry.CloudsmithRegistryConfig, error) {
 	configBytes, err := json.Marshal(m)
 	if err != nil {
 		return nil, err
 	}
 
-	var config CloudsmithRegistryConfig
+	var config registry.CloudsmithRegistryConfig
 	if err := json.Unmarshal(configBytes, &config); err != nil {
 		return nil, err
 	}

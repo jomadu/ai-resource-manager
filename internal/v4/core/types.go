@@ -30,7 +30,7 @@ type PackageMetadata struct {
 
 type Package struct {
 	Metadata PackageMetadata
-	Files    []File
+	Files    []*File
 }
 
 type ConstraintType string
