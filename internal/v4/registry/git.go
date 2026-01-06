@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/core"
@@ -32,18 +33,20 @@ type CloudsmithRegistryConfig struct {
 }
 
 type GitRegistry struct {
+	name         string
 	config       GitRegistryConfig
 	repo         storage.RepoInterface
 	packageCache *storage.PackageCache
 }
 
-func NewGitRegistry(config GitRegistryConfig) (*GitRegistry, error) {
+func NewGitRegistry(name string, config GitRegistryConfig) (*GitRegistry, error) {
 	registry, err := storage.NewRegistry(config)
 	if err != nil {
 		return nil, err
 	}
 	
 	return &GitRegistry{
+		name:         name,
 		config:       config,
 		repo:         storage.NewRepo(registry.GetRepoDir()),
 		packageCache: storage.NewPackageCache(registry.GetPackagesDir()),
@@ -75,9 +78,25 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 	
 	// Get branches if configured
 	if len(g.config.Branches) > 0 {
-		for _, branch := range g.config.Branches {
-			version, _ := core.ParseVersion(branch)
-			versions = append(versions, version)
+		// Get actual branches from repo
+		actualBranches, err := g.repo.GetBranches(ctx, g.config.URL)
+		if err != nil {
+			return nil, err
+		}
+		
+		// Only add configured branches that actually exist (supports glob patterns)
+		for _, configBranch := range g.config.Branches {
+			for _, actualBranch := range actualBranches {
+				matched, err := filepath.Match(configBranch, actualBranch)
+				if err != nil {
+					// If pattern invalid, try exact match
+					matched = (configBranch == actualBranch)
+				}
+				if matched {
+					version, _ := core.ParseVersion(actualBranch)
+					versions = append(versions, version)
+				}
+			}
 		}
 	}
 	
@@ -99,8 +118,12 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 	// Try cache first
 	if files, err := g.packageCache.GetPackageVersion(ctx, cacheKey, version); err == nil {
 		return &core.Package{
-			Metadata: core.PackageMetadata{Name: packageName, Version: version},
-			Files:    files,
+			Metadata: core.PackageMetadata{
+				RegistryName: g.name,
+				Name:         packageName,
+				Version:      version,
+			},
+			Files: files,
 		}, nil
 	}
 	
@@ -122,13 +145,17 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 	g.packageCache.SetPackageVersion(ctx, cacheKey, version, filteredFiles)
 	
 	return &core.Package{
-		Metadata: core.PackageMetadata{Name: packageName, Version: version},
-		Files:    filteredFiles,
+		Metadata: core.PackageMetadata{
+			RegistryName: g.name,
+			Name:         packageName,
+			Version:      version,
+		},
+		Files: filteredFiles,
 	}, nil
 }
 
 // matchesPatterns checks if file path matches include/exclude patterns.
-// Simple implementation - can be enhanced with glob patterns later.
+// Uses filepath.Match for glob pattern support. Invalid patterns are skipped.
 func (g *GitRegistry) matchesPatterns(filePath string, include []string, exclude []string) bool {
 	// If no patterns, include all files
 	if len(include) == 0 && len(exclude) == 0 {
@@ -137,7 +164,12 @@ func (g *GitRegistry) matchesPatterns(filePath string, include []string, exclude
 	
 	// Check exclude patterns first
 	for _, pattern := range exclude {
-		if strings.Contains(filePath, pattern) {
+		matched, err := filepath.Match(pattern, filePath)
+		if err != nil {
+			// Invalid pattern - skip it (could log warning)
+			continue
+		}
+		if matched {
 			return false
 		}
 	}
@@ -149,7 +181,12 @@ func (g *GitRegistry) matchesPatterns(filePath string, include []string, exclude
 	
 	// Check include patterns
 	for _, pattern := range include {
-		if strings.Contains(filePath, pattern) {
+		matched, err := filepath.Match(pattern, filePath)
+		if err != nil {
+			// Invalid pattern - skip it (could log warning)
+			continue
+		}
+		if matched {
 			return true
 		}
 	}
