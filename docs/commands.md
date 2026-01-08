@@ -240,29 +240,29 @@ my-org:
 
 ### arm add sink
 
-`arm add sink [--type <cursor|copilot|amazonq>] [--layout <hierarchical|flat>] [--compile-to <md|cursor|amazonq|copilot>] [--force] NAME PATH`
+`arm add sink --tool <cursor|copilot|amazonq> [--force] NAME PATH`
 
-Add a new sink to the ARM configuration. A sink defines where and how compiled rulesets and promptsets should be output. The `--type` flag is a shortcut that sets combinations of `--layout` and `--compile-to` (e.g., `--type cursor` sets `--layout hierarchical --compile-to cursor`). You can also specify `--layout` and `--compile-to` individually for custom configurations. The `--force` flag allows overwriting an existing sink with the same name.
+Add a new sink to the ARM configuration. A sink defines where compiled rulesets and promptsets should be output for a specific AI tool. The `--force` flag allows overwriting an existing sink with the same name.
 
 **Examples:**
 ```bash
 # Add Cursor rules sink
-$ arm add sink --type cursor cursor-rules .cursor/rules
+$ arm add sink --tool cursor cursor-rules .cursor/rules
 
 # Add Cursor prompts sink
-$ arm add sink --type cursor cursor-commands .cursor/commands
+$ arm add sink --tool cursor cursor-commands .cursor/commands
 
 # Add Amazon Q rules sink
-$ arm add sink --type amazonq q-rules .amazonq/rules
+$ arm add sink --tool amazonq q-rules .amazonq/rules
 
 # Add Amazon Q prompts sink
-$ arm add sink --type amazonq q-prompts .amazonq/prompts
+$ arm add sink --tool amazonq q-prompts .amazonq/prompts
 
 # Add GitHub Copilot sink
-$ arm add sink --type copilot copilot-rules .github/copilot
+$ arm add sink --tool copilot copilot-rules .github/copilot
 
 # Overwrite an existing sink
-$ arm add sink --type cursor --force cursor-rules .cursor/new-rules
+$ arm add sink --tool cursor --force cursor-rules .cursor/new-rules
 ```
 
 ### arm remove sink
@@ -280,18 +280,15 @@ $ arm remove sink cursor-rules
 
 `arm set sink NAME KEY VALUE`
 
-Set configuration values for a specific sink. This command allows you to configure sink-specific settings. The available configuration keys are `layout` (hierarchical or flat), `directory` (output path), and `compileTarget` (md, cursor, amazonq, or copilot).
+Set configuration values for a specific sink. This command allows you to configure sink-specific settings. The available configuration keys are `tool` (cursor, amazonq, or copilot) and `directory` (output path).
 
 **Examples:**
 ```bash
-# Change sink layout
-$ arm set sink cursor-rules layout flat
+# Change sink tool
+$ arm set sink cursor-rules tool amazonq
 
 # Update sink directory
 $ arm set sink cursor-rules directory .cursor/new-rules
-
-# Change compilation target
-$ arm set sink cursor-rules compileTarget md
 ```
 
 ### arm list sink
@@ -322,23 +319,19 @@ Display detailed information about one or more sinks. This command shows compreh
 $ arm info sink
 cursor-rules:
     directory: .cursor/rules
-    layout: hierarchical
-    compileTarget: cursor
+    tool: cursor
 q-rules:
     directory: .amazonq/rules
-    layout: hierarchical
-    compileTarget: md
+    tool: amazonq
 copilot-rules:
     directory: .github/copilot
-    layout: flat
-    compileTarget: copilot
+    tool: copilot
 
 # Show info for specific sinks
 $ arm info sink cursor-rules
 cursor-rules:
     directory: .cursor/rules
-    layout: hierarchical
-    compileTarget: cursor
+    tool: cursor
 ```
 
 ## Package Management

@@ -1,43 +1,35 @@
 # Concepts
 
-## Files
+## Core Components
 
-ARM uses four key files to manage your AI resources:
+**Registries** are remote sources where rulesets and promptsets are stored and versioned (Git repositories, GitLab Package Registry, Cloudsmith).
 
-- **`arm.json`** - Team-shared project manifest with registries, rulesets, promptsets, and sinks
-- **`arm-lock.json`** - Team-shared locked versions for reproducible installs
-- **`arm-index.json`** - Local sink inventory tracking installed packages with resolved versions and file paths, used to generate the `arm_index.*` file
-- **`arm_index.*`** - Generated priority rule that helps AI tools resolve conflicts between rulesets
+**Packages** are versioned collections of AI rules or prompts:
+- **Rulesets** - Collections of AI rules with priority-based conflict resolution
+- **Promptsets** - Collections of AI prompts for reusable templates
 
-## Resources
+**Sinks** are local directories where ARM places compiled files, each configured for a specific AI tool (Cursor, Amazon Q, GitHub Copilot).
 
-ARM consumes two types of AI resources:
+## How It Works
 
-- **Rulesets**: Collections of rules that provide instructions, guidelines, and context to AI coding assistants
-- **Promptsets**: Collections of prompts that provide reusable prompt templates for AI interactions
+1. Add registries where packages are stored
+2. Configure sinks with your desired AI tool and target directory
+3. Install packages from registries to sinks
+4. ARM compiles resource files (when needed) and places the correct files for your tool in the project
 
-Different AI tools use different formats:
+## Package Author Options
 
-- **Cursor**: `.cursorrules` files, `.mdc` files with YAML frontmatter, or `.md` files for prompts
-- **Amazon Q**: `.md` files in `.amazonq/rules/` or `.amazonq/prompts/` directories
-- **GitHub Copilot**: `.instructions.md` files in `.github/copilot/` directory
+**ARM resource files** (YAML) - Cross-platform definitions that ARM compiles to any tool format.
 
-ARM consumes these resources as versioned packages, ensuring consistency across projects while respecting each tool's format requirements.
+**Raw tool files** - Tool-specific files that are used as-is without compilation.
 
-## Resource Types
+This approach enables backwards compatibility with existing repositories like awesome-cursorrules.
 
-### Rulesets vs Promptsets
+## ARM Project Files
 
-**Rulesets** contain rules with:
-- Priority-based conflict resolution
-- Enforcement levels (must/should/may)
-- File scope targeting
-- Compilation with metadata
+- `arm.json` - Project manifest containing registries, packages, and sinks
+- `arm-lock.json` - Locked versions for reproducible installs
+- `arm-index.json` - Local inventory tracking installed packages and file paths
+- `arm_index.*` - Generated priority rules that help AI tools resolve conflicts
 
-**Promptsets** contain prompts with:
-- Simple content-only compilation
-- No priority conflicts
-- Universal compatibility
-- Minimal metadata
-
-Both use ARM's Kubernetes-style resource definitions but serve different purposes in AI assistant workflows.
+See [Resource Schemas](resource-schemas.md) for detailed YAML format specifications.

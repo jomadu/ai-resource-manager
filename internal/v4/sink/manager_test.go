@@ -48,16 +48,34 @@ func TestGetFilePath(t *testing.T) {
 		packageName  string
 		version      string
 		relativePath string
-		want         string
+		wantPattern  string // Pattern to match instead of exact string
 	}{
 		{
-			name:         "flat layout",
+			name:         "flat layout short path",
 			layout:       LayoutFlat,
 			registry:     "test-reg",
 			packageName:  "test-pkg",
 			version:      "1.0.0",
 			relativePath: "rules/test.yml",
-			want:         "arm_12345678_rules_test.yml", // hash will be computed
+			wantPattern:  "arm_[a-f0-9]{4}_[a-f0-9]{4}_rules_test.yml",
+		},
+		{
+			name:         "flat layout long path gets truncated",
+			layout:       LayoutFlat,
+			registry:     "test-reg",
+			packageName:  "test-pkg",
+			version:      "1.0.0",
+			relativePath: "very/long/path/that/exceeds/the/maximum/length/limit/for/filename/test.yml",
+			wantPattern:  "arm_[a-f0-9]{4}_[a-f0-9]{4}_test.yml", // Should use just filename
+		},
+		{
+			name:         "flat layout very long filename gets truncated",
+			layout:       LayoutFlat,
+			registry:     "test-reg",
+			packageName:  "test-pkg",
+			version:      "1.0.0",
+			relativePath: "rules/very_long_filename_that_definitely_exceeds_the_maximum_allowed_length_for_a_single_filename_component.instructions.md",
+			wantPattern:  "arm_[a-f0-9]{4}_[a-f0-9]{4}_very_long_filename_that_definitely_exceeds_the_maximum_allowed_length_for_a_single_filename_component.instructions.md", // Truncated but keeps extension
 		},
 		{
 			name:         "hierarchical layout",
@@ -66,7 +84,7 @@ func TestGetFilePath(t *testing.T) {
 			packageName:  "test-pkg",
 			version:      "1.0.0",
 			relativePath: "rules/test.yml",
-			want:         "arm/test-reg/test-pkg/1.0.0/rules/test.yml",
+			wantPattern:  "arm/test-reg/test-pkg/1.0.0/rules/test.yml",
 		},
 	}
 
@@ -82,12 +100,21 @@ func TestGetFilePath(t *testing.T) {
 			got := m.getFilePath(tt.registry, tt.packageName, tt.version, tt.relativePath)
 
 			if tt.layout == LayoutFlat {
-				// Check it starts with arm_ and has hash
-				if !filepath.HasPrefix(filepath.Base(got), "arm_") {
-					t.Errorf("flat layout should start with arm_, got %v", got)
+				// Check it starts with arm_ and has dual hash pattern
+				basename := filepath.Base(got)
+				if !filepath.HasPrefix(basename, "arm_") {
+					t.Errorf("flat layout should start with arm_, got %v", basename)
+				}
+				// Check dual hash pattern: arm_xxxx_xxxx_...
+				if len(basename) < 14 { // arm_ + 4 + _ + 4 + _ = 14 minimum
+					t.Errorf("filename too short for dual hash pattern: %v", basename)
+				}
+				// Verify total length doesn't exceed 100 chars
+				if len(basename) > 100 {
+					t.Errorf("filename exceeds 100 chars: %d", len(basename))
 				}
 			} else {
-				expected := filepath.Join(tmpDir, tt.want)
+				expected := filepath.Join(tmpDir, tt.wantPattern)
 				if got != expected {
 					t.Errorf("getFilePath() = %v, want %v", got, expected)
 				}
@@ -96,26 +123,54 @@ func TestGetFilePath(t *testing.T) {
 	}
 }
 
-func TestHashFile(t *testing.T) {
+func TestHashPackageAndPath(t *testing.T) {
 	m := &Manager{}
 
-	hash1 := m.hashFile("reg", "pkg", "1.0.0", "test.yml")
-	hash2 := m.hashFile("reg", "pkg", "1.0.0", "test.yml")
-	hash3 := m.hashFile("reg", "pkg", "2.0.0", "test.yml")
+	// Test package hash
+	pkgHash1 := m.hashPackage("reg", "pkg", "1.0.0")
+	pkgHash2 := m.hashPackage("reg", "pkg", "1.0.0")
+	pkgHash3 := m.hashPackage("reg", "pkg", "2.0.0")
 
 	// Same inputs should produce same hash
-	if hash1 != hash2 {
-		t.Errorf("same inputs should produce same hash: %v != %v", hash1, hash2)
+	if pkgHash1 != pkgHash2 {
+		t.Errorf("same package inputs should produce same hash: %v != %v", pkgHash1, pkgHash2)
 	}
 
-	// Different inputs should produce different hash
-	if hash1 == hash3 {
-		t.Errorf("different inputs should produce different hash: %v == %v", hash1, hash3)
+	// Different versions should produce different hash
+	if pkgHash1 == pkgHash3 {
+		t.Errorf("different package versions should produce different hash: %v == %v", pkgHash1, pkgHash3)
 	}
 
-	// Hash should be 8 characters
-	if len(hash1) != 8 {
-		t.Errorf("hash should be 8 characters, got %d", len(hash1))
+	// Package hash should be 4 characters
+	if len(pkgHash1) != 4 {
+		t.Errorf("package hash should be 4 characters, got %d", len(pkgHash1))
+	}
+
+	// Test path hash
+	pathHash1 := m.hashPath("rules/test.yml")
+	pathHash2 := m.hashPath("rules/test.yml")
+	pathHash3 := m.hashPath("rules/other.yml")
+
+	// Same inputs should produce same hash
+	if pathHash1 != pathHash2 {
+		t.Errorf("same path inputs should produce same hash: %v != %v", pathHash1, pathHash2)
+	}
+
+	// Different paths should produce different hash
+	if pathHash1 == pathHash3 {
+		t.Errorf("different paths should produce different hash: %v == %v", pathHash1, pathHash3)
+	}
+
+	// Path hash should be 4 characters
+	if len(pathHash1) != 4 {
+		t.Errorf("path hash should be 4 characters, got %d", len(pathHash1))
+	}
+
+	// Test that same package produces same hash for different files
+	pkgHashA := m.hashPackage("reg", "pkg", "1.0.0")
+	pkgHashB := m.hashPackage("reg", "pkg", "1.0.0")
+	if pkgHashA != pkgHashB {
+		t.Errorf("same package should produce same hash regardless of file: %v != %v", pkgHashA, pkgHashB)
 	}
 }
 
@@ -124,9 +179,9 @@ func TestIsInstalled(t *testing.T) {
 	m := NewManager(tmpDir, compiler.Cursor)
 
 	metadata := core.PackageMetadata{
-		Registry: "test-reg",
-		Name:     "test-pkg",
-		Version:  "1.0.0",
+		RegistryName: "test-reg",
+		Name:         "test-pkg",
+		Version:      core.Version{Version: "1.0.0"},
 	}
 
 	// Should return false for non-installed package
@@ -204,8 +259,8 @@ func TestListRulesets(t *testing.T) {
 	if len(rulesets) != 1 {
 		t.Errorf("expected 1 ruleset, got %d", len(rulesets))
 	}
-	if rulesets[0].Metadata.Registry != "test-reg" {
-		t.Errorf("expected registry test-reg, got %s", rulesets[0].Metadata.Registry)
+	if rulesets[0].Metadata.RegistryName != "test-reg" {
+		t.Errorf("expected registry test-reg, got %s", rulesets[0].Metadata.RegistryName)
 	}
 	if rulesets[0].Priority != 200 {
 		t.Errorf("expected priority 200, got %d", rulesets[0].Priority)
@@ -240,8 +295,8 @@ func TestListPromptsets(t *testing.T) {
 	if len(promptsets) != 1 {
 		t.Errorf("expected 1 promptset, got %d", len(promptsets))
 	}
-	if promptsets[0].Metadata.Registry != "test-reg" {
-		t.Errorf("expected registry test-reg, got %s", promptsets[0].Metadata.Registry)
+	if promptsets[0].Metadata.RegistryName != "test-reg" {
+		t.Errorf("expected registry test-reg, got %s", promptsets[0].Metadata.RegistryName)
 	}
 }
 
@@ -264,9 +319,9 @@ func TestUninstall(t *testing.T) {
 
 	// Uninstall
 	metadata := core.PackageMetadata{
-		Registry: "test-reg",
-		Name:     "test-pkg",
-		Version:  "1.0.0",
+		RegistryName: "test-reg",
+		Name:         "test-pkg",
+		Version:      core.Version{Version: "1.0.0"},
 	}
 	err := m.Uninstall(metadata)
 	if err != nil {
@@ -320,5 +375,52 @@ func TestClean(t *testing.T) {
 	// Tracked file should remain
 	if _, err := os.Stat(trackedFile); os.IsNotExist(err) {
 		t.Errorf("tracked file should remain")
+	}
+}
+func TestFilenameTruncation(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager(tmpDir, compiler.Copilot) // Use Copilot for flat layout
+
+	// Get the actual hashes for our test inputs
+	pkgHash := m.hashPackage("test-reg", "test-pkg", "1.0.0")
+
+	tests := []struct {
+		name         string
+		relativePath string
+		wantFilename string
+	}{
+		{
+			name:         "short path no truncation",
+			relativePath: "rules/test.yml",
+			wantFilename: "arm_" + pkgHash + "_" + m.hashPath("rules/test.yml") + "_rules_test.yml",
+		},
+		{
+			name:         "long path uses filename only",
+			relativePath: "very/long/directory/structure/that/exceeds/the/maximum/allowed/length/for/filename/generation/test.yml",
+			wantFilename: "arm_" + pkgHash + "_" + m.hashPath("very/long/directory/structure/that/exceeds/the/maximum/allowed/length/for/filename/generation/test.yml") + "_test.yml",
+		},
+		{
+			name:         "very long filename gets truncated",
+			relativePath: "rules/this_is_a_very_long_filename_that_definitely_exceeds_the_maximum_allowed_length_for_filename_generation_and_should_be_truncated.instructions.md",
+			// This will be truncated to fit in 100 chars total
+			wantFilename: "arm_" + pkgHash + "_" + m.hashPath("rules/this_is_a_very_long_filename_that_definitely_exceeds_the_maximum_allowed_length_for_filename_generation_and_should_be_truncated.instructions.md") + "_this_is_a_very_long_filename_that_definitely_exceeds_the_maximum_allowed_length_for.md",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := m.getFilePath("test-reg", "test-pkg", "1.0.0", tt.relativePath)
+			basename := filepath.Base(got)
+
+			// Should not exceed 100 characters
+			if len(basename) > 100 {
+				t.Errorf("filename exceeds 100 chars: %d", len(basename))
+			}
+
+			// Check exact match
+			if basename != tt.wantFilename {
+				t.Errorf("getFilePath() = %v, want %v", basename, tt.wantFilename)
+			}
+		})
 	}
 }

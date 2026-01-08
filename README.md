@@ -23,7 +23,8 @@ ARM solves these problems with a modern package manager approach.
 
 - **Consistent, versioned installs** using semantic versioning (except for [git based registry](docs/registries/git-registry.md) without semver tags, which gets a little funky)
 - **Reliable, reproducible environments** through manifest and lock files (similar to npm's `package.json` and `package-lock.json`)
-- **[Unified resource definitions](https://xkcd.com/927/)** that compile to formats needed by any AI tool (the audacity! *clutches pearls*)
+- **Backwards compatibility** with existing repositories like [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules) - use them immediately without conversion
+- **Flexible resource formats** - authors can write cross-platform ARM resources or tool-specific files
 - **Priority-based rule composition** for layering multiple rulesets with clear conflict resolution (your team's standards > internet best practices)
 - **Flexible registry support** for managing resources from Git, GitLab, and Cloudsmith
 - **Automated update workflow:** easily check for updates and apply them across projects ([nice](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTlycTA1ejFwdnZtZHNzOG5tYnVwajF3bDAwYzllcnU1dm5oNWplMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NEvPzZ8bd1V4Y/giphy.gif))
@@ -138,9 +139,8 @@ arm install promptset --include "review/**/*.yml" --include "refactor/**/*.yml" 
 
 ## Documentation
 
-- **[Concepts](docs/concepts.md)** - Core concepts and files
-- **[Rulesets](docs/rulesets.md)** - Working with rulesets
-- **[Promptsets](docs/promptsets.md)** - Working with promptsets
+- **[Concepts](docs/concepts.md)** - Core concepts, file types, and resource definitions
+- **[Resource Schemas](docs/resource-schemas.md)** - ARM resource YAML schemas
 - **[Registries](docs/registries.md)** - Registry management and types
 - **[Sinks](docs/sinks.md)** - Sink configuration and compilation
 - **[Package Management](docs/package-management.md)** - Installing, updating, and managing packages

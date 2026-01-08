@@ -113,26 +113,28 @@ func NewManager(directory string, tool compiler.Tool) *Manager {
 }
 
 // InstallRuleset installs a ruleset package with priority
-// 
+//
 // Algorithm:
 // 1. For each file in package:
-//    - If filetype.IsResourceFile(file.Path):
-//      - If filetype.IsRulesetFile(file.Path):
-//        - Parse with parser.ParseRuleset(&file)
-//        - namespace = fmt.Sprintf("%s/%s/%s", registry, name, version)
-//        - For each rule in rulesetResource.Spec.Rules:
-//          - Generate content with m.ruleGenerator.GenerateRule(namespace, resource, ruleID)
-//          - Generate filename with m.ruleFilenameGenerator.GenerateRuleFilename(rulesetID, ruleID)
-//          - Combine: filepath.Join(filepath.Dir(file.Path), filename)
-//          - Write to disk at m.getFilePath(registry, name, version, combinedPath)
-//          - Add combinedPath to installedFiles
-//      - Else (promptset file): skip
-//    - Else (regular file):
-//      - Write file.Content to m.getFilePath(registry, name, version, file.Path)
-//      - Add file.Path to installedFiles
+//   - If filetype.IsResourceFile(file.Path):
+//   - If filetype.IsRulesetFile(file.Path):
+//   - Parse with parser.ParseRuleset(&file)
+//   - namespace = fmt.Sprintf("%s/%s/%s", registry, name, version)
+//   - For each rule in rulesetResource.Spec.Rules:
+//   - Generate content with m.ruleGenerator.GenerateRule(namespace, resource, ruleID)
+//   - Generate filename with m.ruleFilenameGenerator.GenerateRuleFilename(rulesetID, ruleID)
+//   - Combine: filepath.Join(filepath.Dir(file.Path), filename)
+//   - Write to disk at m.getFilePath(registry, name, version, combinedPath)
+//   - Add combinedPath to installedFiles
+//   - Else (promptset file): skip
+//   - Else (regular file):
+//   - Write file.Content to m.getFilePath(registry, name, version, file.Path)
+//   - Add file.Path to installedFiles
+//
 // 2. Update index:
-//    - packageID = core.PackageID(registry, name, version)
-//    - index.Rulesets[packageID] = {Priority: priority, Files: installedFiles}
+//   - packageID = core.PackageID(registry, name, version)
+//   - index.Rulesets[packageID] = {Priority: priority, Files: installedFiles}
+//
 // 3. Generate ruleset index rule file for AI agents
 func (m *Manager) InstallRuleset(pkg *core.Package, priority int) error {
 	return nil // TODO
@@ -142,23 +144,24 @@ func (m *Manager) InstallRuleset(pkg *core.Package, priority int) error {
 //
 // Algorithm:
 // 1. For each file in package:
-//    - If filetype.IsResourceFile(file.Path):
-//      - If filetype.IsPromptsetFile(file.Path):
-//        - Parse with parser.ParsePromptset(&file)
-//        - namespace = fmt.Sprintf("%s/%s/%s", registry, name, version)
-//        - For each prompt in promptsetResource.Spec.Prompts:
-//          - Generate content with m.promptGenerator.GeneratePrompt(namespace, resource, promptID)
-//          - Generate filename with m.promptFilenameGenerator.GeneratePromptFilename(promptsetID, promptID)
-//          - Combine: filepath.Join(filepath.Dir(file.Path), filename)
-//          - Write to disk at m.getFilePath(registry, name, version, combinedPath)
-//          - Add combinedPath to installedFiles
-//      - Else (ruleset file): skip
-//    - Else (regular file):
-//      - Write file.Content to m.getFilePath(registry, name, version, file.Path)
-//      - Add file.Path to installedFiles
+//   - If filetype.IsResourceFile(file.Path):
+//   - If filetype.IsPromptsetFile(file.Path):
+//   - Parse with parser.ParsePromptset(&file)
+//   - namespace = fmt.Sprintf("%s/%s/%s", registry, name, version)
+//   - For each prompt in promptsetResource.Spec.Prompts:
+//   - Generate content with m.promptGenerator.GeneratePrompt(namespace, resource, promptID)
+//   - Generate filename with m.promptFilenameGenerator.GeneratePromptFilename(promptsetID, promptID)
+//   - Combine: filepath.Join(filepath.Dir(file.Path), filename)
+//   - Write to disk at m.getFilePath(registry, name, version, combinedPath)
+//   - Add combinedPath to installedFiles
+//   - Else (ruleset file): skip
+//   - Else (regular file):
+//   - Write file.Content to m.getFilePath(registry, name, version, file.Path)
+//   - Add file.Path to installedFiles
+//
 // 2. Update index:
-//    - packageID = core.PackageID(registry, name, version)
-//    - index.Promptsets[packageID] = {Files: installedFiles}
+//   - packageID = core.PackageID(registry, name, version)
+//   - index.Promptsets[packageID] = {Files: installedFiles}
 func (m *Manager) InstallPromptset(pkg *core.Package) error {
 	return nil // TODO
 }
@@ -357,18 +360,46 @@ func (m *Manager) generateRulesetIndexRuleFile() error {
 // getFilePath returns the appropriate path for a file based on layout
 func (m *Manager) getFilePath(registry, name, version, relativePath string) string {
 	if m.layout == LayoutFlat {
-		hash := m.hashFile(registry, name, version, relativePath)
-		fileName := "arm_" + hash + "_" + strings.ReplaceAll(strings.ReplaceAll(relativePath, "/", "_"), "\\", "_")
+		packageHash := m.hashPackage(registry, name, version)
+		pathHash := m.hashPath(relativePath)
+		pathPart := strings.ReplaceAll(strings.ReplaceAll(relativePath, "/", "_"), "\\", "_")
+
+		// Calculate filename overhead: arm_xxxx_xxxx_
+		filenameOverhead := len("arm_xxxx_xxxx_")
+		maxPathLen := 100 - filenameOverhead
+
+		if len(pathPart) > maxPathLen {
+			filename := filepath.Base(relativePath)
+			ext := filepath.Ext(filename)
+			nameWithoutExt := strings.TrimSuffix(filename, ext)
+
+			// Try progressively shorter options
+			if len(filename) <= maxPathLen {
+				// 2. Use just filename with extension
+				pathPart = filename
+			} else {
+				// 3. Use truncated filename with extension
+				availableForName := maxPathLen - len(ext)
+				truncatedName := nameWithoutExt[:min(availableForName, len(nameWithoutExt))]
+				pathPart = truncatedName + ext
+			}
+		}
+
+		fileName := "arm_" + packageHash + "_" + pathHash + "_" + pathPart
 		return filepath.Join(m.directory, fileName)
 	}
 	return filepath.Join(m.armDir, registry, name, version, relativePath)
 }
 
-// hashFile creates SHA256 hash for flat layout file naming
-func (m *Manager) hashFile(registry, name, version, filePath string) string {
-	identifier := fmt.Sprintf("%s/%s@%s:%s", registry, name, version, filePath)
+// hashPackage creates 4-char hash for package identification
+func (m *Manager) hashPackage(registry, name, version string) string {
+	identifier := fmt.Sprintf("%s/%s@%s", registry, name, version)
 	hash := sha256.Sum256([]byte(identifier))
-	return hex.EncodeToString(hash[:])[:8]
+	return hex.EncodeToString(hash[:])[:4]
 }
 
-
+// hashPath creates 4-char hash for path identification
+func (m *Manager) hashPath(filePath string) string {
+	hash := sha256.Sum256([]byte(filePath))
+	return hex.EncodeToString(hash[:])[:4]
+}
