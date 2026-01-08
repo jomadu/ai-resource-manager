@@ -1,0 +1,15 @@
+{
+    "version": 1,
+    "rulesets": {
+        "sample-registry/clean-code-ruleset@1.1.0": {
+            "priority": 100,
+            "files": [
+                "arm_1a2b_3c4d_cleanCode_meaningfulNames.instructions.md",
+                "arm_1a2b_5e6f_cleanCode_smallFunctions.instructions.md",
+                "arm_1a2b_7g8h_cleanCode_avoidComments.instructions.md",
+                "arm_1a2b_9i0j_cleanCode_singleResponsibility.instructions.md",
+                "arm_1a2b_k1l2_cleanCode_avoidDuplication.instructions.md"
+            ]
+        }
+    }
+}

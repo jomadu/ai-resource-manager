@@ -5,7 +5,7 @@ Complete ARM ecosystem demonstration with fake registry, cache, and project setu
 ## Structure
 
 - **`registry/`** - Sample packages (clean-code-ruleset, code-review-promptset)
-- **`cache/`** - Local ARM cache with downloaded packages and metadata
+- **`storage/`** - Local ARM storage with downloaded packages and metadata
 - **`project/`** - Example project with ARM configuration and compiled sinks
 
 ## Usage

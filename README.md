@@ -21,7 +21,7 @@ ARM solves these problems with a modern package manager approach.
 
 ### Key Features of ARM
 
-- **Consistent, versioned installs** using semantic versioning (except for [git based registry](docs/registries/git-registry.md) without semver tags, which gets a little funky)
+- **Consistent, versioned installs** using semantic versioning (except for [git based registry](docs/storage/registries/git-registry.md) without semver tags, which gets a little funky)
 - **Reliable, reproducible environments** through manifest and lock files (similar to npm's `package.json` and `package-lock.json`)
 - **Backwards compatibility** with existing repositories like [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules) - use them immediately without conversion
 - **Flexible resource formats** - authors can write cross-platform ARM resources or tool-specific files
@@ -147,6 +147,6 @@ arm install promptset --include "review/**/*.yml" --include "refactor/**/*.yml" 
 
 ### Registry Types
 
-- **[Git Registry](docs/registries/git-registry.md)** - GitHub, GitLab, and Git remotes
-- **[GitLab Registry](docs/registries/gitlab-registry.md)** - GitLab Package Registry
-- **[Cloudsmith Registry](docs/registries/cloudsmith-registry.md)** - Cloudsmith package repository
+- **[Git Registry](docs/storage/registries/git-registry.md)** - GitHub, GitLab, and Git remotes
+- **[GitLab Registry](docs/storage/registries/gitlab-registry.md)** - GitLab Package Registry
+- **[Cloudsmith Registry](docs/storage/registries/cloudsmith-registry.md)** - Cloudsmith package repository

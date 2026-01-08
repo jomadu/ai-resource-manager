@@ -41,13 +41,13 @@ ARM automatically extracts and processes **zip** and **tar.gz** archives during 
 ## Registry Types
 
 ### Git Registry
-Uses Git repositories with tags and branches for versioning. See [Git Registry](registries/git-registry.md) for details.
+Uses Git repositories with tags and branches for versioning. See [Git Registry](storage/registries/git-registry.md) for details.
 
 ### GitLab Registry
-Uses GitLab's Generic Package Registry for versioned packages. See [GitLab Registry](registries/gitlab-registry.md) for details.
+Uses GitLab's Generic Package Registry for versioned packages. See [GitLab Registry](storage/registries/gitlab-registry.md) for details.
 
 ### Cloudsmith Registry
-Uses Cloudsmith's package repository service for single-file artifacts. See [Cloudsmith Registry](registries/cloudsmith-registry.md) for details.
+Uses Cloudsmith's package repository service for single-file artifacts. See [Cloudsmith Registry](storage/registries/cloudsmith-registry.md) for details.
 
 ## Examples
 

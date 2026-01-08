@@ -24,6 +24,10 @@
         "amazonq-prompts": {
             "directory": ".amazonq/prompts",
             "tool": "amazonq"
+        },
+        "copilot-instructions": {
+            "directory": ".github/instructions",
+            "tool": "copilot"
         }
     },
     "dependencies": {
@@ -33,7 +37,8 @@
             "priority": 100,
             "sinks": [
                 "cursor-rules",
-                "amazonq-rules"
+                "amazonq-rules",
+                "copilot-instructions"
             ],
             "include": ["**/*.yml"],
             "exclude": ["**/experimental/**"]
