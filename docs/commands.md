@@ -479,7 +479,7 @@ sinks:
     q-rules:
         directory: .amazonq/rules
         layout: hierarchical
-        compileTarget: md
+        compileTarget: markdown
     cursor-commands:
         directory: .cursor/commands
         layout: hierarchical
@@ -487,7 +487,7 @@ sinks:
     q-prompts:
         directory: .amazonq/prompts
         layout: hierarchical
-        compileTarget: md
+        compileTarget: markdown
 packages:
     rulesets:
         my-org:
@@ -964,9 +964,9 @@ $ arm clean sinks --nuke
 
 ### arm compile
 
-`arm compile [--target <md|cursor|amazonq|copilot>] [--force] [--recursive] [--validate-only] [--include GLOB...] [--exclude GLOB...] [--fail-fast] INPUT_PATH... [OUTPUT_PATH]`
+`arm compile [--tool <markdown|cursor|amazonq|copilot>] [--force] [--recursive] [--validate-only] [--include GLOB...] [--exclude GLOB...] [--fail-fast] INPUT_PATH... [OUTPUT_PATH]`
 
-Compile rulesets and promptsets from source files. This command compiles source ruleset and promptset files to platform-specific formats. It supports different target platforms (md, cursor, amazonq, copilot), recursive directory processing, validation-only mode, and various filtering and output options. This is useful for development and testing of rulesets and promptsets before publishing to registries.
+Compile rulesets and promptsets from source files. This command compiles source ruleset and promptset files to platform-specific formats. It supports different tool platforms (markdown, cursor, amazonq, copilot), recursive directory processing, validation-only mode, and various filtering and output options. This is useful for development and testing of rulesets and promptsets before publishing to registries.
 
 **INPUT_PATH** accepts both files and directories:
 - **Files**: Directly processes the specified file(s)
@@ -978,22 +978,22 @@ Compile rulesets and promptsets from source files. This command compiles source 
 **Examples:**
 ```bash
 # Compile single file to Cursor format
-$ arm compile --target cursor ruleset.yml ./output/
+$ arm compile --tool cursor ruleset.yml ./output/
 
 # Compile multiple files
-$ arm compile --target cursor file1.yml file2.yml ./output/
+$ arm compile --tool cursor file1.yml file2.yml ./output/
 
 # Compile with shell glob expansion (expands to individual files)
-$ arm compile --target cursor rulesets/*.yml ./output/
+$ arm compile --tool cursor rulesets/*.yml ./output/
 
 # Compile directory recursively to Amazon Q format
-$ arm compile --target amazonq --recursive ./src/ ./build/
+$ arm compile --tool amazonq --recursive ./src/ ./build/
 
 # Compile directory non-recursively (default)
-$ arm compile --target cursor ./rulesets/ ./output/
+$ arm compile --tool cursor ./rulesets/ ./output/
 
 # Mix files and directories
-$ arm compile --target cursor specific.yml ./more-rulesets/ ./output/
+$ arm compile --tool cursor specific.yml ./more-rulesets/ ./output/
 
 # Validate only (no output files) - OUTPUT_PATH is optional
 $ arm compile --validate-only ruleset.yml
@@ -1002,10 +1002,10 @@ $ arm compile --validate-only ruleset.yml
 $ arm compile --validate-only ./rulesets/*.yml
 
 # Compile with include/exclude patterns
-$ arm compile --target cursor --include "**/*.yml" --exclude "**/README.md" ./src/ ./build/
+$ arm compile --tool cursor --include "**/*.yml" --exclude "**/README.md" ./src/ ./build/
 
 # Compilation with force overwrite
-$ arm compile --target copilot --force ruleset.yml ./output/
+$ arm compile --tool copilot --force ruleset.yml ./output/
 
 # Validate and fail fast on first error (useful for CI)
 $ arm compile --validate-only --fail-fast ./rulesets/
