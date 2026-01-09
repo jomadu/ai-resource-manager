@@ -450,6 +450,122 @@ func TestGitRegistry_VersionPriority(t *testing.T) {
 	t.Skip("TODO: implement")
 }
 
+// Cache Key Normalization
+func TestNormalizePatterns(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		expected []string
+	}{
+		{
+			name:     "empty slice",
+			input:    []string{},
+			expected: []string{},
+		},
+		{
+			name:     "nil slice",
+			input:    nil,
+			expected: nil,
+		},
+		{
+			name:     "single pattern",
+			input:    []string{"*.yml"},
+			expected: []string{"*.yml"},
+		},
+		{
+			name:     "sort patterns",
+			input:    []string{"*.yaml", "*.yml", "*.json"},
+			expected: []string{"*.json", "*.yaml", "*.yml"},
+		},
+		{
+			name:     "normalize backslashes",
+			input:    []string{"dir\\*.yml", "test\\**"},
+			expected: []string{"dir/*.yml", "test/**"},
+		},
+		{
+			name:     "trim whitespace",
+			input:    []string{" *.yml ", "\t*.yaml\n"},
+			expected: []string{"*.yaml", "*.yml"},
+		},
+		{
+			name:     "mixed separators and whitespace",
+			input:    []string{" build\\** ", "test/**", " *.yml"},
+			expected: []string{"*.yml", "build/**", "test/**"},
+		},
+		{
+			name:     "duplicates preserved",
+			input:    []string{"*.yml", "*.yml"},
+			expected: []string{"*.yml", "*.yml"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := normalizePatterns(tt.input)
+			if len(result) != len(tt.expected) {
+				t.Errorf("expected length %d, got %d", len(tt.expected), len(result))
+				return
+			}
+			for i, expected := range tt.expected {
+				if result[i] != expected {
+					t.Errorf("at index %d: expected %q, got %q", i, expected, result[i])
+				}
+			}
+		})
+	}
+}
+
+func TestGitRegistry_CacheKeyNormalization(t *testing.T) {
+	// Test that different pattern orders produce same cache key
+	tempDir, err := os.MkdirTemp("", "git-registry-test")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	testRepo := storage.NewTestRepo(t, tempDir)
+	testRepo.Builder().
+		Init().
+		AddFile("test.yml", "test content").
+		Commit("Initial commit").
+		Tag("v1.0.0").
+		Build()
+
+	config := GitRegistryConfig{
+		RegistryConfig: RegistryConfig{
+			URL:  "file://" + tempDir,
+			Type: "git",
+		},
+	}
+
+	registry, err := NewGitRegistry("test-registry", config)
+	if err != nil {
+		t.Fatalf("failed to create registry: %v", err)
+	}
+
+	ctx := context.Background()
+	versions, err := registry.ListPackageVersions(ctx, "test-package")
+	if err != nil {
+		t.Fatalf("failed to list versions: %v", err)
+	}
+
+	// Get package with patterns in different orders
+	pkg1, err := registry.GetPackage(ctx, "test-package", versions[0], []string{"*.yml", "*.yaml"}, []string{"test/**", "build/**"})
+	if err != nil {
+		t.Fatalf("failed to get package 1: %v", err)
+	}
+
+	pkg2, err := registry.GetPackage(ctx, "test-package", versions[0], []string{"*.yaml", "*.yml"}, []string{"build/**", "test/**"})
+	if err != nil {
+		t.Fatalf("failed to get package 2: %v", err)
+	}
+
+	// Both should return same result (cache hit on second call)
+	if len(pkg1.Files) != len(pkg2.Files) {
+		t.Errorf("expected same number of files, got %d vs %d", len(pkg1.Files), len(pkg2.Files))
+	}
+}
+
 // File Filtering
 func TestGitRegistry_IncludePatterns(t *testing.T) {
 	// Test --include "*.yml"

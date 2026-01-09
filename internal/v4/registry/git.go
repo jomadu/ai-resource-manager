@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/core"
@@ -103,17 +104,30 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 	return versions, nil
 }
 
+// normalizePatterns sorts patterns and normalizes path separators for consistent cache keys
+func normalizePatterns(patterns []string) []string {
+	if len(patterns) == 0 {
+		return patterns
+	}
+	normalized := make([]string, len(patterns))
+	for i, pattern := range patterns {
+		normalized[i] = strings.ReplaceAll(strings.TrimSpace(pattern), "\\", "/")
+	}
+	sort.Strings(normalized)
+	return normalized
+}
+
 // GetPackage returns files from git repository filtered by include/exclude patterns.
 // packageName is used only for response metadata, not for caching or filtering.
 // Cache key is based on version + include + exclude patterns, not package name.
 // This allows multiple "packages" with same patterns to share cached results.
 func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, version core.Version, include []string, exclude []string) (*core.Package, error) {
-	// Create cache key from version and patterns (not package name)
+	// Create cache key from version and normalized patterns (not package name)
 	cacheKey := struct {
 		Version core.Version `json:"version"`
 		Include []string     `json:"include"`
 		Exclude []string     `json:"exclude"`
-	}{version, include, exclude}
+	}{version, normalizePatterns(include), normalizePatterns(exclude)}
 	
 	// Try cache first
 	if files, err := g.packageCache.GetPackageVersion(ctx, cacheKey, version); err == nil {
