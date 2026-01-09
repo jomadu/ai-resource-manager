@@ -240,7 +240,7 @@ my-org:
 
 ### arm add sink
 
-`arm add sink --tool <cursor|copilot|amazonq> [--force] NAME PATH`
+`arm add sink --tool <cursor|copilot|amazonq|markdown> [--force] NAME PATH`
 
 Add a new sink to the ARM configuration. A sink defines where compiled rulesets and promptsets should be output for a specific AI tool. The `--force` flag allows overwriting an existing sink with the same name.
 
@@ -280,12 +280,15 @@ $ arm remove sink cursor-rules
 
 `arm set sink NAME KEY VALUE`
 
-Set configuration values for a specific sink. This command allows you to configure sink-specific settings. The available configuration keys are `tool` (cursor, amazonq, or copilot) and `directory` (output path).
+Set configuration values for a specific sink. This command allows you to configure sink-specific settings. The available configuration keys are `tool` (cursor, amazonq, copilot, or markdown) and `directory` (output path).
 
 **Examples:**
 ```bash
 # Change sink tool
 $ arm set sink cursor-rules tool amazonq
+
+# Change sink tool to markdown
+$ arm set sink cursor-rules tool markdown
 
 # Update sink directory
 $ arm set sink cursor-rules directory .cursor/new-rules
@@ -444,10 +447,9 @@ sinks:
     - q-rules
     - cursor-commands
     - q-prompts
-rulesets:
+dependencies:
     - my-org/clean-code-ruleset@1.1.0
     - my-org/security-ruleset@2.1.0
-promptsets:
     - my-org/code-review-promptset@1.1.0
     - my-org/testing-promptset@2.0.1
 ```
@@ -463,63 +465,50 @@ Display detailed information about all configured entities in the ARM environmen
 ```bash
 $ arm info
 registries:
-    my-org:
-        type: git
-        url: https://github.com/my-org/arm-registry
-    cloudsmith-registry:
+    sample-registry:
         type: cloudsmith
         url: https://api.cloudsmith.io
-        owner: my-org
-        repository: my-repo
+        owner: sample-org
+        repository: arm-registry
 sinks:
     cursor-rules:
         directory: .cursor/rules
-        layout: hierarchical
-        compileTarget: cursor
-    q-rules:
+        tool: cursor
+    amazonq-rules:
         directory: .amazonq/rules
-        layout: hierarchical
-        compileTarget: markdown
+        tool: amazonq
     cursor-commands:
         directory: .cursor/commands
-        layout: hierarchical
-        compileTarget: cursor
-    q-prompts:
+        tool: cursor
+    amazonq-prompts:
         directory: .amazonq/prompts
-        layout: hierarchical
-        compileTarget: markdown
-packages:
-    rulesets:
-        my-org:
-            clean-code-ruleset:
-                version: 1.1.0
-                constraint: ^1.0.0
-                priority: 100
-                sinks:
-                    - cursor-rules
-                    - q-rules
-                include:
-                    - "**/*.yml"
-                    - "**/*.yaml"
-            security-ruleset:
-                version: 2.1.0
-                constraint: ~2.1.0
-                priority: 200
-                sinks:
-                    - cursor-rules
-                include:
-                    - "**/*.yml"
-    promptsets:
-        my-org:
-            code-review-promptset:
-                version: 1.1.0
-                constraint: ^1.0.0
-                sinks:
-                    - cursor-commands
-                    - q-prompts
-                include:
-                    - "**/*.yml"
-                    - "**/*.yaml"
+        tool: amazonq
+    copilot-instructions:
+        directory: .github/instructions
+        tool: copilot
+dependencies:
+    sample-registry/clean-code-ruleset:
+        type: ruleset
+        version: 1.0.0
+        constraint: ^1.0.0
+        priority: 100
+        sinks:
+            - cursor-rules
+            - amazonq-rules
+            - copilot-instructions
+        include:
+            - "**/*.yml"
+        exclude:
+            - "**/experimental/**"
+    sample-registry/code-review-promptset:
+        type: promptset
+        version: 1.0.0
+        constraint: ^1.0.0
+        sinks:
+            - cursor-commands
+            - amazonq-prompts
+        include:
+            - "review/**/*.yml"
 ```
 
 ## Ruleset Management
@@ -610,42 +599,43 @@ Display detailed information about one or more rulesets. This command shows comp
 ```bash
 # Show info for all rulesets
 $ arm info ruleset
-my-org:
-    clean-code-ruleset:
-        version: 1.0.1
-        constraint: ^1.0.0
-        priority: 100
-        sinks:
-            - cursor-rules
-            - q-rules
-        include:
-            - "**/*.yml"
-            - "**/*.yaml"
-    security-ruleset:
-        version: 2.1.0
-        constraint: ~2.1.0
-        priority: 200
-        sinks:
-            - cursor-rules
-            - q-rules
-            - copilot-rules
-        include:
-            - "**/*.yml"
-            - "**/*.yaml"
+my-org/clean-code-ruleset:
+    type: ruleset
+    version: 1.0.1
+    constraint: ^1.0.0
+    priority: 100
+    sinks:
+        - cursor-rules
+        - q-rules
+    include:
+        - "**/*.yml"
+        - "**/*.yaml"
+my-org/security-ruleset:
+    type: ruleset
+    version: 2.1.0
+    constraint: ~2.1.0
+    priority: 200
+    sinks:
+        - cursor-rules
+        - q-rules
+        - copilot-rules
+    include:
+        - "**/*.yml"
+        - "**/*.yaml"
 
 # Show info for specific rulesets
 $ arm info ruleset my-org/clean-code-ruleset
-my-org:
-    clean-code-ruleset:
-        version: 1.0.1
-        constraint: ^1.0.0
-        priority: 100
-        sinks:
-            - cursor-rules
-            - q-rules
-        include:
-            - "**/*.yml"
-            - "**/*.yaml"
+my-org/clean-code-ruleset:
+    type: ruleset
+    version: 1.0.1
+    constraint: ^1.0.0
+    priority: 100
+    sinks:
+        - cursor-rules
+        - q-rules
+    include:
+        - "**/*.yml"
+        - "**/*.yaml"
 ```
 
 ### arm update ruleset
@@ -799,38 +789,39 @@ Display detailed information about one or more promptsets. This command shows co
 ```bash
 # Show info for all promptsets
 $ arm info promptset
-my-org:
-    code-review-promptset:
-        version: 1.1.0
-        constraint: ^1.0.0
-        sinks:
-            - cursor-commands
-            - q-prompts
-        include:
-            - "**/*.yml"
-            - "**/*.yaml"
-    testing-promptset:
-        version: 2.0.1
-        constraint: ~2.0.0
-        sinks:
-            - cursor-commands
-            - q-prompts
-        include:
-            - "**/*.yml"
-            - "**/*.yaml"
+my-org/code-review-promptset:
+    type: promptset
+    version: 1.1.0
+    constraint: ^1.0.0
+    sinks:
+        - cursor-commands
+        - q-prompts
+    include:
+        - "**/*.yml"
+        - "**/*.yaml"
+my-org/testing-promptset:
+    type: promptset
+    version: 2.0.1
+    constraint: ~2.0.0
+    sinks:
+        - cursor-commands
+        - q-prompts
+    include:
+        - "**/*.yml"
+        - "**/*.yaml"
 
 # Show info for specific promptsets
 $ arm info promptset my-org/code-review-promptset
-my-org:
-    code-review-promptset:
-        version: 1.1.0
-        constraint: ^1.0.0
-        sinks:
-            - cursor-commands
-            - q-prompts
-        include:
-            - "**/*.yml"
-            - "**/*.yaml"
+my-org/code-review-promptset:
+    type: promptset
+    version: 1.1.0
+    constraint: ^1.0.0
+    sinks:
+        - cursor-commands
+        - q-prompts
+    include:
+        - "**/*.yml"
+        - "**/*.yaml"
 ```
 
 ### arm update promptset
