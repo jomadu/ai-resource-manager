@@ -143,7 +143,7 @@ arm install promptset --include "review/**/*.yml" --include "refactor/**/*.yml" 
 - **[Resource Schemas](docs/resource-schemas.md)** - ARM resource YAML schemas
 - **[Registries](docs/registries.md)** - Registry management and types
 - **[Sinks](docs/sinks.md)** - Sink configuration and compilation
-- **[Package Management](docs/package-management.md)** - Installing, updating, and managing packages
+- **[Commands](docs/commands.md)** - Complete command reference and usage examples
 
 ### Registry Types
 
