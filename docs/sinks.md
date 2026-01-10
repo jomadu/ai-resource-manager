@@ -22,6 +22,7 @@ To illustrate how layouts work, we'll use two example packages:
 - Files: `rules/avoid-abstractions.md`, `rules/complexity-enemy.md`, `rules/readable-over-clever.md`
 
 ### Hierarchical Layout (default)
+
 Preserves directory structure from resources.
 
 **Path Schema:**
@@ -53,6 +54,7 @@ Preserves directory structure from resources.
 ```
 
 ### Flat Layout
+
 Places all files in single directory with hash-prefixed names including relative path.
 
 **Path Schema:**
@@ -93,7 +95,7 @@ ARM resource definitions are automatically compiled to tool-specific formats:
 
 - **Cursor**: Markdown with YAML frontmatter (`.mdc`) for rules, plain markdown (`.md`) for prompts
 - **Amazon Q**: Pure markdown (`.md`) for both rules and prompts
-- **Copilot**: Instructions format (`.instructions.md`) for both rules and prompts
+- **Copilot**: Instructions format (`.instructions.md`) for both rules (copilot doesn't have a "prompts" resource)
 
 Each compiled resource includes embedded metadata for priority resolution and resource tracking.
 
@@ -101,7 +103,7 @@ Each compiled resource includes embedded metadata for priority resolution and re
 
 Available sink configuration keys:
 - `directory` - Output path for the sink
-- `tool` - Set to `cursor`, `amazonq`, or `copilot`
+- `tool` - Set to `cursor`, `amazonq`, `copilot`, or `markdown`
 
 ## Examples
 
@@ -120,9 +122,4 @@ arm add sink --tool amazonq q-prompts .amazonq/prompts
 Add GitHub Copilot sink:
 ```bash
 arm add sink --tool copilot copilot-rules .github/copilot
-```
-
-Change sink layout:
-```bash
-arm set sink cursor-rules tool amazonq
 ```
