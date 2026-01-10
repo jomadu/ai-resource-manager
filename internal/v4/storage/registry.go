@@ -5,15 +5,16 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 // RegistryMetadata represents the metadata stored in registry metadata.json
 type RegistryMetadata struct {
-	Metadata       interface{} `json:"metadata"`
-	CreatedOn      time.Time   `json:"created_on"`
-	LastUpdatedOn  time.Time   `json:"last_updated_on"`
-	LastAccessedOn time.Time   `json:"last_accessed_on"`
+	URL        string `json:"url"`
+	Type       string `json:"type"`
+	GroupID    string `json:"group_id,omitempty"`
+	ProjectID  string `json:"project_id,omitempty"`
+	Owner      string `json:"owner,omitempty"`
+	Repository string `json:"repository,omitempty"`
 }
 
 // Registry handles registry directory and metadata with cross-process locking
@@ -46,13 +47,27 @@ func NewRegistryWithPath(baseDir string, registryKey interface{}) (*Registry, er
 		return nil, err
 	}
 	
-	// Create metadata.json
-	now := time.Now().UTC()
-	metadata := RegistryMetadata{
-		Metadata:       registryKey,
-		CreatedOn:      now,
-		LastUpdatedOn:  now,
-		LastAccessedOn: now,
+	// Create metadata.json from registryKey fields
+	var metadata RegistryMetadata
+	if keyMap, ok := registryKey.(map[string]interface{}); ok {
+		if url, ok := keyMap["url"].(string); ok {
+			metadata.URL = url
+		}
+		if typ, ok := keyMap["type"].(string); ok {
+			metadata.Type = typ
+		}
+		if groupID, ok := keyMap["group_id"].(string); ok {
+			metadata.GroupID = groupID
+		}
+		if projectID, ok := keyMap["project_id"].(string); ok {
+			metadata.ProjectID = projectID
+		}
+		if owner, ok := keyMap["owner"].(string); ok {
+			metadata.Owner = owner
+		}
+		if repository, ok := keyMap["repository"].(string); ok {
+			metadata.Repository = repository
+		}
 	}
 	
 	metadataPath := filepath.Join(registryDir, "metadata.json")
@@ -85,57 +100,4 @@ func (r *Registry) GetRepoDir() string {
 // GetPackagesDir returns the packages directory path
 func (r *Registry) GetPackagesDir() string {
 	return filepath.Join(r.registryDir, "packages")
-}
-
-// UpdateAccessTime updates registry metadata access time
-func (r *Registry) UpdateAccessTime(ctx context.Context) error {
-	if err := r.lock.Lock(ctx); err != nil {
-		return err
-	}
-	defer r.lock.Unlock()
-	
-	return r.updateTimestamp("last_accessed_on")
-}
-
-// UpdateUpdatedTime updates registry metadata updated time
-func (r *Registry) UpdateUpdatedTime(ctx context.Context) error {
-	if err := r.lock.Lock(ctx); err != nil {
-		return err
-	}
-	defer r.lock.Unlock()
-	
-	return r.updateTimestamp("last_updated_on")
-}
-
-// updateTimestamp updates a specific timestamp field in metadata.json
-func (r *Registry) updateTimestamp(field string) error {
-	metadataPath := filepath.Join(r.registryDir, "metadata.json")
-	
-	// Read existing metadata
-	data, err := os.ReadFile(metadataPath)
-	if err != nil {
-		return err
-	}
-	
-	var metadata RegistryMetadata
-	if err := json.Unmarshal(data, &metadata); err != nil {
-		return err
-	}
-	
-	// Update timestamp
-	now := time.Now().UTC()
-	switch field {
-	case "last_accessed_on":
-		metadata.LastAccessedOn = now
-	case "last_updated_on":
-		metadata.LastUpdatedOn = now
-	}
-	
-	// Write back to file
-	updatedData, err := json.MarshalIndent(metadata, "", "  ")
-	if err != nil {
-		return err
-	}
-	
-	return os.WriteFile(metadataPath, updatedData, 0644)
 }

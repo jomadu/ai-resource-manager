@@ -327,52 +327,6 @@ func TestPackageCache_RemovePackage(t *testing.T) {
 	}
 }
 
-func TestPackageCache_MetadataTimestamps(t *testing.T) {
-	tempDir := t.TempDir()
-	pkg := NewPackageCache(tempDir)
-	ctx := context.Background()
-
-	packageKey := "test-package"
-	version := core.Version{Major: 1, Minor: 0, Patch: 0}
-	files := []*core.File{{Path: "test.txt", Content: []byte("content")}}
-
-	// Store package version
-	err := pkg.SetPackageVersion(ctx, packageKey, version, files)
-	require.NoError(t, err)
-
-	// Get initial timestamps
-	packageMetadata := readPackageMetadata(t, tempDir, packageKey)
-	versionMetadata := readVersionMetadata(t, tempDir, packageKey, version)
-	
-	initialPackageUpdated := packageMetadata.UpdatedAt
-	initialVersionUpdated := versionMetadata.UpdatedAt
-	initialVersionAccessed := versionMetadata.LastAccessedAt
-
-	// Wait a bit to ensure timestamp difference
-	time.Sleep(10 * time.Millisecond)
-
-	// Access the package version (should update LastAccessedAt)
-	_, err = pkg.GetPackageVersion(ctx, packageKey, version)
-	require.NoError(t, err)
-
-	// Check that LastAccessedAt was updated but UpdatedAt wasn't
-	versionMetadata = readVersionMetadata(t, tempDir, packageKey, version)
-	assert.True(t, versionMetadata.LastAccessedAt.After(initialVersionAccessed))
-	assert.Equal(t, initialVersionUpdated, versionMetadata.UpdatedAt)
-
-	// Wait and store same version again (should update UpdatedAt)
-	time.Sleep(10 * time.Millisecond)
-	err = pkg.SetPackageVersion(ctx, packageKey, version, files)
-	require.NoError(t, err)
-
-	// Check that UpdatedAt was updated
-	packageMetadata = readPackageMetadata(t, tempDir, packageKey)
-	versionMetadata = readVersionMetadata(t, tempDir, packageKey, version)
-	
-	assert.True(t, packageMetadata.UpdatedAt.After(initialPackageUpdated))
-	assert.True(t, versionMetadata.UpdatedAt.After(initialVersionUpdated))
-}
-
 func TestPackageCache_RemoveOldVersionsByTimestamp(t *testing.T) {
 	tempDir := t.TempDir()
 	pkg := NewPackageCache(tempDir)
@@ -403,6 +357,11 @@ func TestPackageCache_RemoveOldVersionsByTimestamp(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, versions, 1)
 	assert.Equal(t, newVersion, versions[0])
+
+	// Verify package still exists
+	packages, err := pkg.ListPackages(ctx)
+	require.NoError(t, err)
+	assert.Len(t, packages, 1)
 }
 
 func TestPackageCache_RemoveUnusedVersionsByAccess(t *testing.T) {
@@ -438,31 +397,44 @@ func TestPackageCache_RemoveUnusedVersionsByAccess(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, versions, 1)
 	assert.Equal(t, version2, versions[0])
+
+	// Verify package still exists
+	packages, err := pkg.ListPackages(ctx)
+	require.NoError(t, err)
+	assert.Len(t, packages, 1)
 }
 
-// Helper functions for reading metadata
-func readPackageMetadata(t *testing.T, baseDir string, packageKey interface{}) struct {
-	UpdatedAt time.Time `json:"updatedAt"`
-} {
-	hashedKey, err := GenerateKey(packageKey)
+func TestPackageCache_RemoveAllVersionsRemovesPackage(t *testing.T) {
+	tempDir := t.TempDir()
+	pkg := NewPackageCache(tempDir)
+	ctx := context.Background()
+
+	packageKey := "test-package"
+	files := []*core.File{{Path: "test.txt", Content: []byte("content")}}
+
+	// Store version
+	version := core.Version{Major: 1, Minor: 0, Patch: 0}
+	err := pkg.SetPackageVersion(ctx, packageKey, version, files)
 	require.NoError(t, err)
-	
-	metadataPath := filepath.Join(baseDir, hashedKey, "metadata.json")
-	data, err := os.ReadFile(metadataPath)
+
+	// Wait to create age
+	time.Sleep(50 * time.Millisecond)
+
+	// Remove all old versions (should remove package entirely)
+	err = pkg.RemoveOldVersions(ctx, 25*time.Millisecond)
 	require.NoError(t, err)
-	
-	var metadata struct {
-		UpdatedAt time.Time `json:"updatedAt"`
-	}
-	err = json.Unmarshal(data, &metadata)
+
+	// Verify package is completely gone
+	packages, err := pkg.ListPackages(ctx)
 	require.NoError(t, err)
-	
-	return metadata
+	assert.Len(t, packages, 0)
 }
 
+// Helper function for reading version metadata
 func readVersionMetadata(t *testing.T, baseDir string, packageKey interface{}, version core.Version) struct {
-	UpdatedAt      time.Time `json:"updatedAt"`
-	LastAccessedAt time.Time `json:"lastAccessedAt"`
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+	AccessedAt time.Time `json:"accessedAt"`
 } {
 	hashedKey, err := GenerateKey(packageKey)
 	require.NoError(t, err)
@@ -473,8 +445,9 @@ func readVersionMetadata(t *testing.T, baseDir string, packageKey interface{}, v
 	require.NoError(t, err)
 	
 	var metadata struct {
-		UpdatedAt      time.Time `json:"updatedAt"`
-		LastAccessedAt time.Time `json:"lastAccessedAt"`
+		CreatedAt  time.Time `json:"createdAt"`
+		UpdatedAt  time.Time `json:"updatedAt"`
+		AccessedAt time.Time `json:"accessedAt"`
 	}
 	err = json.Unmarshal(data, &metadata)
 	require.NoError(t, err)

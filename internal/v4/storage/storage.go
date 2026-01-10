@@ -12,13 +12,13 @@ import (
 // └── storage/
 //     └── registries/
 //         └── {registry-key}/
-//             ├── metadata.json             # Registry metadata + timestamps
+//             ├── metadata.json             # Registry metadata
 //             ├── repo/                     # Git clone (git registries only)
 //             │   ├── .git/
 //             │   └── source-files...
 //             └── packages/
 //                 └── {package-key}/
-//                     ├── metadata.json     # Package metadata + timestamps
+//                     ├── metadata.json     # Package metadata
 //                     └── {version}/
 //                         ├── metadata.json # Version metadata + timestamps
 //                         └── files/

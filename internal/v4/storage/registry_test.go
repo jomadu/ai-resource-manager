@@ -169,39 +169,3 @@ func TestRegistry_DifferentKeys(t *testing.T) {
 		t.Errorf("Different registry keys produced same directory: %s", dir1)
 	}
 }
-
-func TestRegistry_UpdateAccessTime(t *testing.T) {
-	tempDir := t.TempDir()
-	registryKey := map[string]interface{}{"url": "https://github.com/user/repo", "type": "git"}
-	
-	registry, err := NewRegistryWithPath(tempDir, registryKey)
-	if err != nil {
-		t.Fatalf("NewRegistryWithPath() unexpected error: %v", err)
-	}
-	
-	ctx := context.Background()
-	err = registry.UpdateAccessTime(ctx)
-	if err != nil {
-		t.Errorf("UpdateAccessTime() unexpected error: %v", err)
-	}
-	
-	// TODO: verify metadata.json was updated with new access time
-}
-
-func TestRegistry_UpdateUpdatedTime(t *testing.T) {
-	tempDir := t.TempDir()
-	registryKey := map[string]interface{}{"url": "https://github.com/user/repo", "type": "git"}
-	
-	registry, err := NewRegistryWithPath(tempDir, registryKey)
-	if err != nil {
-		t.Fatalf("NewRegistryWithPath() unexpected error: %v", err)
-	}
-	
-	ctx := context.Background()
-	err = registry.UpdateUpdatedTime(ctx)
-	if err != nil {
-		t.Errorf("UpdateUpdatedTime() unexpected error: %v", err)
-	}
-	
-	// TODO: verify metadata.json was updated with new updated time
-}

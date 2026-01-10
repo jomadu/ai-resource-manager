@@ -14,15 +14,15 @@ Storage directory: `~/.arm/storage`
 ~/.arm/storage/
     registries/
         <registry-key>/
-            metadata.json           # Registry metadata and timestamps
+            metadata.json           # Registry metadata
             repo/                   # Git repositories only
                 .git/
                 # Repository files
             packages/               # Cached package versions
                 <package-key>/
-                    metadata.json   # Package metadata and timestamps
+                    metadata.json   # Package metadata
                     <version>/
-                        metadata.json # Version timestamps
+                        metadata.json # Version metadata + timestamps
                         files/      # Package files
                             # Actual package content
 ```
@@ -33,49 +33,74 @@ Storage directory: `~/.arm/storage`
 Unique hash identifying a registry based on:
 - **Git registries**: URL + type
 - **GitLab registries**: URL + type + (group_id OR project_id)
-- **Cloudsmith registries**: URL + type
+- **Cloudsmith registries**: URL + type + owner + repository
 
 ### Package Key
 Unique hash identifying a package based on:
-- **Git registries**: Normalized includes/excludes patterns
-- **Non-git registries**: Package name
+- **Git registries**: Normalized includes/excludes patterns (no name) - the entire repository is the source, "packages" are defined by file patterns
+- **Non-git registries**: Package name + includes/excludes patterns
 
 ## Metadata Structure
 
 The cache uses a three-level metadata structure for efficient management:
-- Registry metadata for key generation and registry-level timestamps
-- Package metadata for key generation and package-level timestamps  
-- Version metadata for version-level timestamps
+- Registry metadata for registry configuration
+- Package metadata for package identification  
+- Version metadata for version information and timestamps
 
 ### Registry Metadata (`metadata.json`)
 
+**Git Registry:**
 ```json
 {
-    "metadata": {
-        "url": "https://api.cloudsmith.io",
-        "type": "cloudsmith",
-        "owner": "sample-org",
-        "repository": "arm-registry"
-    },
-    "created_on": "2025-01-08T23:10:43.984784Z",
-    "last_updated_on": "2025-01-08T23:10:43.984784Z",
-    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+    "url": "https://github.com/PatrickJS/awesome-cursorrules",
+    "type": "git"
+}
+```
+
+**GitLab Group Registry:**
+```json
+{
+    "url": "https://gitlab.example.com",
+    "type": "gitlab",
+    "group_id": "123"
+}
+```
+
+**GitLab Project Registry:**
+```json
+{
+    "url": "https://gitlab.example.com",
+    "type": "gitlab",
+    "project_id": "456"
+}
+```
+
+**Cloudsmith Registry:**
+```json
+{
+    "url": "https://api.cloudsmith.io",
+    "type": "cloudsmith",
+    "owner": "sample-org",
+    "repository": "arm-registry"
 }
 ```
 
 ### Package Metadata (`packages/<package-key>/metadata.json`)
 
+**Git Registry Package:**
 ```json
 {
-    "metadata": {
-        "name": "clean-code-ruleset",
-        "description": "Clean code best practices",
-        "includes": ["**/*.yml"],
-        "excludes": ["**/test/**"]
-    },
-    "created_on": "2025-01-08T23:10:43.984784Z",
-    "last_updated_on": "2025-01-08T23:10:43.984784Z",
-    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+    "includes": ["**/*.yml"],
+    "excludes": ["**/test/**"]
+}
+```
+
+**Non-Git Registry Package:**
+```json
+{
+    "name": "clean-code-ruleset",
+    "includes": ["**/*.yml"],
+    "excludes": ["**/test/**"]
 }
 ```
 
@@ -83,9 +108,14 @@ The cache uses a three-level metadata structure for efficient management:
 
 ```json
 {
-    "created_on": "2025-01-08T23:10:43.984784Z",
-    "last_updated_on": "2025-01-08T23:10:43.984784Z",
-    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+    "version": {
+        "major": 1,
+        "minor": 0,
+        "patch": 0
+    },
+    "createdAt": "2025-01-08T23:10:43.984784Z",
+    "updatedAt": "2025-01-08T23:10:43.984784Z",
+    "accessedAt": "2025-01-08T23:10:43.984784Z"
 }
 ```
 
@@ -95,10 +125,3 @@ Git-based registries include a `repo/` directory containing a local clone of the
 - Efficient file access without API rate limits
 - Fast update checks using Git operations
 - Offline access to previously cached content
-
-## Storage Benefits
-
-- **Performance**: Eliminates redundant downloads
-- **Reliability**: Reduces dependency on network availability
-- **API Efficiency**: Minimizes registry API calls
-- **Offline Support**: Enables work with cached packages when offline

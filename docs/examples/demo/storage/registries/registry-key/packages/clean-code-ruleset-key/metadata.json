@@ -1,9 +1,5 @@
 {
-    "metadata": {
-        "name": "clean-code-ruleset",
-        "description": "Clean code best practices"
-    },
-    "created_on": "2025-01-08T23:10:43.984784Z",
-    "last_updated_on": "2025-01-08T23:10:43.984784Z",
-    "last_accessed_on": "2025-01-08T23:10:43.984784Z"
+    "name": "clean-code-ruleset",
+    "includes": ["**/*.yml"],
+    "excludes": ["**/test/**"]
 }

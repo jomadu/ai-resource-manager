@@ -72,19 +72,22 @@ func (p *PackageCache) SetPackageVersion(ctx context.Context, packageKey interfa
 	now := time.Now()
 
 	// Update package metadata
-	packageMetadata := struct {
-		PackageKey interface{} `json:"packageKey"`
-		UpdatedAt  time.Time   `json:"updatedAt"`
-	}{packageKey, now}
+	var packageMetadata interface{}
+	if keyMap, ok := packageKey.(map[string]interface{}); ok {
+		packageMetadata = keyMap
+	} else {
+		packageMetadata = packageKey
+	}
 	packageMetadataBytes, _ := json.Marshal(packageMetadata)
 	os.WriteFile(filepath.Join(packageDir, "metadata.json"), packageMetadataBytes, 0644)
 
 	// Update version metadata
 	versionMetadata := struct {
-		Version        core.Version `json:"version"`
-		UpdatedAt      time.Time    `json:"updatedAt"`
-		LastAccessedAt time.Time    `json:"lastAccessedAt"`
-	}{version, now, now}
+		Version   core.Version `json:"version"`
+		CreatedAt time.Time    `json:"createdAt"`
+		UpdatedAt time.Time    `json:"updatedAt"`
+		AccessedAt time.Time   `json:"accessedAt"`
+	}{version, now, now, now}
 	versionMetadataBytes, _ := json.Marshal(versionMetadata)
 	os.WriteFile(filepath.Join(versionDir, "metadata.json"), versionMetadataBytes, 0644)
 
@@ -119,12 +122,13 @@ func (p *PackageCache) GetPackageVersion(ctx context.Context, packageKey interfa
 	versionMetadataPath := filepath.Join(versionDir, "metadata.json")
 	if data, err := os.ReadFile(versionMetadataPath); err == nil {
 		var metadata struct {
-			Version        core.Version `json:"version"`
-			UpdatedAt      time.Time    `json:"updatedAt"`
-			LastAccessedAt time.Time    `json:"lastAccessedAt"`
+			Version    core.Version `json:"version"`
+			CreatedAt  time.Time    `json:"createdAt"`
+			UpdatedAt  time.Time    `json:"updatedAt"`
+			AccessedAt time.Time    `json:"accessedAt"`
 		}
 		json.Unmarshal(data, &metadata)
-		metadata.LastAccessedAt = time.Now()
+		metadata.AccessedAt = time.Now()
 		updatedData, _ := json.Marshal(metadata)
 		os.WriteFile(versionMetadataPath, updatedData, 0644)
 	}
@@ -184,11 +188,9 @@ func (p *PackageCache) ListPackages(ctx context.Context) ([]interface{}, error) 
 		if entry.IsDir() {
 			metadataPath := filepath.Join(p.packagesDir, entry.Name(), "metadata.json")
 			if data, err := os.ReadFile(metadataPath); err == nil {
-				var metadata struct {
-					PackageKey interface{} `json:"packageKey"`
-				}
+				var metadata interface{}
 				if json.Unmarshal(data, &metadata) == nil {
-					packages = append(packages, metadata.PackageKey)
+					packages = append(packages, metadata)
 				}
 			}
 		}
@@ -254,6 +256,7 @@ func (p *PackageCache) RemoveOldVersions(ctx context.Context, maxAge time.Durati
 		if entry.IsDir() {
 			packageDir := filepath.Join(p.packagesDir, entry.Name())
 			versionEntries, _ := os.ReadDir(packageDir)
+			allVersionsRemoved := true
 			for _, versionEntry := range versionEntries {
 				if versionEntry.IsDir() && strings.HasPrefix(versionEntry.Name(), "v") {
 					metadataPath := filepath.Join(packageDir, versionEntry.Name(), "metadata.json")
@@ -263,9 +266,19 @@ func (p *PackageCache) RemoveOldVersions(ctx context.Context, maxAge time.Durati
 						}
 						if json.Unmarshal(data, &metadata) == nil && metadata.UpdatedAt.Before(cutoff) {
 							os.RemoveAll(filepath.Join(packageDir, versionEntry.Name()))
+						} else {
+							allVersionsRemoved = false
 						}
+					} else {
+						allVersionsRemoved = false
 					}
+				} else {
+					allVersionsRemoved = false
 				}
+			}
+			// Remove package directory if no versions remain
+			if allVersionsRemoved {
+				os.RemoveAll(packageDir)
 			}
 		}
 	}
@@ -283,18 +296,29 @@ func (p *PackageCache) RemoveUnusedVersions(ctx context.Context, maxTimeSinceLas
 		if entry.IsDir() {
 			packageDir := filepath.Join(p.packagesDir, entry.Name())
 			versionEntries, _ := os.ReadDir(packageDir)
+			allVersionsRemoved := true
 			for _, versionEntry := range versionEntries {
 				if versionEntry.IsDir() && strings.HasPrefix(versionEntry.Name(), "v") {
 					metadataPath := filepath.Join(packageDir, versionEntry.Name(), "metadata.json")
 					if data, err := os.ReadFile(metadataPath); err == nil {
 						var metadata struct {
-							LastAccessedAt time.Time `json:"lastAccessedAt"`
+							AccessedAt time.Time `json:"accessedAt"`
 						}
-						if json.Unmarshal(data, &metadata) == nil && metadata.LastAccessedAt.Before(cutoff) {
+						if json.Unmarshal(data, &metadata) == nil && metadata.AccessedAt.Before(cutoff) {
 							os.RemoveAll(filepath.Join(packageDir, versionEntry.Name()))
+						} else {
+							allVersionsRemoved = false
 						}
+					} else {
+						allVersionsRemoved = false
 					}
+				} else {
+					allVersionsRemoved = false
 				}
+			}
+			// Remove package directory if no versions remain
+			if allVersionsRemoved {
+				os.RemoveAll(packageDir)
 			}
 		}
 	}
