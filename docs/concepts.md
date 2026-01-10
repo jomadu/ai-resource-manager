@@ -14,8 +14,7 @@
 
 1. Add registries where packages are stored
 2. Configure sinks with your desired AI tool and target directory
-3. Install packages from registries to sinks
-4. ARM compiles resource files (when needed) and places the correct files for your tool in the project
+3. Install packages from registries to sinks.
 
 ## Package Author Options
 
