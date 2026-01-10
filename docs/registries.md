@@ -10,7 +10,7 @@ Registries are remote sources where rulesets and promptsets are stored and versi
 
 For detailed command usage and examples, see [Registry Management](commands.md#registry-management) in the commands reference.
 
-## Registry Structure
+## Package Structure
 
 **Recommended structure:**
 ```
