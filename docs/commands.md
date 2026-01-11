@@ -31,8 +31,8 @@
     - [arm info](#arm-info)
   - [Resource Management](#resource-management)
     - [arm install ruleset](#arm-install-ruleset)
-    - [arm install promptset](#arm-install-promptset)
     - [arm set ruleset](#arm-set-ruleset)
+    - [arm install promptset](#arm-install-promptset)
     - [arm set promptset](#arm-set-promptset)
   - [Utilities](#utilities)
     - [arm clean cache](#arm-clean-cache)
@@ -55,10 +55,10 @@ This information is useful for:
 **Example:**
 ```bash
 $ arm version
-AI Resource Manager v1.2.3
-Build: 2024-01-15T10:30:45Z
-Commit: a1b2c3d4
-Platform: darwin/arm64
+version: v1.2.3
+build-id: a1b2c3d4
+build-timestamp: 2024-01-15T10:30:45Z
+build-platform: darwin/arm64
 ```
 
 ### arm help
@@ -127,7 +127,7 @@ $ arm add registry gitlab --url https://gitlab.example.com --group-id 123 --forc
 
 `arm add registry cloudsmith [--url URL] --owner OWNER --repo REPO [--force] NAME`
 
-Add a new Cloudsmith registry to the ARM configuration. Cloudsmith registries use Cloudsmith's package repository service for single-file artifacts. The URL defaults to `https://api.cloudsmith.io` if not specified.
+Add a new Cloudsmith registry to the ARM configuration. Cloudsmith registries use Cloudsmith's raw package repository service for single-file artifacts. The URL defaults to `https://api.cloudsmith.io` if not specified.
 
 **Examples:**
 ```bash
@@ -196,7 +196,7 @@ $ arm list registry
 
 `arm info registry [NAME]...`
 
-Display detailed information about one or more registries. This command shows comprehensive details about the specified registries, including configuration settings, available packages, and status information. If no names are provided, it shows information for all configured registries.
+Display detailed information about one or more registries. This command shows comprehensive details about the specified registries, including configuration settings. If no names are provided, it shows information for all configured registries.
 
 **Examples:**
 
@@ -229,7 +229,7 @@ my-org:
 
 `arm add sink --tool <cursor|copilot|amazonq|markdown> [--force] NAME PATH`
 
-Add a new sink to the ARM configuration. A sink defines where compiled rulesets and promptsets should be output for a specific AI tool. The `--force` flag allows overwriting an existing sink with the same name.
+Add a new sink to the ARM configuration. A sink defines where resources should be output for a specific use case. The `--force` flag allows overwriting an existing sink with the same name.
 
 **Examples:**
 ```bash
@@ -300,7 +300,7 @@ $ arm list sink
 
 `arm info sink [NAME]...`
 
-Display detailed information about one or more sinks. This command shows comprehensive details about the specified sinks, including configuration settings, output directories, layout preferences, and status information. If no names are provided, it shows information for all configured sinks.
+Display detailed information about one or more sinks. This command shows comprehensive details about the specified sinks, including configuration settings and output directories. If no names are provided, it shows information for all configured sinks.
 
 **Examples:**
 
@@ -330,7 +330,7 @@ cursor-rules:
 
 `arm install`
 
-Install all configured packages (rulesets and promptsets) to their assigned sinks. This command processes the ARM configuration file and installs all rulesets and promptsets that are configured. Packages can be compiled from source files or installed as pre-compiled files from repositories, then placed in the correct output directories for each sink.
+Install all configured dependencies to their assigned sinks.
 
 **Example:**
 ```bash
@@ -342,7 +342,7 @@ $ arm install
 
 `arm outdated [--output <table|json|list>]`
 
-Check for outdated packages across all configured registries. This command compares the currently installed versions of rulesets and promptsets with the latest available versions in their respective registries. It shows which packages have newer versions available, displaying the constraint, current version, wanted version, and latest version for each outdated package. The output format can be specified as table (default), JSON, or list.
+Check for outdated dependencies across all configured registries. This command compares the currently installed versions of rulesets and promptsets with the latest available versions in their respective registries. It shows which packages have newer versions available, displaying the constraint, current version, wanted version, and latest version for each outdated package. The output format can be specified as table (default), JSON, or list.
 
 **Examples:**
 ```bash
@@ -384,7 +384,7 @@ my-org/code-review-promptset
 
 `arm update`
 
-Update all installed packages to their latest available versions. This command checks for updates to all currently installed rulesets and promptsets and updates them to the latest versions that satisfy their version constraints. It performs the same installation process as `arm install` but with the updated versions.
+Update all installed packages to their latest available versions. This command checks for updates to all currently installed dependencies and updates them to the latest versions that satisfy their version constraints. It performs the same installation process as `arm install` but with the updated versions.
 
 **Example:**
 ```bash
@@ -396,7 +396,7 @@ $ arm update
 
 `arm upgrade`
 
-Upgrade all installed packages to their latest available versions, ignoring version constraints. This command updates all currently installed rulesets and promptsets to their absolute latest versions, even if they would violate the version constraints specified in the configuration. This is useful for testing or when you want to move to the newest versions regardless of compatibility constraints.
+Upgrade all installed packages to their latest available versions, ignoring version constraints. This command updates all currently installed rulesets and promptsets to their absolute latest versions, even if they would violate the version constraints specified in the configuration. By default, the upgrade command also modifies the version constraint to use a major constraint (^X.0.0) based on the newly installed version, allowing future updates within the same major version.
 
 **Example:**
 ```bash
@@ -571,6 +571,24 @@ $ arm install promptset my-org/code-review-promptset q-prompts
 
 # Install with include/exclude patterns
 $ arm install promptset --include "**/*.yml" --exclude "**/README.md" my-org/code-review-promptset cursor-commands
+```
+
+### arm set promptset
+
+`arm set promptset REGISTRY_NAME/PROMPTSET_NAME KEY VALUE`
+
+Set configuration values for a specific promptset. This command allows you to configure promptset-specific settings. The available configuration keys are `version`, `sinks`, `include`, and `exclude`.
+
+**Examples:**
+```bash
+# Update version constraint
+$ arm set promptset my-org/code-review-promptset version ^2.0.0
+
+# Update sinks
+$ arm set promptset my-org/code-review-promptset sinks cursor-commands,q-prompts
+
+# Update include patterns
+$ arm set promptset my-org/code-review-promptset include "review/**/*.yml","refactor/**/*.yml"
 ```
 
 ## Utilities

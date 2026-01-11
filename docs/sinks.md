@@ -98,28 +98,3 @@ ARM resource definitions are automatically compiled to tool-specific formats:
 - **Copilot**: Instructions format (`.instructions.md`) for both rules (copilot doesn't have a "prompts" resource)
 
 Each compiled resource includes embedded metadata for priority resolution and resource tracking.
-
-## Configuration
-
-Available sink configuration keys:
-- `directory` - Output path for the sink
-- `tool` - Set to `cursor`, `amazonq`, `copilot`, or `markdown`
-
-## Examples
-
-Add Cursor sinks:
-```bash
-arm add sink --tool cursor cursor-rules .cursor/rules
-arm add sink --tool cursor cursor-commands .cursor/commands
-```
-
-Add Amazon Q sinks:
-```bash
-arm add sink --tool amazonq q-rules .amazonq/rules
-arm add sink --tool amazonq q-prompts .amazonq/prompts
-```
-
-Add GitHub Copilot sink:
-```bash
-arm add sink --tool copilot copilot-rules .github/copilot
-```
