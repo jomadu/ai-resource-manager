@@ -1,6 +1,6 @@
 # GitLab Registry
 
-GitLab registries use GitLab's Generic Package Registry to store and distribute AI rules as versioned packages.
+GitLab registries use GitLab's Generic Package Registry to store and distribute packages as versioned packages.
 
 ## Authentication
 

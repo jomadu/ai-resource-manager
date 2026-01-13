@@ -1,6 +1,6 @@
 # Sinks
 
-Sinks define where installed resources should be placed in your local filesystem. Each sink targets a specific directory for a particular AI tool.
+Sinks define where installed packages should be placed in your local filesystem. Each sink targets a specific directory for a particular AI tool.
 
 ## Commands
 
@@ -23,7 +23,7 @@ To illustrate how layouts work, we'll use two example packages:
 
 ### Hierarchical Layout (default)
 
-Preserves directory structure from resources.
+Preserves directory structure from packages.
 
 **Path Schema:**
 ```

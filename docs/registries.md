@@ -1,6 +1,6 @@
 # Registries
 
-Registries are remote sources where rulesets and promptsets are stored and versioned, similar to npm registries. ARM supports:
+Registries are remote sources where packages are stored and versioned, similar to npm registries. ARM supports:
 
 - **Git registries**: GitHub repositories, GitLab projects, or any Git remote
 - **GitLab Package registries**: GitLab's Generic Package Registry for versioned packages

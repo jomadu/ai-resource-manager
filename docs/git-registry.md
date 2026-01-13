@@ -1,6 +1,6 @@
 # Git Registry
 
-Git registries use Git repositories (GitHub, GitLab, or any Git remote) to store and distribute AI rulesets and promptsets using Git tags and branches.
+Git registries use Git repositories (GitHub, GitLab, or any Git remote) to store and distribute packages using Git tags and branches.
 
 ## Authentication
 

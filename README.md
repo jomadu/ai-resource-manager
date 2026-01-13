@@ -4,29 +4,29 @@
 
 ## What is ARM?
 
-ARM is a package manager for AI resources, designed to treat rulesets and promptsets as code dependencies. It introduces semantic versioning, reproducible installs, and straightforward distribution to your AI tools.
+ARM is a dependency manager for AI packages, designed to treat them as code dependencies. You can install packages as rulesets, promptsets, or other resource types. ARM introduces semantic versioning, reproducible installs, and straightforward distribution to your AI tools.
 
-Seamlessly connect to Git repositories such as [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules/tree/main) or your team's private collections. Install and manage versioned resources across projects, and keep everything in sync with your source of truth.
+Seamlessly connect to Git repositories such as [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules/tree/main) or your team's private collections. Install and manage versioned AI resources across projects, and keep everything in sync with your source of truth.
 
 ## Why ARM?
 
-Managing rules and prompts for AI coding assistants like Cursor or Amazon Q is cumbersome:
+Managing AI resources for coding assistants like Cursor or Amazon Q is cumbersome:
 
 - **Manual duplication**: Copying resources disconnects them from updates and the original source
 - **Hidden breaking changes**: Updates may unexpectedly alter your AI's behavior
-- **Poor scalability**: Coordinating resources across multiple projects becomes chaotic
+- **Poor scalability**: Coordinating AI resources across multiple projects becomes chaotic
 - **Incompatible formats**: Frequent manual conversions between different tool formats. ([Obligatory we need a new standard xkcd link](https://xkcd.com/927/))
 
-ARM solves these problems with a modern package manager approach.
+ARM solves these problems with a modern dependency manager approach.
 
 ### Key Features of ARM
 
 - **Consistent, versioned installs** using semantic versioning (except for [git based registry](docs/git-registry.md) without semver tags, which gets a little funky)
 - **Reliable, reproducible environments** through manifest and lock files (similar to npm's `package.json` and `package-lock.json`)
 - **Backwards compatibility** with existing repositories like [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules) - use them immediately without conversion
-- **Flexible resource formats** - authors can write cross-platform ARM resources or tool-specific files
+- **Flexible formats** - authors can write cross-platform ARM resources or tool-specific files
 - **Priority-based rule composition** for layering multiple rulesets with clear conflict resolution (your team's standards > internet best practices)
-- **Flexible registry support** for managing resources from Git, GitLab, and Cloudsmith
+- **Flexible registry support** for managing AI resources from Git, GitLab, and Cloudsmith
 - **Automated update workflow:** easily check for updates and apply them across projects ([nice](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTlycTA1ejFwdnZtZHNzOG5tYnVwajF3bDAwYzllcnU1dm5oNWplMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NEvPzZ8bd1V4Y/giphy.gif))
 
 ## Installation
@@ -65,6 +65,15 @@ curl -fsSL https://raw.githubusercontent.com/jomadu/ai-resource-manager/main/scr
 ```
 
 ## Quick Start
+
+### Resource Types
+
+Packages can be installed as:
+
+- **Rulesets** - Collections of AI rules with priority-based conflict resolution
+- **Promptsets** - Collections of AI prompts for reusable templates
+
+### Setup
 
 Add Git registry:
 ```bash

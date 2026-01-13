@@ -1,6 +1,6 @@
 # Cloudsmith Registry
 
-Cloudsmith registries use Cloudsmith's package repository service to store and distribute AI rules as versioned packages.
+Cloudsmith registries use Cloudsmith's package repository service to store and distribute packages as versioned packages.
 
 ## Authentication
 
