@@ -147,6 +147,13 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 		return nil, err
 	}
 	
+	// Extract archives and merge with loose files
+	extractor := core.NewExtractor()
+	files, err = extractor.ExtractAndMerge(files)
+	if err != nil {
+		return nil, err
+	}
+	
 	// Apply include/exclude filtering
 	var filteredFiles []*core.File
 	for _, file := range files {
