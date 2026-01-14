@@ -63,7 +63,8 @@ func (g *GitRegistry) ListPackages(ctx context.Context) ([]*core.PackageMetadata
 
 // ListPackageVersions returns all available versions for the git repository.
 // packageName is ignored since git versions are repository-wide.
-// Returns both git tags and branch names as versions.
+// Returns semantic version tags and branch names as versions.
+// Non-semantic tags are ignored.
 func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName string) ([]core.Version, error) {
 	// Get git tags
 	tags, err := g.repo.GetTags(ctx, g.config.URL)
@@ -74,7 +75,10 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 	var versions []core.Version
 	for _, tag := range tags {
 		version, _ := core.ParseVersion(tag)
-		versions = append(versions, version)
+		// Only include semantic versions
+		if version.IsSemanticVersion() {
+			versions = append(versions, version)
+		}
 	}
 	
 	// Get branches if configured

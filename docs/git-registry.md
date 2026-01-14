@@ -54,22 +54,66 @@ Git registries automatically extract and process archives during installation:
 
 ## Version Resolution
 
-Git registries support multiple version types:
+Git registries support two versioning approaches:
 
-### Tags (Semantic Versions)
+### Semantic Version Tags
 
-- **Semantic versions**: `v1.0.0`, `1.2.3`
-- **Version constraints**: `^1.0.0`, `~1.1.0`
-- **Latest**: `latest` (resolves to highest semantic version tag)
+Preferred for production releases:
+
+```bash
+# Install specific semantic version
+arm install ruleset git-registry/my-rules@1.0.0 cursor-rules
+
+# Install with version constraints
+arm install ruleset git-registry/my-rules@1 cursor-rules    # >= 1.0.0, < 2.0.0
+arm install ruleset git-registry/my-rules@1.1 cursor-rules  # >= 1.1.0, < 1.2.0
+
+# Install latest semantic version
+arm install ruleset git-registry/my-rules@latest cursor-rules
+```
+
+**In arm-lock.json**: `"version": "1.0.0"`
 
 ### Branches
 
-- **Branch names**: `main`, `develop`, `feature/new-rules`
-- Resolves to the HEAD commit of the branch
-- Displayed as short commit hash (first 7 characters)
+Useful for development and testing:
 
-### Priority Order
+```bash
+# Install from branch
+arm install ruleset git-registry/my-rules@main cursor-rules
+arm install ruleset git-registry/my-rules@develop cursor-rules
+arm install ruleset git-registry/my-rules@feature/new-rules cursor-rules
+```
 
-1. Semantic version tags (sorted descending)
-2. Non-semantic tags
-3. Branch commits (in configuration order)
+**In arm-lock.json**: `"version": "a1b2c3d"` (7-character commit hash)
+
+### Version Resolution Priority
+
+When you specify `@latest` or no version, ARM resolves in this order:
+
+1. **Semantic version tags** (highest version, e.g., `2.1.0` > `1.9.0`)
+2. **Branch HEAD commits** (shown as short commit hash)
+
+### Examples
+
+**Repository with semantic tags**:
+```bash
+# Tags: v1.0.0, v1.1.0, v2.0.0
+arm install ruleset git-registry/my-rules cursor-rules
+# Resolves to: 2.0.0
+```
+
+**Repository with only branches**:
+```bash
+# Branches: main, develop
+arm install ruleset git-registry/my-rules cursor-rules
+# Resolves to: a1b2c3d (main branch HEAD)
+```
+
+**Repository with tags and branches**:
+```bash
+# Tags: v1.0.0, v2.0.0
+# Branches: main
+arm install ruleset git-registry/my-rules cursor-rules
+# Resolves to: 2.0.0 (semantic tag wins)
+```

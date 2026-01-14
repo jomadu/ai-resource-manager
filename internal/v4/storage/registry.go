@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"

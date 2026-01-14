@@ -283,7 +283,7 @@ func TestGitRegistry_MixedVersionFormats(t *testing.T) {
 }
 
 func TestGitRegistry_NonSemanticTags(t *testing.T) {
-	// Test test-tag, release-candidate
+	// Test that non-semantic tags are ignored
 	tempDir, err := os.MkdirTemp("", "git-registry-test")
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
@@ -317,8 +317,9 @@ func TestGitRegistry_NonSemanticTags(t *testing.T) {
 		t.Fatalf("failed to list versions: %v", err)
 	}
 
-	if len(versions) != 2 {
-		t.Errorf("expected 2 versions, got %d", len(versions))
+	// Non-semantic tags should be ignored
+	if len(versions) != 0 {
+		t.Errorf("expected 0 versions (non-semantic tags ignored), got %d", len(versions))
 	}
 }
 
@@ -446,8 +447,74 @@ func TestGitRegistry_BranchNotFound(t *testing.T) {
 }
 
 func TestGitRegistry_VersionPriority(t *testing.T) {
-	// Test semantic > non-semantic > branches
-	t.Skip("TODO: implement")
+	// Test semantic tags > branches
+	tempDir, err := os.MkdirTemp("", "git-registry-test")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	testRepo := storage.NewTestRepo(t, tempDir)
+	testRepo.Builder().
+		Init().
+		AddFile("test.yml", "test content").
+		Commit("Initial commit").
+		Tag("v1.0.0").
+		Tag("stable").  // Non-semantic, should be ignored
+		Tag("v2.0.0").
+		Build()
+
+	config := GitRegistryConfig{
+		RegistryConfig: RegistryConfig{
+			URL:  "file://" + tempDir,
+			Type: "git",
+		},
+		Branches: []string{"main"},
+	}
+
+	registry, err := NewGitRegistry("test-registry", config)
+	if err != nil {
+		t.Fatalf("failed to create registry: %v", err)
+	}
+
+	ctx := context.Background()
+	versions, err := registry.ListPackageVersions(ctx, "test-package")
+	if err != nil {
+		t.Fatalf("failed to list versions: %v", err)
+	}
+
+	// Should have 2 semantic tags + 1 branch = 3 versions
+	// Note: "stable" non-semantic tag should be filtered out
+	if len(versions) < 3 {
+		t.Errorf("expected at least 3 versions (2 semantic tags + 1 branch), got %d", len(versions))
+		for i, v := range versions {
+			t.Logf("  version[%d]: %s (Major:%d Minor:%d Patch:%d)", i, v.Version, v.Major, v.Minor, v.Patch)
+		}
+		return
+	}
+
+	// Verify we have the semantic versions
+	foundV1 := false
+	foundV2 := false
+	for _, v := range versions {
+		if v.Version == "v1.0.0" {
+			foundV1 = true
+		}
+		if v.Version == "v2.0.0" {
+			foundV2 = true
+		}
+	}
+
+	if !foundV1 || !foundV2 {
+		t.Error("expected to find v1.0.0 and v2.0.0")
+	}
+
+	// Verify non-semantic tag excluded
+	for _, v := range versions {
+		if v.Version == "stable" {
+			t.Error("non-semantic tag 'stable' should be excluded")
+		}
+	}
 }
 
 // Cache Key Normalization

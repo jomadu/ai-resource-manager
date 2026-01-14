@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+// IsSemanticVersion returns true if the version was successfully parsed as semantic version
+func (v Version) IsSemanticVersion() bool {
+	return v.Major > 0 || v.Minor > 0 || v.Patch > 0
+}
+
 // Compare returns -1 if v is older than other, 0 if equal, 1 if newer
 func (v Version) Compare(other Version) int {
 	if v.Major < other.Major {

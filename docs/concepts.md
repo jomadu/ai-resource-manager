@@ -17,6 +17,20 @@
 
 **Sinks** are local directories where ARM places compiled files, each configured for a specific AI tool (Cursor, Amazon Q, GitHub Copilot).
 
+## Versioning
+
+ARM supports two versioning models:
+
+**Git Registries** - Flexible versioning using Git's native features:
+- Semantic version tags (`1.0.0`, `v2.1.0`) for production releases
+- Branches (`main`, `develop`) for development and testing (resolves to commit hash)
+- Version constraints: `@1` (major), `@1.1` (major.minor), `@1.0.0` (exact)
+
+**GitLab/Cloudsmith Registries** - Semantic versioning only:
+- Only semantic versions (`1.0.0`, `2.1.3`)
+- No branches or commit hashes
+- Version constraints: `@1` (major), `@1.1` (major.minor), `@1.0.0` (exact)
+
 ## How to Install Packages
 
 1. Add registries where packages are stored

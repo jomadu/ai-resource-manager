@@ -516,6 +516,12 @@ $ arm install ruleset my-org/clean-code-ruleset cursor-rules
 # Install specific version to multiple sinks
 $ arm install ruleset my-org/clean-code-ruleset@1.0.0 cursor-rules q-rules
 
+# Install with major version constraint (>= 1.0.0, < 2.0.0)
+$ arm install ruleset my-org/clean-code-ruleset@1 cursor-rules
+
+# Install with major.minor constraint (>= 1.1.0, < 1.2.0)
+$ arm install ruleset my-org/clean-code-ruleset@1.1 cursor-rules
+
 # Reinstall to different sinks (removes from previous sinks)
 # If previously installed to cursor-rules, this will remove it from cursor-rules
 $ arm install ruleset my-org/clean-code-ruleset q-rules copilot-rules
@@ -565,6 +571,12 @@ $ arm install promptset my-org/code-review-promptset cursor-commands
 
 # Install specific version to multiple sinks
 $ arm install promptset my-org/code-review-promptset@1.0.0 cursor-commands q-prompts
+
+# Install with major version constraint (>= 1.0.0, < 2.0.0)
+$ arm install promptset my-org/code-review-promptset@1 cursor-commands
+
+# Install with major.minor constraint (>= 1.1.0, < 1.2.0)
+$ arm install promptset my-org/code-review-promptset@1.1 cursor-commands
 
 # Reinstall to different sinks (removes from previous sinks)
 $ arm install promptset my-org/code-review-promptset q-prompts

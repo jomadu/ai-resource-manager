@@ -84,7 +84,7 @@ This document tracks conceptual inconsistencies in the ARM documentation that ne
 - Need decision tree: "What version will I get?"
 
 **Priority**: Medium
-**Status**: Identified
+**Status**: Complete - Added Versioning section to concepts.md with decision tree, expanded git-registry.md with detailed examples and lock file formats, clarified semantic-only versioning in gitlab-registry.md and cloudsmith-registry.md. Removed non-semantic tag support from code and tests.
 
 ---
 

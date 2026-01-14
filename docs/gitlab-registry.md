@@ -70,11 +70,21 @@ GitLab packages automatically extract and process archives during installation:
 
 ## Version Resolution
 
-GitLab registries support semantic versioning:
+GitLab uses semantic versioning only.
 
-- **Semantic versions**: `1.0.0`, `^1.0.0`, `~1.1.0`
-- **Latest**: `latest` (resolves to highest semantic version)
-- Versions are sorted by semantic version in descending order
+```bash
+# Install specific version
+arm install ruleset gitlab-registry/clean-code-ruleset@1.0.0 cursor-rules
+
+# Install with version constraints
+arm install ruleset gitlab-registry/clean-code-ruleset@1 cursor-rules    # >= 1.0.0, < 2.0.0
+arm install ruleset gitlab-registry/clean-code-ruleset@1.1 cursor-rules  # >= 1.1.0, < 1.2.0
+
+# Install latest version
+arm install ruleset gitlab-registry/clean-code-ruleset cursor-rules
+```
+
+**Not supported**: Branch references (`@main`), commit hashes (`@a1b2c3d`), or non-semantic tags (`@stable`).
 
 ## Publishing Packages
 

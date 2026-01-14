@@ -69,7 +69,7 @@ func (r *Repo) GetBranches(ctx context.Context, url string) ([]string, error) {
 		return nil, err
 	}
 	
-	cmd := exec.Command("git", "branch", "-a", "--format=%(refname:short)")
+	cmd := exec.Command("git", "branch", "-r", "--format=%(refname:short)")
 	cmd.Dir = r.repoDir
 	output, err := cmd.Output()
 	if err != nil {
@@ -80,12 +80,11 @@ func (r *Repo) GetBranches(ctx context.Context, url string) ([]string, error) {
 	var branches []string
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
+		// Skip origin/HEAD pointer
 		if line != "" && !strings.HasPrefix(line, "origin/HEAD") {
-			// Remove origin/ prefix for remote branches
-			if strings.HasPrefix(line, "origin/") {
-				line = strings.TrimPrefix(line, "origin/")
-			}
-			branches = append(branches, line)
+			// Remove origin/ prefix
+			branch := strings.TrimPrefix(line, "origin/")
+			branches = append(branches, branch)
 		}
 	}
 	return branches, nil
