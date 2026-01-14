@@ -51,7 +51,7 @@ This document tracks conceptual inconsistencies in the ARM documentation that ne
 - Need clear examples showing same content structured differently per registry type
 
 **Priority**: High
-**Status**: Identified
+**Status**: Complete - Updated registries.md with Git vs non-Git models, clarified git-registry.md repository behavior, updated gitlab-registry.md and cloudsmith-registry.md with explicit package examples
 
 ---
 

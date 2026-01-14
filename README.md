@@ -94,19 +94,19 @@ Configure sinks:
 
 **Cursor:**
 ```bash
-arm add sink --type cursor cursor-rules .cursor/rules
-arm add sink --type cursor cursor-commands .cursor/commands
+arm add sink --tool cursor cursor-rules .cursor/rules
+arm add sink --tool cursor cursor-commands .cursor/commands
 ```
 
 **GitHub Copilot:**
 ```bash
-arm add sink --type copilot copilot-rules .github/copilot
+arm add sink --tool copilot copilot-rules .github/copilot
 ```
 
 **Amazon Q:**
 ```bash
-arm add sink --type amazonq q-rules .amazonq/rules
-arm add sink --type amazonq q-prompts .amazonq/prompts
+arm add sink --tool amazonq q-rules .amazonq/rules
+arm add sink --tool amazonq q-prompts .amazonq/prompts
 ```
 
 Install ruleset:

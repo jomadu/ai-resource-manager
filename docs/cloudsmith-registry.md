@@ -28,23 +28,27 @@ Cloudsmith registries require explicit token authentication in `.armrc`. See the
 
 ## Package Structure
 
-Cloudsmith packages are typically single-file artifacts with semantic versioning:
+**Key Concept**: Cloudsmith packages have explicit names defined in the registry. You must use the exact package name when installing. Packages are typically single-file artifacts.
 
 ```
-Package Name: clean-code-ruleset.yml
-Version: 1.0.0, 1.1.0, 2.0.0, etc.
-File: clean-code-ruleset.yml (ARM resource definition)
+Package: clean-code-ruleset.yml (exact name in registry)
+Contents: clean-code-ruleset.yml (ARM resource definition)
 
-Package Name: security-ruleset.yml
-Version: 1.0.0, 1.1.0, 2.0.0, etc.
-File: security-ruleset.yml (ARM resource definition)
-
-Package Name: code-review-promptset.yml
-Version: 1.0.0, 1.1.0, 2.0.0, etc.
-File: code-review-promptset.yml (ARM resource definition)
+Package: security-ruleset.yml (exact name in registry)
+Contents: security-ruleset.yml (ARM resource definition)
 ```
 
-**Key Difference**: Unlike GitLab's generic packages which can contain multiple files, Cloudsmith packages typically contain a single file per artifact. This means each ruleset or promptset is usually published as a separate package.
+**Install examples**:
+```bash
+# Must use exact package names from registry
+arm install ruleset cloudsmith-registry/clean-code-ruleset.yml cursor-rules
+arm install ruleset cloudsmith-registry/security-ruleset.yml q-rules
+
+# Use --include/--exclude to filter files (default: *.yml, *.yaml)
+arm install ruleset --include "**/*.yml" cloudsmith-registry/clean-code-ruleset.yml cursor-rules
+```
+
+**Key Difference**: Unlike GitLab's generic packages which can contain multiple files, Cloudsmith packages typically contain a single file per artifact.
 
 ## Version Resolution
 

@@ -10,23 +10,77 @@ Registries are remote sources where packages are stored and versioned, similar t
 
 For detailed command usage and examples, see [Registry Management](commands.md#registry-management) in the commands reference.
 
-## Package Structure
+## Registry Structure Models
 
-**Recommended structure:**
+ARM supports two fundamentally different package naming models:
+
+### Git Registries (User-Named Packages)
+
+**How it works**: The repository is a source of files. You choose the package name when installing.
+
+**Repository structure:**
 ```
-clean-code-ruleset.yml      # ARM resource definitions
-security-ruleset.yml
-code-review-promptset.yml   # ARM resource definitions
-build/                      # Pre-compiled rules (optional)
-├── cursor/
-│   ├── clean-code.mdc
-│   └── security.mdc
-└── amazonq/
-    ├── clean-code.md
-    └── security.md
+awesome-cursorrules/         # Repository (not the package name)
+├── clean-code-ruleset.yml   # ARM resource definitions
+├── security-ruleset.yml
+├── code-review-promptset.yml
+├── rules.tar.gz             # Optional: archived rules
+└── build/                   # Pre-compiled rules (optional)
+    ├── cursor/
+    │   ├── clean-code.mdc
+    │   └── security.mdc
+    └── amazonq/
+        ├── clean-code.md
+        └── security.md
 ```
 
-This structure works for all registry types, with ARM resource files at the root level and pre-compiled rules organized under `build/` by AI tool. ARM defaults to installing resource files (`*.yml, *.yaml`) when no `--include` patterns are specified.
+**Install examples**: 
+```bash
+# You choose the package name - can be anything
+arm install ruleset git-registry/my-rules cursor-rules
+arm install ruleset git-registry/team-standards q-rules
+arm install ruleset git-registry/awesome-cursorrules cursor-rules
+
+# Use --include/--exclude to filter files (default: *.yml, *.yaml)
+arm install ruleset --include "security-*.yml" git-registry/security-only cursor-rules
+```
+
+**Key point**: The package name (after the `/`) is whatever you want - it's just a label for your installation.
+
+### Non-Git Registries (Registry-Named Packages)
+
+**How it works**: Packages have explicit names in the registry. You must use the exact package name when installing.
+
+**Package structure:**
+```
+Package: clean-code-ruleset (defined in registry)
+├── clean-code-ruleset.yml   # ARM resource definition
+└── build/                   # Optional pre-compiled rules
+    ├── cursor/
+    │   └── clean-code.mdc
+    └── amazonq/
+        └── clean-code.md
+
+Package: security-ruleset (defined in registry)
+├── security-ruleset.yml     # ARM resource definition
+└── build/
+    ├── cursor/
+    │   └── security.mdc
+    └── amazonq/
+        └── security.md
+```
+
+**Install examples**:
+```bash
+# Must use exact package names from registry
+arm install ruleset gitlab-registry/clean-code-ruleset cursor-rules
+arm install ruleset gitlab-registry/security-ruleset q-rules
+
+# Use --include/--exclude to filter files (default: *.yml, *.yaml)
+arm install ruleset --include "**/*.yml" --exclude "**/experimental/**" gitlab-registry/clean-code-ruleset cursor-rules
+```
+
+**Key point**: The package name (after the `/`) must match the exact name published in the registry.
 
 ## Archive Support
 

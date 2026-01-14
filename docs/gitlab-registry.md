@@ -28,22 +28,35 @@ GitLab registries require explicit token authentication in `.armrc`. See the [.a
 
 ## Package Structure
 
-GitLab packages contain ARM resource definitions with semantic versioning:
+**Key Concept**: GitLab packages have explicit names defined in the registry. You must use the exact package name when installing.
 
 ```
-Package Contents:
-├── clean-code-ruleset.yml      # ARM resource definitions
-├── security-ruleset.yml
-├── code-review-promptset.yml   # ARM resource definitions
+Package: clean-code-ruleset (exact name in registry)
+├── clean-code-ruleset.yml      # ARM resource definition
 ├── rules.tar.gz                # Optional: archived rules
-├── legacy-rules.zip            # Optional: archived rules
 └── build/                      # Pre-compiled rules (optional)
     ├── cursor/
-    │   ├── clean-code.mdc
+    │   └── clean-code.mdc
+    └── amazonq/
+        └── clean-code.md
+
+Package: security-ruleset (exact name in registry)
+├── security-ruleset.yml        # ARM resource definition
+└── build/
+    ├── cursor/
     │   └── security.mdc
     └── amazonq/
-        ├── clean-code.md
         └── security.md
+```
+
+**Install examples**:
+```bash
+# Must use exact package names from registry
+arm install ruleset gitlab-registry/clean-code-ruleset cursor-rules
+arm install ruleset gitlab-registry/security-ruleset q-rules
+
+# Use --include/--exclude to filter files (default: *.yml, *.yaml)
+arm install ruleset --include "**/*.yml" --exclude "**/experimental/**" gitlab-registry/clean-code-ruleset cursor-rules
 ```
 
 ### Archive Support

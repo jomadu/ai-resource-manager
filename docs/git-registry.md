@@ -15,10 +15,10 @@ No additional configuration in `.armrc` is required - ARM uses the same authenti
 
 ## Repository Structure
 
-Git repositories should follow the recommended structure:
+**Key Concept**: In Git registries, you choose the package name when installing. The repository is just the source of files.
 
 ```
-Repository Root:
+Repository (source of files):
 ├── clean-code-ruleset.yml      # ARM resource definitions
 ├── security-ruleset.yml
 ├── code-review-promptset.yml   # ARM resource definitions
@@ -31,6 +31,16 @@ Repository Root:
     └── amazonq/
         ├── clean-code.md
         └── security.md
+```
+
+**Install examples**: 
+```bash
+# You choose any package name
+arm install ruleset git-registry/my-rules cursor-rules
+arm install ruleset git-registry/team-standards q-rules
+
+# Use --include/--exclude to filter files (default: *.yml, *.yaml)
+arm install ruleset --include "security-*.yml" git-registry/security-only cursor-rules
 ```
 
 ### Archive Support
