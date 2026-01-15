@@ -116,7 +116,7 @@ This document tracks conceptual inconsistencies in the ARM documentation that ne
 - .armrc format is same, but usage differs
 
 **Priority**: Medium
-**Status**: Identified
+**Status**: Complete.
 
 ---
 
