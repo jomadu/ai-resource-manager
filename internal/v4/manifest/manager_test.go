@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
+	"github.com/jomadu/ai-resource-manager/internal/v4/registry"
 )
 
 // Test helper functions
@@ -71,8 +72,8 @@ func TestFileManager_UpsertGitRegistryConfig(t *testing.T) {
 	manifestPath := filepath.Join(t.TempDir(), "empty.json")
 	fm := NewFileManagerWithPath(manifestPath)
 	
-	config := &GitRegistryConfig{
-		RegistryConfig: RegistryConfig{
+	config := GitRegistryConfig{
+		RegistryConfig: registry.RegistryConfig{
 			Type: "git",
 			URL:  "https://github.com/test/repo",
 		},
@@ -112,8 +113,8 @@ func TestFileManager_UpsertGitLabRegistryConfig(t *testing.T) {
 	manifestPath := filepath.Join(t.TempDir(), "empty.json")
 	fm := NewFileManagerWithPath(manifestPath)
 	
-	config := &GitLabRegistryConfig{
-		RegistryConfig: RegistryConfig{
+	config := GitLabRegistryConfig{
+		RegistryConfig: registry.RegistryConfig{
 			Type: "gitlab",
 			URL:  "https://gitlab.example.com",
 		},
@@ -141,8 +142,8 @@ func TestFileManager_UpsertCloudsmithRegistryConfig(t *testing.T) {
 	manifestPath := filepath.Join(t.TempDir(), "empty.json")
 	fm := NewFileManagerWithPath(manifestPath)
 	
-	config := &CloudsmithRegistryConfig{
-		RegistryConfig: RegistryConfig{
+	config := CloudsmithRegistryConfig{
+		RegistryConfig: registry.RegistryConfig{
 			Type: "cloudsmith",
 			URL:  "https://api.cloudsmith.io",
 		},
@@ -210,7 +211,7 @@ func TestFileManager_UpsertSinkConfig(t *testing.T) {
 	manifestPath := filepath.Join(t.TempDir(), "empty.json")
 	fm := NewFileManagerWithPath(manifestPath)
 	
-	config := &SinkConfig{
+	config := SinkConfig{
 		Directory: ".cursor/rules",
 		Tool:      compiler.Cursor,
 	}

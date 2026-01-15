@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
@@ -26,12 +27,14 @@ type OutdatedDependency struct {
 
 // ArmService handles all ARM operations
 type ArmService struct {
-	// TODO: add fields for dependencies like manifest manager, cache, etc.
+	manifestMgr manifest.Manager
 }
 
 // NewArmService creates a new ARM service
-func NewArmService() *ArmService {
-	return &ArmService{}
+func NewArmService(manifestMgr manifest.Manager) *ArmService {
+	return &ArmService{
+		manifestMgr: manifestMgr,
+	}
 }
 
 // ---------------------------------------------
@@ -128,44 +131,119 @@ func (s *ArmService) GetAllRegistriesConfig(ctx context.Context) (map[string]map
 
 // AddSink adds a sink
 func (s *ArmService) AddSink(ctx context.Context, name, directory string, tool compiler.Tool, force bool) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := m.Sinks[name]; !force && exists {
+		return errors.New("sink already exists")
+	}
+
+	m.Sinks[name] = manifest.SinkConfig{
+		Directory: directory,
+		Tool:      tool,
+	}
+
+	return s.manifestMgr.Save(m)
 }
 
 // RemoveSink removes a sink
 func (s *ArmService) RemoveSink(ctx context.Context, name string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := m.Sinks[name]; !exists {
+		return errors.New("sink does not exist")
+	}
+
+	delete(m.Sinks, name)
+
+	return s.manifestMgr.Save(m)
 }
 
 // GetSinkConfig gets sink configuration
-func (s *ArmService) GetSinkConfig(ctx context.Context, name string) (*manifest.SinkConfig, error) {
-	// TODO: implement
-	return nil, nil
+func (s *ArmService) GetSinkConfig(ctx context.Context, name string) (manifest.SinkConfig, error) {
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return manifest.SinkConfig{}, err
+	}
+
+	cfg, exists := m.Sinks[name]
+	if !exists {
+		return manifest.SinkConfig{}, errors.New("sink does not exist")
+	}
+
+	return cfg, nil
 }
 
 // GetAllSinkConfigs gets all sink configurations
-func (s *ArmService) GetAllSinkConfigs(ctx context.Context) (map[string]*manifest.SinkConfig, error) {
-	// TODO: implement
-	return nil, nil
+func (s *ArmService) GetAllSinkConfigs(ctx context.Context) (map[string]manifest.SinkConfig, error) {
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	return m.Sinks, nil
 }
 
 // SetSinkName sets sink name
 func (s *ArmService) SetSinkName(ctx context.Context, name string, newName string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := m.Sinks[name]; !exists {
+		return errors.New("sink does not exist")
+	}
+
+	if _, exists := m.Sinks[newName]; exists {
+		return errors.New("sink with new name already exists")
+	}
+
+	m.Sinks[newName] = m.Sinks[name]
+	delete(m.Sinks, name)
+
+	return s.manifestMgr.Save(m)
 }
 
 // SetSinkDirectory sets sink directory
 func (s *ArmService) SetSinkDirectory(ctx context.Context, name string, directory string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	sink, exists := m.Sinks[name]
+	if !exists {
+		return errors.New("sink does not exist")
+	}
+
+	sink.Directory = directory
+	m.Sinks[name] = sink
+
+	return s.manifestMgr.Save(m)
 }
 
 // SetSinkTool sets sink tool
 func (s *ArmService) SetSinkTool(ctx context.Context, name string, tool compiler.Tool) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	sink, exists := m.Sinks[name]
+	if !exists {
+		return errors.New("sink does not exist")
+	}
+
+	sink.Tool = tool
+	m.Sinks[name] = sink
+
+	return s.manifestMgr.Save(m)
 }
 
 // ---------------------
