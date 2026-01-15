@@ -21,18 +21,17 @@
     - [arm set sink](#arm-set-sink)
     - [arm list sink](#arm-list-sink)
     - [arm info sink](#arm-info-sink)
-  - [Package Management](#package-management)
+  - [Dependency Management](#dependency-management)
     - [arm install](#arm-install)
-    - [arm outdated](#arm-outdated)
+    - [arm install ruleset](#arm-install-ruleset)
+    - [arm install promptset](#arm-install-promptset)
+    - [arm uninstall](#arm-uninstall)
     - [arm update](#arm-update)
     - [arm upgrade](#arm-upgrade)
-    - [arm uninstall](#arm-uninstall)
     - [arm list](#arm-list)
     - [arm info](#arm-info)
-  - [Resource Management](#resource-management)
-    - [arm install ruleset](#arm-install-ruleset)
+    - [arm outdated](#arm-outdated)
     - [arm set ruleset](#arm-set-ruleset)
-    - [arm install promptset](#arm-install-promptset)
     - [arm set promptset](#arm-set-promptset)
   - [Utilities](#utilities)
     - [arm clean cache](#arm-clean-cache)
@@ -324,7 +323,7 @@ cursor-rules:
     tool: cursor
 ```
 
-## Package Management
+## Dependency Management
 
 ### arm install
 
@@ -338,46 +337,83 @@ Install all configured dependencies to their assigned sinks.
 $ arm install
 ```
 
-### arm outdated
+### arm install ruleset
 
-`arm outdated [--output <table|json|list>]`
+`arm install ruleset [--priority PRIORITY] [--include GLOB...] [--exclude GLOB...] REGISTRY_NAME/RULESET_NAME[@VERSION] SINK_NAME...`
 
-Check for outdated dependencies across all configured registries. This command compares the currently installed versions of rulesets and promptsets with the latest available versions in their respective registries. It shows which packages have newer versions available, displaying the constraint, current version, wanted version, and latest version for each outdated package. The output format can be specified as table (default), JSON, or list.
+Install a specific ruleset from a registry to one or more sinks. This command allows you to specify priority (default: 100), include/exclude patterns for filtering rules (default include: all .yml and .yaml files), and target specific sinks. The ruleset can be installed from a specific version or the latest version that satisfies the constraint.
+
+**Important:** When installing a ruleset to specific sinks, ARM will automatically uninstall the ruleset from any previous sinks that are not in the new sink list. This ensures a clean state and prevents orphaned files across your sinks.
 
 **Examples:**
 ```bash
-# Check for outdated packages (table format)
-$ arm outdated
+# Install ruleset to single sink
+$ arm install ruleset my-org/clean-code-ruleset cursor-rules
 
-# Check for outdated packages in JSON format
-$ arm outdated --output json
+# Install specific version to multiple sinks
+$ arm install ruleset my-org/clean-code-ruleset@1.0.0 cursor-rules q-rules
 
-# Check for outdated packages in list format
-$ arm outdated --output list
+# Install with major version constraint (>= 1.0.0, < 2.0.0)
+$ arm install ruleset my-org/clean-code-ruleset@1 cursor-rules
+
+# Install with major.minor constraint (>= 1.1.0, < 1.2.0)
+$ arm install ruleset my-org/clean-code-ruleset@1.1 cursor-rules
+
+# Reinstall to different sinks (removes from previous sinks)
+# If previously installed to cursor-rules, this will remove it from cursor-rules
+$ arm install ruleset my-org/clean-code-ruleset q-rules copilot-rules
+
+# Install with custom priority
+$ arm install ruleset --priority 200 my-org/clean-code-ruleset cursor-rules
+
+# Install with include/exclude patterns
+$ arm install ruleset --include "**/*.yml" --exclude "**/README.md" my-org/clean-code-ruleset cursor-rules
 ```
 
-**Sample output:**
+**Reinstall Behavior Example:**
+- Initial install to sinks A and B: `arm install ruleset repo/pkg A B`
+- Later install to only sink C: `arm install ruleset repo/pkg C`
+- Result: Package is removed from A and B, only exists in C
+
+### arm install promptset
+
+`arm install promptset [--include GLOB...] [--exclude GLOB...] REGISTRY_NAME/PROMPTSET[@VERSION] SINK_NAME...`
+
+Install a specific promptset from a registry to one or more sinks. This command allows you to specify include/exclude patterns for filtering prompts (default include: all .yml and .yaml files), and target specific sinks. The promptset can be installed from a specific version or the latest version that satisfies the constraint.
+
+**Important:** When installing a promptset to specific sinks, ARM will automatically uninstall the promptset from any previous sinks that are not in the new sink list. This ensures a clean state and prevents orphaned files across your sinks.
+
+**Examples:**
 ```bash
-$ arm outdated
-PACKAGE                         TYPE       CONSTRAINT  CURRENT  WANTED  LATEST
-my-org/clean-code-ruleset       ruleset    ^1.0.0      1.0.1    1.1.0   2.0.0
-my-org/code-review-promptset    promptset  ^1.0.0      1.0.1    1.1.0   2.0.0
+# Install promptset to single sink
+$ arm install promptset my-org/code-review-promptset cursor-commands
 
-$ arm outdated --output json
-[
-  {
-    "package": "my-org/clean-code-ruleset",
-    "type": "ruleset",
-    "constraint": "^1.0.0",
-    "current": "1.0.1",
-    "wanted": "1.1.0",
-    "latest": "2.0.0"
-  }
-]
+# Install specific version to multiple sinks
+$ arm install promptset my-org/code-review-promptset@1.0.0 cursor-commands q-prompts
 
-$ arm outdated --output list
-my-org/clean-code-ruleset
-my-org/code-review-promptset
+# Install with major version constraint (>= 1.0.0, < 2.0.0)
+$ arm install promptset my-org/code-review-promptset@1 cursor-commands
+
+# Install with major.minor constraint (>= 1.1.0, < 1.2.0)
+$ arm install promptset my-org/code-review-promptset@1.1 cursor-commands
+
+# Reinstall to different sinks (removes from previous sinks)
+$ arm install promptset my-org/code-review-promptset q-prompts
+
+# Install with include/exclude patterns
+$ arm install promptset --include "**/*.yml" --exclude "**/README.md" my-org/code-review-promptset cursor-commands
+```
+
+### arm uninstall
+
+`arm uninstall`
+
+Uninstall all configured packages from their assigned sinks. This command removes all currently installed rulesets and promptsets from their output directories, cleaning up the sink directories while preserving the ARM configuration. The packages can be reinstalled later using `arm install`.
+
+**Example:**
+```bash
+# Uninstall all configured packages
+$ arm uninstall
 ```
 
 ### arm update
@@ -402,18 +438,6 @@ Upgrade all installed packages to their latest available versions, ignoring vers
 ```bash
 # Upgrade all packages to latest versions
 $ arm upgrade
-```
-
-### arm uninstall
-
-`arm uninstall`
-
-Uninstall all configured packages from their assigned sinks. This command removes all currently installed rulesets and promptsets from their output directories, cleaning up the sink directories while preserving the ARM configuration. The packages can be reinstalled later using `arm install`.
-
-**Example:**
-```bash
-# Uninstall all configured packages
-$ arm uninstall
 ```
 
 ### arm list
@@ -498,45 +522,48 @@ dependencies:
             - "review/**/*.yml"
 ```
 
-## Resource Management
+### arm outdated
 
-### arm install ruleset
+`arm outdated [--output <table|json|list>]`
 
-`arm install ruleset [--priority PRIORITY] [--include GLOB...] [--exclude GLOB...] REGISTRY_NAME/RULESET_NAME[@VERSION] SINK_NAME...`
-
-Install a specific ruleset from a registry to one or more sinks. This command allows you to specify priority (default: 100), include/exclude patterns for filtering rules (default include: all .yml and .yaml files), and target specific sinks. The ruleset can be installed from a specific version or the latest version that satisfies the constraint.
-
-**Important:** When installing a ruleset to specific sinks, ARM will automatically uninstall the ruleset from any previous sinks that are not in the new sink list. This ensures a clean state and prevents orphaned files across your sinks.
+Check for outdated dependencies across all configured registries. This command compares the currently installed versions of rulesets and promptsets with the latest available versions in their respective registries. It shows which packages have newer versions available, displaying the constraint, current version, wanted version, and latest version for each outdated package. The output format can be specified as table (default), JSON, or list.
 
 **Examples:**
 ```bash
-# Install ruleset to single sink
-$ arm install ruleset my-org/clean-code-ruleset cursor-rules
+# Check for outdated packages (table format)
+$ arm outdated
 
-# Install specific version to multiple sinks
-$ arm install ruleset my-org/clean-code-ruleset@1.0.0 cursor-rules q-rules
+# Check for outdated packages in JSON format
+$ arm outdated --output json
 
-# Install with major version constraint (>= 1.0.0, < 2.0.0)
-$ arm install ruleset my-org/clean-code-ruleset@1 cursor-rules
-
-# Install with major.minor constraint (>= 1.1.0, < 1.2.0)
-$ arm install ruleset my-org/clean-code-ruleset@1.1 cursor-rules
-
-# Reinstall to different sinks (removes from previous sinks)
-# If previously installed to cursor-rules, this will remove it from cursor-rules
-$ arm install ruleset my-org/clean-code-ruleset q-rules copilot-rules
-
-# Install with custom priority
-$ arm install ruleset --priority 200 my-org/clean-code-ruleset cursor-rules
-
-# Install with include/exclude patterns
-$ arm install ruleset --include "**/*.yml" --exclude "**/README.md" my-org/clean-code-ruleset cursor-rules
+# Check for outdated packages in list format
+$ arm outdated --output list
 ```
 
-**Reinstall Behavior Example:**
-- Initial install to sinks A and B: `arm install ruleset repo/pkg A B`
-- Later install to only sink C: `arm install ruleset repo/pkg C`
-- Result: Package is removed from A and B, only exists in C
+**Sample output:**
+```bash
+$ arm outdated
+PACKAGE                         TYPE       CONSTRAINT  CURRENT  WANTED  LATEST
+my-org/clean-code-ruleset       ruleset    ^1.0.0      1.0.1    1.1.0   2.0.0
+my-org/code-review-promptset    promptset  ^1.0.0      1.0.1    1.1.0   2.0.0
+
+$ arm outdated --output json
+[
+  {
+    "package": "my-org/clean-code-ruleset",
+    "type": "ruleset",
+    "constraint": "^1.0.0",
+    "current": "1.0.1",
+    "wanted": "1.1.0",
+    "latest": "2.0.0"
+  }
+]
+
+$ arm outdated --output list
+my-org/clean-code-ruleset
+my-org/code-review-promptset
+```
+
 
 ### arm set ruleset
 
@@ -554,35 +581,6 @@ $ arm set ruleset my-org/clean-code-ruleset priority 150
 
 # Update sinks
 $ arm set ruleset my-org/clean-code-ruleset sinks cursor-rules,q-rules,copilot-rules
-```
-
-### arm install promptset
-
-`arm install promptset [--include GLOB...] [--exclude GLOB...] REGISTRY_NAME/PROMPTSET[@VERSION] SINK_NAME...`
-
-Install a specific promptset from a registry to one or more sinks. This command allows you to specify include/exclude patterns for filtering prompts (default include: all .yml and .yaml files), and target specific sinks. The promptset can be installed from a specific version or the latest version that satisfies the constraint.
-
-**Important:** When installing a promptset to specific sinks, ARM will automatically uninstall the promptset from any previous sinks that are not in the new sink list. This ensures a clean state and prevents orphaned files across your sinks.
-
-**Examples:**
-```bash
-# Install promptset to single sink
-$ arm install promptset my-org/code-review-promptset cursor-commands
-
-# Install specific version to multiple sinks
-$ arm install promptset my-org/code-review-promptset@1.0.0 cursor-commands q-prompts
-
-# Install with major version constraint (>= 1.0.0, < 2.0.0)
-$ arm install promptset my-org/code-review-promptset@1 cursor-commands
-
-# Install with major.minor constraint (>= 1.1.0, < 1.2.0)
-$ arm install promptset my-org/code-review-promptset@1.1 cursor-commands
-
-# Reinstall to different sinks (removes from previous sinks)
-$ arm install promptset my-org/code-review-promptset q-prompts
-
-# Install with include/exclude patterns
-$ arm install promptset --include "**/*.yml" --exclude "**/README.md" my-org/code-review-promptset cursor-commands
 ```
 
 ### arm set promptset
@@ -662,7 +660,7 @@ $ arm clean sinks --nuke
 
 ### arm compile
 
-`arm compile [--tool <markdown|cursor|amazonq|copilot>] [--force] [--recursive] [--validate-only] [--include GLOB...] [--exclude GLOB...] [--fail-fast] INPUT_PATH... [OUTPUT_PATH]`
+`arm compile [--tool <markdown|cursor|amazonq|copilot>] [--namespace NAMESPACE] [--force] [--recursive] [--validate-only] [--include GLOB...] [--exclude GLOB...] [--fail-fast] INPUT_PATH... [OUTPUT_PATH]`
 
 Compile rulesets and promptsets from source files. This command compiles source ruleset and promptset files to platform-specific formats. It supports different tool platforms (markdown, cursor, amazonq, copilot), recursive directory processing, validation-only mode, and various filtering and output options. This is useful for development and testing of rulesets and promptsets before publishing to registries.
 
@@ -671,20 +669,33 @@ Compile rulesets and promptsets from source files. This command compiles source 
 - **Directories**: Discovers files within using `--include`/`--exclude` patterns (non-recursive by default)
 - **Mixed**: Can combine files and directories in the same command
 
+**Flags:**
+- `--tool`: Target platform (markdown, cursor, amazonq, copilot)
+- `--namespace`: Namespace for compiled files (defaults to resource metadata ID)
+- `--force`: Force overwrite existing files
+- `--recursive`: Process directories recursively
+- `--validate-only`: Validate only (no output files)
+- `--include`: Include patterns (default: `**/*.yml`, `**/*.yaml`)
+- `--exclude`: Exclude patterns
+- `--fail-fast`: Stop on first error
+
 **Note:** Shell glob patterns (e.g., `*.yml`) are expanded to individual file paths by your shell before ARM processes them. When using `--validate-only`, the OUTPUT_PATH argument is optional and will be ignored if provided.
 
 **Examples:**
 ```bash
-# Compile single file to Cursor format
+# Compile single file (uses metadata ID as namespace)
 $ arm compile --tool cursor ruleset.yml ./output/
+
+# Compile with custom namespace
+$ arm compile --tool cursor --namespace my-org ruleset.yml ./output/
 
 # Compile multiple files
 $ arm compile --tool cursor file1.yml file2.yml ./output/
 
-# Compile with shell glob expansion (expands to individual files)
+# Compile with shell glob expansion
 $ arm compile --tool cursor rulesets/*.yml ./output/
 
-# Compile directory recursively to Amazon Q format
+# Compile directory recursively
 $ arm compile --tool amazonq --recursive ./src/ ./build/
 
 # Compile directory non-recursively (default)
@@ -693,18 +704,18 @@ $ arm compile --tool cursor ./rulesets/ ./output/
 # Mix files and directories
 $ arm compile --tool cursor specific.yml ./more-rulesets/ ./output/
 
-# Validate only (no output files) - OUTPUT_PATH is optional
+# Validate only (no output files)
 $ arm compile --validate-only ruleset.yml
 
-# Validate multiple files without output
+# Validate multiple files
 $ arm compile --validate-only ./rulesets/*.yml
 
 # Compile with include/exclude patterns
 $ arm compile --tool cursor --include "**/*.yml" --exclude "**/README.md" ./src/ ./build/
 
-# Compilation with force overwrite
+# Compile with force overwrite
 $ arm compile --tool copilot --force ruleset.yml ./output/
 
-# Validate and fail fast on first error (useful for CI)
+# Validate and fail fast on first error
 $ arm compile --validate-only --fail-fast ./rulesets/
 ```
