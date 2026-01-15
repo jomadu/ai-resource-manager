@@ -43,86 +43,286 @@ func NewArmService(manifestMgr manifest.Manager) *ArmService {
 
 // AddGitRegistry adds a Git registry
 func (s *ArmService) AddGitRegistry(ctx context.Context, name, url string, branches []string, force bool) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := m.Registries[name]; !force && exists {
+		return errors.New("registry already exists")
+	}
+
+	config := map[string]interface{}{
+		"url":  url,
+		"type": "git",
+	}
+	if len(branches) > 0 {
+		config["branches"] = branches
+	}
+
+	m.Registries[name] = config
+	return s.manifestMgr.Save(m)
 }
 
 // AddGitLabRegistry adds a GitLab registry
 func (s *ArmService) AddGitLabRegistry(ctx context.Context, name, url, projectID, groupID, apiVersion string, force bool) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := m.Registries[name]; !force && exists {
+		return errors.New("registry already exists")
+	}
+
+	config := map[string]interface{}{
+		"url":  url,
+		"type": "gitlab",
+	}
+	if projectID != "" {
+		config["projectId"] = projectID
+	}
+	if groupID != "" {
+		config["groupId"] = groupID
+	}
+	if apiVersion != "" {
+		config["apiVersion"] = apiVersion
+	}
+
+	m.Registries[name] = config
+	return s.manifestMgr.Save(m)
 }
 
 // AddCloudsmithRegistry adds a Cloudsmith registry
 func (s *ArmService) AddCloudsmithRegistry(ctx context.Context, name, url, owner, repository string, force bool) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := m.Registries[name]; !force && exists {
+		return errors.New("registry already exists")
+	}
+
+	m.Registries[name] = map[string]interface{}{
+		"url":        url,
+		"type":       "cloudsmith",
+		"owner":      owner,
+		"repository": repository,
+	}
+
+	return s.manifestMgr.Save(m)
 }
 
 // RemoveRegistry removes a registry
 func (s *ArmService) RemoveRegistry(ctx context.Context, name string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := m.Registries[name]; !exists {
+		return errors.New("registry does not exist")
+	}
+
+	delete(m.Registries, name)
+	return s.manifestMgr.Save(m)
 }
 
 // SetRegistryName sets registry name
 func (s *ArmService) SetRegistryName(ctx context.Context, name string, newName string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	if _, exists := m.Registries[name]; !exists {
+		return errors.New("registry does not exist")
+	}
+
+	if _, exists := m.Registries[newName]; exists {
+		return errors.New("registry with new name already exists")
+	}
+
+	m.Registries[newName] = m.Registries[name]
+	delete(m.Registries, name)
+
+	return s.manifestMgr.Save(m)
 }
 
 // SetRegistryURL sets registry URL
 func (s *ArmService) SetRegistryURL(ctx context.Context, name string, url string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	reg, exists := m.Registries[name]
+	if !exists {
+		return errors.New("registry does not exist")
+	}
+
+	reg["url"] = url
+	m.Registries[name] = reg
+
+	return s.manifestMgr.Save(m)
 }
 
 // SetGitRegistryBranches sets Git registry branches
 func (s *ArmService) SetGitRegistryBranches(ctx context.Context, name string, branches []string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	reg, exists := m.Registries[name]
+	if !exists {
+		return errors.New("registry does not exist")
+	}
+
+	if regType, ok := reg["type"].(string); !ok || regType != "git" {
+		return errors.New("registry is not a git registry")
+	}
+
+	reg["branches"] = branches
+	m.Registries[name] = reg
+
+	return s.manifestMgr.Save(m)
 }
 
 // SetGitLabRegistryProjectID sets GitLab registry project ID
 func (s *ArmService) SetGitLabRegistryProjectID(ctx context.Context, name string, projectID string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	reg, exists := m.Registries[name]
+	if !exists {
+		return errors.New("registry does not exist")
+	}
+
+	if regType, ok := reg["type"].(string); !ok || regType != "gitlab" {
+		return errors.New("registry is not a gitlab registry")
+	}
+
+	reg["projectId"] = projectID
+	m.Registries[name] = reg
+
+	return s.manifestMgr.Save(m)
 }
 
 // SetGitLabRegistryGroupID sets GitLab registry group ID
 func (s *ArmService) SetGitLabRegistryGroupID(ctx context.Context, name string, groupID string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	reg, exists := m.Registries[name]
+	if !exists {
+		return errors.New("registry does not exist")
+	}
+
+	if regType, ok := reg["type"].(string); !ok || regType != "gitlab" {
+		return errors.New("registry is not a gitlab registry")
+	}
+
+	reg["groupId"] = groupID
+	m.Registries[name] = reg
+
+	return s.manifestMgr.Save(m)
 }
 
 // SetGitLabRegistryAPIVersion sets GitLab registry API version
 func (s *ArmService) SetGitLabRegistryAPIVersion(ctx context.Context, name string, apiVersion string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	reg, exists := m.Registries[name]
+	if !exists {
+		return errors.New("registry does not exist")
+	}
+
+	if regType, ok := reg["type"].(string); !ok || regType != "gitlab" {
+		return errors.New("registry is not a gitlab registry")
+	}
+
+	reg["apiVersion"] = apiVersion
+	m.Registries[name] = reg
+
+	return s.manifestMgr.Save(m)
 }
 
 // SetCloudsmithRegistryOwner sets Cloudsmith registry owner
 func (s *ArmService) SetCloudsmithRegistryOwner(ctx context.Context, name string, owner string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	reg, exists := m.Registries[name]
+	if !exists {
+		return errors.New("registry does not exist")
+	}
+
+	if regType, ok := reg["type"].(string); !ok || regType != "cloudsmith" {
+		return errors.New("registry is not a cloudsmith registry")
+	}
+
+	reg["owner"] = owner
+	m.Registries[name] = reg
+
+	return s.manifestMgr.Save(m)
 }
 
 // SetCloudsmithRegistryRepository sets Cloudsmith registry repository
 func (s *ArmService) SetCloudsmithRegistryRepository(ctx context.Context, name string, repository string) error {
-	// TODO: implement
-	return nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return err
+	}
+
+	reg, exists := m.Registries[name]
+	if !exists {
+		return errors.New("registry does not exist")
+	}
+
+	if regType, ok := reg["type"].(string); !ok || regType != "cloudsmith" {
+		return errors.New("registry is not a cloudsmith registry")
+	}
+
+	reg["repository"] = repository
+	m.Registries[name] = reg
+
+	return s.manifestMgr.Save(m)
 }
 
 // GetRegistryConfig gets registry configuration
 func (s *ArmService) GetRegistryConfig(ctx context.Context, name string) (map[string]interface{}, error) {
-	// TODO: implement
-	return nil, nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, exists := m.Registries[name]
+	if !exists {
+		return nil, errors.New("registry does not exist")
+	}
+
+	return cfg, nil
 }
 
 // GetAllRegistriesConfig gets all registry configurations
 func (s *ArmService) GetAllRegistriesConfig(ctx context.Context) (map[string]map[string]interface{}, error) {
-	// TODO: implement
-	return nil, nil
+	m, err := s.manifestMgr.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	return m.Registries, nil
 }
 
 // ---------------
