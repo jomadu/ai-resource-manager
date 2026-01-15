@@ -15,7 +15,31 @@
 - **Rulesets** - Collections of AI rules with priority-based conflict resolution
 - **Promptsets** - Collections of AI prompts for reusable templates
 
-**Sinks** are local directories where ARM places compiled files, each configured for a specific AI tool (Cursor, Amazon Q, GitHub Copilot).
+**Sinks** are output destinations where ARM compiles and places files. Each sink specifies a target directory and compilation format for a specific AI tool (Cursor, Amazon Q, GitHub Copilot).
+
+## File Patterns
+
+ARM uses glob patterns to filter which files are installed from packages.
+
+**Default behavior**: Include all `.yml` and `.yaml` files
+
+**Pattern matching**:
+- Archives (`.tar.gz`, `.zip`) are extracted first, then patterns filter the contents
+- Patterns use standard glob syntax: `**/*.yml`, `security/**/*.md`, `**/typescript-*`
+- Multiple `--include` patterns are OR'd together (match any)
+- `--exclude` patterns override includes
+
+**Examples**:
+```bash
+# Install only TypeScript rules
+arm install ruleset --include "**/typescript-*.yml" ai-rules/language-rules cursor-rules
+
+# Exclude experimental files
+arm install ruleset --exclude "**/experimental/**" ai-rules/security-ruleset cursor-rules
+
+# Multiple includes
+arm install promptset --include "review/**/*.yml" --include "refactor/**/*.yml" ai-rules/prompts cursor-commands
+```
 
 ## Versioning
 

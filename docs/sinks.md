@@ -1,6 +1,11 @@
 # Sinks
 
-Sinks define where installed packages should be placed in your local filesystem. Each sink targets a specific directory for a particular AI tool.
+## What are Sinks?
+
+Sinks are output destinations where ARM compiles and writes installed resources. Think of them as build targets - the same source content can be compiled to different formats for different AI tools.
+
+- The `--directory` parameter defines WHERE files go, usually where an AI tool expects the resources to already be (e.g. `.cursor/rules`, etc.)
+- The `--tool` parameter specifies HOW any ARM resource files are compiled (e.g. to amazonq, cursor, copilot, etc.)
 
 ## Commands
 

@@ -148,7 +148,7 @@ This document tracks conceptual inconsistencies in the ARM documentation that ne
 - Need examples: "Install only TypeScript rules", "Exclude experimental", etc.
 
 **Priority**: Low
-**Status**: Identified
+**Status**: Complete - Added File Patterns section to concepts.md with glob behavior and examples
 
 ---
 
@@ -180,7 +180,7 @@ This document tracks conceptual inconsistencies in the ARM documentation that ne
 - Analogy: Sinks are like "build targets" - same source, different output formats
 
 **Priority**: Low
-**Status**: Identified
+**Status**: Complete - Added "What are Sinks?" section to sinks.md clarifying output destination concept, updated README.md sink examples
 
 ---
 

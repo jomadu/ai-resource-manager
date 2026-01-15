@@ -90,7 +90,7 @@ Add Cloudsmith registry:
 arm add registry cloudsmith --owner myorg --repo ai-rules my-cloudsmith
 ```
 
-Configure sinks:
+Configure sinks (output destinations):
 
 **Cursor:**
 ```bash
