@@ -11,13 +11,13 @@ import (
 	"github.com/jomadu/ai-resource-manager/internal/v4/sink"
 )
 
-type PackageInfo struct {
+type DependencyInfo struct {
 	Installation sink.PackageInstallation
 	LockInfo     packagelockfile.DependencyLockConfig
 	Config       map[string]interface{}
 }
 
-type OutdatedPackage struct {
+type OutdatedDependency struct {
 	Current    core.PackageMetadata
 	Constraint string
 	Wanted     core.PackageMetadata
@@ -168,11 +168,11 @@ func (s *ArmService) SetSinkTool(ctx context.Context, name string, tool compiler
 	return nil
 }
 
-// ------------------
-// Package Management
-// ------------------
+// ---------------------
+// Dependency Management
+// ---------------------
 
-// InstallAll installs all packages
+// InstallAll installs all dependencies
 func (s *ArmService) InstallAll(ctx context.Context) error {
 	// TODO: implement
 	return nil
@@ -190,38 +190,38 @@ func (s *ArmService) InstallPromptset(ctx context.Context, registry, promptset, 
 	return nil
 }
 
-// UninstallAll uninstalls all packages
+// UninstallAll uninstalls all dependencies
 func (s *ArmService) UninstallAll(ctx context.Context) error {
 	// TODO: implement
 	return nil
 }
 
-// UpdateAll updates all packages
+// UpdateAll updates all dependencies
 func (s *ArmService) UpdateAll(ctx context.Context) error {
 	// TODO: implement
 	return nil
 }
 
-// UpgradeAll upgrades all packages
+// UpgradeAll upgrades all dependencies
 func (s *ArmService) UpgradeAll(ctx context.Context) error {
 	// TODO: implement
 	return nil
 }
 
-// ListAll lists all packages
-func (s *ArmService) ListAll(ctx context.Context) ([]*PackageInfo, error) {
+// ListAll lists all dependencies
+func (s *ArmService) ListAll(ctx context.Context) ([]*DependencyInfo, error) {
 	// TODO: implement
 	return nil, nil
 }
 
-// GetPackageInfo gets package information
-func (s *ArmService) GetPackageInfo(ctx context.Context, registry, packageName string) (*PackageInfo, error) {
+// GetDependencyInfo gets dependency information
+func (s *ArmService) GetDependencyInfo(ctx context.Context, registry, dependencyName string) (*DependencyInfo, error) {
 	// TODO: implement
 	return nil, nil
 }
 
-// ListOutdated lists outdated packages
-func (s *ArmService) ListOutdated(ctx context.Context) ([]*OutdatedPackage, error) {
+// ListOutdated lists outdated dependencies
+func (s *ArmService) ListOutdated(ctx context.Context) ([]*OutdatedDependency, error) {
 	// TODO: implement
 	return nil, nil
 }
