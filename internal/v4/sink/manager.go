@@ -11,6 +11,8 @@ import (
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
 	"github.com/jomadu/ai-resource-manager/internal/v4/core"
+	"github.com/jomadu/ai-resource-manager/internal/v4/filetype"
+	"github.com/jomadu/ai-resource-manager/internal/v4/parser"
 )
 
 type Layout string
@@ -113,57 +115,154 @@ func NewManager(directory string, tool compiler.Tool) *Manager {
 }
 
 // InstallRuleset installs a ruleset package with priority
-//
-// Algorithm:
-// 1. For each file in package:
-//   - If filetype.IsResourceFile(file.Path):
-//   - If filetype.IsRulesetFile(file.Path):
-//   - Parse with parser.ParseRuleset(&file)
-//   - namespace = fmt.Sprintf("%s/%s/%s", registry, name, version)
-//   - For each rule in rulesetResource.Spec.Rules:
-//   - Generate content with m.ruleGenerator.GenerateRule(namespace, resource, ruleID)
-//   - Generate filename with m.ruleFilenameGenerator.GenerateRuleFilename(rulesetID, ruleID)
-//   - Combine: filepath.Join(filepath.Dir(file.Path), filename)
-//   - Write to disk at m.getFilePath(registry, name, version, combinedPath)
-//   - Add combinedPath to installedFiles
-//   - Else (promptset file): skip
-//   - Else (regular file):
-//   - Write file.Content to m.getFilePath(registry, name, version, file.Path)
-//   - Add file.Path to installedFiles
-//
-// 2. Update index:
-//   - packageID = core.PackageID(registry, name, version)
-//   - index.Rulesets[packageID] = {Priority: priority, Files: installedFiles}
-//
-// 3. Generate ruleset index rule file for AI agents
 func (m *Manager) InstallRuleset(pkg *core.Package, priority int) error {
-	return nil // TODO
+	// Uninstall old version if exists
+	if m.IsInstalled(pkg.Metadata) {
+		if err := m.Uninstall(pkg.Metadata); err != nil {
+			return err
+		}
+	}
+
+	var installedFiles []string
+	namespace := fmt.Sprintf("%s/%s@%s", pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version)
+
+	for _, file := range pkg.Files {
+		if filetype.IsResourceFile(file.Path) {
+			if filetype.IsRulesetFile(file.Path) {
+				rulesetResource, err := parser.ParseRuleset(file)
+				if err != nil {
+					return err
+				}
+
+				for ruleID := range rulesetResource.Spec.Rules {
+					content, err := m.ruleGenerator.GenerateRule(namespace, rulesetResource, ruleID)
+					if err != nil {
+						return err
+					}
+
+					filename, err := m.ruleFilenameGenerator.GenerateRuleFilename(rulesetResource.Metadata.ID, ruleID)
+					if err != nil {
+						return err
+					}
+
+					combinedPath := filepath.Join(filepath.Dir(file.Path), filename)
+					fullPath := m.getFilePath(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version, combinedPath)
+
+					if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+						return err
+					}
+					if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+						return err
+					}
+
+					relPath, _ := filepath.Rel(m.directory, fullPath)
+					installedFiles = append(installedFiles, relPath)
+				}
+			}
+		} else {
+			fullPath := m.getFilePath(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version, file.Path)
+
+			if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+				return err
+			}
+			if err := os.WriteFile(fullPath, file.Content, 0644); err != nil {
+				return err
+			}
+
+			relPath, _ := filepath.Rel(m.directory, fullPath)
+			installedFiles = append(installedFiles, relPath)
+		}
+	}
+
+	index, err := m.loadIndex()
+	if err != nil {
+		return err
+	}
+
+	packageID := core.PackageID(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version)
+	index.Rulesets[packageID] = RulesetIndexEntry{
+		Priority: priority,
+		Files:    installedFiles,
+	}
+
+	if err := m.saveIndex(index); err != nil {
+		return err
+	}
+
+	return m.generateRulesetIndexRuleFile()
 }
 
 // InstallPromptset installs a promptset package
-//
-// Algorithm:
-// 1. For each file in package:
-//   - If filetype.IsResourceFile(file.Path):
-//   - If filetype.IsPromptsetFile(file.Path):
-//   - Parse with parser.ParsePromptset(&file)
-//   - namespace = fmt.Sprintf("%s/%s/%s", registry, name, version)
-//   - For each prompt in promptsetResource.Spec.Prompts:
-//   - Generate content with m.promptGenerator.GeneratePrompt(namespace, resource, promptID)
-//   - Generate filename with m.promptFilenameGenerator.GeneratePromptFilename(promptsetID, promptID)
-//   - Combine: filepath.Join(filepath.Dir(file.Path), filename)
-//   - Write to disk at m.getFilePath(registry, name, version, combinedPath)
-//   - Add combinedPath to installedFiles
-//   - Else (ruleset file): skip
-//   - Else (regular file):
-//   - Write file.Content to m.getFilePath(registry, name, version, file.Path)
-//   - Add file.Path to installedFiles
-//
-// 2. Update index:
-//   - packageID = core.PackageID(registry, name, version)
-//   - index.Promptsets[packageID] = {Files: installedFiles}
 func (m *Manager) InstallPromptset(pkg *core.Package) error {
-	return nil // TODO
+	// Uninstall old version if exists
+	if m.IsInstalled(pkg.Metadata) {
+		if err := m.Uninstall(pkg.Metadata); err != nil {
+			return err
+		}
+	}
+
+	var installedFiles []string
+	namespace := fmt.Sprintf("%s/%s@%s", pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version)
+
+	for _, file := range pkg.Files {
+		if filetype.IsResourceFile(file.Path) {
+			if filetype.IsPromptsetFile(file.Path) {
+				promptsetResource, err := parser.ParsePromptset(file)
+				if err != nil {
+					return err
+				}
+
+				for promptID := range promptsetResource.Spec.Prompts {
+					content, err := m.promptGenerator.GeneratePrompt(namespace, promptsetResource, promptID)
+					if err != nil {
+						return err
+					}
+
+					filename, err := m.promptFilenameGenerator.GeneratePromptFilename(promptsetResource.Metadata.ID, promptID)
+					if err != nil {
+						return err
+					}
+
+					combinedPath := filepath.Join(filepath.Dir(file.Path), filename)
+					fullPath := m.getFilePath(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version, combinedPath)
+
+					if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+						return err
+					}
+					if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+						return err
+					}
+
+					relPath, _ := filepath.Rel(m.directory, fullPath)
+					installedFiles = append(installedFiles, relPath)
+				}
+			}
+		} else {
+			fullPath := m.getFilePath(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version, file.Path)
+
+			if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+				return err
+			}
+			if err := os.WriteFile(fullPath, file.Content, 0644); err != nil {
+				return err
+			}
+
+			relPath, _ := filepath.Rel(m.directory, fullPath)
+			installedFiles = append(installedFiles, relPath)
+		}
+	}
+
+	index, err := m.loadIndex()
+	if err != nil {
+		return err
+	}
+
+	packageID := core.PackageID(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version)
+	index.Promptsets[packageID] = PromptsetIndexEntry{
+		Files: installedFiles,
+	}
+
+	return m.saveIndex(index)
 }
 
 // Uninstall removes a package from the sink
@@ -333,6 +432,14 @@ func (m *Manager) loadIndex() (*Index, error) {
 		return nil, err
 	}
 
+	// Initialize maps if nil
+	if index.Rulesets == nil {
+		index.Rulesets = make(map[string]RulesetIndexEntry)
+	}
+	if index.Promptsets == nil {
+		index.Promptsets = make(map[string]PromptsetIndexEntry)
+	}
+
 	return &index, nil
 }
 
@@ -352,7 +459,65 @@ func (m *Manager) saveIndex(index *Index) error {
 
 // generateRulesetIndexRuleFile creates arm_index.* file for rulesets (priority explanation for AI agents)
 func (m *Manager) generateRulesetIndexRuleFile() error {
-	return nil // TODO
+	index, err := m.loadIndex()
+	if err != nil {
+		return err
+	}
+
+	if len(index.Rulesets) == 0 {
+		if _, err := os.Stat(m.rulesetIndexRulePath); err == nil {
+			os.Remove(m.rulesetIndexRulePath)
+		}
+		return nil
+	}
+
+	body := "# ARM Rulesets\n\n"
+	body += "This file defines the installation priorities for rulesets managed by ARM.\n\n"
+	body += "## Priority Rules\n\n"
+	body += "**This index is the authoritative source of truth for ruleset priorities.** When conflicts arise between rulesets, follow this priority order:\n\n"
+	body += "1. **Higher priority numbers take precedence** over lower priority numbers\n"
+	body += "2. **Rules from higher priority rulesets override** conflicting rules from lower priority rulesets\n"
+	body += "3. **Always consult this index** to resolve any ambiguity about which rules to follow\n\n"
+	body += "## Installed Rulesets\n\n"
+
+	type entry struct {
+		packageID string
+		priority  int
+		files     []string
+	}
+
+	var entries []entry
+	for packageID, info := range index.Rulesets {
+		entries = append(entries, entry{
+			packageID: packageID,
+			priority:  info.Priority,
+			files:     info.Files,
+		})
+	}
+
+	// Sort by priority (high to low)
+	for i := 0; i < len(entries); i++ {
+		for j := i + 1; j < len(entries); j++ {
+			if entries[j].priority > entries[i].priority {
+				entries[i], entries[j] = entries[j], entries[i]
+			}
+		}
+	}
+
+	for _, e := range entries {
+		body += fmt.Sprintf("### %s\n", e.packageID)
+		body += fmt.Sprintf("- **Priority:** %d\n", e.priority)
+		body += "- **Rules:**\n"
+		for _, file := range e.files {
+			body += fmt.Sprintf("  - %s\n", file)
+		}
+		body += "\n"
+	}
+
+	if err := os.MkdirAll(filepath.Dir(m.rulesetIndexRulePath), 0755); err != nil {
+		return err
+	}
+	return os.WriteFile(m.rulesetIndexRulePath, []byte(body), 0644)
 }
 
 // Helper functions for path computation

@@ -3,6 +3,7 @@ package sink
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
@@ -422,5 +423,391 @@ func TestFilenameTruncation(t *testing.T) {
 				t.Errorf("getFilePath() = %v, want %v", basename, tt.wantFilename)
 			}
 		})
+	}
+}
+
+func TestGenerateRulesetIndexRuleFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager(tmpDir, compiler.Cursor)
+
+	// Test with no rulesets - should not create file
+	err := m.generateRulesetIndexRuleFile()
+	if err != nil {
+		t.Errorf("generateRulesetIndexRuleFile failed: %v", err)
+	}
+	if _, err := os.Stat(m.rulesetIndexRulePath); !os.IsNotExist(err) {
+		t.Errorf("index file should not exist when no rulesets")
+	}
+
+	// Add rulesets to index
+	index, _ := m.loadIndex()
+	index.Rulesets["reg1/pkg1@1.0.0"] = RulesetIndexEntry{
+		Priority: 200,
+		Files:    []string{"arm/reg1/pkg1/1.0.0/rule1.mdc", "arm/reg1/pkg1/1.0.0/rule2.mdc"},
+	}
+	index.Rulesets["reg2/pkg2@2.0.0"] = RulesetIndexEntry{
+		Priority: 100,
+		Files:    []string{"arm/reg2/pkg2/2.0.0/rule3.mdc"},
+	}
+	m.saveIndex(index)
+
+	// Generate index file
+	err = m.generateRulesetIndexRuleFile()
+	if err != nil {
+		t.Errorf("generateRulesetIndexRuleFile failed: %v", err)
+	}
+
+	// File should exist
+	if _, err := os.Stat(m.rulesetIndexRulePath); os.IsNotExist(err) {
+		t.Errorf("index file should exist")
+	}
+
+	// Read and verify content
+	content, err := os.ReadFile(m.rulesetIndexRulePath)
+	if err != nil {
+		t.Errorf("failed to read index file: %v", err)
+	}
+
+	contentStr := string(content)
+
+	// Check header
+	if !strings.Contains(contentStr, "# ARM Rulesets") {
+		t.Errorf("missing header")
+	}
+	if !strings.Contains(contentStr, "Priority Rules") {
+		t.Errorf("missing priority rules section")
+	}
+
+	// Check both packages are listed
+	if !strings.Contains(contentStr, "reg1/pkg1@1.0.0") {
+		t.Errorf("missing reg1/pkg1@1.0.0")
+	}
+	if !strings.Contains(contentStr, "reg2/pkg2@2.0.0") {
+		t.Errorf("missing reg2/pkg2@2.0.0")
+	}
+
+	// Check priorities
+	if !strings.Contains(contentStr, "**Priority:** 200") {
+		t.Errorf("missing priority 200")
+	}
+	if !strings.Contains(contentStr, "**Priority:** 100") {
+		t.Errorf("missing priority 100")
+	}
+
+	// Check files are listed
+	if !strings.Contains(contentStr, "arm/reg1/pkg1/1.0.0/rule1.mdc") {
+		t.Errorf("missing rule1.mdc")
+	}
+	if !strings.Contains(contentStr, "arm/reg2/pkg2/2.0.0/rule3.mdc") {
+		t.Errorf("missing rule3.mdc")
+	}
+
+	// Verify priority order (higher priority first)
+	pkg1Idx := strings.Index(contentStr, "reg1/pkg1@1.0.0")
+	pkg2Idx := strings.Index(contentStr, "reg2/pkg2@2.0.0")
+	if pkg1Idx > pkg2Idx {
+		t.Errorf("higher priority package should appear first")
+	}
+}
+
+func TestGenerateRulesetIndexRuleFileRemovesWhenEmpty(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager(tmpDir, compiler.Cursor)
+
+	// Create index file first
+	index, _ := m.loadIndex()
+	index.Rulesets["reg1/pkg1@1.0.0"] = RulesetIndexEntry{
+		Priority: 100,
+		Files:    []string{"rule1.mdc"},
+	}
+	m.saveIndex(index)
+	m.generateRulesetIndexRuleFile()
+
+	// Verify file exists
+	if _, err := os.Stat(m.rulesetIndexRulePath); os.IsNotExist(err) {
+		t.Errorf("index file should exist")
+	}
+
+	// Remove all rulesets
+	index.Rulesets = make(map[string]RulesetIndexEntry)
+	m.saveIndex(index)
+	m.generateRulesetIndexRuleFile()
+
+	// File should be removed
+	if _, err := os.Stat(m.rulesetIndexRulePath); !os.IsNotExist(err) {
+		t.Errorf("index file should be removed when no rulesets")
+	}
+}
+
+func TestInstallRuleset(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager(tmpDir, compiler.Cursor)
+
+	// Create test package with regular file
+	pkg := &core.Package{
+		Metadata: core.PackageMetadata{
+			RegistryName: "test-reg",
+			Name:         "test-pkg",
+			Version:      core.Version{Version: "1.0.0"},
+		},
+		Files: []*core.File{
+			{
+				Path:    "README.md",
+				Content: []byte("# Test Package"),
+			},
+		},
+	}
+
+	err := m.InstallRuleset(pkg, 100)
+	if err != nil {
+		t.Errorf("InstallRuleset failed: %v", err)
+	}
+
+	// Check package is installed
+	if !m.IsInstalled(pkg.Metadata) {
+		t.Errorf("package should be installed")
+	}
+
+	// Check index
+	index, _ := m.loadIndex()
+	packageID := core.PackageID("test-reg", "test-pkg", "1.0.0")
+	entry, exists := index.Rulesets[packageID]
+	if !exists {
+		t.Errorf("package should be in index")
+	}
+	if entry.Priority != 100 {
+		t.Errorf("expected priority 100, got %d", entry.Priority)
+	}
+	if len(entry.Files) != 1 {
+		t.Errorf("expected 1 file, got %d", len(entry.Files))
+	}
+
+	// Check file exists
+	expectedPath := filepath.Join(tmpDir, "arm", "test-reg", "test-pkg", "1.0.0", "README.md")
+	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
+		t.Errorf("file should exist at %s", expectedPath)
+	}
+
+	// Check index rule file exists
+	if _, err := os.Stat(m.rulesetIndexRulePath); os.IsNotExist(err) {
+		t.Errorf("index rule file should exist")
+	}
+}
+
+func TestInstallRulesetReplacesOldVersion(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager(tmpDir, compiler.Cursor)
+
+	// Install v1.0.0
+	pkg1 := &core.Package{
+		Metadata: core.PackageMetadata{
+			RegistryName: "test-reg",
+			Name:         "test-pkg",
+			Version:      core.Version{Version: "1.0.0"},
+		},
+		Files: []*core.File{
+			{
+				Path:    "old.md",
+				Content: []byte("old"),
+			},
+		},
+	}
+	m.InstallRuleset(pkg1, 100)
+
+	// Install v1.0.0 again with different file
+	pkg2 := &core.Package{
+		Metadata: core.PackageMetadata{
+			RegistryName: "test-reg",
+			Name:         "test-pkg",
+			Version:      core.Version{Version: "1.0.0"},
+		},
+		Files: []*core.File{
+			{
+				Path:    "new.md",
+				Content: []byte("new"),
+			},
+		},
+	}
+	err := m.InstallRuleset(pkg2, 200)
+	if err != nil {
+		t.Errorf("InstallRuleset failed: %v", err)
+	}
+
+	// Check only new file exists
+	oldPath := filepath.Join(tmpDir, "arm", "test-reg", "test-pkg", "1.0.0", "old.md")
+	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
+		t.Errorf("old file should be removed")
+	}
+
+	newPath := filepath.Join(tmpDir, "arm", "test-reg", "test-pkg", "1.0.0", "new.md")
+	if _, err := os.Stat(newPath); os.IsNotExist(err) {
+		t.Errorf("new file should exist")
+	}
+
+	// Check priority updated
+	index, _ := m.loadIndex()
+	packageID := core.PackageID("test-reg", "test-pkg", "1.0.0")
+	if index.Rulesets[packageID].Priority != 200 {
+		t.Errorf("expected priority 200, got %d", index.Rulesets[packageID].Priority)
+	}
+}
+
+func TestInstallRulesetEmptyPackage(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager(tmpDir, compiler.Cursor)
+
+	// Install package with no files
+	pkg := &core.Package{
+		Metadata: core.PackageMetadata{
+			RegistryName: "test-reg",
+			Name:         "empty-pkg",
+			Version:      core.Version{Version: "1.0.0"},
+		},
+		Files: []*core.File{},
+	}
+
+	err := m.InstallRuleset(pkg, 100)
+	if err != nil {
+		t.Errorf("InstallRuleset should handle empty package: %v", err)
+	}
+
+	// Should still be in index
+	if !m.IsInstalled(pkg.Metadata) {
+		t.Errorf("empty package should be installed")
+	}
+
+	index, _ := m.loadIndex()
+	packageID := core.PackageID("test-reg", "empty-pkg", "1.0.0")
+	if len(index.Rulesets[packageID].Files) != 0 {
+		t.Errorf("expected 0 files, got %d", len(index.Rulesets[packageID].Files))
+	}
+}
+
+func TestInstallPromptset(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager(tmpDir, compiler.Cursor)
+
+	// Create test package with regular file
+	pkg := &core.Package{
+		Metadata: core.PackageMetadata{
+			RegistryName: "test-reg",
+			Name:         "test-prompts",
+			Version:      core.Version{Version: "1.0.0"},
+		},
+		Files: []*core.File{
+			{
+				Path:    "README.md",
+				Content: []byte("# Test Promptset"),
+			},
+		},
+	}
+
+	err := m.InstallPromptset(pkg)
+	if err != nil {
+		t.Errorf("InstallPromptset failed: %v", err)
+	}
+
+	// Check package is installed
+	if !m.IsInstalled(pkg.Metadata) {
+		t.Errorf("package should be installed")
+	}
+
+	// Check index
+	index, _ := m.loadIndex()
+	packageID := core.PackageID("test-reg", "test-prompts", "1.0.0")
+	entry, exists := index.Promptsets[packageID]
+	if !exists {
+		t.Errorf("package should be in index")
+	}
+	if len(entry.Files) != 1 {
+		t.Errorf("expected 1 file, got %d", len(entry.Files))
+	}
+
+	// Check file exists
+	expectedPath := filepath.Join(tmpDir, "arm", "test-reg", "test-prompts", "1.0.0", "README.md")
+	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
+		t.Errorf("file should exist at %s", expectedPath)
+	}
+}
+
+func TestInstallPromptsetReplacesOldVersion(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager(tmpDir, compiler.Cursor)
+
+	// Install v1.0.0
+	pkg1 := &core.Package{
+		Metadata: core.PackageMetadata{
+			RegistryName: "test-reg",
+			Name:         "test-prompts",
+			Version:      core.Version{Version: "1.0.0"},
+		},
+		Files: []*core.File{
+			{
+				Path:    "old.md",
+				Content: []byte("old"),
+			},
+		},
+	}
+	m.InstallPromptset(pkg1)
+
+	// Install v1.0.0 again with different file
+	pkg2 := &core.Package{
+		Metadata: core.PackageMetadata{
+			RegistryName: "test-reg",
+			Name:         "test-prompts",
+			Version:      core.Version{Version: "1.0.0"},
+		},
+		Files: []*core.File{
+			{
+				Path:    "new.md",
+				Content: []byte("new"),
+			},
+		},
+	}
+	err := m.InstallPromptset(pkg2)
+	if err != nil {
+		t.Errorf("InstallPromptset failed: %v", err)
+	}
+
+	// Check only new file exists
+	oldPath := filepath.Join(tmpDir, "arm", "test-reg", "test-prompts", "1.0.0", "old.md")
+	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
+		t.Errorf("old file should be removed")
+	}
+
+	newPath := filepath.Join(tmpDir, "arm", "test-reg", "test-prompts", "1.0.0", "new.md")
+	if _, err := os.Stat(newPath); os.IsNotExist(err) {
+		t.Errorf("new file should exist")
+	}
+}
+
+func TestInstallPromptsetEmptyPackage(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager(tmpDir, compiler.Cursor)
+
+	// Install package with no files
+	pkg := &core.Package{
+		Metadata: core.PackageMetadata{
+			RegistryName: "test-reg",
+			Name:         "empty-prompts",
+			Version:      core.Version{Version: "1.0.0"},
+		},
+		Files: []*core.File{},
+	}
+
+	err := m.InstallPromptset(pkg)
+	if err != nil {
+		t.Errorf("InstallPromptset should handle empty package: %v", err)
+	}
+
+	// Should still be in index
+	if !m.IsInstalled(pkg.Metadata) {
+		t.Errorf("empty package should be installed")
+	}
+
+	index, _ := m.loadIndex()
+	packageID := core.PackageID("test-reg", "empty-prompts", "1.0.0")
+	if len(index.Promptsets[packageID].Files) != 0 {
+		t.Errorf("expected 0 files, got %d", len(index.Promptsets[packageID].Files))
 	}
 }
