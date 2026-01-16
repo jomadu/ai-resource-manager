@@ -356,8 +356,80 @@ func (s *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 }
 
 // InstallPromptset installs a promptset
-func (s *ArmService) InstallPromptset(ctx context.Context, registry, promptset, version string, include []string, exclude []string, sinks []string) error {
-	// TODO: implement
+func (s *ArmService) InstallPromptset(ctx context.Context, registryName, promptset, version string, include []string, exclude []string, sinks []string) error {
+	// 1. Validate registry and sinks exist
+	regConfig, err := s.manifestMgr.GetRegistryConfig(ctx, registryName)
+	if err != nil {
+		return err
+	}
+
+	allSinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, sinkName := range sinks {
+		if _, exists := allSinks[sinkName]; !exists {
+			return fmt.Errorf("sink does not exist: %s", sinkName)
+		}
+	}
+
+	// 2. Create registry client
+	reg, err := registry.CreateRegistry(registryName, regConfig)
+	if err != nil {
+		return err
+	}
+
+	// 3. Resolve version constraint
+	availableVersions, err := reg.ListPackageVersions(ctx, promptset)
+	if err != nil {
+		return err
+	}
+
+	resolvedVersion, err := core.ResolveVersion(version, availableVersions)
+	if err != nil {
+		return err
+	}
+
+	// 4. Fetch package from registry
+	pkg, err := reg.GetPackage(ctx, promptset, resolvedVersion, include, exclude)
+	if err != nil {
+		return err
+	}
+
+	// 5. Update manifest with dependency
+	depKey := fmt.Sprintf("%s/%s", registryName, promptset)
+	depConfig := manifest.PromptsetDependencyConfig{
+		BaseDependencyConfig: manifest.BaseDependencyConfig{
+			Version: resolvedVersion.Version,
+			Sinks:   sinks,
+			Include: include,
+			Exclude: exclude,
+		},
+	}
+
+	if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, depKey, depConfig); err != nil {
+		return err
+	}
+
+	// 6. Update lock file
+	lockConfig := &packagelockfile.DependencyLockConfig{
+		Integrity: pkg.Integrity,
+	}
+
+	if err := s.lockfileMgr.UpsertDependencyLock(ctx, depKey, lockConfig); err != nil {
+		return err
+	}
+
+	// 7. Install to each sink
+	for _, sinkName := range sinks {
+		sinkConfig := allSinks[sinkName]
+		sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+		if err := sinkMgr.InstallPromptset(pkg); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
