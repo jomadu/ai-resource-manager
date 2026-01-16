@@ -2,13 +2,16 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
 	"github.com/jomadu/ai-resource-manager/internal/v4/core"
 	"github.com/jomadu/ai-resource-manager/internal/v4/manifest"
 	"github.com/jomadu/ai-resource-manager/internal/v4/packagelockfile"
+	"github.com/jomadu/ai-resource-manager/internal/v4/registry"
 	"github.com/jomadu/ai-resource-manager/internal/v4/sink"
 )
 
@@ -28,12 +31,14 @@ type OutdatedDependency struct {
 // ArmService handles all ARM operations
 type ArmService struct {
 	manifestMgr manifest.Manager
+	lockfileMgr *packagelockfile.FileManager
 }
 
 // NewArmService creates a new ARM service
-func NewArmService(manifestMgr manifest.Manager) *ArmService {
+func NewArmService(manifestMgr manifest.Manager, lockfileMgr *packagelockfile.FileManager) *ArmService {
 	return &ArmService{
 		manifestMgr: manifestMgr,
+		lockfileMgr: lockfileMgr,
 	}
 }
 
@@ -43,286 +48,159 @@ func NewArmService(manifestMgr manifest.Manager) *ArmService {
 
 // AddGitRegistry adds a Git registry
 func (s *ArmService) AddGitRegistry(ctx context.Context, name, url string, branches []string, force bool) error {
-	m, err := s.manifestMgr.Load()
+	registries, err := s.manifestMgr.GetAllRegistriesConfig(ctx)
 	if err != nil {
 		return err
 	}
 
-	if _, exists := m.Registries[name]; !force && exists {
+	if _, exists := registries[name]; !force && exists {
 		return errors.New("registry already exists")
 	}
 
-	config := map[string]interface{}{
-		"url":  url,
-		"type": "git",
-	}
-	if len(branches) > 0 {
-		config["branches"] = branches
+	config := manifest.GitRegistryConfig{
+		URL:      url,
+		Branches: branches,
 	}
 
-	m.Registries[name] = config
-	return s.manifestMgr.Save(m)
+	return s.manifestMgr.UpsertGitRegistryConfig(ctx, name, config)
 }
 
 // AddGitLabRegistry adds a GitLab registry
 func (s *ArmService) AddGitLabRegistry(ctx context.Context, name, url, projectID, groupID, apiVersion string, force bool) error {
-	m, err := s.manifestMgr.Load()
+	registries, err := s.manifestMgr.GetAllRegistriesConfig(ctx)
 	if err != nil {
 		return err
 	}
 
-	if _, exists := m.Registries[name]; !force && exists {
+	if _, exists := registries[name]; !force && exists {
 		return errors.New("registry already exists")
 	}
 
-	config := map[string]interface{}{
-		"url":  url,
-		"type": "gitlab",
-	}
-	if projectID != "" {
-		config["projectId"] = projectID
-	}
-	if groupID != "" {
-		config["groupId"] = groupID
-	}
-	if apiVersion != "" {
-		config["apiVersion"] = apiVersion
+	config := manifest.GitLabRegistryConfig{
+		URL:        url,
+		ProjectID:  projectID,
+		GroupID:    groupID,
+		APIVersion: apiVersion,
 	}
 
-	m.Registries[name] = config
-	return s.manifestMgr.Save(m)
+	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, config)
 }
 
 // AddCloudsmithRegistry adds a Cloudsmith registry
 func (s *ArmService) AddCloudsmithRegistry(ctx context.Context, name, url, owner, repository string, force bool) error {
-	m, err := s.manifestMgr.Load()
+	registries, err := s.manifestMgr.GetAllRegistriesConfig(ctx)
 	if err != nil {
 		return err
 	}
 
-	if _, exists := m.Registries[name]; !force && exists {
+	if _, exists := registries[name]; !force && exists {
 		return errors.New("registry already exists")
 	}
 
-	m.Registries[name] = map[string]interface{}{
-		"url":        url,
-		"type":       "cloudsmith",
-		"owner":      owner,
-		"repository": repository,
+	config := manifest.CloudsmithRegistryConfig{
+		URL:        url,
+		Owner:      owner,
+		Repository: repository,
 	}
 
-	return s.manifestMgr.Save(m)
+	return s.manifestMgr.UpsertCloudsmithRegistryConfig(ctx, name, config)
 }
 
 // RemoveRegistry removes a registry
 func (s *ArmService) RemoveRegistry(ctx context.Context, name string) error {
-	m, err := s.manifestMgr.Load()
-	if err != nil {
-		return err
-	}
-
-	if _, exists := m.Registries[name]; !exists {
-		return errors.New("registry does not exist")
-	}
-
-	delete(m.Registries, name)
-	return s.manifestMgr.Save(m)
+	return s.manifestMgr.RemoveRegistryConfig(ctx, name)
 }
 
 // SetRegistryName sets registry name
 func (s *ArmService) SetRegistryName(ctx context.Context, name string, newName string) error {
-	m, err := s.manifestMgr.Load()
-	if err != nil {
-		return err
-	}
-
-	if _, exists := m.Registries[name]; !exists {
-		return errors.New("registry does not exist")
-	}
-
-	if _, exists := m.Registries[newName]; exists {
-		return errors.New("registry with new name already exists")
-	}
-
-	m.Registries[newName] = m.Registries[name]
-	delete(m.Registries, name)
-
-	return s.manifestMgr.Save(m)
+	return s.manifestMgr.UpdateRegistryConfigName(ctx, name, newName)
 }
 
 // SetRegistryURL sets registry URL
 func (s *ArmService) SetRegistryURL(ctx context.Context, name string, url string) error {
-	m, err := s.manifestMgr.Load()
+	reg, err := s.manifestMgr.GetRegistryConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	reg, exists := m.Registries[name]
-	if !exists {
-		return errors.New("registry does not exist")
-	}
-
 	reg["url"] = url
-	m.Registries[name] = reg
-
-	return s.manifestMgr.Save(m)
+	return s.manifestMgr.UpsertRegistryConfig(ctx, name, reg)
 }
 
 // SetGitRegistryBranches sets Git registry branches
 func (s *ArmService) SetGitRegistryBranches(ctx context.Context, name string, branches []string) error {
-	m, err := s.manifestMgr.Load()
+	config, err := s.manifestMgr.GetGitRegistryConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	reg, exists := m.Registries[name]
-	if !exists {
-		return errors.New("registry does not exist")
-	}
-
-	if regType, ok := reg["type"].(string); !ok || regType != "git" {
-		return errors.New("registry is not a git registry")
-	}
-
-	reg["branches"] = branches
-	m.Registries[name] = reg
-
-	return s.manifestMgr.Save(m)
+	config.Branches = branches
+	return s.manifestMgr.UpsertGitRegistryConfig(ctx, name, config)
 }
 
 // SetGitLabRegistryProjectID sets GitLab registry project ID
 func (s *ArmService) SetGitLabRegistryProjectID(ctx context.Context, name string, projectID string) error {
-	m, err := s.manifestMgr.Load()
+	config, err := s.manifestMgr.GetGitLabRegistryConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	reg, exists := m.Registries[name]
-	if !exists {
-		return errors.New("registry does not exist")
-	}
-
-	if regType, ok := reg["type"].(string); !ok || regType != "gitlab" {
-		return errors.New("registry is not a gitlab registry")
-	}
-
-	reg["projectId"] = projectID
-	m.Registries[name] = reg
-
-	return s.manifestMgr.Save(m)
+	config.ProjectID = projectID
+	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, config)
 }
 
 // SetGitLabRegistryGroupID sets GitLab registry group ID
 func (s *ArmService) SetGitLabRegistryGroupID(ctx context.Context, name string, groupID string) error {
-	m, err := s.manifestMgr.Load()
+	config, err := s.manifestMgr.GetGitLabRegistryConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	reg, exists := m.Registries[name]
-	if !exists {
-		return errors.New("registry does not exist")
-	}
-
-	if regType, ok := reg["type"].(string); !ok || regType != "gitlab" {
-		return errors.New("registry is not a gitlab registry")
-	}
-
-	reg["groupId"] = groupID
-	m.Registries[name] = reg
-
-	return s.manifestMgr.Save(m)
+	config.GroupID = groupID
+	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, config)
 }
 
 // SetGitLabRegistryAPIVersion sets GitLab registry API version
 func (s *ArmService) SetGitLabRegistryAPIVersion(ctx context.Context, name string, apiVersion string) error {
-	m, err := s.manifestMgr.Load()
+	config, err := s.manifestMgr.GetGitLabRegistryConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	reg, exists := m.Registries[name]
-	if !exists {
-		return errors.New("registry does not exist")
-	}
-
-	if regType, ok := reg["type"].(string); !ok || regType != "gitlab" {
-		return errors.New("registry is not a gitlab registry")
-	}
-
-	reg["apiVersion"] = apiVersion
-	m.Registries[name] = reg
-
-	return s.manifestMgr.Save(m)
+	config.APIVersion = apiVersion
+	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, config)
 }
 
 // SetCloudsmithRegistryOwner sets Cloudsmith registry owner
 func (s *ArmService) SetCloudsmithRegistryOwner(ctx context.Context, name string, owner string) error {
-	m, err := s.manifestMgr.Load()
+	config, err := s.manifestMgr.GetCloudsmithRegistryConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	reg, exists := m.Registries[name]
-	if !exists {
-		return errors.New("registry does not exist")
-	}
-
-	if regType, ok := reg["type"].(string); !ok || regType != "cloudsmith" {
-		return errors.New("registry is not a cloudsmith registry")
-	}
-
-	reg["owner"] = owner
-	m.Registries[name] = reg
-
-	return s.manifestMgr.Save(m)
+	config.Owner = owner
+	return s.manifestMgr.UpsertCloudsmithRegistryConfig(ctx, name, config)
 }
 
 // SetCloudsmithRegistryRepository sets Cloudsmith registry repository
 func (s *ArmService) SetCloudsmithRegistryRepository(ctx context.Context, name string, repository string) error {
-	m, err := s.manifestMgr.Load()
+	config, err := s.manifestMgr.GetCloudsmithRegistryConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	reg, exists := m.Registries[name]
-	if !exists {
-		return errors.New("registry does not exist")
-	}
-
-	if regType, ok := reg["type"].(string); !ok || regType != "cloudsmith" {
-		return errors.New("registry is not a cloudsmith registry")
-	}
-
-	reg["repository"] = repository
-	m.Registries[name] = reg
-
-	return s.manifestMgr.Save(m)
+	config.Repository = repository
+	return s.manifestMgr.UpsertCloudsmithRegistryConfig(ctx, name, config)
 }
 
 // GetRegistryConfig gets registry configuration
 func (s *ArmService) GetRegistryConfig(ctx context.Context, name string) (map[string]interface{}, error) {
-	m, err := s.manifestMgr.Load()
-	if err != nil {
-		return nil, err
-	}
-
-	cfg, exists := m.Registries[name]
-	if !exists {
-		return nil, errors.New("registry does not exist")
-	}
-
-	return cfg, nil
+	return s.manifestMgr.GetRegistryConfig(ctx, name)
 }
 
 // GetAllRegistriesConfig gets all registry configurations
 func (s *ArmService) GetAllRegistriesConfig(ctx context.Context) (map[string]map[string]interface{}, error) {
-	m, err := s.manifestMgr.Load()
-	if err != nil {
-		return nil, err
-	}
-
-	return m.Registries, nil
+	return s.manifestMgr.GetAllRegistriesConfig(ctx)
 }
 
 // ---------------
@@ -331,119 +209,61 @@ func (s *ArmService) GetAllRegistriesConfig(ctx context.Context) (map[string]map
 
 // AddSink adds a sink
 func (s *ArmService) AddSink(ctx context.Context, name, directory string, tool compiler.Tool, force bool) error {
-	m, err := s.manifestMgr.Load()
+	sinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
 	if err != nil {
 		return err
 	}
 
-	if _, exists := m.Sinks[name]; !force && exists {
+	if _, exists := sinks[name]; !force && exists {
 		return errors.New("sink already exists")
 	}
 
-	m.Sinks[name] = manifest.SinkConfig{
+	return s.manifestMgr.UpsertSinkConfig(ctx, name, manifest.SinkConfig{
 		Directory: directory,
 		Tool:      tool,
-	}
-
-	return s.manifestMgr.Save(m)
+	})
 }
 
 // RemoveSink removes a sink
 func (s *ArmService) RemoveSink(ctx context.Context, name string) error {
-	m, err := s.manifestMgr.Load()
-	if err != nil {
-		return err
-	}
-
-	if _, exists := m.Sinks[name]; !exists {
-		return errors.New("sink does not exist")
-	}
-
-	delete(m.Sinks, name)
-
-	return s.manifestMgr.Save(m)
+	return s.manifestMgr.RemoveSinkConfig(ctx, name)
 }
 
 // GetSinkConfig gets sink configuration
 func (s *ArmService) GetSinkConfig(ctx context.Context, name string) (manifest.SinkConfig, error) {
-	m, err := s.manifestMgr.Load()
-	if err != nil {
-		return manifest.SinkConfig{}, err
-	}
-
-	cfg, exists := m.Sinks[name]
-	if !exists {
-		return manifest.SinkConfig{}, errors.New("sink does not exist")
-	}
-
-	return cfg, nil
+	return s.manifestMgr.GetSinkConfig(ctx, name)
 }
 
 // GetAllSinkConfigs gets all sink configurations
 func (s *ArmService) GetAllSinkConfigs(ctx context.Context) (map[string]manifest.SinkConfig, error) {
-	m, err := s.manifestMgr.Load()
-	if err != nil {
-		return nil, err
-	}
-
-	return m.Sinks, nil
+	return s.manifestMgr.GetAllSinksConfig(ctx)
 }
 
 // SetSinkName sets sink name
 func (s *ArmService) SetSinkName(ctx context.Context, name string, newName string) error {
-	m, err := s.manifestMgr.Load()
-	if err != nil {
-		return err
-	}
-
-	if _, exists := m.Sinks[name]; !exists {
-		return errors.New("sink does not exist")
-	}
-
-	if _, exists := m.Sinks[newName]; exists {
-		return errors.New("sink with new name already exists")
-	}
-
-	m.Sinks[newName] = m.Sinks[name]
-	delete(m.Sinks, name)
-
-	return s.manifestMgr.Save(m)
+	return s.manifestMgr.UpdateSinkConfigName(ctx, name, newName)
 }
 
 // SetSinkDirectory sets sink directory
 func (s *ArmService) SetSinkDirectory(ctx context.Context, name string, directory string) error {
-	m, err := s.manifestMgr.Load()
+	sink, err := s.manifestMgr.GetSinkConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	sink, exists := m.Sinks[name]
-	if !exists {
-		return errors.New("sink does not exist")
-	}
-
 	sink.Directory = directory
-	m.Sinks[name] = sink
-
-	return s.manifestMgr.Save(m)
+	return s.manifestMgr.UpsertSinkConfig(ctx, name, sink)
 }
 
 // SetSinkTool sets sink tool
 func (s *ArmService) SetSinkTool(ctx context.Context, name string, tool compiler.Tool) error {
-	m, err := s.manifestMgr.Load()
+	sink, err := s.manifestMgr.GetSinkConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	sink, exists := m.Sinks[name]
-	if !exists {
-		return errors.New("sink does not exist")
-	}
-
 	sink.Tool = tool
-	m.Sinks[name] = sink
-
-	return s.manifestMgr.Save(m)
+	return s.manifestMgr.UpsertSinkConfig(ctx, name, sink)
 }
 
 // ---------------------
@@ -457,8 +277,81 @@ func (s *ArmService) InstallAll(ctx context.Context) error {
 }
 
 // InstallRuleset installs a ruleset
-func (s *ArmService) InstallRuleset(ctx context.Context, registry, ruleset, version string, priority int, include []string, exclude []string, sinks []string) error {
-	// TODO: implement
+func (s *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, version string, priority int, include []string, exclude []string, sinks []string) error {
+	// 1. Validate registry and sinks exist
+	regConfig, err := s.manifestMgr.GetRegistryConfig(ctx, registryName)
+	if err != nil {
+		return err
+	}
+
+	allSinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, sinkName := range sinks {
+		if _, exists := allSinks[sinkName]; !exists {
+			return fmt.Errorf("sink does not exist: %s", sinkName)
+		}
+	}
+
+	// 2. Create registry client
+	reg, err := registry.CreateRegistry(registryName, regConfig)
+	if err != nil {
+		return err
+	}
+
+	// 3. Resolve version constraint
+	availableVersions, err := reg.ListPackageVersions(ctx, ruleset)
+	if err != nil {
+		return err
+	}
+
+	resolvedVersion, err := core.ResolveVersion(version, availableVersions)
+	if err != nil {
+		return err
+	}
+
+	// 4. Fetch package from registry
+	pkg, err := reg.GetPackage(ctx, ruleset, resolvedVersion, include, exclude)
+	if err != nil {
+		return err
+	}
+
+	// 5. Update manifest with dependency
+	depKey := fmt.Sprintf("%s/%s", registryName, ruleset)
+	depConfig := manifest.RulesetDependencyConfig{
+		BaseDependencyConfig: manifest.BaseDependencyConfig{
+			Version: resolvedVersion.Version,
+			Sinks:   sinks,
+			Include: include,
+			Exclude: exclude,
+		},
+		Priority: priority,
+	}
+
+	if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, depKey, depConfig); err != nil {
+		return err
+	}
+
+	// 6. Update lock file
+	lockConfig := &packagelockfile.DependencyLockConfig{
+		Integrity: pkg.Integrity,
+	}
+
+	if err := s.lockfileMgr.UpsertDependencyLock(ctx, depKey, lockConfig); err != nil {
+		return err
+	}
+
+	// 7. Install to each sink
+	for _, sinkName := range sinks {
+		sinkConfig := allSinks[sinkName]
+		sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+		if err := sinkMgr.InstallRuleset(pkg, priority); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

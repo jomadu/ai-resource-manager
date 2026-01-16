@@ -28,3 +28,26 @@ func (c *Constraint) IsSatisfiedBy(version Version) bool {
 		return false
 	}
 }
+
+func ParseConstraint(versionStr string) (Constraint, error) {
+	if versionStr == "latest" {
+		return Constraint{Type: Latest}, nil
+	}
+
+	version, err := ParseVersion(versionStr)
+	if err != nil {
+		return Constraint{}, err
+	}
+
+	if !version.IsSemanticVersion() {
+		return Constraint{Type: BranchHead, Version: &version}, nil
+	}
+
+	if version.Patch > 0 {
+		return Constraint{Type: Exact, Version: &version}, nil
+	}
+	if version.Minor > 0 {
+		return Constraint{Type: Minor, Version: &version}, nil
+	}
+	return Constraint{Type: Major, Version: &version}, nil
+}

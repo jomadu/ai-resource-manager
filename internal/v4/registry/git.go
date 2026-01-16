@@ -135,13 +135,15 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 	
 	// Try cache first
 	if files, err := g.packageCache.GetPackageVersion(ctx, cacheKey, version); err == nil {
+		integrity := calculateIntegrity(files)
 		return &core.Package{
 			Metadata: core.PackageMetadata{
 				RegistryName: g.name,
 				Name:         packageName,
 				Version:      version,
 			},
-			Files: files,
+			Files:     files,
+			Integrity: integrity,
 		}, nil
 	}
 	
@@ -169,13 +171,16 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 	// Cache the filtered result
 	g.packageCache.SetPackageVersion(ctx, cacheKey, version, filteredFiles)
 	
+	integrity := calculateIntegrity(filteredFiles)
+	
 	return &core.Package{
 		Metadata: core.PackageMetadata{
 			RegistryName: g.name,
 			Name:         packageName,
 			Version:      version,
 		},
-		Files: filteredFiles,
+		Files:     filteredFiles,
+		Integrity: integrity,
 	}, nil
 }
 

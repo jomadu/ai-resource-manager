@@ -1,6 +1,8 @@
 package core
 
 import (
+	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -113,4 +115,28 @@ func ParseVersion(versionString string) (Version, error) {
 		Build:      build,
 		Version:    original,
 	}, nil
+}
+
+func ResolveVersion(versionStr string, availableVersions []Version) (Version, error) {
+	constraint, err := ParseConstraint(versionStr)
+	if err != nil {
+		return Version{}, err
+	}
+
+	var candidates []Version
+	for _, v := range availableVersions {
+		if constraint.IsSatisfiedBy(v) {
+			candidates = append(candidates, v)
+		}
+	}
+
+	if len(candidates) == 0 {
+		return Version{}, fmt.Errorf("no version satisfies constraint: %s", versionStr)
+	}
+
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].Compare(candidates[j]) > 0
+	})
+
+	return candidates[0], nil
 }

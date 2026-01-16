@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -15,13 +16,301 @@ type mockManifestManager struct {
 	saveErr  error
 }
 
-func (m *mockManifestManager) Load() (*manifest.Manifest, error) {
-	return m.manifest, m.loadErr
+func (m *mockManifestManager) GetAllRegistriesConfig(ctx context.Context) (map[string]map[string]interface{}, error) {
+	if m.loadErr != nil {
+		return nil, m.loadErr
+	}
+	return m.manifest.Registries, nil
 }
 
-func (m *mockManifestManager) Save(mf *manifest.Manifest) error {
-	m.manifest = mf
-	return m.saveErr
+func (m *mockManifestManager) GetRegistryConfig(ctx context.Context, name string) (map[string]interface{}, error) {
+	if m.loadErr != nil {
+		return nil, m.loadErr
+	}
+	cfg, exists := m.manifest.Registries[name]
+	if !exists {
+		return nil, errors.New("registry does not exist")
+	}
+	return cfg, nil
+}
+
+func (m *mockManifestManager) GetGitRegistryConfig(ctx context.Context, name string) (manifest.GitRegistryConfig, error) {
+	if m.loadErr != nil {
+		return manifest.GitRegistryConfig{}, m.loadErr
+	}
+	cfg, exists := m.manifest.Registries[name]
+	if !exists {
+		return manifest.GitRegistryConfig{}, errors.New("registry does not exist")
+	}
+	regType, ok := cfg["type"].(string)
+	if !ok || regType != "git" {
+		return manifest.GitRegistryConfig{}, errors.New("registry is not a git registry")
+	}
+	configMap, _ := json.Marshal(cfg)
+	var result manifest.GitRegistryConfig
+	json.Unmarshal(configMap, &result)
+	return result, nil
+}
+
+func (m *mockManifestManager) GetGitLabRegistryConfig(ctx context.Context, name string) (manifest.GitLabRegistryConfig, error) {
+	if m.loadErr != nil {
+		return manifest.GitLabRegistryConfig{}, m.loadErr
+	}
+	cfg, exists := m.manifest.Registries[name]
+	if !exists {
+		return manifest.GitLabRegistryConfig{}, errors.New("registry does not exist")
+	}
+	regType, ok := cfg["type"].(string)
+	if !ok || regType != "gitlab" {
+		return manifest.GitLabRegistryConfig{}, errors.New("registry is not a gitlab registry")
+	}
+	configMap, _ := json.Marshal(cfg)
+	var result manifest.GitLabRegistryConfig
+	json.Unmarshal(configMap, &result)
+	return result, nil
+}
+
+func (m *mockManifestManager) GetCloudsmithRegistryConfig(ctx context.Context, name string) (manifest.CloudsmithRegistryConfig, error) {
+	if m.loadErr != nil {
+		return manifest.CloudsmithRegistryConfig{}, m.loadErr
+	}
+	cfg, exists := m.manifest.Registries[name]
+	if !exists {
+		return manifest.CloudsmithRegistryConfig{}, errors.New("registry does not exist")
+	}
+	regType, ok := cfg["type"].(string)
+	if !ok || regType != "cloudsmith" {
+		return manifest.CloudsmithRegistryConfig{}, errors.New("registry is not a cloudsmith registry")
+	}
+	configMap, _ := json.Marshal(cfg)
+	var result manifest.CloudsmithRegistryConfig
+	json.Unmarshal(configMap, &result)
+	return result, nil
+}
+
+func (m *mockManifestManager) UpsertRegistryConfig(ctx context.Context, name string, config map[string]interface{}) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	m.manifest.Registries[name] = config
+	return nil
+}
+
+func (m *mockManifestManager) UpsertGitRegistryConfig(ctx context.Context, name string, config manifest.GitRegistryConfig) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	config.Type = "git"
+	configMap, _ := json.Marshal(config)
+	var result map[string]interface{}
+	json.Unmarshal(configMap, &result)
+	m.manifest.Registries[name] = result
+	return nil
+}
+
+func (m *mockManifestManager) UpsertGitLabRegistryConfig(ctx context.Context, name string, config manifest.GitLabRegistryConfig) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	config.Type = "gitlab"
+	configMap, _ := json.Marshal(config)
+	var result map[string]interface{}
+	json.Unmarshal(configMap, &result)
+	m.manifest.Registries[name] = result
+	return nil
+}
+
+func (m *mockManifestManager) UpsertCloudsmithRegistryConfig(ctx context.Context, name string, config manifest.CloudsmithRegistryConfig) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	config.Type = "cloudsmith"
+	configMap, _ := json.Marshal(config)
+	var result map[string]interface{}
+	json.Unmarshal(configMap, &result)
+	m.manifest.Registries[name] = result
+	return nil
+}
+
+func (m *mockManifestManager) UpdateRegistryConfigName(ctx context.Context, name string, newName string) error {
+	if m.loadErr != nil {
+		return m.loadErr
+	}
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	cfg, exists := m.manifest.Registries[name]
+	if !exists {
+		return errors.New("registry does not exist")
+	}
+	if _, exists := m.manifest.Registries[newName]; exists {
+		return errors.New("registry with new name already exists")
+	}
+	m.manifest.Registries[newName] = cfg
+	delete(m.manifest.Registries, name)
+	return nil
+}
+
+func (m *mockManifestManager) RemoveRegistryConfig(ctx context.Context, name string) error {
+	if m.loadErr != nil {
+		return m.loadErr
+	}
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	if _, exists := m.manifest.Registries[name]; !exists {
+		return errors.New("registry does not exist")
+	}
+	delete(m.manifest.Registries, name)
+	return nil
+}
+
+func (m *mockManifestManager) GetAllSinksConfig(ctx context.Context) (map[string]manifest.SinkConfig, error) {
+	if m.loadErr != nil {
+		return nil, m.loadErr
+	}
+	return m.manifest.Sinks, nil
+}
+
+func (m *mockManifestManager) GetSinkConfig(ctx context.Context, name string) (manifest.SinkConfig, error) {
+	if m.loadErr != nil {
+		return manifest.SinkConfig{}, m.loadErr
+	}
+	cfg, exists := m.manifest.Sinks[name]
+	if !exists {
+		return manifest.SinkConfig{}, errors.New("sink does not exist")
+	}
+	return cfg, nil
+}
+
+func (m *mockManifestManager) UpsertSinkConfig(ctx context.Context, name string, config manifest.SinkConfig) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	m.manifest.Sinks[name] = config
+	return nil
+}
+
+func (m *mockManifestManager) UpdateSinkConfigName(ctx context.Context, name string, newName string) error {
+	if m.loadErr != nil {
+		return m.loadErr
+	}
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	cfg, exists := m.manifest.Sinks[name]
+	if !exists {
+		return errors.New("sink does not exist")
+	}
+	if _, exists := m.manifest.Sinks[newName]; exists {
+		return errors.New("sink with new name already exists")
+	}
+	m.manifest.Sinks[newName] = cfg
+	delete(m.manifest.Sinks, name)
+	return nil
+}
+
+func (m *mockManifestManager) RemoveSinkConfig(ctx context.Context, name string) error {
+	if m.loadErr != nil {
+		return m.loadErr
+	}
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	if _, exists := m.manifest.Sinks[name]; !exists {
+		return errors.New("sink does not exist")
+	}
+	delete(m.manifest.Sinks, name)
+	return nil
+}
+
+func (m *mockManifestManager) GetAllDependenciesConfig(ctx context.Context) (map[string]map[string]interface{}, error) {
+	if m.loadErr != nil {
+		return nil, m.loadErr
+	}
+	return m.manifest.Dependencies, nil
+}
+
+func (m *mockManifestManager) GetDependencyConfig(ctx context.Context, key string) (map[string]interface{}, error) {
+	if m.loadErr != nil {
+		return nil, m.loadErr
+	}
+	cfg, exists := m.manifest.Dependencies[key]
+	if !exists {
+		return nil, errors.New("dependency does not exist")
+	}
+	return cfg, nil
+}
+
+func (m *mockManifestManager) UpsertDependencyConfig(ctx context.Context, key string, config map[string]interface{}) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	if m.manifest.Dependencies == nil {
+		m.manifest.Dependencies = make(map[string]map[string]interface{})
+	}
+	m.manifest.Dependencies[key] = config
+	return nil
+}
+
+func (m *mockManifestManager) UpsertRulesetDependencyConfig(ctx context.Context, key string, config manifest.RulesetDependencyConfig) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	if m.manifest.Dependencies == nil {
+		m.manifest.Dependencies = make(map[string]map[string]interface{})
+	}
+	config.Type = manifest.ResourceTypeRuleset
+	configMap, _ := json.Marshal(config)
+	var result map[string]interface{}
+	json.Unmarshal(configMap, &result)
+	m.manifest.Dependencies[key] = result
+	return nil
+}
+
+func (m *mockManifestManager) UpsertPromptsetDependencyConfig(ctx context.Context, key string, config manifest.PromptsetDependencyConfig) error {
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	if m.manifest.Dependencies == nil {
+		m.manifest.Dependencies = make(map[string]map[string]interface{})
+	}
+	config.Type = manifest.ResourceTypePromptset
+	configMap, _ := json.Marshal(config)
+	var result map[string]interface{}
+	json.Unmarshal(configMap, &result)
+	m.manifest.Dependencies[key] = result
+	return nil
+}
+
+func (m *mockManifestManager) UpdateDependencyConfigName(ctx context.Context, key string, newKey string) error {
+	if m.loadErr != nil {
+		return m.loadErr
+	}
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	cfg, exists := m.manifest.Dependencies[key]
+	if !exists {
+		return errors.New("dependency does not exist")
+	}
+	m.manifest.Dependencies[newKey] = cfg
+	delete(m.manifest.Dependencies, key)
+	return nil
+}
+
+func (m *mockManifestManager) RemoveDependencyConfig(ctx context.Context, key string) error {
+	if m.loadErr != nil {
+		return m.loadErr
+	}
+	if m.saveErr != nil {
+		return m.saveErr
+	}
+	if _, exists := m.manifest.Dependencies[key]; !exists {
+		return errors.New("dependency does not exist")
+	}
+	delete(m.manifest.Dependencies, key)
+	return nil
 }
 
 func TestAddSink(t *testing.T) {
@@ -29,7 +318,7 @@ func TestAddSink(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.AddSink(context.Background(), "test", "/path", compiler.Cursor, false)
 
@@ -56,7 +345,7 @@ func TestAddSink(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.AddSink(context.Background(), "test", "/new", compiler.AmazonQ, false)
 
@@ -76,7 +365,7 @@ func TestAddSink(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.AddSink(context.Background(), "test", "/new", compiler.AmazonQ, true)
 
@@ -95,7 +384,7 @@ func TestAddSink(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.AddSink(context.Background(), "test", "/path", compiler.Cursor, false)
 
@@ -109,7 +398,7 @@ func TestAddSink(t *testing.T) {
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 			saveErr:  errors.New("save error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.AddSink(context.Background(), "test", "/path", compiler.Cursor, false)
 
@@ -128,7 +417,7 @@ func TestRemoveSink(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.RemoveSink(context.Background(), "test")
 
@@ -144,7 +433,7 @@ func TestRemoveSink(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.RemoveSink(context.Background(), "test")
 
@@ -157,7 +446,7 @@ func TestRemoveSink(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.RemoveSink(context.Background(), "test")
 
@@ -175,7 +464,7 @@ func TestRemoveSink(t *testing.T) {
 			},
 			saveErr: errors.New("save error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.RemoveSink(context.Background(), "test")
 
@@ -194,7 +483,7 @@ func TestGetSinkConfig(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		cfg, err := svc.GetSinkConfig(context.Background(), "test")
 
@@ -210,7 +499,7 @@ func TestGetSinkConfig(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		_, err := svc.GetSinkConfig(context.Background(), "test")
 
@@ -223,7 +512,7 @@ func TestGetSinkConfig(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		_, err := svc.GetSinkConfig(context.Background(), "test")
 
@@ -243,7 +532,7 @@ func TestGetAllSinkConfigs(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		cfgs, err := svc.GetAllSinkConfigs(context.Background())
 
@@ -259,7 +548,7 @@ func TestGetAllSinkConfigs(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		cfgs, err := svc.GetAllSinkConfigs(context.Background())
 
@@ -275,7 +564,7 @@ func TestGetAllSinkConfigs(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		_, err := svc.GetAllSinkConfigs(context.Background())
 
@@ -294,7 +583,7 @@ func TestSetSinkName(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkName(context.Background(), "old", "new")
 
@@ -316,7 +605,7 @@ func TestSetSinkName(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkName(context.Background(), "old", "new")
 
@@ -334,7 +623,7 @@ func TestSetSinkName(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkName(context.Background(), "old", "new")
 
@@ -347,7 +636,7 @@ func TestSetSinkName(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkName(context.Background(), "old", "new")
 
@@ -365,7 +654,7 @@ func TestSetSinkName(t *testing.T) {
 			},
 			saveErr: errors.New("save error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkName(context.Background(), "old", "new")
 
@@ -384,7 +673,7 @@ func TestSetSinkDirectory(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkDirectory(context.Background(), "test", "/new")
 
@@ -400,7 +689,7 @@ func TestSetSinkDirectory(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkDirectory(context.Background(), "test", "/new")
 
@@ -413,7 +702,7 @@ func TestSetSinkDirectory(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkDirectory(context.Background(), "test", "/new")
 
@@ -431,7 +720,7 @@ func TestSetSinkDirectory(t *testing.T) {
 			},
 			saveErr: errors.New("save error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkDirectory(context.Background(), "test", "/new")
 
@@ -450,7 +739,7 @@ func TestSetSinkTool(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkTool(context.Background(), "test", compiler.AmazonQ)
 
@@ -466,7 +755,7 @@ func TestSetSinkTool(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkTool(context.Background(), "test", compiler.AmazonQ)
 
@@ -479,7 +768,7 @@ func TestSetSinkTool(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkTool(context.Background(), "test", compiler.AmazonQ)
 
@@ -497,7 +786,7 @@ func TestSetSinkTool(t *testing.T) {
 			},
 			saveErr: errors.New("save error"),
 		}
-		svc := NewArmService(mgr)
+		svc := NewArmService(mgr, nil)
 
 		err := svc.SetSinkTool(context.Background(), "test", compiler.AmazonQ)
 

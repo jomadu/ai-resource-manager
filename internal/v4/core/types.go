@@ -29,8 +29,9 @@ type PackageMetadata struct {
 }
 
 type Package struct {
-	Metadata PackageMetadata
-	Files    []*File
+	Metadata  PackageMetadata
+	Files     []*File
+	Integrity string
 }
 
 type ConstraintType string

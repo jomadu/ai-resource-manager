@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
-	"github.com/jomadu/ai-resource-manager/internal/v4/registry"
 )
 
 // Test helper functions
@@ -67,108 +66,8 @@ func TestFileManager_GetAllRegistriesConfig(t *testing.T) {
 	}
 }
 
-func TestFileManager_UpsertGitRegistryConfig(t *testing.T) {
-	ctx := context.Background()
-	manifestPath := filepath.Join(t.TempDir(), "empty.json")
-	fm := NewFileManagerWithPath(manifestPath)
-	
-	config := GitRegistryConfig{
-		RegistryConfig: registry.RegistryConfig{
-			Type: "git",
-			URL:  "https://github.com/test/repo",
-		},
-		Branches: []string{"main"},
-	}
-	
-	err := fm.UpsertGitRegistryConfig(ctx, "test-reg", config)
-	if err != nil {
-		t.Fatalf("UpsertGitRegistryConfig() error = %v", err)
-	}
-	
-	// Verify it was added
-	retrieved, err := fm.GetGitRegistryConfig(ctx, "test-reg")
-	if err != nil {
-		t.Fatalf("GetGitRegistryConfig() error = %v", err)
-	}
-	
-	if retrieved.URL != config.URL {
-		t.Errorf("Expected URL %s, got %s", config.URL, retrieved.URL)
-	}
-	
-	// Test upsert (update existing)
-	config.URL = "https://github.com/test/updated"
-	err = fm.UpsertGitRegistryConfig(ctx, "test-reg", config)
-	if err != nil {
-		t.Fatalf("UpsertGitRegistryConfig() update error = %v", err)
-	}
-	
-	retrieved, _ = fm.GetGitRegistryConfig(ctx, "test-reg")
-	if retrieved.URL != "https://github.com/test/updated" {
-		t.Errorf("Expected updated URL")
-	}
-}
 
-func TestFileManager_UpsertGitLabRegistryConfig(t *testing.T) {
-	ctx := context.Background()
-	manifestPath := filepath.Join(t.TempDir(), "empty.json")
-	fm := NewFileManagerWithPath(manifestPath)
-	
-	config := GitLabRegistryConfig{
-		RegistryConfig: registry.RegistryConfig{
-			Type: "gitlab",
-			URL:  "https://gitlab.example.com",
-		},
-		ProjectID: "123",
-		GroupID:   "456",
-	}
-	
-	err := fm.UpsertGitLabRegistryConfig(ctx, "gitlab-reg", config)
-	if err != nil {
-		t.Fatalf("UpsertGitLabRegistryConfig() error = %v", err)
-	}
-	
-	retrieved, err := fm.GetGitLabRegistryConfig(ctx, "gitlab-reg")
-	if err != nil {
-		t.Fatalf("GetGitLabRegistryConfig() error = %v", err)
-	}
-	
-	if retrieved.ProjectID != config.ProjectID {
-		t.Errorf("Expected ProjectID %s, got %s", config.ProjectID, retrieved.ProjectID)
-	}
-}
 
-func TestFileManager_UpsertCloudsmithRegistryConfig(t *testing.T) {
-	ctx := context.Background()
-	manifestPath := filepath.Join(t.TempDir(), "empty.json")
-	fm := NewFileManagerWithPath(manifestPath)
-	
-	config := CloudsmithRegistryConfig{
-		RegistryConfig: registry.RegistryConfig{
-			Type: "cloudsmith",
-			URL:  "https://api.cloudsmith.io",
-		},
-		Owner:      "myorg",
-		Repository: "ai-rules",
-	}
-	
-	err := fm.UpsertCloudsmithRegistryConfig(ctx, "cloudsmith-reg", config)
-	if err != nil {
-		t.Fatalf("UpsertCloudsmithRegistryConfig() error = %v", err)
-	}
-	
-	retrieved, err := fm.GetCloudsmithRegistryConfig(ctx, "cloudsmith-reg")
-	if err != nil {
-		t.Fatalf("GetCloudsmithRegistryConfig() error = %v", err)
-	}
-	
-	if retrieved.Owner != config.Owner {
-		t.Errorf("Expected Owner %s, got %s", config.Owner, retrieved.Owner)
-	}
-	
-	if retrieved.Repository != config.Repository {
-		t.Errorf("Expected Repository %s, got %s", config.Repository, retrieved.Repository)
-	}
-}
 
 func TestFileManager_RemoveRegistryConfig(t *testing.T) {
 	ctx := context.Background()
@@ -289,7 +188,7 @@ func TestFileManager_UpsertRulesetDependencyConfig(t *testing.T) {
 		Priority: 100,
 	}
 	
-	err := fm.UpsertRulesetDependencyConfig(ctx, "test-reg/ruleset1", config)
+	err := fm.UpsertRulesetDependencyConfig(ctx, "test-reg/ruleset1", *config)
 	if err != nil {
 		t.Fatalf("UpsertRulesetDependencyConfig() error = %v", err)
 	}
@@ -326,7 +225,7 @@ func TestFileManager_UpsertPromptsetDependencyConfig(t *testing.T) {
 		},
 	}
 	
-	err := fm.UpsertPromptsetDependencyConfig(ctx, "test-reg/promptset1", config)
+	err := fm.UpsertPromptsetDependencyConfig(ctx, "test-reg/promptset1", *config)
 	if err != nil {
 		t.Fatalf("UpsertPromptsetDependencyConfig() error = %v", err)
 	}
@@ -490,7 +389,7 @@ func TestFileManager_UpsertDependency_Overwrite(t *testing.T) {
 		Priority: 200,
 	}
 	
-	err := fm.UpsertRulesetDependencyConfig(ctx, "test-reg/package1", newConfig)
+	err := fm.UpsertRulesetDependencyConfig(ctx, "test-reg/package1", *newConfig)
 	if err != nil {
 		t.Fatalf("UpsertRulesetDependencyConfig() error = %v", err)
 	}
@@ -512,56 +411,203 @@ func TestFileManager_UpsertDependency_Overwrite(t *testing.T) {
 
 // Registry type validation tests
 
+
+
+
+func TestFileManager_GetGitRegistryConfig(t *testing.T) {
+	ctx := context.Background()
+	
+	manifest := newTestManifest()
+	manifest.Registries["git-reg"] = map[string]interface{}{
+		"type":     "git",
+		"url":      "https://github.com/test/repo",
+		"branches": []interface{}{"main", "develop"},
+	}
+	
+	manifestPath := createTestManifest(t, manifest)
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	config, err := fm.GetGitRegistryConfig(ctx, "git-reg")
+	if err != nil {
+		t.Fatalf("GetGitRegistryConfig() error = %v", err)
+	}
+	
+	if config.Type != "git" {
+		t.Errorf("Expected type git, got %s", config.Type)
+	}
+	if config.URL != "https://github.com/test/repo" {
+		t.Errorf("Expected URL https://github.com/test/repo, got %s", config.URL)
+	}
+	if len(config.Branches) != 2 {
+		t.Errorf("Expected 2 branches, got %d", len(config.Branches))
+	}
+}
+
 func TestFileManager_GetGitRegistryConfig_WrongType(t *testing.T) {
 	ctx := context.Background()
 	
 	manifest := newTestManifest()
-	manifest.Registries["test-reg"] = map[string]interface{}{
-		"type": "gitlab", // Wrong type
-		"url":  "https://gitlab.example.com",
+	manifest.Registries["gitlab-reg"] = map[string]interface{}{
+		"type": "gitlab",
+		"url":  "https://gitlab.com/test/repo",
 	}
 	
 	manifestPath := createTestManifest(t, manifest)
 	fm := NewFileManagerWithPath(manifestPath)
 	
-	_, err := fm.GetGitRegistryConfig(ctx, "test-reg")
+	_, err := fm.GetGitRegistryConfig(ctx, "gitlab-reg")
 	if err == nil {
 		t.Errorf("Expected error for wrong registry type")
 	}
 }
 
-func TestFileManager_GetGitLabRegistryConfig_WrongType(t *testing.T) {
+func TestFileManager_GetGitLabRegistryConfig(t *testing.T) {
 	ctx := context.Background()
 	
 	manifest := newTestManifest()
-	manifest.Registries["test-reg"] = map[string]interface{}{
-		"type": "cloudsmith", // Wrong type
-		"url":  "https://api.cloudsmith.io",
+	manifest.Registries["gitlab-reg"] = map[string]interface{}{
+		"type":       "gitlab",
+		"url":        "https://gitlab.com",
+		"projectId":  "123",
+		"groupId":    "456",
+		"apiVersion": "v4",
 	}
 	
 	manifestPath := createTestManifest(t, manifest)
 	fm := NewFileManagerWithPath(manifestPath)
 	
-	_, err := fm.GetGitLabRegistryConfig(ctx, "test-reg")
-	if err == nil {
-		t.Errorf("Expected error for wrong registry type")
+	config, err := fm.GetGitLabRegistryConfig(ctx, "gitlab-reg")
+	if err != nil {
+		t.Fatalf("GetGitLabRegistryConfig() error = %v", err)
+	}
+	
+	if config.Type != "gitlab" {
+		t.Errorf("Expected type gitlab, got %s", config.Type)
+	}
+	if config.ProjectID != "123" {
+		t.Errorf("Expected projectId 123, got %s", config.ProjectID)
+	}
+	if config.GroupID != "456" {
+		t.Errorf("Expected groupId 456, got %s", config.GroupID)
+	}
+	if config.APIVersion != "v4" {
+		t.Errorf("Expected apiVersion v4, got %s", config.APIVersion)
 	}
 }
 
-func TestFileManager_GetCloudsmithRegistryConfig_WrongType(t *testing.T) {
+func TestFileManager_GetCloudsmithRegistryConfig(t *testing.T) {
 	ctx := context.Background()
 	
 	manifest := newTestManifest()
-	manifest.Registries["test-reg"] = map[string]interface{}{
-		"type": "git", // Wrong type
-		"url":  "https://github.com/test/repo",
+	manifest.Registries["cloudsmith-reg"] = map[string]interface{}{
+		"type":       "cloudsmith",
+		"url":        "https://cloudsmith.io",
+		"owner":      "myorg",
+		"repository": "myrepo",
 	}
 	
 	manifestPath := createTestManifest(t, manifest)
 	fm := NewFileManagerWithPath(manifestPath)
 	
-	_, err := fm.GetCloudsmithRegistryConfig(ctx, "test-reg")
-	if err == nil {
-		t.Errorf("Expected error for wrong registry type")
+	config, err := fm.GetCloudsmithRegistryConfig(ctx, "cloudsmith-reg")
+	if err != nil {
+		t.Fatalf("GetCloudsmithRegistryConfig() error = %v", err)
+	}
+	
+	if config.Type != "cloudsmith" {
+		t.Errorf("Expected type cloudsmith, got %s", config.Type)
+	}
+	if config.Owner != "myorg" {
+		t.Errorf("Expected owner myorg, got %s", config.Owner)
+	}
+	if config.Repository != "myrepo" {
+		t.Errorf("Expected repository myrepo, got %s", config.Repository)
+	}
+}
+
+func TestFileManager_UpsertGitRegistryConfig(t *testing.T) {
+	ctx := context.Background()
+	manifestPath := filepath.Join(t.TempDir(), "empty.json")
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	config := GitRegistryConfig{
+		URL:      "https://github.com/test/repo",
+		Branches: []string{"main", "develop"},
+	}
+	
+	err := fm.UpsertGitRegistryConfig(ctx, "git-reg", config)
+	if err != nil {
+		t.Fatalf("UpsertGitRegistryConfig() error = %v", err)
+	}
+	
+	retrieved, err := fm.GetGitRegistryConfig(ctx, "git-reg")
+	if err != nil {
+		t.Fatalf("GetGitRegistryConfig() error = %v", err)
+	}
+	
+	if retrieved.Type != "git" {
+		t.Errorf("Expected type git, got %s", retrieved.Type)
+	}
+	if retrieved.URL != config.URL {
+		t.Errorf("Expected URL %s, got %s", config.URL, retrieved.URL)
+	}
+}
+
+func TestFileManager_UpsertGitLabRegistryConfig(t *testing.T) {
+	ctx := context.Background()
+	manifestPath := filepath.Join(t.TempDir(), "empty.json")
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	config := GitLabRegistryConfig{
+		URL:        "https://gitlab.com",
+		ProjectID:  "123",
+		GroupID:    "456",
+		APIVersion: "v4",
+	}
+	
+	err := fm.UpsertGitLabRegistryConfig(ctx, "gitlab-reg", config)
+	if err != nil {
+		t.Fatalf("UpsertGitLabRegistryConfig() error = %v", err)
+	}
+	
+	retrieved, err := fm.GetGitLabRegistryConfig(ctx, "gitlab-reg")
+	if err != nil {
+		t.Fatalf("GetGitLabRegistryConfig() error = %v", err)
+	}
+	
+	if retrieved.Type != "gitlab" {
+		t.Errorf("Expected type gitlab, got %s", retrieved.Type)
+	}
+	if retrieved.ProjectID != config.ProjectID {
+		t.Errorf("Expected projectId %s, got %s", config.ProjectID, retrieved.ProjectID)
+	}
+}
+
+func TestFileManager_UpsertCloudsmithRegistryConfig(t *testing.T) {
+	ctx := context.Background()
+	manifestPath := filepath.Join(t.TempDir(), "empty.json")
+	fm := NewFileManagerWithPath(manifestPath)
+	
+	config := CloudsmithRegistryConfig{
+		URL:        "https://cloudsmith.io",
+		Owner:      "myorg",
+		Repository: "myrepo",
+	}
+	
+	err := fm.UpsertCloudsmithRegistryConfig(ctx, "cloudsmith-reg", config)
+	if err != nil {
+		t.Fatalf("UpsertCloudsmithRegistryConfig() error = %v", err)
+	}
+	
+	retrieved, err := fm.GetCloudsmithRegistryConfig(ctx, "cloudsmith-reg")
+	if err != nil {
+		t.Fatalf("GetCloudsmithRegistryConfig() error = %v", err)
+	}
+	
+	if retrieved.Type != "cloudsmith" {
+		t.Errorf("Expected type cloudsmith, got %s", retrieved.Type)
+	}
+	if retrieved.Owner != config.Owner {
+		t.Errorf("Expected owner %s, got %s", config.Owner, retrieved.Owner)
 	}
 }

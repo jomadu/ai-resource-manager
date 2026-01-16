@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
-	"github.com/jomadu/ai-resource-manager/internal/v4/registry"
 )
 
 type ResourceType string
@@ -17,11 +16,6 @@ const (
 	ResourceTypeRuleset  ResourceType = "ruleset"
 	ResourceTypePromptset ResourceType = "promptset"
 )
-
-// Registry config type aliases
-type GitRegistryConfig = registry.GitRegistryConfig
-type GitLabRegistryConfig = registry.GitLabRegistryConfig
-type CloudsmithRegistryConfig = registry.CloudsmithRegistryConfig
 
 type Manifest struct {
 	Version      int                               `json:"version"`
@@ -35,10 +29,57 @@ type SinkConfig struct {
 	Tool      compiler.Tool `json:"tool"`
 }
 
+type GitRegistryConfig struct {
+	Type     string   `json:"type"`
+	URL      string   `json:"url"`
+	Branches []string `json:"branches,omitempty"`
+}
+
+type GitLabRegistryConfig struct {
+	Type       string `json:"type"`
+	URL        string `json:"url"`
+	ProjectID  string `json:"projectId,omitempty"`
+	GroupID    string `json:"groupId,omitempty"`
+	APIVersion string `json:"apiVersion,omitempty"`
+}
+
+type CloudsmithRegistryConfig struct {
+	Type       string `json:"type"`
+	URL        string `json:"url"`
+	Owner      string `json:"owner"`
+	Repository string `json:"repository"`
+}
+
 // Manager interface for service layer
 type Manager interface {
-	Load() (*Manifest, error)
-	Save(*Manifest) error
+	// Registry operations
+	GetAllRegistriesConfig(ctx context.Context) (map[string]map[string]interface{}, error)
+	GetRegistryConfig(ctx context.Context, name string) (map[string]interface{}, error)
+	GetGitRegistryConfig(ctx context.Context, name string) (GitRegistryConfig, error)
+	GetGitLabRegistryConfig(ctx context.Context, name string) (GitLabRegistryConfig, error)
+	GetCloudsmithRegistryConfig(ctx context.Context, name string) (CloudsmithRegistryConfig, error)
+	UpsertRegistryConfig(ctx context.Context, name string, config map[string]interface{}) error
+	UpsertGitRegistryConfig(ctx context.Context, name string, config GitRegistryConfig) error
+	UpsertGitLabRegistryConfig(ctx context.Context, name string, config GitLabRegistryConfig) error
+	UpsertCloudsmithRegistryConfig(ctx context.Context, name string, config CloudsmithRegistryConfig) error
+	UpdateRegistryConfigName(ctx context.Context, name string, newName string) error
+	RemoveRegistryConfig(ctx context.Context, name string) error
+
+	// Sink operations
+	GetAllSinksConfig(ctx context.Context) (map[string]SinkConfig, error)
+	GetSinkConfig(ctx context.Context, name string) (SinkConfig, error)
+	UpsertSinkConfig(ctx context.Context, name string, config SinkConfig) error
+	UpdateSinkConfigName(ctx context.Context, name string, newName string) error
+	RemoveSinkConfig(ctx context.Context, name string) error
+
+	// Dependency operations
+	GetAllDependenciesConfig(ctx context.Context) (map[string]map[string]interface{}, error)
+	GetDependencyConfig(ctx context.Context, key string) (map[string]interface{}, error)
+	UpsertDependencyConfig(ctx context.Context, key string, config map[string]interface{}) error
+	UpsertRulesetDependencyConfig(ctx context.Context, key string, config RulesetDependencyConfig) error
+	UpsertPromptsetDependencyConfig(ctx context.Context, key string, config PromptsetDependencyConfig) error
+	UpdateDependencyConfigName(ctx context.Context, key string, newKey string) error
+	RemoveDependencyConfig(ctx context.Context, key string) error
 }
 
 // Type-safe dependency configs for API
@@ -77,16 +118,6 @@ func NewFileManagerWithPath(manifestPath string) *FileManager {
 	return &FileManager{manifestPath: manifestPath}
 }
 
-// Load loads the manifest
-func (f *FileManager) Load() (*Manifest, error) {
-	return f.loadManifest()
-}
-
-// Save saves the manifest
-func (f *FileManager) Save(m *Manifest) error {
-	return f.saveManifest(m)
-}
-
 // Registry operations (generic)
 
 func (f *FileManager) GetAllRegistriesConfig(ctx context.Context) (map[string]map[string]interface{}, error) {
@@ -111,7 +142,105 @@ func (f *FileManager) GetRegistryConfig(ctx context.Context, name string) (map[s
 	return config, nil
 }
 
+func (f *FileManager) GetGitRegistryConfig(ctx context.Context, name string) (GitRegistryConfig, error) {
+	rawConfig, err := f.GetRegistryConfig(ctx, name)
+	if err != nil {
+		return GitRegistryConfig{}, err
+	}
 
+	regType, ok := rawConfig["type"].(string)
+	if !ok || regType != "git" {
+		return GitRegistryConfig{}, fmt.Errorf("registry %s is not a git registry", name)
+	}
+
+	return convertMapToGitRegistryConfig(rawConfig)
+}
+
+func (f *FileManager) GetGitLabRegistryConfig(ctx context.Context, name string) (GitLabRegistryConfig, error) {
+	rawConfig, err := f.GetRegistryConfig(ctx, name)
+	if err != nil {
+		return GitLabRegistryConfig{}, err
+	}
+
+	regType, ok := rawConfig["type"].(string)
+	if !ok || regType != "gitlab" {
+		return GitLabRegistryConfig{}, fmt.Errorf("registry %s is not a gitlab registry", name)
+	}
+
+	return convertMapToGitLabRegistryConfig(rawConfig)
+}
+
+func (f *FileManager) GetCloudsmithRegistryConfig(ctx context.Context, name string) (CloudsmithRegistryConfig, error) {
+	rawConfig, err := f.GetRegistryConfig(ctx, name)
+	if err != nil {
+		return CloudsmithRegistryConfig{}, err
+	}
+
+	regType, ok := rawConfig["type"].(string)
+	if !ok || regType != "cloudsmith" {
+		return CloudsmithRegistryConfig{}, fmt.Errorf("registry %s is not a cloudsmith registry", name)
+	}
+
+	return convertMapToCloudsmithRegistryConfig(rawConfig)
+}
+
+func (f *FileManager) UpsertRegistryConfig(ctx context.Context, name string, config map[string]interface{}) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	manifest.Registries[name] = config
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) UpsertGitRegistryConfig(ctx context.Context, name string, config GitRegistryConfig) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	config.Type = "git"
+	configMap, err := convertRegistryToMap(config)
+	if err != nil {
+		return err
+	}
+
+	manifest.Registries[name] = configMap
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) UpsertGitLabRegistryConfig(ctx context.Context, name string, config GitLabRegistryConfig) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	config.Type = "gitlab"
+	configMap, err := convertRegistryToMap(config)
+	if err != nil {
+		return err
+	}
+
+	manifest.Registries[name] = configMap
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) UpsertCloudsmithRegistryConfig(ctx context.Context, name string, config CloudsmithRegistryConfig) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	config.Type = "cloudsmith"
+	configMap, err := convertRegistryToMap(config)
+	if err != nil {
+		return err
+	}
+
+	manifest.Registries[name] = configMap
+	return f.saveManifest(manifest)
+}
 
 func (f *FileManager) UpdateRegistryConfigName(ctx context.Context, name string, newName string) error {
 	manifest, err := f.loadManifest()
@@ -166,98 +295,6 @@ func (f *FileManager) RemoveRegistryConfig(ctx context.Context, name string) err
 		}
 	}
 	
-	return f.saveManifest(manifest)
-}
-
-// Registry operations (type-safe helpers)
-
-func (f *FileManager) GetGitRegistryConfig(ctx context.Context, name string) (GitRegistryConfig, error) {
-	rawConfig, err := f.GetRegistryConfig(ctx, name)
-	if err != nil {
-		return GitRegistryConfig{}, err
-	}
-
-	// Check registry type
-	regType, ok := rawConfig["type"].(string)
-	if !ok || regType != "git" {
-		return GitRegistryConfig{}, fmt.Errorf("registry %s is not a git registry", name)
-	}
-
-	return convertMapToGitRegistry(rawConfig)
-}
-
-func (f *FileManager) GetGitLabRegistryConfig(ctx context.Context, name string) (GitLabRegistryConfig, error) {
-	rawConfig, err := f.GetRegistryConfig(ctx, name)
-	if err != nil {
-		return GitLabRegistryConfig{}, err
-	}
-
-	// Check registry type
-	regType, ok := rawConfig["type"].(string)
-	if !ok || regType != "gitlab" {
-		return GitLabRegistryConfig{}, fmt.Errorf("registry %s is not a gitlab registry", name)
-	}
-
-	return convertMapToGitLabRegistry(rawConfig)
-}
-
-func (f *FileManager) GetCloudsmithRegistryConfig(ctx context.Context, name string) (CloudsmithRegistryConfig, error) {
-	rawConfig, err := f.GetRegistryConfig(ctx, name)
-	if err != nil {
-		return CloudsmithRegistryConfig{}, err
-	}
-
-	// Check registry type
-	regType, ok := rawConfig["type"].(string)
-	if !ok || regType != "cloudsmith" {
-		return CloudsmithRegistryConfig{}, fmt.Errorf("registry %s is not a cloudsmith registry", name)
-	}
-
-	return convertMapToCloudsmithRegistry(rawConfig)
-}
-
-func (f *FileManager) UpsertGitRegistryConfig(ctx context.Context, name string, config GitRegistryConfig) error {
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-
-	configMap, err := convertRegistryToMap(config)
-	if err != nil {
-		return err
-	}
-
-	manifest.Registries[name] = configMap
-	return f.saveManifest(manifest)
-}
-
-func (f *FileManager) UpsertGitLabRegistryConfig(ctx context.Context, name string, config GitLabRegistryConfig) error {
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-
-	configMap, err := convertRegistryToMap(config)
-	if err != nil {
-		return err
-	}
-
-	manifest.Registries[name] = configMap
-	return f.saveManifest(manifest)
-}
-
-func (f *FileManager) UpsertCloudsmithRegistryConfig(ctx context.Context, name string, config CloudsmithRegistryConfig) error {
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-
-	configMap, err := convertRegistryToMap(config)
-	if err != nil {
-		return err
-	}
-
-	manifest.Registries[name] = configMap
 	return f.saveManifest(manifest)
 }
 
@@ -354,6 +391,60 @@ func (f *FileManager) GetDependencyConfig(ctx context.Context, key string) (map[
 	return config, nil
 }
 
+func (f *FileManager) UpsertDependencyConfig(ctx context.Context, key string, config map[string]interface{}) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	if manifest.Dependencies == nil {
+		manifest.Dependencies = make(map[string]map[string]interface{})
+	}
+
+	manifest.Dependencies[key] = config
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) UpsertRulesetDependencyConfig(ctx context.Context, key string, config RulesetDependencyConfig) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	if manifest.Dependencies == nil {
+		manifest.Dependencies = make(map[string]map[string]interface{})
+	}
+
+	config.Type = ResourceTypeRuleset
+	configMap, err := convertDependencyToMap(config)
+	if err != nil {
+		return err
+	}
+
+	manifest.Dependencies[key] = configMap
+	return f.saveManifest(manifest)
+}
+
+func (f *FileManager) UpsertPromptsetDependencyConfig(ctx context.Context, key string, config PromptsetDependencyConfig) error {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return err
+	}
+
+	if manifest.Dependencies == nil {
+		manifest.Dependencies = make(map[string]map[string]interface{})
+	}
+
+	config.Type = ResourceTypePromptset
+	configMap, err := convertDependencyToMap(config)
+	if err != nil {
+		return err
+	}
+
+	manifest.Dependencies[key] = configMap
+	return f.saveManifest(manifest)
+}
+
 func (f *FileManager) UpdateDependencyConfigName(ctx context.Context, key string, newKey string) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
@@ -419,42 +510,6 @@ func (f *FileManager) GetPromptsetDependencyConfig(ctx context.Context, key stri
 	}
 
 	return convertMapToPromptsetDependency(rawConfig)
-}
-
-func (f *FileManager) UpsertRulesetDependencyConfig(ctx context.Context, key string, config *RulesetDependencyConfig) error {
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-
-	// Set type to ruleset
-	config.Type = ResourceTypeRuleset
-
-	configMap, err := convertDependencyToMap(config)
-	if err != nil {
-		return err
-	}
-
-	manifest.Dependencies[key] = configMap
-	return f.saveManifest(manifest)
-}
-
-func (f *FileManager) UpsertPromptsetDependencyConfig(ctx context.Context, key string, config *PromptsetDependencyConfig) error {
-	manifest, err := f.loadManifest()
-	if err != nil {
-		return err
-	}
-
-	// Set type to promptset
-	config.Type = ResourceTypePromptset
-
-	configMap, err := convertDependencyToMap(config)
-	if err != nil {
-		return err
-	}
-
-	manifest.Dependencies[key] = configMap
-	return f.saveManifest(manifest)
 }
 
 // Helper functions for FileManager implementation
@@ -524,20 +579,49 @@ func (f *FileManager) saveManifest(manifest *Manifest) error {
 	return os.WriteFile(f.manifestPath, data, 0644)
 }
 
-// convertRegistryToMap converts a typed registry config to map[string]interface{}.
-// Used when storing typed configs in the generic manifest structure.
-func convertRegistryToMap(config interface{}) (map[string]interface{}, error) {
-	configBytes, err := json.Marshal(config)
+// convertMapToGitRegistryConfig converts map[string]interface{} to GitRegistryConfig.
+func convertMapToGitRegistryConfig(m map[string]interface{}) (GitRegistryConfig, error) {
+	configBytes, err := json.Marshal(m)
 	if err != nil {
-		return nil, err
+		return GitRegistryConfig{}, err
 	}
 
-	var result map[string]interface{}
-	if err := json.Unmarshal(configBytes, &result); err != nil {
-		return nil, err
+	var config GitRegistryConfig
+	if err := json.Unmarshal(configBytes, &config); err != nil {
+		return GitRegistryConfig{}, err
 	}
 
-	return result, nil
+	return config, nil
+}
+
+// convertMapToGitLabRegistryConfig converts map[string]interface{} to GitLabRegistryConfig.
+func convertMapToGitLabRegistryConfig(m map[string]interface{}) (GitLabRegistryConfig, error) {
+	configBytes, err := json.Marshal(m)
+	if err != nil {
+		return GitLabRegistryConfig{}, err
+	}
+
+	var config GitLabRegistryConfig
+	if err := json.Unmarshal(configBytes, &config); err != nil {
+		return GitLabRegistryConfig{}, err
+	}
+
+	return config, nil
+}
+
+// convertMapToCloudsmithRegistryConfig converts map[string]interface{} to CloudsmithRegistryConfig.
+func convertMapToCloudsmithRegistryConfig(m map[string]interface{}) (CloudsmithRegistryConfig, error) {
+	configBytes, err := json.Marshal(m)
+	if err != nil {
+		return CloudsmithRegistryConfig{}, err
+	}
+
+	var config CloudsmithRegistryConfig
+	if err := json.Unmarshal(configBytes, &config); err != nil {
+		return CloudsmithRegistryConfig{}, err
+	}
+
+	return config, nil
 }
 
 // convertDependencyToMap converts a typed dependency config to map[string]interface{}.
@@ -554,51 +638,6 @@ func convertDependencyToMap(config interface{}) (map[string]interface{}, error) 
 	}
 
 	return result, nil
-}
-
-// convertMapToGitRegistry converts map[string]interface{} to registry.GitRegistryConfig.
-func convertMapToGitRegistry(m map[string]interface{}) (registry.GitRegistryConfig, error) {
-	configBytes, err := json.Marshal(m)
-	if err != nil {
-		return registry.GitRegistryConfig{}, err
-	}
-
-	var config registry.GitRegistryConfig
-	if err := json.Unmarshal(configBytes, &config); err != nil {
-		return registry.GitRegistryConfig{}, err
-	}
-
-	return config, nil
-}
-
-// convertMapToGitLabRegistry converts map[string]interface{} to registry.GitLabRegistryConfig.
-func convertMapToGitLabRegistry(m map[string]interface{}) (registry.GitLabRegistryConfig, error) {
-	configBytes, err := json.Marshal(m)
-	if err != nil {
-		return registry.GitLabRegistryConfig{}, err
-	}
-
-	var config registry.GitLabRegistryConfig
-	if err := json.Unmarshal(configBytes, &config); err != nil {
-		return registry.GitLabRegistryConfig{}, err
-	}
-
-	return config, nil
-}
-
-// convertMapToCloudsmithRegistry converts map[string]interface{} to registry.CloudsmithRegistryConfig.
-func convertMapToCloudsmithRegistry(m map[string]interface{}) (registry.CloudsmithRegistryConfig, error) {
-	configBytes, err := json.Marshal(m)
-	if err != nil {
-		return registry.CloudsmithRegistryConfig{}, err
-	}
-
-	var config registry.CloudsmithRegistryConfig
-	if err := json.Unmarshal(configBytes, &config); err != nil {
-		return registry.CloudsmithRegistryConfig{}, err
-	}
-
-	return config, nil
 }
 
 // convertMapToRulesetDependency converts map[string]interface{} to RulesetDependencyConfig.
@@ -629,6 +668,21 @@ func convertMapToPromptsetDependency(m map[string]interface{}) (*PromptsetDepend
 	}
 
 	return &config, nil
+}
+
+// convertRegistryToMap converts a typed registry config to map[string]interface{}.
+func convertRegistryToMap(config interface{}) (map[string]interface{}, error) {
+	configBytes, err := json.Marshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(configBytes, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // ensureRegistryExists ensures a registry exists in the manifest, returns error if not.
