@@ -29,7 +29,8 @@ func NewFileManagerWithPath(lockPath string) *FileManager {
 	return &FileManager{lockPath: lockPath}
 }
 
-func (f *FileManager) GetDependencyLock(ctx context.Context, key string) (*DependencyLockConfig, error) {
+func (f *FileManager) GetDependencyLock(ctx context.Context, registry, packageName, version string) (*DependencyLockConfig, error) {
+	key := lockKey(registry, packageName, version)
 	lockfile, err := f.readLockFile()
 	if err != nil {
 		return nil, err
@@ -47,7 +48,8 @@ func (f *FileManager) GetLockFile(ctx context.Context) (*LockFile, error) {
 	return f.readLockFile()
 }
 
-func (f *FileManager) UpsertDependencyLock(ctx context.Context, key string, config *DependencyLockConfig) error {
+func (f *FileManager) UpsertDependencyLock(ctx context.Context, registry, packageName, version string, config *DependencyLockConfig) error {
+	key := lockKey(registry, packageName, version)
 	var lockfile *LockFile
 	var err error
 
@@ -72,7 +74,8 @@ func (f *FileManager) UpsertDependencyLock(ctx context.Context, key string, conf
 	return f.writeLockFile(lockfile)
 }
 
-func (f *FileManager) RemoveDependencyLock(ctx context.Context, key string) error {
+func (f *FileManager) RemoveDependencyLock(ctx context.Context, registry, packageName, version string) error {
+	key := lockKey(registry, packageName, version)
 	lockfile, err := f.readLockFile()
 	if err != nil {
 		return err
@@ -151,4 +154,9 @@ func (f *FileManager) isLockfileEmpty(lockfile *LockFile) bool {
 // deleteLockFile removes the lockfile from disk
 func (f *FileManager) deleteLockFile() error {
 	return os.Remove(f.lockPath)
+}
+
+// lockKey creates a lock key in format "registry/package@version"
+func lockKey(registry, packageName, version string) string {
+	return registry + "/" + packageName + "@" + version
 }

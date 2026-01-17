@@ -276,57 +276,93 @@ func (s *ArmService) SetSinkTool(ctx context.Context, name string, tool compiler
 
 // InstallAll installs all dependencies
 func (s *ArmService) InstallAll(ctx context.Context) error {
-	// TODO: implement
+	deps, err := s.manifestMgr.GetAllDependenciesConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	for key, depConfig := range deps {
+		depType, ok := depConfig["type"].(string)
+		if !ok {
+			return fmt.Errorf("dependency %s missing type", key)
+		}
+
+		registryName, packageName := manifest.ParseDependencyKey(key)
+
+		if depType == "ruleset" {
+			rulesetCfg, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
+			if err != nil {
+				return err
+			}
+			if err := s.InstallRuleset(ctx, registryName, packageName, rulesetCfg.Version, rulesetCfg.Priority, rulesetCfg.Include, rulesetCfg.Exclude, rulesetCfg.Sinks); err != nil {
+				return err
+			}
+		} else if depType == "promptset" {
+			promptsetCfg, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
+			if err != nil {
+				return err
+			}
+			if err := s.InstallPromptset(ctx, registryName, packageName, promptsetCfg.Version, promptsetCfg.Include, promptsetCfg.Exclude, promptsetCfg.Sinks); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
-// InstallRuleset installs a ruleset
-func (s *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, version string, priority int, include []string, exclude []string, sinks []string) error {
-	// 1. Validate registry and sinks exist
+// resolveAndFetchPackage validates registry/sinks, resolves version, and fetches package
+func (s *ArmService) resolveAndFetchPackage(ctx context.Context, registryName, packageName, version string, include, exclude, sinks []string) (*core.Package, string, map[string]manifest.SinkConfig, error) {
 	regConfig, err := s.manifestMgr.GetRegistryConfig(ctx, registryName)
 	if err != nil {
-		return err
+		return nil, "", nil, err
 	}
 
 	allSinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
 	if err != nil {
-		return err
+		return nil, "", nil, err
 	}
 
 	for _, sinkName := range sinks {
 		if _, exists := allSinks[sinkName]; !exists {
-			return fmt.Errorf("sink does not exist: %s", sinkName)
+			return nil, "", nil, fmt.Errorf("sink does not exist: %s", sinkName)
 		}
 	}
 
-	// 2. Create registry client
 	reg, err := s.registryFactory.CreateRegistry(registryName, regConfig)
 	if err != nil {
-		return err
+		return nil, "", nil, err
 	}
 
-	// 3. Resolve version constraint
-	availableVersions, err := reg.ListPackageVersions(ctx, ruleset)
+	availableVersions, err := reg.ListPackageVersions(ctx, packageName)
 	if err != nil {
-		return err
+		return nil, "", nil, err
 	}
 
 	resolvedVersion, err := core.ResolveVersion(version, availableVersions)
 	if err != nil {
-		return err
+		return nil, "", nil, err
 	}
 
-	// 4. Fetch package from registry
-	pkg, err := reg.GetPackage(ctx, ruleset, resolvedVersion, include, exclude)
+	pkg, err := reg.GetPackage(ctx, packageName, resolvedVersion, include, exclude)
+	if err != nil {
+		return nil, "", nil, err
+	}
+
+	return pkg, resolvedVersion.Version, allSinks, nil
+}
+
+// InstallRuleset installs a ruleset
+func (s *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, version string, priority int, include []string, exclude []string, sinks []string) error {
+	pkg, resolvedVersion, allSinks, err := s.resolveAndFetchPackage(ctx, registryName, ruleset, version, include, exclude, sinks)
 	if err != nil {
 		return err
 	}
 
 	// 5. Update manifest with dependency
-	depKey := fmt.Sprintf("%s/%s", registryName, ruleset)
 	depConfig := manifest.RulesetDependencyConfig{
 		BaseDependencyConfig: manifest.BaseDependencyConfig{
-			Version: resolvedVersion.Version,
+			Version: version,
 			Sinks:   sinks,
 			Include: include,
 			Exclude: exclude,
@@ -334,16 +370,14 @@ func (s *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 		Priority: priority,
 	}
 
-	if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, depKey, depConfig); err != nil {
+	if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, ruleset, depConfig); err != nil {
 		return err
 	}
 
 	// 6. Update lock file
-	lockConfig := &packagelockfile.DependencyLockConfig{
+	if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, ruleset, resolvedVersion, &packagelockfile.DependencyLockConfig{
 		Integrity: pkg.Integrity,
-	}
-
-	if err := s.lockfileMgr.UpsertDependencyLock(ctx, depKey, lockConfig); err != nil {
+	}); err != nil {
 		return err
 	}
 
@@ -361,67 +395,29 @@ func (s *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 
 // InstallPromptset installs a promptset
 func (s *ArmService) InstallPromptset(ctx context.Context, registryName, promptset, version string, include []string, exclude []string, sinks []string) error {
-	// 1. Validate registry and sinks exist
-	regConfig, err := s.manifestMgr.GetRegistryConfig(ctx, registryName)
-	if err != nil {
-		return err
-	}
-
-	allSinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
-	if err != nil {
-		return err
-	}
-
-	for _, sinkName := range sinks {
-		if _, exists := allSinks[sinkName]; !exists {
-			return fmt.Errorf("sink does not exist: %s", sinkName)
-		}
-	}
-
-	// 2. Create registry client
-	reg, err := s.registryFactory.CreateRegistry(registryName, regConfig)
-	if err != nil {
-		return err
-	}
-
-	// 3. Resolve version constraint
-	availableVersions, err := reg.ListPackageVersions(ctx, promptset)
-	if err != nil {
-		return err
-	}
-
-	resolvedVersion, err := core.ResolveVersion(version, availableVersions)
-	if err != nil {
-		return err
-	}
-
-	// 4. Fetch package from registry
-	pkg, err := reg.GetPackage(ctx, promptset, resolvedVersion, include, exclude)
+	pkg, resolvedVersion, allSinks, err := s.resolveAndFetchPackage(ctx, registryName, promptset, version, include, exclude, sinks)
 	if err != nil {
 		return err
 	}
 
 	// 5. Update manifest with dependency
-	depKey := fmt.Sprintf("%s/%s", registryName, promptset)
 	depConfig := manifest.PromptsetDependencyConfig{
 		BaseDependencyConfig: manifest.BaseDependencyConfig{
-			Version: resolvedVersion.Version,
+			Version: version,
 			Sinks:   sinks,
 			Include: include,
 			Exclude: exclude,
 		},
 	}
 
-	if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, depKey, depConfig); err != nil {
+	if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registryName, promptset, depConfig); err != nil {
 		return err
 	}
 
 	// 6. Update lock file
-	lockConfig := &packagelockfile.DependencyLockConfig{
+	if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, promptset, resolvedVersion, &packagelockfile.DependencyLockConfig{
 		Integrity: pkg.Integrity,
-	}
-
-	if err := s.lockfileMgr.UpsertDependencyLock(ctx, depKey, lockConfig); err != nil {
+	}); err != nil {
 		return err
 	}
 

@@ -74,12 +74,14 @@ type Manager interface {
 
 	// Dependency operations
 	GetAllDependenciesConfig(ctx context.Context) (map[string]map[string]interface{}, error)
-	GetDependencyConfig(ctx context.Context, key string) (map[string]interface{}, error)
-	UpsertDependencyConfig(ctx context.Context, key string, config map[string]interface{}) error
-	UpsertRulesetDependencyConfig(ctx context.Context, key string, config RulesetDependencyConfig) error
-	UpsertPromptsetDependencyConfig(ctx context.Context, key string, config PromptsetDependencyConfig) error
-	UpdateDependencyConfigName(ctx context.Context, key string, newKey string) error
-	RemoveDependencyConfig(ctx context.Context, key string) error
+	GetDependencyConfig(ctx context.Context, registry, packageName string) (map[string]interface{}, error)
+	GetRulesetDependencyConfig(ctx context.Context, registry, packageName string) (*RulesetDependencyConfig, error)
+	GetPromptsetDependencyConfig(ctx context.Context, registry, packageName string) (*PromptsetDependencyConfig, error)
+	UpsertDependencyConfig(ctx context.Context, registry, packageName string, config map[string]interface{}) error
+	UpsertRulesetDependencyConfig(ctx context.Context, registry, packageName string, config RulesetDependencyConfig) error
+	UpsertPromptsetDependencyConfig(ctx context.Context, registry, packageName string, config PromptsetDependencyConfig) error
+	UpdateDependencyConfigName(ctx context.Context, registry, packageName, newRegistry, newPackageName string) error
+	RemoveDependencyConfig(ctx context.Context, registry, packageName string) error
 }
 
 // Type-safe dependency configs for API
@@ -262,9 +264,9 @@ func (f *FileManager) UpdateRegistryConfigName(ctx context.Context, name string,
 
 	// Update package keys from "oldName/package" to "newName/package"
 	for key, depConfig := range manifest.Dependencies {
-		regName, pkgName := parseDependencyKey(key)
+		regName, pkgName := ParseDependencyKey(key)
 		if regName == name {
-			newKey := dependencyKey(newName, pkgName)
+			newKey := DependencyKey(newName, pkgName)
 			manifest.Dependencies[newKey] = depConfig
 			delete(manifest.Dependencies, key)
 		}
@@ -289,7 +291,7 @@ func (f *FileManager) RemoveRegistryConfig(ctx context.Context, name string) err
 	
 	// Remove all packages from this registry
 	for key := range manifest.Dependencies {
-		regName, _ := parseDependencyKey(key)
+		regName, _ := ParseDependencyKey(key)
 		if regName == name {
 			delete(manifest.Dependencies, key)
 		}
@@ -377,7 +379,8 @@ func (f *FileManager) GetAllDependenciesConfig(ctx context.Context) (map[string]
 	return manifest.Dependencies, nil
 }
 
-func (f *FileManager) GetDependencyConfig(ctx context.Context, key string) (map[string]interface{}, error) {
+func (f *FileManager) GetDependencyConfig(ctx context.Context, registry, packageName string) (map[string]interface{}, error) {
+	key := DependencyKey(registry, packageName)
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return nil, err
@@ -391,7 +394,8 @@ func (f *FileManager) GetDependencyConfig(ctx context.Context, key string) (map[
 	return config, nil
 }
 
-func (f *FileManager) UpsertDependencyConfig(ctx context.Context, key string, config map[string]interface{}) error {
+func (f *FileManager) UpsertDependencyConfig(ctx context.Context, registry, packageName string, config map[string]interface{}) error {
+	key := DependencyKey(registry, packageName)
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -405,7 +409,8 @@ func (f *FileManager) UpsertDependencyConfig(ctx context.Context, key string, co
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) UpsertRulesetDependencyConfig(ctx context.Context, key string, config RulesetDependencyConfig) error {
+func (f *FileManager) UpsertRulesetDependencyConfig(ctx context.Context, registry, packageName string, config RulesetDependencyConfig) error {
+	key := DependencyKey(registry, packageName)
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -425,7 +430,8 @@ func (f *FileManager) UpsertRulesetDependencyConfig(ctx context.Context, key str
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) UpsertPromptsetDependencyConfig(ctx context.Context, key string, config PromptsetDependencyConfig) error {
+func (f *FileManager) UpsertPromptsetDependencyConfig(ctx context.Context, registry, packageName string, config PromptsetDependencyConfig) error {
+	key := DependencyKey(registry, packageName)
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -445,7 +451,9 @@ func (f *FileManager) UpsertPromptsetDependencyConfig(ctx context.Context, key s
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) UpdateDependencyConfigName(ctx context.Context, key string, newKey string) error {
+func (f *FileManager) UpdateDependencyConfigName(ctx context.Context, registry, packageName, newRegistry, newPackageName string) error {
+	key := DependencyKey(registry, packageName)
+	newKey := DependencyKey(newRegistry, newPackageName)
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -466,7 +474,8 @@ func (f *FileManager) UpdateDependencyConfigName(ctx context.Context, key string
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) RemoveDependencyConfig(ctx context.Context, key string) error {
+func (f *FileManager) RemoveDependencyConfig(ctx context.Context, registry, packageName string) error {
+	key := DependencyKey(registry, packageName)
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -482,8 +491,8 @@ func (f *FileManager) RemoveDependencyConfig(ctx context.Context, key string) er
 
 // Dependencies operations (type-safe helpers)
 
-func (f *FileManager) GetRulesetDependencyConfig(ctx context.Context, key string) (*RulesetDependencyConfig, error) {
-	rawConfig, err := f.GetDependencyConfig(ctx, key)
+func (f *FileManager) GetRulesetDependencyConfig(ctx context.Context, registry, packageName string) (*RulesetDependencyConfig, error) {
+	rawConfig, err := f.GetDependencyConfig(ctx, registry, packageName)
 	if err != nil {
 		return nil, err
 	}
@@ -491,14 +500,15 @@ func (f *FileManager) GetRulesetDependencyConfig(ctx context.Context, key string
 	// Check dependency type
 	depType, ok := rawConfig["type"].(string)
 	if !ok || depType != "ruleset" {
+		key := DependencyKey(registry, packageName)
 		return nil, fmt.Errorf("dependency %s is not a ruleset", key)
 	}
 
 	return convertMapToRulesetDependency(rawConfig)
 }
 
-func (f *FileManager) GetPromptsetDependencyConfig(ctx context.Context, key string) (*PromptsetDependencyConfig, error) {
-	rawConfig, err := f.GetDependencyConfig(ctx, key)
+func (f *FileManager) GetPromptsetDependencyConfig(ctx context.Context, registry, packageName string) (*PromptsetDependencyConfig, error) {
+	rawConfig, err := f.GetDependencyConfig(ctx, registry, packageName)
 	if err != nil {
 		return nil, err
 	}
@@ -506,6 +516,7 @@ func (f *FileManager) GetPromptsetDependencyConfig(ctx context.Context, key stri
 	// Check dependency type
 	depType, ok := rawConfig["type"].(string)
 	if !ok || depType != "promptset" {
+		key := DependencyKey(registry, packageName)
 		return nil, fmt.Errorf("dependency %s is not a promptset", key)
 	}
 
@@ -703,13 +714,13 @@ func (f *FileManager) ensureSinkExists(manifest *Manifest, name string) error {
 
 // Local dependency key helpers (manifest uses registry/package format without version)
 
-// dependencyKey creates a dependency key in format "registry/package"
-func dependencyKey(registry, packageName string) string {
+// DependencyKey creates a dependency key in format "registry/package"
+func DependencyKey(registry, packageName string) string {
 	return fmt.Sprintf("%s/%s", registry, packageName)
 }
 
-// parseDependencyKey parses a dependency key and returns registry, package name
-func parseDependencyKey(key string) (registry, packageName string) {
+// ParseDependencyKey parses a dependency key and returns registry, package name
+func ParseDependencyKey(key string) (registry, packageName string) {
 	parts := strings.Split(key, "/")
 	if len(parts) != 2 {
 		return "", "" // Invalid format

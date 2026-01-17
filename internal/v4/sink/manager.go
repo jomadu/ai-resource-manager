@@ -179,8 +179,8 @@ func (m *Manager) InstallRuleset(pkg *core.Package, priority int) error {
 		return err
 	}
 
-	packageID := core.PackageID(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version)
-	index.Rulesets[packageID] = RulesetIndexEntry{
+	key := pkgKey(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version)
+	index.Rulesets[key] = RulesetIndexEntry{
 		Priority: priority,
 		Files:    installedFiles,
 	}
@@ -257,8 +257,8 @@ func (m *Manager) InstallPromptset(pkg *core.Package) error {
 		return err
 	}
 
-	packageID := core.PackageID(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version)
-	index.Promptsets[packageID] = PromptsetIndexEntry{
+	key := pkgKey(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version)
+	index.Promptsets[key] = PromptsetIndexEntry{
 		Files: installedFiles,
 	}
 
@@ -272,24 +272,24 @@ func (m *Manager) Uninstall(metadata core.PackageMetadata) error {
 		return err
 	}
 
-	packageID := core.PackageID(metadata.RegistryName, metadata.Name, metadata.Version.Version)
+	key := pkgKey(metadata.RegistryName, metadata.Name, metadata.Version.Version)
 
 	// Remove files for rulesets
-	if entry, exists := index.Rulesets[packageID]; exists {
+	if entry, exists := index.Rulesets[key]; exists {
 		for _, filePath := range entry.Files {
 			fullPath := filepath.Join(m.directory, filePath)
 			os.Remove(fullPath) // Ignore errors
 		}
-		delete(index.Rulesets, packageID)
+		delete(index.Rulesets, key)
 	}
 
 	// Remove files for promptsets
-	if entry, exists := index.Promptsets[packageID]; exists {
+	if entry, exists := index.Promptsets[key]; exists {
 		for _, filePath := range entry.Files {
 			fullPath := filepath.Join(m.directory, filePath)
 			os.Remove(fullPath) // Ignore errors
 		}
-		delete(index.Promptsets, packageID)
+		delete(index.Promptsets, key)
 	}
 
 	return m.saveIndex(index)
@@ -302,9 +302,9 @@ func (m *Manager) IsInstalled(metadata core.PackageMetadata) bool {
 		return false
 	}
 
-	packageID := core.PackageID(metadata.RegistryName, metadata.Name, metadata.Version.Version)
-	_, rulesetExists := index.Rulesets[packageID]
-	_, promptsetExists := index.Promptsets[packageID]
+	key := pkgKey(metadata.RegistryName, metadata.Name, metadata.Version.Version)
+	_, rulesetExists := index.Rulesets[key]
+	_, promptsetExists := index.Promptsets[key]
 	return rulesetExists || promptsetExists
 }
 
@@ -316,8 +316,8 @@ func (m *Manager) ListRulesets() ([]*InstalledRuleset, error) {
 	}
 
 	var rulesets []*InstalledRuleset
-	for packageID, entry := range index.Rulesets {
-		registry, name, version, err := core.ParsePackageID(packageID)
+	for key, entry := range index.Rulesets {
+		registry, name, version, err := parsePkgKey(key)
 		if err != nil {
 			continue // Skip invalid entries
 		}
@@ -344,8 +344,8 @@ func (m *Manager) ListPromptsets() ([]*InstalledPromptset, error) {
 	}
 
 	var promptsets []*InstalledPromptset
-	for packageID, entry := range index.Promptsets {
-		registry, name, version, err := core.ParsePackageID(packageID)
+	for key, entry := range index.Promptsets {
+		registry, name, version, err := parsePkgKey(key)
 		if err != nil {
 			continue // Skip invalid entries
 		}
@@ -481,17 +481,17 @@ func (m *Manager) generateRulesetIndexRuleFile() error {
 	body += "## Installed Rulesets\n\n"
 
 	type entry struct {
-		packageID string
-		priority  int
-		files     []string
+		key      string
+		priority int
+		files    []string
 	}
 
 	var entries []entry
-	for packageID, info := range index.Rulesets {
+	for key, info := range index.Rulesets {
 		entries = append(entries, entry{
-			packageID: packageID,
-			priority:  info.Priority,
-			files:     info.Files,
+			key:      key,
+			priority: info.Priority,
+			files:    info.Files,
 		})
 	}
 
@@ -505,7 +505,7 @@ func (m *Manager) generateRulesetIndexRuleFile() error {
 	}
 
 	for _, e := range entries {
-		body += fmt.Sprintf("### %s\n", e.packageID)
+		body += fmt.Sprintf("### %s\n", e.key)
 		body += fmt.Sprintf("- **Priority:** %d\n", e.priority)
 		body += "- **Rules:**\n"
 		for _, file := range e.files {

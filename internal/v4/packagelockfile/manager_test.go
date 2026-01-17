@@ -41,7 +41,7 @@ func TestFileManager_UpsertDependencyLock(t *testing.T) {
 			lockPath := filepath.Join(t.TempDir(), "test-lock.json")
 			fm := NewFileManagerWithPath(lockPath)
 
-			err := fm.UpsertDependencyLock(ctx, tt.key, tt.config)
+			err := fm.UpsertDependencyLock(ctx, "myregistry", "clean-code", "1.2.0", tt.config)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpsertDependencyLock() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -49,7 +49,7 @@ func TestFileManager_UpsertDependencyLock(t *testing.T) {
 
 			if !tt.wantErr {
 				// Verify the dependency was stored
-				got, err := fm.GetDependencyLock(ctx, tt.key)
+				got, err := fm.GetDependencyLock(ctx, "myregistry", "clean-code", "1.2.0")
 				if err != nil {
 					t.Fatalf("GetDependencyLock() error = %v", err)
 				}
@@ -122,7 +122,7 @@ func TestFileManager_GetDependencyLock(t *testing.T) {
 			lockPath := tt.setupFile(t)
 			fm := NewFileManagerWithPath(lockPath)
 
-			got, err := fm.GetDependencyLock(ctx, tt.key)
+			got, err := fm.GetDependencyLock(ctx, "myregistry", "clean-code", "1.2.0")
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetDependencyLock() error = %v, wantErr %v", err, tt.wantErr)
@@ -199,7 +199,7 @@ func TestFileManager_RemoveDependencyLock(t *testing.T) {
 			lockPath := tt.setupFile(t)
 			fm := NewFileManagerWithPath(lockPath)
 
-			err := fm.RemoveDependencyLock(ctx, tt.key)
+			err := fm.RemoveDependencyLock(ctx, "myregistry", "clean-code", "1.2.0")
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RemoveDependencyLock() error = %v, wantErr %v", err, tt.wantErr)
@@ -240,12 +240,12 @@ func TestFileManager_UpdateRegistryName(t *testing.T) {
 	}
 
 	// Verify old key is gone and new key exists
-	_, err = fm.GetDependencyLock(ctx, "oldregistry/clean-code@1.2.0")
+	_, err = fm.GetDependencyLock(ctx, "oldregistry", "clean-code", "1.2.0")
 	if err == nil {
 		t.Error("Expected old key to be removed")
 	}
 
-	got, err := fm.GetDependencyLock(ctx, "newregistry/clean-code@1.2.0")
+	got, err := fm.GetDependencyLock(ctx, "newregistry", "clean-code", "1.2.0")
 	if err != nil {
 		t.Fatalf("GetDependencyLock() error = %v", err)
 	}
@@ -254,7 +254,7 @@ func TestFileManager_UpdateRegistryName(t *testing.T) {
 	}
 
 	// Verify other registry unchanged
-	other, err := fm.GetDependencyLock(ctx, "otherregistry/other@2.0.0")
+	other, err := fm.GetDependencyLock(ctx, "otherregistry", "other", "2.0.0")
 	if err != nil {
 		t.Fatalf("GetDependencyLock() error = %v", err)
 	}

@@ -231,7 +231,8 @@ func (m *mockManifestManager) GetAllDependenciesConfig(ctx context.Context) (map
 	return m.manifest.Dependencies, nil
 }
 
-func (m *mockManifestManager) GetDependencyConfig(ctx context.Context, key string) (map[string]interface{}, error) {
+func (m *mockManifestManager) GetDependencyConfig(ctx context.Context, registry, packageName string) (map[string]interface{}, error) {
+	key := registry + "/" + packageName
 	if m.loadErr != nil {
 		return nil, m.loadErr
 	}
@@ -242,7 +243,8 @@ func (m *mockManifestManager) GetDependencyConfig(ctx context.Context, key strin
 	return cfg, nil
 }
 
-func (m *mockManifestManager) UpsertDependencyConfig(ctx context.Context, key string, config map[string]interface{}) error {
+func (m *mockManifestManager) UpsertDependencyConfig(ctx context.Context, registry, packageName string, config map[string]interface{}) error {
+	key := registry + "/" + packageName
 	if m.saveErr != nil {
 		return m.saveErr
 	}
@@ -253,7 +255,8 @@ func (m *mockManifestManager) UpsertDependencyConfig(ctx context.Context, key st
 	return nil
 }
 
-func (m *mockManifestManager) UpsertRulesetDependencyConfig(ctx context.Context, key string, config manifest.RulesetDependencyConfig) error {
+func (m *mockManifestManager) UpsertRulesetDependencyConfig(ctx context.Context, registry, packageName string, config manifest.RulesetDependencyConfig) error {
+	key := registry + "/" + packageName
 	if m.saveErr != nil {
 		return m.saveErr
 	}
@@ -268,7 +271,8 @@ func (m *mockManifestManager) UpsertRulesetDependencyConfig(ctx context.Context,
 	return nil
 }
 
-func (m *mockManifestManager) UpsertPromptsetDependencyConfig(ctx context.Context, key string, config manifest.PromptsetDependencyConfig) error {
+func (m *mockManifestManager) UpsertPromptsetDependencyConfig(ctx context.Context, registry, packageName string, config manifest.PromptsetDependencyConfig) error {
+	key := registry + "/" + packageName
 	if m.saveErr != nil {
 		return m.saveErr
 	}
@@ -283,7 +287,9 @@ func (m *mockManifestManager) UpsertPromptsetDependencyConfig(ctx context.Contex
 	return nil
 }
 
-func (m *mockManifestManager) UpdateDependencyConfigName(ctx context.Context, key string, newKey string) error {
+func (m *mockManifestManager) UpdateDependencyConfigName(ctx context.Context, registry, packageName, newRegistry, newPackageName string) error {
+	key := registry + "/" + packageName
+	newKey := newRegistry + "/" + newPackageName
 	if m.loadErr != nil {
 		return m.loadErr
 	}
@@ -299,7 +305,8 @@ func (m *mockManifestManager) UpdateDependencyConfigName(ctx context.Context, ke
 	return nil
 }
 
-func (m *mockManifestManager) RemoveDependencyConfig(ctx context.Context, key string) error {
+func (m *mockManifestManager) RemoveDependencyConfig(ctx context.Context, registry, packageName string) error {
+	key := registry + "/" + packageName
 	if m.loadErr != nil {
 		return m.loadErr
 	}
@@ -311,6 +318,36 @@ func (m *mockManifestManager) RemoveDependencyConfig(ctx context.Context, key st
 	}
 	delete(m.manifest.Dependencies, key)
 	return nil
+}
+
+func (m *mockManifestManager) GetRulesetDependencyConfig(ctx context.Context, registry, packageName string) (*manifest.RulesetDependencyConfig, error) {
+	key := registry + "/" + packageName
+	if m.loadErr != nil {
+		return nil, m.loadErr
+	}
+	cfg, exists := m.manifest.Dependencies[key]
+	if !exists {
+		return nil, errors.New("dependency does not exist")
+	}
+	configMap, _ := json.Marshal(cfg)
+	var result manifest.RulesetDependencyConfig
+	json.Unmarshal(configMap, &result)
+	return &result, nil
+}
+
+func (m *mockManifestManager) GetPromptsetDependencyConfig(ctx context.Context, registry, packageName string) (*manifest.PromptsetDependencyConfig, error) {
+	key := registry + "/" + packageName
+	if m.loadErr != nil {
+		return nil, m.loadErr
+	}
+	cfg, exists := m.manifest.Dependencies[key]
+	if !exists {
+		return nil, errors.New("dependency does not exist")
+	}
+	configMap, _ := json.Marshal(cfg)
+	var result manifest.PromptsetDependencyConfig
+	json.Unmarshal(configMap, &result)
+	return &result, nil
 }
 
 func TestAddSink(t *testing.T) {

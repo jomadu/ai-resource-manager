@@ -188,13 +188,13 @@ func TestFileManager_UpsertRulesetDependencyConfig(t *testing.T) {
 		Priority: 100,
 	}
 	
-	err := fm.UpsertRulesetDependencyConfig(ctx, "test-reg/ruleset1", *config)
+	err := fm.UpsertRulesetDependencyConfig(ctx, "test-reg", "ruleset1", *config)
 	if err != nil {
 		t.Fatalf("UpsertRulesetDependencyConfig() error = %v", err)
 	}
 	
 	// Verify it was added
-	retrieved, err := fm.GetRulesetDependencyConfig(ctx, "test-reg/ruleset1")
+	retrieved, err := fm.GetRulesetDependencyConfig(ctx, "test-reg", "ruleset1")
 	if err != nil {
 		t.Fatalf("GetRulesetDependencyConfig() error = %v", err)
 	}
@@ -225,13 +225,13 @@ func TestFileManager_UpsertPromptsetDependencyConfig(t *testing.T) {
 		},
 	}
 	
-	err := fm.UpsertPromptsetDependencyConfig(ctx, "test-reg/promptset1", *config)
+	err := fm.UpsertPromptsetDependencyConfig(ctx, "test-reg", "promptset1", *config)
 	if err != nil {
 		t.Fatalf("UpsertPromptsetDependencyConfig() error = %v", err)
 	}
 	
 	// Verify it was added
-	retrieved, err := fm.GetPromptsetDependencyConfig(ctx, "test-reg/promptset1")
+	retrieved, err := fm.GetPromptsetDependencyConfig(ctx, "test-reg", "promptset1")
 	if err != nil {
 		t.Fatalf("GetPromptsetDependencyConfig() error = %v", err)
 	}
@@ -258,13 +258,13 @@ func TestFileManager_RemoveDependencyConfig(t *testing.T) {
 	manifestPath := createTestManifest(t, manifest)
 	fm := NewFileManagerWithPath(manifestPath)
 	
-	err := fm.RemoveDependencyConfig(ctx, "test-reg/package1")
+	err := fm.RemoveDependencyConfig(ctx, "test-reg", "package1")
 	if err != nil {
 		t.Fatalf("RemoveDependencyConfig() error = %v", err)
 	}
 	
 	// Verify it was removed
-	_, err = fm.GetDependencyConfig(ctx, "test-reg/package1")
+	_, err = fm.GetDependencyConfig(ctx, "test-reg", "package1")
 	if err == nil {
 		t.Errorf("Expected error when getting removed dependency")
 	}
@@ -295,7 +295,7 @@ func TestFileManager_GetRulesetDependencyConfig_WrongType(t *testing.T) {
 	manifestPath := createTestManifest(t, manifest)
 	fm := NewFileManagerWithPath(manifestPath)
 	
-	_, err := fm.GetRulesetDependencyConfig(ctx, "test-reg/package1")
+	_, err := fm.GetRulesetDependencyConfig(ctx, "test-reg", "package1")
 	if err == nil {
 		t.Errorf("Expected error for wrong dependency type")
 	}
@@ -389,13 +389,13 @@ func TestFileManager_UpsertDependency_Overwrite(t *testing.T) {
 		Priority: 200,
 	}
 	
-	err := fm.UpsertRulesetDependencyConfig(ctx, "test-reg/package1", *newConfig)
+	err := fm.UpsertRulesetDependencyConfig(ctx, "test-reg", "package1", *newConfig)
 	if err != nil {
 		t.Fatalf("UpsertRulesetDependencyConfig() error = %v", err)
 	}
 	
 	// Verify it was updated
-	retrieved, err := fm.GetRulesetDependencyConfig(ctx, "test-reg/package1")
+	retrieved, err := fm.GetRulesetDependencyConfig(ctx, "test-reg", "package1")
 	if err != nil {
 		t.Fatalf("GetRulesetDependencyConfig() error = %v", err)
 	}

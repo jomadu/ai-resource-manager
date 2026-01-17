@@ -570,8 +570,8 @@ func TestInstallRuleset(t *testing.T) {
 
 	// Check index
 	index, _ := m.loadIndex()
-	packageID := core.PackageID("test-reg", "test-pkg", "1.0.0")
-	entry, exists := index.Rulesets[packageID]
+	key := pkgKey("test-reg", "test-pkg", "1.0.0")
+	entry, exists := index.Rulesets[key]
 	if !exists {
 		t.Errorf("package should be in index")
 	}
@@ -646,8 +646,8 @@ func TestInstallRulesetReplacesOldVersion(t *testing.T) {
 
 	// Check priority updated
 	index, _ := m.loadIndex()
-	packageID := core.PackageID("test-reg", "test-pkg", "1.0.0")
-	if index.Rulesets[packageID].Priority != 200 {
+	key := pkgKey("test-reg", "test-pkg", "1.0.0")
+	if index.Rulesets[key].Priority != 200 {
 		t.Errorf("expected priority 200, got %d", index.Rulesets[packageID].Priority)
 	}
 }
@@ -677,8 +677,8 @@ func TestInstallRulesetEmptyPackage(t *testing.T) {
 	}
 
 	index, _ := m.loadIndex()
-	packageID := core.PackageID("test-reg", "empty-pkg", "1.0.0")
-	if len(index.Rulesets[packageID].Files) != 0 {
+	key := pkgKey("test-reg", "empty-pkg", "1.0.0")
+	if len(index.Rulesets[key].Files) != 0 {
 		t.Errorf("expected 0 files, got %d", len(index.Rulesets[packageID].Files))
 	}
 }
@@ -714,8 +714,8 @@ func TestInstallPromptset(t *testing.T) {
 
 	// Check index
 	index, _ := m.loadIndex()
-	packageID := core.PackageID("test-reg", "test-prompts", "1.0.0")
-	entry, exists := index.Promptsets[packageID]
+	key := pkgKey("test-reg", "test-prompts", "1.0.0")
+	entry, exists := index.Promptsets[key]
 	if !exists {
 		t.Errorf("package should be in index")
 	}
@@ -806,8 +806,8 @@ func TestInstallPromptsetEmptyPackage(t *testing.T) {
 	}
 
 	index, _ := m.loadIndex()
-	packageID := core.PackageID("test-reg", "empty-prompts", "1.0.0")
-	if len(index.Promptsets[packageID].Files) != 0 {
+	key := pkgKey("test-reg", "empty-prompts", "1.0.0")
+	if len(index.Promptsets[key].Files) != 0 {
 		t.Errorf("expected 0 files, got %d", len(index.Promptsets[packageID].Files))
 	}
 }
