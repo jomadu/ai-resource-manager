@@ -318,7 +318,7 @@ func TestAddSink(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddSink(context.Background(), "test", "/path", compiler.Cursor, false)
 
@@ -345,7 +345,7 @@ func TestAddSink(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddSink(context.Background(), "test", "/new", compiler.AmazonQ, false)
 
@@ -365,7 +365,7 @@ func TestAddSink(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddSink(context.Background(), "test", "/new", compiler.AmazonQ, true)
 
@@ -384,7 +384,7 @@ func TestAddSink(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddSink(context.Background(), "test", "/path", compiler.Cursor, false)
 
@@ -398,7 +398,7 @@ func TestAddSink(t *testing.T) {
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 			saveErr:  errors.New("save error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddSink(context.Background(), "test", "/path", compiler.Cursor, false)
 
@@ -417,7 +417,7 @@ func TestRemoveSink(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.RemoveSink(context.Background(), "test")
 
@@ -433,7 +433,7 @@ func TestRemoveSink(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.RemoveSink(context.Background(), "test")
 
@@ -446,7 +446,7 @@ func TestRemoveSink(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.RemoveSink(context.Background(), "test")
 
@@ -464,7 +464,7 @@ func TestRemoveSink(t *testing.T) {
 			},
 			saveErr: errors.New("save error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.RemoveSink(context.Background(), "test")
 
@@ -483,7 +483,7 @@ func TestGetSinkConfig(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		cfg, err := svc.GetSinkConfig(context.Background(), "test")
 
@@ -499,7 +499,7 @@ func TestGetSinkConfig(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		_, err := svc.GetSinkConfig(context.Background(), "test")
 
@@ -512,7 +512,7 @@ func TestGetSinkConfig(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		_, err := svc.GetSinkConfig(context.Background(), "test")
 
@@ -532,7 +532,7 @@ func TestGetAllSinkConfigs(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		cfgs, err := svc.GetAllSinkConfigs(context.Background())
 
@@ -548,7 +548,7 @@ func TestGetAllSinkConfigs(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		cfgs, err := svc.GetAllSinkConfigs(context.Background())
 
@@ -564,7 +564,7 @@ func TestGetAllSinkConfigs(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		_, err := svc.GetAllSinkConfigs(context.Background())
 
@@ -583,7 +583,7 @@ func TestSetSinkName(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkName(context.Background(), "old", "new")
 
@@ -605,7 +605,7 @@ func TestSetSinkName(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkName(context.Background(), "old", "new")
 
@@ -623,7 +623,7 @@ func TestSetSinkName(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkName(context.Background(), "old", "new")
 
@@ -636,7 +636,7 @@ func TestSetSinkName(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkName(context.Background(), "old", "new")
 
@@ -654,7 +654,7 @@ func TestSetSinkName(t *testing.T) {
 			},
 			saveErr: errors.New("save error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkName(context.Background(), "old", "new")
 
@@ -673,7 +673,7 @@ func TestSetSinkDirectory(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkDirectory(context.Background(), "test", "/new")
 
@@ -689,7 +689,7 @@ func TestSetSinkDirectory(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkDirectory(context.Background(), "test", "/new")
 
@@ -702,7 +702,7 @@ func TestSetSinkDirectory(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkDirectory(context.Background(), "test", "/new")
 
@@ -720,7 +720,7 @@ func TestSetSinkDirectory(t *testing.T) {
 			},
 			saveErr: errors.New("save error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkDirectory(context.Background(), "test", "/new")
 
@@ -739,7 +739,7 @@ func TestSetSinkTool(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkTool(context.Background(), "test", compiler.AmazonQ)
 
@@ -755,7 +755,7 @@ func TestSetSinkTool(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Sinks: make(map[string]manifest.SinkConfig)},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkTool(context.Background(), "test", compiler.AmazonQ)
 
@@ -768,7 +768,7 @@ func TestSetSinkTool(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkTool(context.Background(), "test", compiler.AmazonQ)
 
@@ -786,7 +786,7 @@ func TestSetSinkTool(t *testing.T) {
 			},
 			saveErr: errors.New("save error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetSinkTool(context.Background(), "test", compiler.AmazonQ)
 

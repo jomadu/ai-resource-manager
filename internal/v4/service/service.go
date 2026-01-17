@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -30,15 +29,20 @@ type OutdatedDependency struct {
 
 // ArmService handles all ARM operations
 type ArmService struct {
-	manifestMgr manifest.Manager
-	lockfileMgr *packagelockfile.FileManager
+	manifestMgr     manifest.Manager
+	lockfileMgr     packagelockfile.Manager
+	registryFactory registry.Factory
 }
 
 // NewArmService creates a new ARM service
-func NewArmService(manifestMgr manifest.Manager, lockfileMgr *packagelockfile.FileManager) *ArmService {
+func NewArmService(manifestMgr manifest.Manager, lockfileMgr packagelockfile.Manager, registryFactory registry.Factory) *ArmService {
+	if registryFactory == nil {
+		registryFactory = &registry.DefaultFactory{}
+	}
 	return &ArmService{
-		manifestMgr: manifestMgr,
-		lockfileMgr: lockfileMgr,
+		manifestMgr:     manifestMgr,
+		lockfileMgr:     lockfileMgr,
+		registryFactory: registryFactory,
 	}
 }
 
@@ -296,7 +300,7 @@ func (s *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 	}
 
 	// 2. Create registry client
-	reg, err := registry.CreateRegistry(registryName, regConfig)
+	reg, err := s.registryFactory.CreateRegistry(registryName, regConfig)
 	if err != nil {
 		return err
 	}
@@ -375,7 +379,7 @@ func (s *ArmService) InstallPromptset(ctx context.Context, registryName, prompts
 	}
 
 	// 2. Create registry client
-	reg, err := registry.CreateRegistry(registryName, regConfig)
+	reg, err := s.registryFactory.CreateRegistry(registryName, regConfig)
 	if err != nil {
 		return err
 	}

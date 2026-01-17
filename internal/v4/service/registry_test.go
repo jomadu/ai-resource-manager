@@ -13,7 +13,7 @@ func TestAddGitRegistry(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddGitRegistry(context.Background(), "test", "https://github.com/test/repo", []string{"main"}, false)
 
@@ -36,7 +36,7 @@ func TestAddGitRegistry(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddGitRegistry(context.Background(), "test", "https://github.com/test/repo", nil, false)
 
@@ -57,7 +57,7 @@ func TestAddGitRegistry(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddGitRegistry(context.Background(), "test", "https://new.com", nil, false)
 
@@ -77,7 +77,7 @@ func TestAddGitRegistry(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddGitRegistry(context.Background(), "test", "https://new.com", []string{"dev"}, true)
 
@@ -93,7 +93,7 @@ func TestAddGitRegistry(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddGitRegistry(context.Background(), "test", "https://github.com/test/repo", nil, false)
 
@@ -107,7 +107,7 @@ func TestAddGitRegistry(t *testing.T) {
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 			saveErr:  errors.New("save error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddGitRegistry(context.Background(), "test", "https://github.com/test/repo", nil, false)
 
@@ -122,7 +122,7 @@ func TestAddGitLabRegistry(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddGitLabRegistry(context.Background(), "test", "https://gitlab.com", "123", "456", "v4", false)
 
@@ -142,7 +142,7 @@ func TestAddGitLabRegistry(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddGitLabRegistry(context.Background(), "test", "https://gitlab.com", "", "", "", false)
 
@@ -159,7 +159,7 @@ func TestAddGitLabRegistry(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddGitLabRegistry(context.Background(), "test", "https://new.com", "123", "", "", false)
 
@@ -176,7 +176,7 @@ func TestAddGitLabRegistry(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddGitLabRegistry(context.Background(), "test", "https://new.com", "999", "", "", true)
 
@@ -194,7 +194,7 @@ func TestAddCloudsmithRegistry(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddCloudsmithRegistry(context.Background(), "test", "https://cloudsmith.io", "myorg", "myrepo", false)
 
@@ -221,7 +221,7 @@ func TestAddCloudsmithRegistry(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddCloudsmithRegistry(context.Background(), "test", "https://new.com", "org", "repo", false)
 
@@ -238,7 +238,7 @@ func TestAddCloudsmithRegistry(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.AddCloudsmithRegistry(context.Background(), "test", "https://new.com", "neworg", "newrepo", true)
 
@@ -260,7 +260,7 @@ func TestRemoveRegistry(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.RemoveRegistry(context.Background(), "test")
 
@@ -276,7 +276,7 @@ func TestRemoveRegistry(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.RemoveRegistry(context.Background(), "test")
 
@@ -289,7 +289,7 @@ func TestRemoveRegistry(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.RemoveRegistry(context.Background(), "test")
 
@@ -307,7 +307,7 @@ func TestRemoveRegistry(t *testing.T) {
 			},
 			saveErr: errors.New("save error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.RemoveRegistry(context.Background(), "test")
 
@@ -326,7 +326,7 @@ func TestGetRegistryConfig(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		cfg, err := svc.GetRegistryConfig(context.Background(), "test")
 
@@ -342,7 +342,7 @@ func TestGetRegistryConfig(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		_, err := svc.GetRegistryConfig(context.Background(), "test")
 
@@ -355,7 +355,7 @@ func TestGetRegistryConfig(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		_, err := svc.GetRegistryConfig(context.Background(), "test")
 
@@ -375,7 +375,7 @@ func TestGetAllRegistriesConfig(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		cfgs, err := svc.GetAllRegistriesConfig(context.Background())
 
@@ -391,7 +391,7 @@ func TestGetAllRegistriesConfig(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		cfgs, err := svc.GetAllRegistriesConfig(context.Background())
 
@@ -407,7 +407,7 @@ func TestGetAllRegistriesConfig(t *testing.T) {
 		mgr := &mockManifestManager{
 			loadErr: errors.New("load error"),
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		_, err := svc.GetAllRegistriesConfig(context.Background())
 
@@ -426,7 +426,7 @@ func TestSetRegistryName(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetRegistryName(context.Background(), "old", "new")
 
@@ -448,7 +448,7 @@ func TestSetRegistryName(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetRegistryName(context.Background(), "old", "new")
 
@@ -466,7 +466,7 @@ func TestSetRegistryName(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetRegistryName(context.Background(), "old", "new")
 
@@ -485,7 +485,7 @@ func TestSetRegistryURL(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetRegistryURL(context.Background(), "test", "https://new.com")
 
@@ -501,7 +501,7 @@ func TestSetRegistryURL(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetRegistryURL(context.Background(), "test", "https://new.com")
 
@@ -520,7 +520,7 @@ func TestSetGitRegistryBranches(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetGitRegistryBranches(context.Background(), "test", []string{"main", "dev"})
 
@@ -541,7 +541,7 @@ func TestSetGitRegistryBranches(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetGitRegistryBranches(context.Background(), "test", []string{"main"})
 
@@ -554,7 +554,7 @@ func TestSetGitRegistryBranches(t *testing.T) {
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{Registries: make(map[string]map[string]interface{})},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetGitRegistryBranches(context.Background(), "test", []string{"main"})
 
@@ -573,7 +573,7 @@ func TestSetGitLabRegistryProjectID(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetGitLabRegistryProjectID(context.Background(), "test", "999")
 
@@ -593,7 +593,7 @@ func TestSetGitLabRegistryProjectID(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetGitLabRegistryProjectID(context.Background(), "test", "999")
 
@@ -612,7 +612,7 @@ func TestSetGitLabRegistryGroupID(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetGitLabRegistryGroupID(context.Background(), "test", "888")
 
@@ -632,7 +632,7 @@ func TestSetGitLabRegistryGroupID(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetGitLabRegistryGroupID(context.Background(), "test", "888")
 
@@ -651,7 +651,7 @@ func TestSetGitLabRegistryAPIVersion(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetGitLabRegistryAPIVersion(context.Background(), "test", "v5")
 
@@ -671,7 +671,7 @@ func TestSetGitLabRegistryAPIVersion(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetGitLabRegistryAPIVersion(context.Background(), "test", "v5")
 
@@ -690,7 +690,7 @@ func TestSetCloudsmithRegistryOwner(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetCloudsmithRegistryOwner(context.Background(), "test", "neworg")
 
@@ -710,7 +710,7 @@ func TestSetCloudsmithRegistryOwner(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetCloudsmithRegistryOwner(context.Background(), "test", "neworg")
 
@@ -729,7 +729,7 @@ func TestSetCloudsmithRegistryRepository(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetCloudsmithRegistryRepository(context.Background(), "test", "newrepo")
 
@@ -749,7 +749,7 @@ func TestSetCloudsmithRegistryRepository(t *testing.T) {
 				},
 			},
 		}
-		svc := NewArmService(mgr, nil)
+		svc := NewArmService(mgr, nil, nil)
 
 		err := svc.SetCloudsmithRegistryRepository(context.Background(), "test", "newrepo")
 

@@ -5,7 +5,15 @@ import (
 	"fmt"
 )
 
-func CreateRegistry(name string, config map[string]interface{}) (Registry, error) {
+// Factory creates registries from config
+type Factory interface {
+	CreateRegistry(name string, config map[string]interface{}) (Registry, error)
+}
+
+// DefaultFactory is the default registry factory
+type DefaultFactory struct{}
+
+func (f *DefaultFactory) CreateRegistry(name string, config map[string]interface{}) (Registry, error) {
 	regType, ok := config["type"].(string)
 	if !ok {
 		return nil, fmt.Errorf("registry type not specified")
