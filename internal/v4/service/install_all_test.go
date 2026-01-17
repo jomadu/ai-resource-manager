@@ -136,6 +136,8 @@ func (m *mockLockfileManager) UpsertDependencyLock(ctx context.Context, registry
 }
 
 func (m *mockLockfileManager) RemoveDependencyLock(ctx context.Context, registry, packageName, version string) error {
+	key := registry + "/" + packageName + "@" + version
+	delete(m.locks, key)
 	return nil
 }
 

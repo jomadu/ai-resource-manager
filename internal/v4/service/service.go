@@ -435,7 +435,59 @@ func (s *ArmService) InstallPromptset(ctx context.Context, registryName, prompts
 
 // UninstallAll uninstalls all dependencies
 func (s *ArmService) UninstallAll(ctx context.Context) error {
-	// TODO: implement
+	deps, err := s.manifestMgr.GetAllDependenciesConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	allSinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	for key := range deps {
+		registryName, packageName := manifest.ParseDependencyKey(key)
+		depConfig, err := s.manifestMgr.GetDependencyConfig(ctx, registryName, packageName)
+		if err != nil {
+			return err
+		}
+
+		sinks, ok := depConfig["sinks"].([]interface{})
+		if ok {
+			version, ok := depConfig["version"].(string)
+			if ok {
+				for _, sinkInterface := range sinks {
+					sinkName, ok := sinkInterface.(string)
+					if !ok {
+						continue
+					}
+
+					sinkConfig, exists := allSinks[sinkName]
+					if !exists {
+						continue
+					}
+
+					sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+					if err := sinkMgr.Uninstall(core.PackageMetadata{
+						RegistryName: registryName,
+						Name:         packageName,
+						Version:      core.Version{Version: version},
+					}); err != nil {
+						return err
+					}
+				}
+
+				if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, version); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := s.manifestMgr.RemoveDependencyConfig(ctx, registryName, packageName); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
