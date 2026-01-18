@@ -74,6 +74,8 @@ type Manager interface {
 
 	// Dependency operations
 	GetAllDependenciesConfig(ctx context.Context) (map[string]map[string]interface{}, error)
+	GetAllRulesetDependenciesConfig(ctx context.Context) (map[string]*RulesetDependencyConfig, error)
+	GetAllPromptsetDependenciesConfig(ctx context.Context) (map[string]*PromptsetDependencyConfig, error)
 	GetDependencyConfig(ctx context.Context, registry, packageName string) (map[string]interface{}, error)
 	GetRulesetDependencyConfig(ctx context.Context, registry, packageName string) (*RulesetDependencyConfig, error)
 	GetPromptsetDependencyConfig(ctx context.Context, registry, packageName string) (*PromptsetDependencyConfig, error)
@@ -490,6 +492,52 @@ func (f *FileManager) RemoveDependencyConfig(ctx context.Context, registry, pack
 }
 
 // Dependencies operations (type-safe helpers)
+
+func (f *FileManager) GetAllRulesetDependenciesConfig(ctx context.Context) (map[string]*RulesetDependencyConfig, error) {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return nil, err
+	}
+
+	rulesets := make(map[string]*RulesetDependencyConfig)
+	for key, rawConfig := range manifest.Dependencies {
+		depType, ok := rawConfig["type"].(string)
+		if !ok || depType != "ruleset" {
+			continue
+		}
+
+		config, err := convertMapToRulesetDependency(rawConfig)
+		if err != nil {
+			return nil, err
+		}
+		rulesets[key] = config
+	}
+
+	return rulesets, nil
+}
+
+func (f *FileManager) GetAllPromptsetDependenciesConfig(ctx context.Context) (map[string]*PromptsetDependencyConfig, error) {
+	manifest, err := f.loadManifest()
+	if err != nil {
+		return nil, err
+	}
+
+	promptsets := make(map[string]*PromptsetDependencyConfig)
+	for key, rawConfig := range manifest.Dependencies {
+		depType, ok := rawConfig["type"].(string)
+		if !ok || depType != "promptset" {
+			continue
+		}
+
+		config, err := convertMapToPromptsetDependency(rawConfig)
+		if err != nil {
+			return nil, err
+		}
+		promptsets[key] = config
+	}
+
+	return promptsets, nil
+}
 
 func (f *FileManager) GetRulesetDependencyConfig(ctx context.Context, registry, packageName string) (*RulesetDependencyConfig, error) {
 	rawConfig, err := f.GetDependencyConfig(ctx, registry, packageName)
