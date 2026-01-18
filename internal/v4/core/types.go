@@ -20,6 +20,7 @@ type Version struct {
 	Prerelease string
 	Build      string
 	Version    string
+	IsSemver   bool
 }
 
 type PackageMetadata struct {

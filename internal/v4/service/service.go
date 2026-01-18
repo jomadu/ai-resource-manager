@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
@@ -493,7 +494,139 @@ func (s *ArmService) UninstallAll(ctx context.Context) error {
 
 // UpdateAll updates all dependencies
 func (s *ArmService) UpdateAll(ctx context.Context) error {
-	// TODO: implement
+	deps, err := s.manifestMgr.GetAllDependenciesConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	allSinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	lockFile, err := s.lockfileMgr.GetLockFile(ctx)
+	if err != nil {
+		return err
+	}
+
+	for key, depConfig := range deps {
+		depType, ok := depConfig["type"].(string)
+		if !ok {
+			continue
+		}
+
+		registryName, packageName := manifest.ParseDependencyKey(key)
+
+		version, ok := depConfig["version"].(string)
+		if !ok {
+			continue
+		}
+
+		regConfig, err := s.manifestMgr.GetRegistryConfig(ctx, registryName)
+		if err != nil {
+			return err
+		}
+
+		reg, err := s.registryFactory.CreateRegistry(registryName, regConfig)
+		if err != nil {
+			return err
+		}
+
+		availableVersions, err := reg.ListPackageVersions(ctx, packageName)
+		if err != nil {
+			return err
+		}
+
+		resolvedVersion, err := core.ResolveVersion(version, availableVersions)
+		if err != nil {
+			return err
+		}
+
+		var oldVersion string
+		if lockFile != nil && lockFile.Dependencies != nil {
+			for lockKey := range lockFile.Dependencies {
+				if strings.HasPrefix(lockKey, key+"@") {
+					oldVersion = lockKey[len(key)+1:]
+					break
+				}
+			}
+		}
+
+		if oldVersion == resolvedVersion.Version {
+			continue
+		}
+
+		include, _ := depConfig["include"].([]string)
+		exclude, _ := depConfig["exclude"].([]string)
+
+		pkg, err := reg.GetPackage(ctx, packageName, resolvedVersion, include, exclude)
+		if err != nil {
+			return err
+		}
+
+		sinksInterface, ok := depConfig["sinks"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		if oldVersion != "" {
+			for _, sinkInterface := range sinksInterface {
+				sinkName, ok := sinkInterface.(string)
+				if !ok {
+					continue
+				}
+
+				sinkConfig, exists := allSinks[sinkName]
+				if !exists {
+					continue
+				}
+
+				sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+				if err := sinkMgr.Uninstall(core.PackageMetadata{
+					RegistryName: registryName,
+					Name:         packageName,
+					Version:      core.Version{Version: oldVersion},
+				}); err != nil {
+					return err
+				}
+			}
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+				return err
+			}
+		}
+
+		for _, sinkInterface := range sinksInterface {
+			sinkName, ok := sinkInterface.(string)
+			if !ok {
+				continue
+			}
+
+			sinkConfig, exists := allSinks[sinkName]
+			if !exists {
+				continue
+			}
+
+			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+
+			if depType == "ruleset" {
+				priority, _ := depConfig["priority"].(int)
+				if err := sinkMgr.InstallRuleset(pkg, priority); err != nil {
+					return err
+				}
+			} else if depType == "promptset" {
+				if err := sinkMgr.InstallPromptset(pkg); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, resolvedVersion.Version, &packagelockfile.DependencyLockConfig{
+			Integrity: pkg.Integrity,
+		}); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

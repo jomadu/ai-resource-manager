@@ -1,5 +1,7 @@
 package core
 
+import "strings"
+
 func (c *Constraint) IsSatisfiedBy(version Version) bool {
 	if c == nil {
 		return false
@@ -34,12 +36,36 @@ func ParseConstraint(versionStr string) (Constraint, error) {
 		return Constraint{Type: Latest}, nil
 	}
 
+	// Handle ^ (caret) - allows changes within same major version
+	if strings.HasPrefix(versionStr, "^") {
+		version, err := ParseVersion(versionStr[1:])
+		if err != nil {
+			return Constraint{}, err
+		}
+		if !version.IsSemver {
+			return Constraint{Type: BranchHead, Version: &version}, nil
+		}
+		return Constraint{Type: Major, Version: &version}, nil
+	}
+
+	// Handle ~ (tilde) - allows patch-level changes
+	if strings.HasPrefix(versionStr, "~") {
+		version, err := ParseVersion(versionStr[1:])
+		if err != nil {
+			return Constraint{}, err
+		}
+		if !version.IsSemver {
+			return Constraint{Type: BranchHead, Version: &version}, nil
+		}
+		return Constraint{Type: Minor, Version: &version}, nil
+	}
+
 	version, err := ParseVersion(versionStr)
 	if err != nil {
 		return Constraint{}, err
 	}
 
-	if !version.IsSemanticVersion() {
+	if !version.IsSemver {
 		return Constraint{Type: BranchHead, Version: &version}, nil
 	}
 

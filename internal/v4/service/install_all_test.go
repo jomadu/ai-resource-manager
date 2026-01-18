@@ -126,7 +126,14 @@ func (m *mockLockfileManager) GetDependencyLock(ctx context.Context, registry, p
 }
 
 func (m *mockLockfileManager) GetLockFile(ctx context.Context) (*packagelockfile.LockFile, error) {
-	return nil, nil
+	lockFile := &packagelockfile.LockFile{
+		Version:      1,
+		Dependencies: make(map[string]packagelockfile.DependencyLockConfig),
+	}
+	for key, config := range m.locks {
+		lockFile.Dependencies[key] = *config
+	}
+	return lockFile, nil
 }
 
 func (m *mockLockfileManager) UpsertDependencyLock(ctx context.Context, registry, packageName, version string, config *packagelockfile.DependencyLockConfig) error {

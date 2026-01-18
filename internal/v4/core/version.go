@@ -7,11 +7,6 @@ import (
 	"strings"
 )
 
-// IsSemanticVersion returns true if the version was successfully parsed as semantic version
-func (v Version) IsSemanticVersion() bool {
-	return v.Major > 0 || v.Minor > 0 || v.Patch > 0
-}
-
 // Compare returns -1 if v is older than other, 0 if equal, 1 if newer
 func (v Version) Compare(other Version) int {
 	if v.Major < other.Major {
@@ -78,33 +73,27 @@ func ParseVersion(versionString string) (Version, error) {
 	
 	// Parse major.minor.patch
 	versionParts := strings.Split(corePart, ".")
-	if len(versionParts) < 1 {
-		// No version parts, return as-is
-		return Version{Version: original}, nil
+	if len(versionParts) < 3 {
+		// Not a valid semver format (needs major.minor.patch)
+		return Version{Version: original, IsSemver: false}, nil
 	}
 	
 	// Parse major (required)
 	major, err := strconv.Atoi(versionParts[0])
 	if err != nil {
-		return Version{Version: original}, nil
+		return Version{Version: original, IsSemver: false}, nil
 	}
 	
-	// Parse minor (optional)
-	minor := 0
-	if len(versionParts) > 1 {
-		minor, err = strconv.Atoi(versionParts[1])
-		if err != nil {
-			return Version{Version: original}, nil
-		}
+	// Parse minor (required for semver)
+	minor, err := strconv.Atoi(versionParts[1])
+	if err != nil {
+		return Version{Version: original, IsSemver: false}, nil
 	}
 	
-	// Parse patch (optional)
-	patch := 0
-	if len(versionParts) > 2 {
-		patch, err = strconv.Atoi(versionParts[2])
-		if err != nil {
-			return Version{Version: original}, nil
-		}
+	// Parse patch (required for semver)
+	patch, err := strconv.Atoi(versionParts[2])
+	if err != nil {
+		return Version{Version: original, IsSemver: false}, nil
 	}
 	
 	return Version{
@@ -114,6 +103,7 @@ func ParseVersion(versionString string) (Version, error) {
 		Prerelease: prerelease,
 		Build:      build,
 		Version:    original,
+		IsSemver:   true,
 	}, nil
 }
 

@@ -85,3 +85,106 @@ func TestParseConstraint_VersionValues(t *testing.T) {
 		}
 	})
 }
+
+func TestParseConstraint_Caret(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		wantType ConstraintType
+	}{
+		{"^1.1.1 is major", "^1.1.1", Major},
+		{"^1.0.0 is major", "^1.0.0", Major},
+		{"^2.3.4 is major", "^2.3.4", Major},
+		{"^0.1.0 is major", "^0.1.0", Major},
+		{"^0.2.5 is major", "^0.2.5", Major},
+		{"^0.0.1 is major", "^0.0.1", Major},
+		{"^0.0.0 is major", "^0.0.0", Major},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := ParseConstraint(tt.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if c.Type != tt.wantType {
+				t.Errorf("got type %v, want %v", c.Type, tt.wantType)
+			}
+		})
+	}
+}
+
+func TestParseConstraint_Tilde(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"~1.0.1", "~1.0.1"},
+		{"~1.2.3", "~1.2.3"},
+		{"~0.0.1", "~0.0.1"},
+		{"~2.5.0", "~2.5.0"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := ParseConstraint(tt.input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if c.Type != Minor {
+				t.Errorf("tilde should always be Minor, got %v", c.Type)
+			}
+		})
+	}
+}
+
+func TestConstraint_IsSatisfiedBy(t *testing.T) {
+	tests := []struct {
+		name       string
+		constraint string
+		version    string
+		want       bool
+	}{
+		// Caret always major
+		{"^1.1.1 allows 1.1.1", "^1.1.1", "1.1.1", true},
+		{"^1.1.1 allows 1.2.0", "^1.1.1", "1.2.0", true},
+		{"^1.1.1 allows 1.9.9", "^1.1.1", "1.9.9", true},
+		{"^1.1.1 rejects 2.0.0", "^1.1.1", "2.0.0", false},
+		{"^1.1.1 rejects 1.1.0", "^1.1.1", "1.1.0", false},
+		{"^1.1.1 rejects 1.0.0", "^1.1.1", "1.0.0", false},
+		{"^0.1.0 allows 0.1.0", "^0.1.0", "0.1.0", true},
+		{"^0.1.0 allows 0.9.9", "^0.1.0", "0.9.9", true},
+		{"^0.1.0 rejects 1.0.0", "^0.1.0", "1.0.0", false},
+		{"^0.0.1 allows 0.0.1", "^0.0.1", "0.0.1", true},
+		{"^0.0.1 allows 0.0.9", "^0.0.1", "0.0.9", true},
+		{"^0.0.1 allows 0.1.0", "^0.0.1", "0.1.0", true},
+		{"^0.0.1 rejects 1.0.0", "^0.0.1", "1.0.0", false},
+
+		// Tilde
+		{"~1.0.1 allows 1.0.1", "~1.0.1", "1.0.1", true},
+		{"~1.0.1 allows 1.0.9", "~1.0.1", "1.0.9", true},
+		{"~1.0.1 rejects 1.1.0", "~1.0.1", "1.1.0", false},
+		{"~1.0.1 rejects 1.0.0", "~1.0.1", "1.0.0", false},
+
+		// Exact
+		{"1.2.3 allows 1.2.3", "1.2.3", "1.2.3", true},
+		{"1.2.3 rejects 1.2.4", "1.2.3", "1.2.4", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := ParseConstraint(tt.constraint)
+			if err != nil {
+				t.Fatal(err)
+			}
+			v, err := ParseVersion(tt.version)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := c.IsSatisfiedBy(v)
+			if got != tt.want {
+				t.Errorf("IsSatisfiedBy() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
