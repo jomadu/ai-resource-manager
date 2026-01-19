@@ -648,7 +648,7 @@ func TestInstallRulesetReplacesOldVersion(t *testing.T) {
 	index, _ := m.loadIndex()
 	key := pkgKey("test-reg", "test-pkg", "1.0.0")
 	if index.Rulesets[key].Priority != 200 {
-		t.Errorf("expected priority 200, got %d", index.Rulesets[packageID].Priority)
+		t.Errorf("expected priority 200, got %d", index.Rulesets[key].Priority)
 	}
 }
 
@@ -679,7 +679,7 @@ func TestInstallRulesetEmptyPackage(t *testing.T) {
 	index, _ := m.loadIndex()
 	key := pkgKey("test-reg", "empty-pkg", "1.0.0")
 	if len(index.Rulesets[key].Files) != 0 {
-		t.Errorf("expected 0 files, got %d", len(index.Rulesets[packageID].Files))
+		t.Errorf("expected 0 files, got %d", len(index.Rulesets[key].Files))
 	}
 }
 
@@ -808,6 +808,6 @@ func TestInstallPromptsetEmptyPackage(t *testing.T) {
 	index, _ := m.loadIndex()
 	key := pkgKey("test-reg", "empty-prompts", "1.0.0")
 	if len(index.Promptsets[key].Files) != 0 {
-		t.Errorf("expected 0 files, got %d", len(index.Promptsets[packageID].Files))
+		t.Errorf("expected 0 files, got %d", len(index.Promptsets[key].Files))
 	}
 }

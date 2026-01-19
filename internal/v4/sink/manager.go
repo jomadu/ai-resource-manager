@@ -393,6 +393,12 @@ func (m *Manager) Clean() error {
 				return nil // Skip directories
 			}
 
+			// Skip ARM system files
+			filename := filepath.Base(path)
+			if filename == "arm-index.json" || strings.HasPrefix(filename, "arm_index.") {
+				return nil
+			}
+
 			// Get relative path from directory
 			relPath, err := filepath.Rel(m.directory, path)
 			if err != nil {

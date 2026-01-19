@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/jomadu/ai-resource-manager/internal/v4/packagelockfile"
 	"github.com/jomadu/ai-resource-manager/internal/v4/registry"
 	"github.com/jomadu/ai-resource-manager/internal/v4/sink"
+	"github.com/jomadu/ai-resource-manager/internal/v4/storage"
 )
 
 type DependencyInfo struct {
@@ -1084,31 +1086,135 @@ func (s *ArmService) SetPromptsetSinks(ctx context.Context, registry, promptset 
 
 // CleanCacheByAge cleans cache by age
 func (s *ArmService) CleanCacheByAge(ctx context.Context, maxAge time.Duration) error {
-	// TODO: implement
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	storageDir := filepath.Join(homeDir, ".arm", "storage")
+	return s.cleanCacheByAgeWithPath(ctx, maxAge, storageDir)
+}
+
+func (s *ArmService) cleanCacheByAgeWithPath(ctx context.Context, maxAge time.Duration, storageDir string) error {
+	registriesDir := filepath.Join(storageDir, "registries")
+	if _, err := os.Stat(registriesDir); os.IsNotExist(err) {
+		return nil
+	}
+
+	entries, err := os.ReadDir(registriesDir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			packagesDir := filepath.Join(registriesDir, entry.Name(), "packages")
+			if _, err := os.Stat(packagesDir); os.IsNotExist(err) {
+				continue
+			}
+			packageCache := storage.NewPackageCache(packagesDir)
+			if err := packageCache.RemoveOldVersions(ctx, maxAge); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
 // CleanCacheByTimeSinceLastAccess cleans cache by time since last access
 func (s *ArmService) CleanCacheByTimeSinceLastAccess(ctx context.Context, maxTimeSinceLastAccess time.Duration) error {
-	// TODO: implement
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	storageDir := filepath.Join(homeDir, ".arm", "storage")
+	return s.cleanCacheByTimeSinceLastAccessWithPath(ctx, maxTimeSinceLastAccess, storageDir)
+}
+
+func (s *ArmService) cleanCacheByTimeSinceLastAccessWithPath(ctx context.Context, maxTimeSinceLastAccess time.Duration, storageDir string) error {
+	registriesDir := filepath.Join(storageDir, "registries")
+	if _, err := os.Stat(registriesDir); os.IsNotExist(err) {
+		return nil
+	}
+
+	entries, err := os.ReadDir(registriesDir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			packagesDir := filepath.Join(registriesDir, entry.Name(), "packages")
+			if _, err := os.Stat(packagesDir); os.IsNotExist(err) {
+				continue
+			}
+			packageCache := storage.NewPackageCache(packagesDir)
+			if err := packageCache.RemoveUnusedVersions(ctx, maxTimeSinceLastAccess); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
 // NukeCache nukes the cache
 func (s *ArmService) NukeCache(ctx context.Context) error {
-	// TODO: implement
-	return nil
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	storageDir := filepath.Join(homeDir, ".arm", "storage")
+	return s.nukeCacheWithPath(ctx, storageDir)
+}
+
+func (s *ArmService) nukeCacheWithPath(ctx context.Context, storageDir string) error {
+	return os.RemoveAll(storageDir)
 }
 
 // CleanSinks cleans sinks
 func (s *ArmService) CleanSinks(ctx context.Context) error {
-	// TODO: implement
+	sinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, sinkConfig := range sinks {
+		sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+		if err := sinkMgr.Clean(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 // NukeSinks nukes sinks
 func (s *ArmService) NukeSinks(ctx context.Context) error {
-	// TODO: implement
+	sinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, sinkConfig := range sinks {
+		if sinkConfig.Tool == compiler.Copilot {
+			// Flat layout: remove arm_* files and arm-index.json
+			entries, err := os.ReadDir(sinkConfig.Directory)
+			if err != nil {
+				if os.IsNotExist(err) {
+					continue
+				}
+				return err
+			}
+			for _, entry := range entries {
+				name := entry.Name()
+				if len(name) >= 4 && name[:4] == "arm_" || name == "arm-index.json" {
+					os.Remove(filepath.Join(sinkConfig.Directory, name))
+				}
+			}
+		} else {
+			// Hierarchical layout: remove arm/ directory
+			armDir := filepath.Join(sinkConfig.Directory, "arm")
+			os.RemoveAll(armDir)
+		}
+	}
 	return nil
 }
 
