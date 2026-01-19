@@ -44,6 +44,18 @@ func (m *MockRegistry) ListPackageVersions(ctx context.Context, packageName stri
 	for _, pkg := range versions {
 		result = append(result, pkg.Metadata.Version)
 	}
+	
+	// Sort versions descending (latest first)
+	for i := 0; i < len(result); i++ {
+		for j := i + 1; j < len(result); j++ {
+			if result[j].Major > result[i].Major ||
+				(result[j].Major == result[i].Major && result[j].Minor > result[i].Minor) ||
+				(result[j].Major == result[i].Major && result[j].Minor == result[i].Minor && result[j].Patch > result[i].Patch) {
+				result[i], result[j] = result[j], result[i]
+			}
+		}
+	}
+	
 	return result, nil
 }
 

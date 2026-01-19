@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -799,86 +800,282 @@ func (s *ArmService) fetchLatest(ctx context.Context, registryName, packageName 
 
 // ListAll lists all dependencies
 func (s *ArmService) ListAll(ctx context.Context) ([]*DependencyInfo, error) {
-	// TODO: implement
-	return nil, nil
+	allDeps, err := s.manifestMgr.GetAllDependenciesConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	lockFile, err := s.lockfileMgr.GetLockFile(ctx)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	var result []*DependencyInfo
+	for key, config := range allDeps {
+		registryName, packageName := manifest.ParseDependencyKey(key)
+		
+		var lockInfo packagelockfile.DependencyLockConfig
+		if lockFile != nil && lockFile.Dependencies != nil {
+			for lockKey, lockCfg := range lockFile.Dependencies {
+				if strings.HasPrefix(lockKey, key+"@") {
+					lockInfo = lockCfg
+					break
+				}
+			}
+		}
+
+		result = append(result, &DependencyInfo{
+			Installation: sink.PackageInstallation{
+				Metadata: core.PackageMetadata{
+					RegistryName: registryName,
+					Name:         packageName,
+				},
+			},
+			LockInfo: lockInfo,
+			Config:   config,
+		})
+	}
+
+	return result, nil
 }
 
 // GetDependencyInfo gets dependency information
 func (s *ArmService) GetDependencyInfo(ctx context.Context, registry, dependencyName string) (*DependencyInfo, error) {
-	// TODO: implement
-	return nil, nil
+	config, err := s.manifestMgr.GetDependencyConfig(ctx, registry, dependencyName)
+	if err != nil {
+		return nil, err
+	}
+
+	lockFile, err := s.lockfileMgr.GetLockFile(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	key := registry + "/" + dependencyName
+	var lockInfo packagelockfile.DependencyLockConfig
+	if lockFile != nil && lockFile.Dependencies != nil {
+		for lockKey, lockCfg := range lockFile.Dependencies {
+			if strings.HasPrefix(lockKey, key+"@") {
+				lockInfo = lockCfg
+				break
+			}
+		}
+	}
+
+	return &DependencyInfo{
+		Installation: sink.PackageInstallation{
+			Metadata: core.PackageMetadata{
+				RegistryName: registry,
+				Name:         dependencyName,
+			},
+		},
+		LockInfo: lockInfo,
+		Config:   config,
+	}, nil
 }
 
 // ListOutdated lists outdated dependencies
 func (s *ArmService) ListOutdated(ctx context.Context) ([]*OutdatedDependency, error) {
-	// TODO: implement
-	return nil, nil
+	allDeps, err := s.manifestMgr.GetAllDependenciesConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	lockFile, err := s.lockfileMgr.GetLockFile(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*OutdatedDependency
+	for key, config := range allDeps {
+		registryName, packageName := manifest.ParseDependencyKey(key)
+		
+		versionConstraint, ok := config["version"].(string)
+		if !ok {
+			continue
+		}
+
+		var currentVersion string
+		if lockFile != nil && lockFile.Dependencies != nil {
+			for lockKey := range lockFile.Dependencies {
+				if strings.HasPrefix(lockKey, key+"@") {
+					currentVersion = lockKey[len(key)+1:]
+					break
+				}
+			}
+		}
+
+		if currentVersion == "" {
+			continue
+		}
+
+		regConfig, err := s.manifestMgr.GetRegistryConfig(ctx, registryName)
+		if err != nil {
+			continue
+		}
+
+		reg, err := s.registryFactory.CreateRegistry(registryName, regConfig)
+		if err != nil {
+			continue
+		}
+
+		availableVersions, err := reg.ListPackageVersions(ctx, packageName)
+		if err != nil {
+			continue
+		}
+
+		if len(availableVersions) == 0 {
+			continue
+		}
+
+		wantedVersion, err := core.ResolveVersion(versionConstraint, availableVersions)
+		if err != nil {
+			continue
+		}
+
+		latestVersion := availableVersions[0]
+
+		if wantedVersion.Version != currentVersion || latestVersion.Version != currentVersion {
+			result = append(result, &OutdatedDependency{
+				Current: core.PackageMetadata{
+					Name:         packageName,
+					RegistryName: registryName,
+					Version:      core.Version{Version: currentVersion},
+				},
+				Constraint: versionConstraint,
+				Wanted: core.PackageMetadata{
+					Name:         packageName,
+					RegistryName: registryName,
+					Version:      wantedVersion,
+				},
+				Latest: core.PackageMetadata{
+					Name:         packageName,
+					RegistryName: registryName,
+					Version:      latestVersion,
+				},
+			})
+		}
+	}
+
+	return result, nil
 }
 
 // SetRulesetName sets ruleset name
 func (s *ArmService) SetRulesetName(ctx context.Context, registry, ruleset, newName string) error {
-	// TODO: implement
-	return nil
+	return s.manifestMgr.UpdateDependencyConfigName(ctx, registry, ruleset, registry, newName)
 }
 
 // SetRulesetVersion sets ruleset version
 func (s *ArmService) SetRulesetVersion(ctx context.Context, registry, ruleset, version string) error {
-	// TODO: implement
-	return nil
+	config, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registry, ruleset)
+	if err != nil {
+		return err
+	}
+	config.Version = version
+	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, *config)
 }
 
 // SetRulesetPriority sets ruleset priority
 func (s *ArmService) SetRulesetPriority(ctx context.Context, registry, ruleset string, priority int) error {
-	// TODO: implement
-	return nil
+	config, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registry, ruleset)
+	if err != nil {
+		return err
+	}
+	config.Priority = priority
+	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, *config)
 }
 
 // SetRulesetInclude sets ruleset include patterns
 func (s *ArmService) SetRulesetInclude(ctx context.Context, registry, ruleset string, include []string) error {
-	// TODO: implement
-	return nil
+	config, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registry, ruleset)
+	if err != nil {
+		return err
+	}
+	config.Include = include
+	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, *config)
 }
 
 // SetRulesetExclude sets ruleset exclude patterns
 func (s *ArmService) SetRulesetExclude(ctx context.Context, registry, ruleset string, exclude []string) error {
-	// TODO: implement
-	return nil
+	config, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registry, ruleset)
+	if err != nil {
+		return err
+	}
+	config.Exclude = exclude
+	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, *config)
 }
 
 // SetRulesetSinks sets ruleset sinks
 func (s *ArmService) SetRulesetSinks(ctx context.Context, registry, ruleset string, sinks []string) error {
-	// TODO: implement
-	return nil
+	allSinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
+	if err != nil {
+		return err
+	}
+	for _, sinkName := range sinks {
+		if _, exists := allSinks[sinkName]; !exists {
+			return fmt.Errorf("sink %s does not exist", sinkName)
+		}
+	}
+	config, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registry, ruleset)
+	if err != nil {
+		return err
+	}
+	config.Sinks = sinks
+	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, *config)
 }
 
 // SetPromptsetName sets promptset name
 func (s *ArmService) SetPromptsetName(ctx context.Context, registry, ruleset, newName string) error {
-	// TODO: implement
-	return nil
+	return s.manifestMgr.UpdateDependencyConfigName(ctx, registry, ruleset, registry, newName)
 }
 
 // SetPromptsetVersion sets promptset version
-func (s *ArmService) SetPromptsetVersion(ctx context.Context, registry, ruleset, version string) error {
-	// TODO: implement
-	return nil
+func (s *ArmService) SetPromptsetVersion(ctx context.Context, registry, promptset, version string) error {
+	config, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registry, promptset)
+	if err != nil {
+		return err
+	}
+	config.Version = version
+	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, *config)
 }
 
 // SetPromptsetInclude sets promptset include patterns
-func (s *ArmService) SetPromptsetInclude(ctx context.Context, registry, ruleset string, include []string) error {
-	// TODO: implement
-	return nil
+func (s *ArmService) SetPromptsetInclude(ctx context.Context, registry, promptset string, include []string) error {
+	config, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registry, promptset)
+	if err != nil {
+		return err
+	}
+	config.Include = include
+	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, *config)
 }
 
 // SetPromptsetExclude sets promptset exclude patterns
-func (s *ArmService) SetPromptsetExclude(ctx context.Context, registry, ruleset string, exclude []string) error {
-	// TODO: implement
-	return nil
+func (s *ArmService) SetPromptsetExclude(ctx context.Context, registry, promptset string, exclude []string) error {
+	config, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registry, promptset)
+	if err != nil {
+		return err
+	}
+	config.Exclude = exclude
+	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, *config)
 }
 
 // SetPromptsetSinks sets promptset sinks
-func (s *ArmService) SetPromptsetSinks(ctx context.Context, registry, ruleset string, sinks []string) error {
-	// TODO: implement
-	return nil
+func (s *ArmService) SetPromptsetSinks(ctx context.Context, registry, promptset string, sinks []string) error {
+	allSinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
+	if err != nil {
+		return err
+	}
+	for _, sinkName := range sinks {
+		if _, exists := allSinks[sinkName]; !exists {
+			return fmt.Errorf("sink %s does not exist", sinkName)
+		}
+	}
+	config, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registry, promptset)
+	if err != nil {
+		return err
+	}
+	config.Sinks = sinks
+	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, *config)
 }
 
 // --------
