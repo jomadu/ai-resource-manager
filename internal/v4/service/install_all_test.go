@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"sort"
 	"testing"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
@@ -162,10 +163,15 @@ func (m *mockRegistry) ListPackages(ctx context.Context) ([]*core.PackageMetadat
 }
 
 func (m *mockRegistry) ListPackageVersions(ctx context.Context, packageName string) ([]core.Version, error) {
-	versions := make([]core.Version, len(m.versions[packageName]))
-	for i, v := range m.versions[packageName] {
+	metadata := m.versions[packageName]
+	versions := make([]core.Version, len(metadata))
+	for i, v := range metadata {
 		versions[i] = v.Version
 	}
+	// Sort versions highest first (like real registries do)
+	sort.Slice(versions, func(i, j int) bool {
+		return versions[i].Compare(versions[j]) > 0
+	})
 	return versions, nil
 }
 

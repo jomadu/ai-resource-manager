@@ -595,7 +595,7 @@ func (s *ArmService) UpdateAll(ctx context.Context) error {
 	return nil
 }
 
-func (s *ArmService) getOldVersionFromLock(lockFile *packagelockfile.PackageLockFile, key string) string {
+func (s *ArmService) getOldVersionFromLock(lockFile *packagelockfile.LockFile, key string) string {
 	if lockFile == nil || lockFile.Dependencies == nil {
 		return ""
 	}
@@ -656,10 +656,145 @@ func (s *ArmService) uninstallFromSinks(sinkNames []string, allSinks map[string]
 	return nil
 }
 
-// UpgradeAll upgrades all dependencies
+// UpgradeAll upgrades all dependencies to latest versions
 func (s *ArmService) UpgradeAll(ctx context.Context) error {
-	// TODO: implement
+	rulesets, err := s.manifestMgr.GetAllRulesetDependenciesConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	promptsets, err := s.manifestMgr.GetAllPromptsetDependenciesConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	allSinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	lockFile, err := s.lockfileMgr.GetLockFile(ctx)
+	if err != nil {
+		return err
+	}
+
+	for key, rulesetConfig := range rulesets {
+		registryName, packageName := manifest.ParseDependencyKey(key)
+
+		oldVersion := s.getOldVersionFromLock(lockFile, key)
+		latestVersion, pkg, err := s.fetchLatest(ctx, registryName, packageName, rulesetConfig.Include, rulesetConfig.Exclude)
+		if err != nil {
+			return err
+		}
+
+		if oldVersion == latestVersion {
+			continue
+		}
+
+		if oldVersion != "" {
+			if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+				return err
+			}
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+				return err
+			}
+		}
+
+		for _, sinkName := range rulesetConfig.Sinks {
+			sinkConfig := allSinks[sinkName]
+			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+			if err := sinkMgr.InstallRuleset(pkg, rulesetConfig.Priority); err != nil {
+				return err
+			}
+		}
+
+		if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, latestVersion, &packagelockfile.DependencyLockConfig{
+			Integrity: pkg.Integrity,
+		}); err != nil {
+			return err
+		}
+
+		newConstraint := fmt.Sprintf("^%d.0.0", pkg.Metadata.Version.Major)
+		rulesetConfig.Version = newConstraint
+		if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, packageName, *rulesetConfig); err != nil {
+			return err
+		}
+	}
+
+	for key, promptsetConfig := range promptsets {
+		registryName, packageName := manifest.ParseDependencyKey(key)
+
+		oldVersion := s.getOldVersionFromLock(lockFile, key)
+		latestVersion, pkg, err := s.fetchLatest(ctx, registryName, packageName, promptsetConfig.Include, promptsetConfig.Exclude)
+		if err != nil {
+			return err
+		}
+
+		if oldVersion == latestVersion {
+			continue
+		}
+
+		if oldVersion != "" {
+			if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+				return err
+			}
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+				return err
+			}
+		}
+
+		for _, sinkName := range promptsetConfig.Sinks {
+			sinkConfig := allSinks[sinkName]
+			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+			if err := sinkMgr.InstallPromptset(pkg); err != nil {
+				return err
+			}
+		}
+
+		if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, latestVersion, &packagelockfile.DependencyLockConfig{
+			Integrity: pkg.Integrity,
+		}); err != nil {
+			return err
+		}
+
+		newConstraint := fmt.Sprintf("^%d.0.0", pkg.Metadata.Version.Major)
+		promptsetConfig.Version = newConstraint
+		if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registryName, packageName, *promptsetConfig); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func (s *ArmService) fetchLatest(ctx context.Context, registryName, packageName string, include, exclude []string) (string, *core.Package, error) {
+	regConfig, err := s.manifestMgr.GetRegistryConfig(ctx, registryName)
+	if err != nil {
+		return "", nil, err
+	}
+
+	reg, err := s.registryFactory.CreateRegistry(registryName, regConfig)
+	if err != nil {
+		return "", nil, err
+	}
+
+	availableVersions, err := reg.ListPackageVersions(ctx, packageName)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if len(availableVersions) == 0 {
+		return "", nil, fmt.Errorf("no versions available for %s", packageName)
+	}
+
+	latestVersion := availableVersions[0]
+
+	pkg, err := reg.GetPackage(ctx, packageName, latestVersion, include, exclude)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return latestVersion.Version, pkg, nil
 }
 
 // ListAll lists all dependencies

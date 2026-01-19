@@ -76,7 +76,7 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 	for _, tag := range tags {
 		version, _ := core.ParseVersion(tag)
 		// Only include semantic versions
-		if version.IsSemanticVersion() {
+		if version.IsSemver {
 			versions = append(versions, version)
 		}
 	}

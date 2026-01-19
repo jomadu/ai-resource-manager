@@ -350,6 +350,42 @@ func (m *mockManifestManager) GetPromptsetDependencyConfig(ctx context.Context, 
 	return &result, nil
 }
 
+func (m *mockManifestManager) GetAllRulesetDependenciesConfig(ctx context.Context) (map[string]*manifest.RulesetDependencyConfig, error) {
+	if m.loadErr != nil {
+		return nil, m.loadErr
+	}
+	rulesets := make(map[string]*manifest.RulesetDependencyConfig)
+	for key, rawConfig := range m.manifest.Dependencies {
+		depType, ok := rawConfig["type"].(string)
+		if !ok || depType != "ruleset" {
+			continue
+		}
+		configMap, _ := json.Marshal(rawConfig)
+		var result manifest.RulesetDependencyConfig
+		json.Unmarshal(configMap, &result)
+		rulesets[key] = &result
+	}
+	return rulesets, nil
+}
+
+func (m *mockManifestManager) GetAllPromptsetDependenciesConfig(ctx context.Context) (map[string]*manifest.PromptsetDependencyConfig, error) {
+	if m.loadErr != nil {
+		return nil, m.loadErr
+	}
+	promptsets := make(map[string]*manifest.PromptsetDependencyConfig)
+	for key, rawConfig := range m.manifest.Dependencies {
+		depType, ok := rawConfig["type"].(string)
+		if !ok || depType != "promptset" {
+			continue
+		}
+		configMap, _ := json.Marshal(rawConfig)
+		var result manifest.PromptsetDependencyConfig
+		json.Unmarshal(configMap, &result)
+		promptsets[key] = &result
+	}
+	return promptsets, nil
+}
+
 func TestAddSink(t *testing.T) {
 	t.Run("add new sink", func(t *testing.T) {
 		mgr := &mockManifestManager{
