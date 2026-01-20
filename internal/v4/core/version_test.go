@@ -70,6 +70,124 @@ func TestCompareTo(t *testing.T) {
 	}
 }
 
+func TestIsNewerThan(t *testing.T) {
+	tests := []struct {
+		name    string
+		v1      Version
+		v2      Version
+		want    bool
+		wantErr bool
+	}{
+		{
+			name:    "v1 newer than v2",
+			v1:      Version{Major: 2, Minor: 0, Patch: 0, Version: "2.0.0", IsSemver: true},
+			v2:      Version{Major: 1, Minor: 9, Patch: 9, Version: "1.9.9", IsSemver: true},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name:    "v1 older than v2",
+			v1:      Version{Major: 1, Minor: 0, Patch: 0, Version: "1.0.0", IsSemver: true},
+			v2:      Version{Major: 1, Minor: 0, Patch: 1, Version: "1.0.1", IsSemver: true},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name:    "equal versions",
+			v1:      Version{Major: 1, Minor: 2, Patch: 3, Version: "1.2.3", IsSemver: true},
+			v2:      Version{Major: 1, Minor: 2, Patch: 3, Version: "1.2.3", IsSemver: true},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name:    "non-semver v1",
+			v1:      Version{Version: "main", IsSemver: false},
+			v2:      Version{Major: 1, Minor: 0, Patch: 0, Version: "1.0.0", IsSemver: true},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name:    "non-semver v2",
+			v1:      Version{Major: 1, Minor: 0, Patch: 0, Version: "1.0.0", IsSemver: true},
+			v2:      Version{Version: "main", IsSemver: false},
+			want:    false,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.v1.IsNewerThan(tt.v2)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("IsNewerThan() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("IsNewerThan() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsOlderThan(t *testing.T) {
+	tests := []struct {
+		name    string
+		v1      Version
+		v2      Version
+		want    bool
+		wantErr bool
+	}{
+		{
+			name:    "v1 older than v2",
+			v1:      Version{Major: 1, Minor: 0, Patch: 0, Version: "1.0.0", IsSemver: true},
+			v2:      Version{Major: 1, Minor: 0, Patch: 1, Version: "1.0.1", IsSemver: true},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name:    "v1 newer than v2",
+			v1:      Version{Major: 2, Minor: 0, Patch: 0, Version: "2.0.0", IsSemver: true},
+			v2:      Version{Major: 1, Minor: 9, Patch: 9, Version: "1.9.9", IsSemver: true},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name:    "equal versions",
+			v1:      Version{Major: 1, Minor: 2, Patch: 3, Version: "1.2.3", IsSemver: true},
+			v2:      Version{Major: 1, Minor: 2, Patch: 3, Version: "1.2.3", IsSemver: true},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name:    "non-semver v1",
+			v1:      Version{Version: "main", IsSemver: false},
+			v2:      Version{Major: 1, Minor: 0, Patch: 0, Version: "1.0.0", IsSemver: true},
+			want:    false,
+			wantErr: true,
+		},
+		{
+			name:    "non-semver v2",
+			v1:      Version{Major: 1, Minor: 0, Patch: 0, Version: "1.0.0", IsSemver: true},
+			v2:      Version{Version: "main", IsSemver: false},
+			want:    false,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.v1.IsOlderThan(tt.v2)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("IsOlderThan() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("IsOlderThan() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestToString(t *testing.T) {
 	tests := []struct {
 		name    string

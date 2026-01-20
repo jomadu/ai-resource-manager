@@ -42,7 +42,11 @@ func GetBestMatching(versions []Version, constraint Constraint) (*Version, error
 	// Find highest - versions know how to compare
 	best := candidates[0]
 	for _, candidate := range candidates[1:] {
-		if candidate.IsNewerThan(*best) {
+		isNewer, err := candidate.IsNewerThan(*best)
+		if err != nil {
+			return nil, err
+		}
+		if isNewer {
 			best = candidate
 		}
 	}

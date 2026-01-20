@@ -43,13 +43,21 @@ func (v Version) CompareTo(other Version) (int, error) {
 }
 
 // IsNewerThan returns true if v is newer than other
-func (v Version) IsNewerThan(other Version) bool {
-	return v.Compare(other) > 0
+func (v Version) IsNewerThan(other Version) (bool, error) {
+	cmp, err := v.CompareTo(other)
+	if err != nil {
+		return false, err
+	}
+	return cmp > 0, nil
 }
 
 // IsOlderThan returns true if v is older than other
-func (v Version) IsOlderThan(other Version) bool {
-	return v.Compare(other) < 0
+func (v Version) IsOlderThan(other Version) (bool, error) {
+	cmp, err := v.CompareTo(other)
+	if err != nil {
+		return false, err
+	}
+	return cmp < 0, nil
 }
 
 // ToString returns the string representation of the version
