@@ -1,139 +1,164 @@
 {
-  "tasks": [
+  "project": "AI Resource Manager",
+  "branchName": "ralph/version-constraint-interface",
+  "description": "Refactor Version and Constraint types from struct-based interpretation to interface-based behavior encapsulation with explicit error handling",
+  "userStories": [
     {
-      "id": "task-1",
-      "name": "Refactor Version type and add new methods",
-      "description": "Update Version struct to add CompareTo, IsNewerThan, IsOlderThan, ToString methods with error returns for non-semver comparisons. Create NewVersion constructor to replace ParseVersion.",
-      "files": [
-        "internal/v4/core/version.go"
+      "id": "US-001",
+      "title": "Add Version constructor and ToString method",
+      "description": "As a developer, I want to create Version instances from strings and get string representation.",
+      "acceptanceCriteria": [
+        "NewVersion accepts semver strings: 1.2.3, v1.2.3",
+        "NewVersion accepts non-semver strings: main, abc123def",
+        "NewVersion returns error for empty string",
+        "ToString returns original string with v prefix if present",
+        "ToString works for both semver and non-semver versions",
+        "Typecheck passes",
+        "Tests pass"
       ],
-      "linkedTaskIds": [],
-      "dependencies": [],
-      "status": "todo"
+      "priority": 1,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "task-2",
-      "name": "Refactor Constraint type and add new methods",
-      "description": "Update Constraint to remove BranchHead type, add IsSatisfiedBy and ToString methods with error returns. Create NewConstraint constructor to replace ParseConstraint. Reject non-semver inputs.",
-      "files": [
-        "internal/v4/core/constraint.go"
+      "id": "US-002",
+      "title": "Add Version comparison methods",
+      "description": "As a developer, I want to compare two semver versions to determine ordering.",
+      "acceptanceCriteria": [
+        "CompareTo returns -1 when self is older than other",
+        "CompareTo returns 0 when self equals other",
+        "CompareTo returns 1 when self is newer than other",
+        "CompareTo returns error when either version is non-semver",
+        "Comparison uses major → minor → patch ordering",
+        "IsNewerThan returns true when CompareTo > 0",
+        "IsOlderThan returns true when CompareTo < 0",
+        "Both methods return error when either version is non-semver",
+        "Typecheck passes",
+        "Tests pass"
       ],
-      "linkedTaskIds": [],
-      "dependencies": [],
-      "status": "todo"
+      "priority": 2,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "task-3",
-      "name": "Update Version tests",
-      "description": "Update existing tests and add new tests for CompareTo, IsNewerThan, IsOlderThan, ToString methods. Test error cases for non-semver comparisons.",
-      "files": [
-        "internal/v4/core/version_test.go"
+      "id": "US-003",
+      "title": "Add Constraint constructor and ToString method",
+      "description": "As a developer, I want to create Constraint instances from semver strings.",
+      "acceptanceCriteria": [
+        "NewConstraint accepts latest keyword",
+        "NewConstraint accepts exact semver: 1.2.3, v1.2.3",
+        "NewConstraint accepts abbreviated: 1, 1.2, v1, v1.2",
+        "NewConstraint accepts caret: ^1.2.3, ^v1.2.3",
+        "NewConstraint accepts tilde: ~1.2.3, ~v1.2.3",
+        "NewConstraint returns error for non-semver strings",
+        "ToString returns original string with v, ^, ~ prefix if present",
+        "Typecheck passes",
+        "Tests pass"
       ],
-      "linkedTaskIds": ["task-1"],
-      "dependencies": ["task-1"],
-      "status": "todo"
+      "priority": 3,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "task-4",
-      "name": "Update Constraint tests",
-      "description": "Update existing tests and add new tests for IsSatisfiedBy and ToString methods. Test error cases for non-semver versions. Remove BranchHead tests.",
-      "files": [
-        "internal/v4/core/constraint_test.go"
+      "id": "US-004",
+      "title": "Add Constraint satisfaction check method",
+      "description": "As a developer, I want to check if a version satisfies a constraint.",
+      "acceptanceCriteria": [
+        "IsSatisfiedBy returns true for Latest constraint with any semver",
+        "IsSatisfiedBy checks exact match for Exact constraint",
+        "IsSatisfiedBy checks major version range for Major constraint",
+        "IsSatisfiedBy checks minor version range for Minor constraint",
+        "IsSatisfiedBy returns error when version is non-semver",
+        "Typecheck passes",
+        "Tests pass"
       ],
-      "linkedTaskIds": ["task-2"],
-      "dependencies": ["task-2"],
-      "status": "todo"
+      "priority": 4,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "task-5",
-      "name": "Update ResolveVersion function",
-      "description": "Update ResolveVersion to use new Version.CompareTo method and handle errors from IsSatisfiedBy.",
-      "files": [
-        "internal/v4/core/version.go"
+      "id": "US-005",
+      "title": "Update ResolveVersion function",
+      "description": "As a developer, I want ResolveVersion to use new Version methods.",
+      "acceptanceCriteria": [
+        "ResolveVersion uses Version.CompareTo method",
+        "ResolveVersion handles errors from IsSatisfiedBy",
+        "Typecheck passes",
+        "Tests pass"
       ],
-      "linkedTaskIds": ["task-1", "task-2"],
-      "dependencies": ["task-1", "task-2"],
-      "status": "todo"
+      "priority": 5,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "task-6",
-      "name": "Update manifest manager",
-      "description": "Update manifest manager to use NewVersion/NewConstraint constructors and handle new error returns.",
-      "files": [
-        "internal/v4/manifest/manager.go",
-        "internal/v4/manifest/manager_test.go"
+      "id": "US-006",
+      "title": "Update helpers package",
+      "description": "As a developer, I want helper functions to use new Version/Constraint methods.",
+      "acceptanceCriteria": [
+        "Update helper functions to use NewVersion and NewConstraint",
+        "Handle error returns from new methods",
+        "Typecheck passes",
+        "Tests pass"
       ],
-      "linkedTaskIds": ["task-1", "task-2"],
-      "dependencies": ["task-1", "task-2"],
-      "status": "todo"
+      "priority": 6,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "task-7",
-      "name": "Update package lock file manager",
-      "description": "Update package lock file manager to use NewVersion constructor and handle new error returns.",
-      "files": [
-        "internal/v4/packagelockfile/manager.go",
-        "internal/v4/packagelockfile/manager_test.go"
+      "id": "US-007",
+      "title": "Update storage package",
+      "description": "As a developer, I want storage package to use new constructors.",
+      "acceptanceCriteria": [
+        "Uses NewVersion constructor in package.go and storage.go",
+        "Handles error returns from new methods",
+        "Typecheck passes",
+        "Tests pass"
       ],
-      "linkedTaskIds": ["task-1"],
-      "dependencies": ["task-1"],
-      "status": "todo"
+      "priority": 7,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "task-8",
-      "name": "Update sink manager",
-      "description": "Update sink manager to use NewVersion constructor and handle new error returns.",
-      "files": [
-        "internal/v4/sink/manager.go",
-        "internal/v4/sink/manager_test.go"
+      "id": "US-008",
+      "title": "Update manifest manager",
+      "description": "As a developer, I want manifest manager to use new constructors.",
+      "acceptanceCriteria": [
+        "Uses NewVersion and NewConstraint constructors",
+        "Handles error returns from new methods",
+        "Typecheck passes",
+        "Tests pass"
       ],
-      "linkedTaskIds": ["task-1"],
-      "dependencies": ["task-1"],
-      "status": "todo"
+      "priority": 8,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "task-9",
-      "name": "Update storage package",
-      "description": "Update storage package to use NewVersion constructor and handle new error returns.",
-      "files": [
-        "internal/v4/storage/package.go",
-        "internal/v4/storage/storage.go",
-        "internal/v4/storage/package_test.go"
+      "id": "US-009",
+      "title": "Update package lock manager",
+      "description": "As a developer, I want package lock manager to use new constructors.",
+      "acceptanceCriteria": [
+        "Uses NewVersion constructor",
+        "Handles error returns from new methods",
+        "Typecheck passes",
+        "Tests pass"
       ],
-      "linkedTaskIds": ["task-1"],
-      "dependencies": ["task-1"],
-      "status": "todo"
+      "priority": 9,
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "task-10",
-      "name": "Update parser",
-      "description": "Update parser to use NewVersion/NewConstraint constructors and handle new error returns.",
-      "files": [
-        "internal/v4/parser/parser_test.go"
+      "id": "US-010",
+      "title": "Update sink manager",
+      "description": "As a developer, I want sink manager to use new constructors.",
+      "acceptanceCriteria": [
+        "Uses NewVersion constructor",
+        "Handles error returns from new methods",
+        "Typecheck passes",
+        "Tests pass"
       ],
-      "linkedTaskIds": ["task-1", "task-2"],
-      "dependencies": ["task-1", "task-2"],
-      "status": "todo"
-    },
-    {
-      "id": "task-11",
-      "name": "Update helpers",
-      "description": "Update helper functions to use new Version/Constraint methods and handle errors.",
-      "files": [
-        "internal/v4/core/helpers.go"
-      ],
-      "linkedTaskIds": ["task-1", "task-2"],
-      "dependencies": ["task-1", "task-2"],
-      "status": "todo"
-    },
-    {
-      "id": "task-12",
-      "name": "Run full test suite",
-      "description": "Run all tests to ensure refactor is complete and no regressions introduced.",
-      "files": [],
-      "linkedTaskIds": ["task-3", "task-4", "task-5", "task-6", "task-7", "task-8", "task-9", "task-10", "task-11"],
-      "dependencies": ["task-3", "task-4", "task-5", "task-6", "task-7", "task-8", "task-9", "task-10", "task-11"],
-      "status": "todo"
+      "priority": 10,
+      "passes": false,
+      "notes": ""
     }
   ]
 }
