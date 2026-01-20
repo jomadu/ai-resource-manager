@@ -35,15 +35,6 @@ ARCHIVE_DIR="archive"
 LAST_BRANCH_FILE=".last-branch"
 SPECS_DIR="specs"
 
-# Save progress back to feature directory
-save_progress() {
-  if [ -n "$FEATURE_DIR" ] && [ -d "$FEATURE_DIR" ]; then
-    echo "Saving progress to: $FEATURE_DIR/"
-    cp "$PRD_FILE" "$FEATURE_DIR/"
-    cp "$PROGRESS_FILE" "$FEATURE_DIR/"
-  fi
-}
-
 # Archive previous run if branch changed
 if [ -f "$PRD_FILE" ] && [ -f "$LAST_BRANCH_FILE" ]; then
   CURRENT_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
@@ -112,7 +103,6 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     echo ""
     echo "✓ Ralph completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
-    save_progress
     exit 0
   fi
   
@@ -121,7 +111,6 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     echo ""
     echo "✗ Ralph is blocked:"
     echo "$OUTPUT" | grep -o "<promise>BLOCKED:.*</promise>" | sed 's/<[^>]*>//g'
-    save_progress
     exit 1
   fi
   
@@ -130,7 +119,6 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     echo ""
     echo "✓ Ralph completed all stories!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
-    save_progress
     exit 0
   fi
   
@@ -142,5 +130,4 @@ done
 echo ""
 echo "Ralph reached max iterations ($MAX_ITERATIONS) without completing all tasks."
 echo "Check $PROGRESS_FILE for status."
-save_progress
 exit 1

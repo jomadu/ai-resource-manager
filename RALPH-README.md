@@ -5,11 +5,15 @@ This project uses Ralph for autonomous development.
 ## Quick Start
 
 ```bash
-# Copy a feature's PRD to project root
+# Copy a feature's PRD to project root (and progress.txt if it exists)
 cp specs/version-constraint-interface/prd.json ./prd.json
+[ -f specs/version-constraint-interface/progress.txt ] && cp specs/version-constraint-interface/progress.txt ./progress.txt
 
 # Run Ralph (RALPH.md is the agent instructions)
 ./ralph-kiro.sh
+
+# After Ralph completes, copy progress back to feature directory
+cp prd.json progress.txt specs/version-constraint-interface/
 
 # With custom max iterations (default is 10)
 ./ralph-kiro.sh 20
