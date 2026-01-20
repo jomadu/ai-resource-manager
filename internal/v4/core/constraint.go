@@ -7,6 +7,21 @@ import (
 	"strings"
 )
 
+type ConstraintType string
+
+const (
+	Exact      ConstraintType = "exact"
+	Major      ConstraintType = "major"
+	Minor      ConstraintType = "minor"
+	BranchHead ConstraintType = "branch-head"
+	Latest     ConstraintType = "latest"
+)
+
+type Constraint struct {
+	Type    ConstraintType
+	Version *Version
+}
+
 func (c *Constraint) IsSatisfiedBy(version Version) bool {
 	if c == nil {
 		return false
