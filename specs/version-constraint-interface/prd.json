@@ -1,6 +1,6 @@
 {
   "project": "AI Resource Manager",
-  "branchName": "ralph/version-constraint-interface",
+  "branchName": "no-pterm",
   "description": "Refactor Version and Constraint types from struct-based interpretation to interface-based behavior encapsulation with explicit error handling",
   "userStories": [
     {
