@@ -3,6 +3,8 @@ package registry
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/jomadu/ai-resource-manager/internal/v4/config"
 )
 
 // Factory creates registries from config
@@ -13,8 +15,8 @@ type Factory interface {
 // DefaultFactory is the default registry factory
 type DefaultFactory struct{}
 
-func (f *DefaultFactory) CreateRegistry(name string, config map[string]interface{}) (Registry, error) {
-	regType, ok := config["type"].(string)
+func (f *DefaultFactory) CreateRegistry(name string, cfg map[string]interface{}) (Registry, error) {
+	regType, ok := cfg["type"].(string)
 	if !ok {
 		return nil, fmt.Errorf("registry type not specified")
 	}
@@ -22,10 +24,17 @@ func (f *DefaultFactory) CreateRegistry(name string, config map[string]interface
 	switch regType {
 	case "git":
 		var gitConfig GitRegistryConfig
-		if err := convertMapToStruct(config, &gitConfig); err != nil {
+		if err := convertMapToStruct(cfg, &gitConfig); err != nil {
 			return nil, err
 		}
 		return NewGitRegistry(name, gitConfig)
+	case "gitlab":
+		var gitlabConfig GitLabRegistryConfig
+		if err := convertMapToStruct(cfg, &gitlabConfig); err != nil {
+			return nil, err
+		}
+		configMgr := config.NewFileManager()
+		return NewGitLabRegistry(name, gitlabConfig, configMgr)
 	default:
 		return nil, fmt.Errorf("unsupported registry type: %s", regType)
 	}
