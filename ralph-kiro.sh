@@ -33,6 +33,16 @@ PROGRESS_FILE="progress.txt"
 PROMPT_FILE="RALPH.md"
 ARCHIVE_DIR="archive"
 LAST_BRANCH_FILE=".last-branch"
+SPECS_DIR="specs"
+
+# Save progress back to feature directory
+save_progress() {
+  if [ -n "$FEATURE_DIR" ] && [ -d "$FEATURE_DIR" ]; then
+    echo "Saving progress to: $FEATURE_DIR/"
+    cp "$PRD_FILE" "$FEATURE_DIR/"
+    cp "$PROGRESS_FILE" "$FEATURE_DIR/"
+  fi
+}
 
 # Archive previous run if branch changed
 if [ -f "$PRD_FILE" ] && [ -f "$LAST_BRANCH_FILE" ]; then
@@ -56,11 +66,22 @@ if [ -f "$PRD_FILE" ] && [ -f "$LAST_BRANCH_FILE" ]; then
   fi
 fi
 
-# Track current branch
+# Track current branch and determine feature directory
+FEATURE_DIR=""
 if [ -f "$PRD_FILE" ]; then
   CURRENT_BRANCH=$(jq -r '.branchName // empty' "$PRD_FILE" 2>/dev/null || echo "")
   if [ -n "$CURRENT_BRANCH" ]; then
     echo "$CURRENT_BRANCH" > "$LAST_BRANCH_FILE"
+    
+    # Extract feature name from branch (remove ralph/ prefix if present)
+    FEATURE_NAME=$(echo "$CURRENT_BRANCH" | sed 's|^ralph/||')
+    FEATURE_DIR="$SPECS_DIR/$FEATURE_NAME"
+    
+    # Copy existing progress.txt from feature directory if it exists
+    if [ -d "$FEATURE_DIR" ] && [ -f "$FEATURE_DIR/$PROGRESS_FILE" ]; then
+      echo "Loading existing progress from: $FEATURE_DIR/$PROGRESS_FILE"
+      cp "$FEATURE_DIR/$PROGRESS_FILE" "$PROGRESS_FILE"
+    fi
   fi
 fi
 
@@ -91,6 +112,7 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     echo ""
     echo "✓ Ralph completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
+    save_progress
     exit 0
   fi
   
@@ -99,6 +121,7 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     echo ""
     echo "✗ Ralph is blocked:"
     echo "$OUTPUT" | grep -o "<promise>BLOCKED:.*</promise>" | sed 's/<[^>]*>//g'
+    save_progress
     exit 1
   fi
   
@@ -107,6 +130,7 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     echo ""
     echo "✓ Ralph completed all stories!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
+    save_progress
     exit 0
   fi
   
@@ -118,4 +142,5 @@ done
 echo ""
 echo "Ralph reached max iterations ($MAX_ITERATIONS) without completing all tasks."
 echo "Check $PROGRESS_FILE for status."
+save_progress
 exit 1

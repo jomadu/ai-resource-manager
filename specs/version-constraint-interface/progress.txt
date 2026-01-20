@@ -1,0 +1,45 @@
+# Ralph Progress Log
+Started: Tue Jan 20 13:43:23 PST 2026
+
+## Codebase Patterns
+- IsSatisfiedBy returns (bool, error) - always handle error when calling
+- Version structs need IsSemver field set correctly for constraint checking
+- Use NewVersion/NewConstraint constructors, not direct struct initialization
+
+---
+
+## 2026-01-20 13:43 - Starting US-001
+- Story: Add Version constructor and ToString method
+- Plan: Create NewVersion constructor that accepts semver and non-semver strings, add ToString method. Will need to examine existing Version type first to understand structure.
+---
+
+### 13:43 - Progress on US-001
+- Completed: Examined existing NewVersion and ToString implementations
+- Next: Add empty string validation to NewVersion
+
+### 13:44 - Progress on US-001
+- Completed: Added empty string validation and test
+- Next: Run tests to verify implementation
+
+### 13:45 - Progress on US-001
+- Completed: All tests for Version constructor and ToString pass
+- Next: Commit changes
+
+## 2026-01-20 13:45 - Completed US-001
+- What was implemented:
+  - Added empty string validation to NewVersion constructor
+  - Updated TestParseVersion to include empty string test case with error handling
+  - Fixed IsSatisfiedBy calls in helpers.go and version.go to handle error returns
+  
+- Files changed:
+  - internal/v4/core/version.go (added empty string check)
+  - internal/v4/core/version_test.go (added empty string test case and wantErr handling)
+  - internal/v4/core/helpers.go (fixed IsSatisfiedBy error handling)
+  
+- **Learnings for future iterations:**
+  - NewVersion and ToString methods already existed, only needed empty string validation
+  - IsSatisfiedBy now returns (bool, error) - must handle error in all call sites
+  - Test failures in TestResolveVersion_* are due to test data not setting IsSemver field properly - these will be addressed in US-005
+  - The codebase uses ParseVersion as an alias for NewVersion (deprecated pattern)
+  - Version struct has both parsed fields (Major, Minor, Patch) and original string (Version field)
+---
