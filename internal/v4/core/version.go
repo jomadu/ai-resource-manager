@@ -30,6 +30,18 @@ func (v Version) Compare(other Version) int {
 	return 0
 }
 
+// CompareTo returns -1 if v is older than other, 0 if equal, 1 if newer
+// Returns error if either version is not semver
+func (v Version) CompareTo(other Version) (int, error) {
+	if !v.IsSemver {
+		return 0, fmt.Errorf("cannot compare non-semver version: %s", v.Version)
+	}
+	if !other.IsSemver {
+		return 0, fmt.Errorf("cannot compare non-semver version: %s", other.Version)
+	}
+	return v.Compare(other), nil
+}
+
 // IsNewerThan returns true if v is newer than other
 func (v Version) IsNewerThan(other Version) bool {
 	return v.Compare(other) > 0
@@ -38,6 +50,11 @@ func (v Version) IsNewerThan(other Version) bool {
 // IsOlderThan returns true if v is older than other
 func (v Version) IsOlderThan(other Version) bool {
 	return v.Compare(other) < 0
+}
+
+// ToString returns the string representation of the version
+func (v Version) ToString() string {
+	return v.Version
 }
 
 // Build-time variables set by ldflags
@@ -49,7 +66,8 @@ var (
 
 var semverRegex = regexp.MustCompile(`^(v)?(\d+)\.(\d+)\.(\d+)(?:-([\.\w-]+))?(?:\+([\w.-]+))?$`)
 
-func ParseVersion(versionString string) (Version, error) {
+// NewVersion creates a new Version from a version string
+func NewVersion(versionString string) (Version, error) {
 	// Try to match semver pattern
 	matches := semverRegex.FindStringSubmatch(versionString)
 	if matches == nil {
@@ -73,6 +91,11 @@ func ParseVersion(versionString string) (Version, error) {
 		Version:    versionString,
 		IsSemver:   true,
 	}, nil
+}
+
+// ParseVersion is deprecated, use NewVersion instead
+func ParseVersion(versionString string) (Version, error) {
+	return NewVersion(versionString)
 }
 
 func ResolveVersion(versionStr string, availableVersions []Version) (Version, error) {
