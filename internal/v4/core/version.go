@@ -120,7 +120,8 @@ func ResolveVersion(versionStr string, availableVersions []Version) (Version, er
 	for _, v := range availableVersions {
 		satisfied, err := constraint.IsSatisfiedBy(v)
 		if err != nil {
-			return Version{}, err
+			// Skip versions that don't match constraint requirements (e.g., non-semver for semver constraints)
+			continue
 		}
 		if satisfied {
 			candidates = append(candidates, v)
@@ -132,7 +133,11 @@ func ResolveVersion(versionStr string, availableVersions []Version) (Version, er
 	}
 
 	sort.Slice(candidates, func(i, j int) bool {
-		return candidates[i].Compare(candidates[j]) > 0
+		cmp, err := candidates[i].CompareTo(candidates[j])
+		if err != nil {
+			return false
+		}
+		return cmp > 0
 	})
 
 	return candidates[0], nil

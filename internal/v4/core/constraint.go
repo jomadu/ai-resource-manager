@@ -28,7 +28,12 @@ func (c *Constraint) IsSatisfiedBy(version Version) (bool, error) {
 		return false, nil
 	}
 	
-	// Latest accepts any version
+	// Latest with a version means exact match (branch name)
+	if c.Type == Latest && c.Version != nil {
+		return version.Version == c.Version.Version, nil
+	}
+	
+	// Latest without version accepts any version
 	if c.Type == Latest {
 		return true, nil
 	}
