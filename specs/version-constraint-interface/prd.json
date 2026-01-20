@@ -1,0 +1,139 @@
+{
+  "tasks": [
+    {
+      "id": "task-1",
+      "name": "Refactor Version type and add new methods",
+      "description": "Update Version struct to add CompareTo, IsNewerThan, IsOlderThan, ToString methods with error returns for non-semver comparisons. Create NewVersion constructor to replace ParseVersion.",
+      "files": [
+        "internal/v4/core/version.go"
+      ],
+      "linkedTaskIds": [],
+      "dependencies": [],
+      "status": "todo"
+    },
+    {
+      "id": "task-2",
+      "name": "Refactor Constraint type and add new methods",
+      "description": "Update Constraint to remove BranchHead type, add IsSatisfiedBy and ToString methods with error returns. Create NewConstraint constructor to replace ParseConstraint. Reject non-semver inputs.",
+      "files": [
+        "internal/v4/core/constraint.go"
+      ],
+      "linkedTaskIds": [],
+      "dependencies": [],
+      "status": "todo"
+    },
+    {
+      "id": "task-3",
+      "name": "Update Version tests",
+      "description": "Update existing tests and add new tests for CompareTo, IsNewerThan, IsOlderThan, ToString methods. Test error cases for non-semver comparisons.",
+      "files": [
+        "internal/v4/core/version_test.go"
+      ],
+      "linkedTaskIds": ["task-1"],
+      "dependencies": ["task-1"],
+      "status": "todo"
+    },
+    {
+      "id": "task-4",
+      "name": "Update Constraint tests",
+      "description": "Update existing tests and add new tests for IsSatisfiedBy and ToString methods. Test error cases for non-semver versions. Remove BranchHead tests.",
+      "files": [
+        "internal/v4/core/constraint_test.go"
+      ],
+      "linkedTaskIds": ["task-2"],
+      "dependencies": ["task-2"],
+      "status": "todo"
+    },
+    {
+      "id": "task-5",
+      "name": "Update ResolveVersion function",
+      "description": "Update ResolveVersion to use new Version.CompareTo method and handle errors from IsSatisfiedBy.",
+      "files": [
+        "internal/v4/core/version.go"
+      ],
+      "linkedTaskIds": ["task-1", "task-2"],
+      "dependencies": ["task-1", "task-2"],
+      "status": "todo"
+    },
+    {
+      "id": "task-6",
+      "name": "Update manifest manager",
+      "description": "Update manifest manager to use NewVersion/NewConstraint constructors and handle new error returns.",
+      "files": [
+        "internal/v4/manifest/manager.go",
+        "internal/v4/manifest/manager_test.go"
+      ],
+      "linkedTaskIds": ["task-1", "task-2"],
+      "dependencies": ["task-1", "task-2"],
+      "status": "todo"
+    },
+    {
+      "id": "task-7",
+      "name": "Update package lock file manager",
+      "description": "Update package lock file manager to use NewVersion constructor and handle new error returns.",
+      "files": [
+        "internal/v4/packagelockfile/manager.go",
+        "internal/v4/packagelockfile/manager_test.go"
+      ],
+      "linkedTaskIds": ["task-1"],
+      "dependencies": ["task-1"],
+      "status": "todo"
+    },
+    {
+      "id": "task-8",
+      "name": "Update sink manager",
+      "description": "Update sink manager to use NewVersion constructor and handle new error returns.",
+      "files": [
+        "internal/v4/sink/manager.go",
+        "internal/v4/sink/manager_test.go"
+      ],
+      "linkedTaskIds": ["task-1"],
+      "dependencies": ["task-1"],
+      "status": "todo"
+    },
+    {
+      "id": "task-9",
+      "name": "Update storage package",
+      "description": "Update storage package to use NewVersion constructor and handle new error returns.",
+      "files": [
+        "internal/v4/storage/package.go",
+        "internal/v4/storage/storage.go",
+        "internal/v4/storage/package_test.go"
+      ],
+      "linkedTaskIds": ["task-1"],
+      "dependencies": ["task-1"],
+      "status": "todo"
+    },
+    {
+      "id": "task-10",
+      "name": "Update parser",
+      "description": "Update parser to use NewVersion/NewConstraint constructors and handle new error returns.",
+      "files": [
+        "internal/v4/parser/parser_test.go"
+      ],
+      "linkedTaskIds": ["task-1", "task-2"],
+      "dependencies": ["task-1", "task-2"],
+      "status": "todo"
+    },
+    {
+      "id": "task-11",
+      "name": "Update helpers",
+      "description": "Update helper functions to use new Version/Constraint methods and handle errors.",
+      "files": [
+        "internal/v4/core/helpers.go"
+      ],
+      "linkedTaskIds": ["task-1", "task-2"],
+      "dependencies": ["task-1", "task-2"],
+      "status": "todo"
+    },
+    {
+      "id": "task-12",
+      "name": "Run full test suite",
+      "description": "Run all tests to ensure refactor is complete and no regressions introduced.",
+      "files": [],
+      "linkedTaskIds": ["task-3", "task-4", "task-5", "task-6", "task-7", "task-8", "task-9", "task-10", "task-11"],
+      "dependencies": ["task-3", "task-4", "task-5", "task-6", "task-7", "task-8", "task-9", "task-10", "task-11"],
+      "status": "todo"
+    }
+  ]
+}
