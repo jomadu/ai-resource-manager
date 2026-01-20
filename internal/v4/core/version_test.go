@@ -4,6 +4,109 @@ import (
 	"testing"
 )
 
+func TestCompareTo(t *testing.T) {
+	tests := []struct {
+		name    string
+		v1      Version
+		v2      Version
+		want    int
+		wantErr bool
+	}{
+		{
+			name:    "equal versions",
+			v1:      Version{Major: 1, Minor: 2, Patch: 3, Version: "1.2.3", IsSemver: true},
+			v2:      Version{Major: 1, Minor: 2, Patch: 3, Version: "1.2.3", IsSemver: true},
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name:    "v1 newer than v2",
+			v1:      Version{Major: 2, Minor: 0, Patch: 0, Version: "2.0.0", IsSemver: true},
+			v2:      Version{Major: 1, Minor: 9, Patch: 9, Version: "1.9.9", IsSemver: true},
+			want:    1,
+			wantErr: false,
+		},
+		{
+			name:    "v1 older than v2",
+			v1:      Version{Major: 1, Minor: 0, Patch: 0, Version: "1.0.0", IsSemver: true},
+			v2:      Version{Major: 1, Minor: 0, Patch: 1, Version: "1.0.1", IsSemver: true},
+			want:    -1,
+			wantErr: false,
+		},
+		{
+			name:    "non-semver v1",
+			v1:      Version{Version: "main", IsSemver: false},
+			v2:      Version{Major: 1, Minor: 0, Patch: 0, Version: "1.0.0", IsSemver: true},
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "non-semver v2",
+			v1:      Version{Major: 1, Minor: 0, Patch: 0, Version: "1.0.0", IsSemver: true},
+			v2:      Version{Version: "main", IsSemver: false},
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "both non-semver",
+			v1:      Version{Version: "main", IsSemver: false},
+			v2:      Version{Version: "develop", IsSemver: false},
+			want:    0,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.v1.CompareTo(tt.v2)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CompareTo() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("CompareTo() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestToString(t *testing.T) {
+	tests := []struct {
+		name    string
+		version Version
+		want    string
+	}{
+		{
+			name:    "semver version",
+			version: Version{Major: 1, Minor: 2, Patch: 3, Version: "1.2.3", IsSemver: true},
+			want:    "1.2.3",
+		},
+		{
+			name:    "semver with v prefix",
+			version: Version{Major: 1, Minor: 2, Patch: 3, Version: "v1.2.3", IsSemver: true},
+			want:    "v1.2.3",
+		},
+		{
+			name:    "non-semver version",
+			version: Version{Version: "main", IsSemver: false},
+			want:    "main",
+		},
+		{
+			name:    "branch name",
+			version: Version{Version: "feature/test", IsSemver: false},
+			want:    "feature/test",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.version.ToString(); got != tt.want {
+				t.Errorf("ToString() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestParseVersion(t *testing.T) {
 	tests := []struct {
 		input    string
