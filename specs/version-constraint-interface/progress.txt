@@ -83,3 +83,31 @@ Started: Tue Jan 20 13:43:23 PST 2026
   - The Compare method (without error) is still used internally by CompareTo
   - All comparison tests pass; ResolveVersion tests still fail due to missing IsSemver in test data (will be fixed in US-005)
 ---
+
+## 2026-01-20 14:07 - Starting US-003
+- Story: Add Constraint constructor and ToString method
+- Plan: Implement NewConstraint constructor that accepts latest, exact semver, abbreviated, caret, and tilde formats. Add ToString method. Will examine existing Constraint type first.
+---
+
+### 14:08 - Progress on US-003
+- Completed: Added comprehensive tests for NewConstraint (abbreviated, caret, tilde) and ToString (v prefix preservation)
+- Next: Run full test suite to ensure no regressions
+
+## 2026-01-20 14:09 - Completed US-003
+- What was implemented:
+  - Added comprehensive tests for NewConstraint covering abbreviated versions (1, 1.2, v1, v1.2)
+  - Added tests for caret constraints (^1.2.3, ^v1.2.3)
+  - Added tests for tilde constraints (~1.2.3, ~v1.2.3)
+  - Added TestNewConstraint_ToString to verify ToString preserves v prefix and constraint operators
+  - All acceptance criteria met: latest, exact, abbreviated, caret, tilde, error handling, ToString
+  
+- Files changed:
+  - internal/v4/core/constraint_test.go (added 8 new test cases to TestNewConstraint, added TestNewConstraint_ToString with 11 test cases, enhanced TestConstraint_ToString with v prefix tests)
+  
+- **Learnings for future iterations:**
+  - NewConstraint and ToString methods already existed and were correctly implemented
+  - Only needed to add comprehensive tests to verify all acceptance criteria
+  - ToString correctly preserves v prefix and constraint operators (^, ~)
+  - Abbreviated versions (1, 1.2) are expanded to full semver (1.0.0, 1.2.0) with appropriate constraint type
+  - Pre-existing ResolveVersion test failures are expected and will be fixed in US-005
+---

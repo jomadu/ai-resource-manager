@@ -114,13 +114,7 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     exit 1
   fi
   
-  # Check if no stories left (alternative completion signal)
-  if echo "$OUTPUT" | grep -q "All stories complete\|No stories remaining\|All user stories.*passes: true"; then
-    echo ""
-    echo "✓ Ralph completed all stories!"
-    echo "Completed at iteration $i of $MAX_ITERATIONS"
-    exit 0
-  fi
+
   
   echo ""
   echo "→ Iteration $i complete. Continuing..."
