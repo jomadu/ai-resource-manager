@@ -8,18 +8,39 @@ You are an autonomous coding agent working on a software project.
 2. Read the progress log at `progress.txt` (check Codebase Patterns section first)
 3. Check you're on the correct branch from PRD `branchName`. If not, check it out or create from main.
 4. Pick the **highest priority** user story where `passes: false`
-5. Implement that single user story
-6. Run quality checks (e.g., typecheck, lint, test - use whatever your project requires)
-7. Update AGENTS.md files if you discover reusable patterns (see below)
-8. If checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
-9. Update the PRD to set `passes: true` for the completed story
-10. Append your progress to `progress.txt`
+5. **Write to progress.txt:** Append which story you picked and what you plan to do
+6. Implement that single user story:
+   - Break work into logical chunks (e.g., "add types", "implement function", "add tests")
+   - After completing each chunk, append progress update to progress.txt
+   - Keep working until story complete
+7. Run quality checks (e.g., typecheck, lint, test - use whatever your project requires)
+8. Update AGENTS.md files if you discover reusable patterns (see below)
+9. If checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
+10. **Update prd.json:** Set `passes: true` for the completed story and write file
+11. **Write to progress.txt:** Append completion report with learnings
 
 ## Progress Report Format
 
 APPEND to progress.txt (never replace, always append):
+
+**When starting a story:**
 ```
-## [Date/Time] - [Story ID]
+## [Date/Time] - Starting [Story ID]
+- Story: [Story Title]
+- Plan: [Brief description of approach]
+---
+```
+
+**During implementation (after each chunk):**
+```
+### [Time] - Progress on [Story ID]
+- Completed: [What you just finished]
+- Next: [What you're doing next]
+```
+
+**When completing a story:**
+```
+## [Date/Time] - Completed [Story ID]
 - What was implemented
 - Files changed
 - **Learnings for future iterations:**
@@ -87,6 +108,8 @@ Exit immediately in these cases:
 4. **All stories complete** - Exit with: `<promise>COMPLETE</promise>`
 
 Do NOT continue to the next story automatically. Each iteration handles exactly one story.
+
+**IMPORTANT:** Always output the promise tag on its own line at the END of your response so the script can detect it.
 
 ## Important
 

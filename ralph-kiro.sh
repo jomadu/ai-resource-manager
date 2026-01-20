@@ -83,23 +83,35 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   ARGS=(chat --no-interactive --trust-all-tools)
   [ -n "$AGENT" ] && ARGS+=(--agent "$AGENT")
   
+  # Capture output silently, check for promises
   OUTPUT=$(cat "$PROMPT_FILE" | kiro-cli "${ARGS[@]}" 2>&1) || true
   
+  # Check for completion
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
     echo ""
-    echo "Ralph completed all tasks!"
+    echo "✓ Ralph completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
     exit 0
   fi
   
+  # Check for blocked
   if echo "$OUTPUT" | grep -q "<promise>BLOCKED:"; then
     echo ""
-    echo "Ralph is blocked:"
+    echo "✗ Ralph is blocked:"
     echo "$OUTPUT" | grep -o "<promise>BLOCKED:.*</promise>" | sed 's/<[^>]*>//g'
     exit 1
   fi
   
-  echo "Iteration $i complete. Continuing..."
+  # Check if no stories left (alternative completion signal)
+  if echo "$OUTPUT" | grep -q "All stories complete\|No stories remaining\|All user stories.*passes: true"; then
+    echo ""
+    echo "✓ Ralph completed all stories!"
+    echo "Completed at iteration $i of $MAX_ITERATIONS"
+    exit 0
+  fi
+  
+  echo ""
+  echo "→ Iteration $i complete. Continuing..."
   sleep 2
 done
 
