@@ -2,9 +2,9 @@ package core
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 )
 
 // Compare returns -1 if v is older than other, 0 if equal, 1 if newer
@@ -47,54 +47,22 @@ var (
 	BuildTime     = "unknown"
 )
 
+var semverRegex = regexp.MustCompile(`^(v)?(\d+)\.(\d+)\.(\d+)(?:-([\.\w-]+))?(?:\+([\w.-]+))?$`)
+
 func ParseVersion(versionString string) (Version, error) {
-	original := versionString
-	
-	// Remove 'v' prefix if present
-	if strings.HasPrefix(versionString, "v") {
-		versionString = versionString[1:]
+	// Try to match semver pattern
+	matches := semverRegex.FindStringSubmatch(versionString)
+	if matches == nil {
+		// Not semver, return as plain version string
+		return Version{Version: versionString, IsSemver: false}, nil
 	}
 	
-	// Split on '+' to separate build metadata
-	parts := strings.Split(versionString, "+")
-	versionPart := parts[0]
-	build := ""
-	if len(parts) > 1 {
-		build = parts[1]
-	}
-	
-	// Split on '-' to separate prerelease
-	parts = strings.Split(versionPart, "-")
-	corePart := parts[0]
-	prerelease := ""
-	if len(parts) > 1 {
-		prerelease = strings.Join(parts[1:], "-")
-	}
-	
-	// Parse major.minor.patch
-	versionParts := strings.Split(corePart, ".")
-	if len(versionParts) < 3 {
-		// Not a valid semver format (needs major.minor.patch)
-		return Version{Version: original, IsSemver: false}, nil
-	}
-	
-	// Parse major (required)
-	major, err := strconv.Atoi(versionParts[0])
-	if err != nil {
-		return Version{Version: original, IsSemver: false}, nil
-	}
-	
-	// Parse minor (required for semver)
-	minor, err := strconv.Atoi(versionParts[1])
-	if err != nil {
-		return Version{Version: original, IsSemver: false}, nil
-	}
-	
-	// Parse patch (required for semver)
-	patch, err := strconv.Atoi(versionParts[2])
-	if err != nil {
-		return Version{Version: original, IsSemver: false}, nil
-	}
+	// Parse semver groups
+	major, _ := strconv.Atoi(matches[2])
+	minor, _ := strconv.Atoi(matches[3])
+	patch, _ := strconv.Atoi(matches[4])
+	prerelease := matches[5]
+	build := matches[6]
 	
 	return Version{
 		Major:      major,
@@ -102,7 +70,7 @@ func ParseVersion(versionString string) (Version, error) {
 		Patch:      patch,
 		Prerelease: prerelease,
 		Build:      build,
-		Version:    original,
+		Version:    versionString,
 		IsSemver:   true,
 	}, nil
 }

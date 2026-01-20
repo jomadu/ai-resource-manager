@@ -13,19 +13,21 @@ func TestParseVersion(t *testing.T) {
 		{
 			input: "1.2.3",
 			expected: Version{
-				Major:   1,
-				Minor:   2,
-				Patch:   3,
-				Version: "1.2.3",
+				Major:    1,
+				Minor:    2,
+				Patch:    3,
+				Version:  "1.2.3",
+				IsSemver: true,
 			},
 		},
 		{
 			input: "v1.2.3",
 			expected: Version{
-				Major:   1,
-				Minor:   2,
-				Patch:   3,
-				Version: "v1.2.3",
+				Major:    1,
+				Minor:    2,
+				Patch:    3,
+				Version:  "v1.2.3",
+				IsSemver: true,
 			},
 		},
 		{
@@ -36,16 +38,18 @@ func TestParseVersion(t *testing.T) {
 				Patch:      3,
 				Prerelease: "alpha",
 				Version:    "1.2.3-alpha",
+				IsSemver:   true,
 			},
 		},
 		{
 			input: "1.2.3+build123",
 			expected: Version{
-				Major:   1,
-				Minor:   2,
-				Patch:   3,
-				Build:   "build123",
-				Version: "1.2.3+build123",
+				Major:    1,
+				Minor:    2,
+				Patch:    3,
+				Build:    "build123",
+				Version:  "1.2.3+build123",
+				IsSemver: true,
 			},
 		},
 		{
@@ -57,68 +61,65 @@ func TestParseVersion(t *testing.T) {
 				Prerelease: "beta.1",
 				Build:      "exp.sha.5114f85",
 				Version:    "v2.0.0-beta.1+exp.sha.5114f85",
+				IsSemver:   true,
 			},
 		},
-		// Partial version cases - should parse what's available
+		// Abbreviated versions - now treated as non-semver
 		{
 			input: "1.2",
 			expected: Version{
-				Major:   1,
-				Minor:   2,
-				Version: "1.2",
+				Version:  "1.2",
+				IsSemver: false,
 			},
 		},
 		{
 			input: "v1.2",
 			expected: Version{
-				Major:   1,
-				Minor:   2,
-				Version: "v1.2",
+				Version:  "v1.2",
+				IsSemver: false,
 			},
 		},
 		{
 			input: "5",
 			expected: Version{
-				Major:   5,
-				Version: "5",
+				Version:  "5",
+				IsSemver: false,
 			},
 		},
 		{
 			input: "v3",
 			expected: Version{
-				Major:   3,
-				Version: "v3",
+				Version:  "v3",
+				IsSemver: false,
 			},
 		},
 		// Non-semver cases - should return Version field only
 		{
 			input: "main",
 			expected: Version{
-				Version: "main",
+				Version:  "main",
+				IsSemver: false,
 			},
 		},
 		{
 			input: "develop",
 			expected: Version{
-				Version: "develop",
+				Version:  "develop",
+				IsSemver: false,
 			},
 		},
 		{
 			input: "feature/new-stuff",
 			expected: Version{
-				Version: "feature/new-stuff",
+				Version:  "feature/new-stuff",
+				IsSemver: false,
 			},
 		},
 		{
 			input: "1.2.x",
 			expected: Version{
-				Version: "1.2.x",
-			},
-		},
-		{
-			input: "latest",
-			expected: Version{
-				Version: "latest",
+				Version:  "1.2.x",
+				IsSemver: false,
 			},
 		},
 	}
@@ -148,6 +149,9 @@ func TestParseVersion(t *testing.T) {
 			}
 			if result.Version != test.expected.Version {
 				t.Errorf("Version: got %q, want %q", result.Version, test.expected.Version)
+			}
+			if result.IsSemver != test.expected.IsSemver {
+				t.Errorf("IsSemver: got %v, want %v", result.IsSemver, test.expected.IsSemver)
 			}
 		})
 	}
