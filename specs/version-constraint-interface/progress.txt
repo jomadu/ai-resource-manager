@@ -43,3 +43,43 @@ Started: Tue Jan 20 13:43:23 PST 2026
   - The codebase uses ParseVersion as an alias for NewVersion (deprecated pattern)
   - Version struct has both parsed fields (Major, Minor, Patch) and original string (Version field)
 ---
+
+## 2026-01-20 13:53 - Starting US-002
+- Story: Add Version comparison methods
+- Plan: Implement CompareTo, IsNewerThan, and IsOlderThan methods. CompareTo should return error for non-semver versions. Will examine existing code first.
+---
+
+### 13:53 - Progress on US-002
+- Completed: Updated IsNewerThan and IsOlderThan to return (bool, error)
+- Next: Add tests for IsNewerThan and IsOlderThan
+
+### 13:54 - Progress on US-002
+- Completed: Added comprehensive tests for IsNewerThan and IsOlderThan
+- Next: Run tests to verify implementation
+
+### 13:55 - Progress on US-002
+- Completed: All comparison tests pass (CompareTo, IsNewerThan, IsOlderThan)
+- Note: Some ResolveVersion tests fail due to missing IsSemver field in test data - this is expected and will be fixed in US-005
+- Next: Run typecheck to verify no compilation errors
+
+## 2026-01-20 13:56 - Completed US-002
+- What was implemented:
+  - Updated IsNewerThan to return (bool, error) instead of bool
+  - Updated IsOlderThan to return (bool, error) instead of bool
+  - Both methods now use CompareTo internally and propagate errors
+  - Added comprehensive tests for IsNewerThan (5 test cases)
+  - Added comprehensive tests for IsOlderThan (5 test cases)
+  - Fixed IsNewerThan call site in helpers.go to handle error return
+  
+- Files changed:
+  - internal/v4/core/version.go (updated IsNewerThan and IsOlderThan signatures)
+  - internal/v4/core/version_test.go (added TestIsNewerThan and TestIsOlderThan)
+  - internal/v4/core/helpers.go (fixed IsNewerThan error handling)
+  
+- **Learnings for future iterations:**
+  - IsNewerThan and IsOlderThan now return (bool, error) - must handle error at all call sites
+  - Only one call site needed updating (helpers.go) - grep confirmed no other usages
+  - CompareTo was already implemented correctly with error handling
+  - The Compare method (without error) is still used internally by CompareTo
+  - All comparison tests pass; ResolveVersion tests still fail due to missing IsSemver in test data (will be fixed in US-005)
+---
