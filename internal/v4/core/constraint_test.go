@@ -189,6 +189,28 @@ func TestConstraint_IsSatisfiedBy(t *testing.T) {
 		want       bool
 		wantErr    bool
 	}{
+		// Latest
+		{"latest allows semver", "latest", "1.2.3", true, false},
+		{"latest allows any semver", "latest", "0.0.1", true, false},
+
+		// Exact
+		{"1.2.3 allows 1.2.3", "1.2.3", "1.2.3", true, false},
+		{"1.2.3 rejects 1.2.4", "1.2.3", "1.2.4", false, false},
+
+		// Major (abbreviated like "1" becomes Major constraint)
+		{"1 allows 1.0.0", "1", "1.0.0", true, false},
+		{"1 allows 1.5.0", "1", "1.5.0", true, false},
+		{"1 allows 1.9.9", "1", "1.9.9", true, false},
+		{"1 rejects 2.0.0", "1", "2.0.0", false, false},
+		{"1 rejects 0.9.9", "1", "0.9.9", false, false},
+
+		// Minor (abbreviated like "1.2" becomes Minor constraint)
+		{"1.2 allows 1.2.0", "1.2", "1.2.0", true, false},
+		{"1.2 allows 1.2.5", "1.2", "1.2.5", true, false},
+		{"1.2 allows 1.2.9", "1.2", "1.2.9", true, false},
+		{"1.2 rejects 1.3.0", "1.2", "1.3.0", false, false},
+		{"1.2 rejects 1.1.9", "1.2", "1.1.9", false, false},
+
 		// Caret always major
 		{"^1.1.1 allows 1.1.1", "^1.1.1", "1.1.1", true, false},
 		{"^1.1.1 allows 1.2.0", "^1.1.1", "1.2.0", true, false},
@@ -209,10 +231,6 @@ func TestConstraint_IsSatisfiedBy(t *testing.T) {
 		{"~1.0.1 allows 1.0.9", "~1.0.1", "1.0.9", true, false},
 		{"~1.0.1 rejects 1.1.0", "~1.0.1", "1.1.0", false, false},
 		{"~1.0.1 rejects 1.0.0", "~1.0.1", "1.0.0", false, false},
-
-		// Exact
-		{"1.2.3 allows 1.2.3", "1.2.3", "1.2.3", true, false},
-		{"1.2.3 rejects 1.2.4", "1.2.3", "1.2.4", false, false},
 	}
 
 	for _, tt := range tests {
