@@ -46,4 +46,3 @@ git log --oneline -10
 
 - [Geoffrey Huntley's Ralph](https://ghuntley.com/ralph/)
 - [snarktank/ralph](https://github.com/snarktank/ralph)
-- [Analysis](./specs/RALPH-STRUCTURE-ANALYSIS.md)
