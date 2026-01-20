@@ -18,6 +18,17 @@ func TestNewConstraint(t *testing.T) {
 		{"v prefix exact", "v1.2.3", Exact, false},
 		{"v prefix minor", "v1.2.0", Minor, false},
 		{"v prefix major", "v1.0.0", Major, false},
+		// Abbreviated versions
+		{"abbreviated major", "1", Major, false},
+		{"abbreviated minor", "1.2", Minor, false},
+		{"abbreviated major with v", "v1", Major, false},
+		{"abbreviated minor with v", "v1.2", Minor, false},
+		// Caret
+		{"caret exact", "^1.2.3", Major, false},
+		{"caret with v", "^v1.2.3", Major, false},
+		// Tilde
+		{"tilde exact", "~1.2.3", Minor, false},
+		{"tilde with v", "~v1.2.3", Minor, false},
 	}
 
 	for _, tt := range tests {
@@ -267,11 +278,49 @@ func TestConstraint_ToString(t *testing.T) {
 		{"major version", "1.0.0", "^1.0.0"},
 		{"caret explicit", "^2.3.4", "^2.3.4"},
 		{"tilde explicit", "~3.4.5", "~3.4.5"},
+		// Test v prefix preservation
+		{"v prefix exact", "v1.2.3", "v1.2.3"},
+		{"v prefix with caret", "^v2.3.4", "^v2.3.4"},
+		{"v prefix with tilde", "~v3.4.5", "~v3.4.5"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c, err := ParseConstraint(tt.constraint)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := c.ToString()
+			if got != tt.want {
+				t.Errorf("ToString() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewConstraint_ToString(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"latest", "latest", "latest"},
+		{"exact version", "1.2.3", "1.2.3"},
+		{"v prefix exact", "v1.2.3", "v1.2.3"},
+		{"caret", "^1.2.3", "^1.2.3"},
+		{"caret with v", "^v1.2.3", "^v1.2.3"},
+		{"tilde", "~1.2.3", "~1.2.3"},
+		{"tilde with v", "~v1.2.3", "~v1.2.3"},
+		// Abbreviated versions expand but preserve v
+		{"abbreviated major", "1", "^1.0.0"},
+		{"abbreviated minor", "1.2", "~1.2.0"},
+		{"abbreviated major with v", "v1", "^v1.0.0"},
+		{"abbreviated minor with v", "v1.2", "~v1.2.0"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := NewConstraint(tt.input)
 			if err != nil {
 				t.Fatal(err)
 			}
