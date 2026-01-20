@@ -26,7 +26,11 @@ func GetBestMatching(versions []Version, constraint Constraint) (*Version, error
 	}
 	var candidates []*Version
 	for i := range versions {
-		if constraint.IsSatisfiedBy(versions[i]) {
+		satisfied, err := constraint.IsSatisfiedBy(versions[i])
+		if err != nil {
+			return nil, err
+		}
+		if satisfied {
 			candidates = append(candidates, &versions[i])
 		}
 	}

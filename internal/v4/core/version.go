@@ -68,6 +68,10 @@ var semverRegex = regexp.MustCompile(`^(v)?(\d+)\.(\d+)\.(\d+)(?:-([\.\w-]+))?(?
 
 // NewVersion creates a new Version from a version string
 func NewVersion(versionString string) (Version, error) {
+	if versionString == "" {
+		return Version{}, fmt.Errorf("version string cannot be empty")
+	}
+	
 	// Try to match semver pattern
 	matches := semverRegex.FindStringSubmatch(versionString)
 	if matches == nil {
@@ -106,7 +110,11 @@ func ResolveVersion(versionStr string, availableVersions []Version) (Version, er
 
 	var candidates []Version
 	for _, v := range availableVersions {
-		if constraint.IsSatisfiedBy(v) {
+		satisfied, err := constraint.IsSatisfiedBy(v)
+		if err != nil {
+			return Version{}, err
+		}
+		if satisfied {
 			candidates = append(candidates, v)
 		}
 	}

@@ -111,7 +111,13 @@ func TestParseVersion(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected Version
+		wantErr  bool
 	}{
+		// Empty string case
+		{
+			input:   "",
+			wantErr: true,
+		},
 		// Valid semver cases
 		{
 			input: "1.2.3",
@@ -230,6 +236,12 @@ func TestParseVersion(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			result, err := ParseVersion(test.input)
+			if test.wantErr {
+				if err == nil {
+					t.Errorf("ParseVersion(%q) expected error but got none", test.input)
+				}
+				return
+			}
 			if err != nil {
 				t.Errorf("ParseVersion(%q) returned error: %v", test.input, err)
 				return
