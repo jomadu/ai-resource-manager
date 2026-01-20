@@ -34,18 +34,3 @@ type Package struct {
 	Files     []*File
 	Integrity string
 }
-
-type ConstraintType string
-
-const (
-	Exact      ConstraintType = "exact"
-	Major      ConstraintType = "major"
-	Minor      ConstraintType = "minor"
-	BranchHead ConstraintType = "branch-head"
-	Latest     ConstraintType = "latest"
-)
-
-type Constraint struct {
-	Type    ConstraintType
-	Version *Version
-}
