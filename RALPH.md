@@ -77,14 +77,16 @@ Only update AGENTS.md if you have **genuinely reusable knowledge** that would he
 - Keep changes focused and minimal
 - Follow existing code patterns
 
-## Stop Condition
+## Exit Conditions
 
-After completing a user story, check if ALL stories have `passes: true`.
+Exit immediately in these cases:
 
-If ALL stories are complete and passing, reply with:
-<promise>COMPLETE</promise>
+1. **After completing ONE story successfully** - Commit, update PRD, log progress, then STOP
+2. **Quality checks fail 3 times** - Report the issue and exit with: `<promise>BLOCKED: [reason]</promise>`
+3. **Cannot proceed** - Missing files, unclear requirements, or other blockers: `<promise>BLOCKED: [reason]</promise>`
+4. **All stories complete** - Exit with: `<promise>COMPLETE</promise>`
 
-If there are still stories with `passes: false`, end your response normally (another iteration will pick up the next story).
+Do NOT continue to the next story automatically. Each iteration handles exactly one story.
 
 ## Important
 

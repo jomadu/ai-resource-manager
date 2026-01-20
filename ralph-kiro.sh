@@ -83,13 +83,20 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   ARGS=(chat --no-interactive --trust-all-tools)
   [ -n "$AGENT" ] && ARGS+=(--agent "$AGENT")
   
-  OUTPUT=$(cat "$PROMPT_FILE" | kiro-cli "${ARGS[@]}" 2>&1 | tee /dev/stderr) || true
+  OUTPUT=$(cat "$PROMPT_FILE" | kiro-cli "${ARGS[@]}" 2>&1) || true
   
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
     echo ""
     echo "Ralph completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
     exit 0
+  fi
+  
+  if echo "$OUTPUT" | grep -q "<promise>BLOCKED:"; then
+    echo ""
+    echo "Ralph is blocked:"
+    echo "$OUTPUT" | grep -o "<promise>BLOCKED:.*</promise>" | sed 's/<[^>]*>//g'
+    exit 1
   fi
   
   echo "Iteration $i complete. Continuing..."
