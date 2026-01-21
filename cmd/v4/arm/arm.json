@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "registries": {
+    "test-reg": {
+      "type": "git",
+      "url": "https://github.com/test/repo2"
+    },
+    "test-reg2": {
+      "branches": [
+        "main",
+        "dev"
+      ],
+      "type": "git",
+      "url": "https://github.com/test/repo"
+    }
+  }
+}
