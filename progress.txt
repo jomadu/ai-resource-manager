@@ -320,3 +320,35 @@
 ### 2026-01-21 06:22 - Progress on US-011
 - Completed: All tests passing (6 test cases), typecheck passing
 - Next: Commit changes
+
+
+## 2026-01-21 06:22 - Completed US-011
+- Implemented `arm install promptset REGISTRY/PROMPTSET[@VERSION] SINK...` command
+- Added --include and --exclude flags for glob patterns (can be specified multiple times)
+- Supports version constraints in package spec (@1.0.0, @1.1, @1, or no version)
+- Follows same pattern as install ruleset but without --priority flag
+- Created comprehensive tests (6 test cases for CLI validation)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/install_promptset_test.go, prd.json
+- **Learnings for future iterations:**
+  - Service layer InstallPromptset takes: registryName, promptset, version, include, exclude, sinks (no priority parameter)
+  - Same package spec parsing as ruleset: REGISTRY/PACKAGE[@VERSION]
+  - Same test pattern: build inline, test with isolated manifests
+  - Promptsets don't have priority - that's a ruleset-only feature
+---
+
+## 2026-01-21 06:25 - Starting US-012
+- Story: Install all and uninstall commands
+- Plan: Implement `arm install` (no args) to install all configured dependencies, and `arm uninstall` to remove all packages from sinks. Use service layer Install() and Uninstall() methods.
+---
+
+### 2026-01-21 06:25 - Progress on US-012
+- Completed: Implemented handleInstallAll and handleUninstall functions
+- Next: Create tests for the commands
+
+### 2026-01-21 06:25 - Progress on US-012
+- Completed: Created tests for install all and uninstall commands
+- Next: Run tests and typecheck
+
+### 2026-01-21 06:25 - Progress on US-012
+- Completed: All tests passing (4 test cases), typecheck passing
+- Next: Commit changes

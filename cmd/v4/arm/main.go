@@ -41,6 +41,8 @@ func main() {
 		handleInfo()
 	case "install":
 		handleInstall()
+	case "uninstall":
+		handleUninstall()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
 		fmt.Fprintf(os.Stderr, "Run 'arm help' for usage.\n")
@@ -71,6 +73,7 @@ func printHelp() {
 	fmt.Println("  list                 List registries or sinks")
 	fmt.Println("  info                 Show detailed information")
 	fmt.Println("  install              Install rulesets or promptsets")
+	fmt.Println("  uninstall            Uninstall all packages")
 	fmt.Println()
 	fmt.Println("Run 'arm help <command>' for more information on a command.")
 }
@@ -145,15 +148,26 @@ func printCommandHelp(command string) {
 		fmt.Println("Install rulesets or promptsets")
 		fmt.Println()
 		fmt.Println("Usage:")
+		fmt.Println("  arm install                                                                    # Install all dependencies")
 		fmt.Println("  arm install ruleset [--priority N] [--include PATTERN] [--exclude PATTERN] REGISTRY/RULESET[@VERSION] SINK...")
+		fmt.Println("  arm install promptset [--include PATTERN] [--exclude PATTERN] REGISTRY/PROMPTSET[@VERSION] SINK...")
 		fmt.Println()
 		fmt.Println("Flags:")
 		fmt.Println("  --priority     Priority for ruleset (default: 100)")
 		fmt.Println("  --include      Include glob pattern (can be specified multiple times)")
 		fmt.Println("  --exclude      Exclude glob pattern (can be specified multiple times)")
 		fmt.Println()
-		fmt.Println("Example:")
+		fmt.Println("Examples:")
+		fmt.Println("  arm install")
 		fmt.Println("  arm install ruleset --priority 200 my-registry/clean-code@1.0.0 cursor-rules")
+		fmt.Println("  arm install promptset my-registry/code-review cursor-commands")
+	case "uninstall":
+		fmt.Println("Uninstall all packages")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  arm uninstall")
+		fmt.Println()
+		fmt.Println("Removes all installed packages from sinks and clears dependency configuration.")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
@@ -934,8 +948,8 @@ func handleInfoSink() {
 
 func handleInstall() {
 	if len(os.Args) < 3 {
-		fmt.Fprintf(os.Stderr, "Usage: arm install <ruleset|promptset> ...\n")
-		os.Exit(1)
+		handleInstallAll()
+		return
 	}
 
 	switch os.Args[2] {
@@ -947,6 +961,28 @@ func handleInstall() {
 		fmt.Fprintf(os.Stderr, "Unknown install target: %s\n", os.Args[2])
 		os.Exit(1)
 	}
+}
+
+func handleInstallAll() {
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm-manifest.json"
+	}
+
+	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(lockfilePath)
+
+	svc := service.NewArmService(manifestMgr, lockfileMgr, nil)
+	ctx := context.Background()
+
+	if err := svc.InstallAll(ctx); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("All dependencies installed successfully")
 }
 
 func handleInstallRuleset() {
@@ -1184,4 +1220,26 @@ func parseVersion(input string) (string, error) {
 	}
 
 	return version, nil
+}
+
+func handleUninstall() {
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm-manifest.json"
+	}
+
+	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(lockfilePath)
+
+	svc := service.NewArmService(manifestMgr, lockfileMgr, nil)
+	ctx := context.Background()
+
+	if err := svc.UninstallAll(ctx); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("All packages uninstalled successfully")
 }
