@@ -7,29 +7,32 @@ DIST_DIR := dist
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME := $(shell date -u '+%Y-%m-%d_%H:%M:%S')
-LDFLAGS := -ldflags "-X main.buildVersion=$(VERSION) -X main.buildCommit=$(COMMIT) -X main.buildTimestamp=$(BUILD_TIME) -X github.com/jomadu/ai-rules-manager/internal/v3/version.Version=$(VERSION) -X github.com/jomadu/ai-rules-manager/internal/v3/version.Commit=$(COMMIT) -X github.com/jomadu/ai-rules-manager/internal/v3/version.BuildTime=$(BUILD_TIME) -s -w"
+LDFLAGS := -ldflags "-X github.com/jomadu/ai-resource-manager/internal/arm/core.buildVersion=$(VERSION) -X github.com/jomadu/ai-resource-manager/internal/arm/core.buildCommit=$(COMMIT) -X github.com/jomadu/ai-resource-manager/internal/arm/core.buildTimestamp=$(BUILD_TIME) -s -w"
 
-# Build the internal/v4 package
+# Build the binary
 build:
-	go build ./internal/v4/...
+	@mkdir -p $(BIN_DIR)
+	go build $(LDFLAGS) -o $(BIN_DIR)/$(BINARY_NAME) ./cmd/arm
 
-# Build for all platforms (internal/v4)
+# Build for all platforms
 build-all:
-	@echo "Building internal/v4 for all platforms..."
+	@echo "Building for all platforms..."
 	@mkdir -p $(DIST_DIR)
-	GOOS=linux GOARCH=amd64 go build ./internal/v4/...
-	GOOS=linux GOARCH=arm64 go build ./internal/v4/...
-	GOOS=darwin GOARCH=amd64 go build ./internal/v4/...
-	GOOS=darwin GOARCH=arm64 go build ./internal/v4/...
-	GOOS=windows GOARCH=amd64 go build ./internal/v4/...
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-linux-amd64 ./cmd/arm
+	GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-linux-arm64 ./cmd/arm
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-darwin-amd64 ./cmd/arm
+	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-darwin-arm64 ./cmd/arm
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(DIST_DIR)/$(BINARY_NAME)-windows-amd64.exe ./cmd/arm
 
-# Install binary to system PATH (disabled - internal/v4 is a library)
+# Install binary to system PATH
 install: build
-	@echo "Note: internal/v4 is a library package, not a binary. Nothing to install."
+	@echo "Installing $(BINARY_NAME) to /usr/local/bin..."
+	@cp $(BIN_DIR)/$(BINARY_NAME) /usr/local/bin/$(BINARY_NAME)
+	@echo "Installation complete!"
 
 # Run tests
 test:
-	go test -v -race -coverprofile=coverage.out ./internal/v4/...
+	go test -v -race -coverprofile=coverage.out ./...
 
 # Format code
 fmt:

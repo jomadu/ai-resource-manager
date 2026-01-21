@@ -1,1 +1,0 @@
-If you are an agent, recognize that the code under this folder is v3 code, meant to be decommissioned in favor of the v4 code in internal/v4/.
