@@ -132,10 +132,10 @@ cd "$SCRIPT_DIR/sandbox"
 # Configure registry and sinks
 log "Configuring registry and sinks..."
 run_arm add registry git --url "$REPO_URL" sample-repo
-run_arm add sink --type cursor cursor-rules .cursor/rules
-run_arm add sink --type cursor cursor-commands .cursor/commands
-run_arm add sink --type amazonq q-rules .amazonq/rules
-run_arm add sink --type amazonq q-prompts .amazonq/prompts
+run_arm add sink --tool cursor cursor-rules .cursor/rules
+run_arm add sink --tool cursor cursor-commands .cursor/commands
+run_arm add sink --tool amazonq q-rules .amazonq/rules
+run_arm add sink --tool amazonq q-prompts .amazonq/prompts
 
 # Install configured ruleset
 log "Installing $RULESET_NAME..."

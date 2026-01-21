@@ -159,19 +159,19 @@ pause
 log "=== SINK SETUP ==="
 
 log "Setting up cursor sink (hierarchical)..."
-run_arm add sink --type cursor cursor-rules .cursor/rules
+run_arm add sink --tool cursor cursor-rules .cursor/rules
 
 log "Setting up Amazon Q sink (hierarchical)..."
-run_arm add sink --type amazonq q-rules .amazonq/rules
+run_arm add sink --tool amazonq q-rules .amazonq/rules
 
 log "Setting up copilot sink (flat)..."
-run_arm add sink --type copilot copilot-rules .github/copilot
+run_arm add sink --tool copilot copilot-rules .github/copilot
 
 log "Setting up cursor prompts sink..."
-run_arm add sink --type cursor cursor-commands .cursor/commands
+run_arm add sink --tool cursor cursor-commands .cursor/commands
 
 log "Setting up Amazon Q prompts sink..."
-run_arm add sink --type amazonq q-prompts .amazonq/prompts
+run_arm add sink --tool amazonq q-prompts .amazonq/prompts
 
 log "Showing configuration..."
 run_arm list registry
