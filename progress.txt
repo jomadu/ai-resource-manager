@@ -31,3 +31,48 @@
 - Completed: Verified AddCloudsmithRegistry method already exists with all acceptance criteria met
 - Verified: Typecheck passes, tests exist and pass
 - Next: Commit story completion
+
+## 2026-01-21 07:10 - Completed US-002
+- What was implemented: AddCloudsmithRegistry method already existed in service layer with full implementation
+- Files changed: prd.json, progress.txt
+- **Learnings for future iterations:**
+  - Service layer methods for adding registries follow pattern: validate existence, create config struct, call manifest manager UpsertXXXRegistryConfig
+  - Tests use mockManifestManager pattern with embedded manifest struct
+  - Force flag allows overwriting existing registries
+---
+
+## 2026-01-21 07:12 - Starting US-003
+- Story: Create CloudsmithRegistry struct and constructor
+- Plan: Create CloudsmithRegistry struct with required fields, CloudsmithClient struct, and NewCloudsmithRegistry constructor in internal/v4/registry/cloudsmith/
+---
+
+### 07:13 - Progress on US-003
+- Completed: Created cloudsmith.go with CloudsmithRegistry struct, cloudsmithClient struct, and NewCloudsmithRegistry constructor
+- Next: Run typecheck
+
+## 2026-01-21 07:13 - Completed US-003
+- What was implemented: Created CloudsmithRegistry struct with name, config, client, packageCache fields; cloudsmithClient struct with baseURL, httpClient, token fields; NewCloudsmithRegistry constructor
+- Files changed: internal/v4/registry/cloudsmith.go (new file)
+- **Learnings for future iterations:**
+  - v4 registries use storage.NewRegistry() to create registry directories
+  - v4 registries use storage.PackageCache instead of v3's cache interface
+  - Constructor pattern: accept name and config, create storage registry, initialize client with default URL if empty
+  - v4 simplified field set compared to v3 (no resolver, semver, rcService, extractor in struct - will be used inline in methods)
+---
+
+## 2026-01-21 07:13 - Starting US-004
+- Story: Implement token authentication
+- Plan: Add loadToken() method reading from .armrc, store in client, add makeRequest() with Authorization header
+---
+
+### 07:14 - Progress on US-004
+- Completed: Added loadToken() and makeRequest() methods to cloudsmith.go
+- Next: Run typecheck
+
+### 07:14 - Progress on US-004
+- Completed: Created cloudsmith_test.go with tests for loadToken and makeRequest
+- Next: Run tests
+
+### 07:15 - Progress on US-004
+- Completed: All tests pass
+- Next: Commit story

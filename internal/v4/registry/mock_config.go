@@ -1,6 +1,9 @@
 package registry
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 type mockConfigManager struct {
 	sections map[string]map[string]string
@@ -31,10 +34,14 @@ func (m *mockConfigManager) GetSection(ctx context.Context, section string) (map
 }
 
 func (m *mockConfigManager) GetValue(ctx context.Context, section, key string) (string, error) {
+	if m == nil || m.sections == nil {
+		return "", fmt.Errorf("config manager not initialized")
+	}
 	if sec, ok := m.sections[section]; ok {
 		if val, ok := sec[key]; ok {
 			return val, nil
 		}
+		return "", fmt.Errorf("key %s not found in section %s", key, section)
 	}
-	return "", nil
+	return "", fmt.Errorf("section %s not found", section)
 }
