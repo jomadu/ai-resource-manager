@@ -217,13 +217,17 @@ func printCommandHelp(command string) {
 		fmt.Println()
 		fmt.Println("Usage:")
 		fmt.Println("  arm clean cache [--max-age DURATION] [--nuke]")
+		fmt.Println("  arm clean sinks [--nuke]")
 		fmt.Println()
-		fmt.Println("Flags:")
+		fmt.Println("Cache Flags:")
 		fmt.Println("  --max-age      Remove cache older than duration (default: 7d)")
 		fmt.Println("                 Examples: 30m, 2h, 7d, 1h30m")
 		fmt.Println("  --nuke         Remove all cache (mutually exclusive with --max-age)")
 		fmt.Println()
-		fmt.Println("Removes cached data to free up space.")
+		fmt.Println("Sinks Flags:")
+		fmt.Println("  --nuke         Remove entire ARM directory from sinks")
+		fmt.Println()
+		fmt.Println("Removes cached data or orphaned files from sinks.")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
@@ -1821,7 +1825,7 @@ func printOutdatedList(outdated []*service.OutdatedDependency) {
 
 func handleClean() {
 	if len(os.Args) < 3 {
-		fmt.Fprintf(os.Stderr, "Error: clean requires a subcommand (cache)\n")
+		fmt.Fprintf(os.Stderr, "Error: clean requires a subcommand (cache, sinks)\n")
 		fmt.Fprintf(os.Stderr, "Run 'arm help clean' for usage.\n")
 		os.Exit(1)
 	}
@@ -1829,6 +1833,8 @@ func handleClean() {
 	switch os.Args[2] {
 	case "cache":
 		handleCleanCache()
+	case "sinks":
+		handleCleanSinks()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown clean subcommand: %s\n", os.Args[2])
 		fmt.Fprintf(os.Stderr, "Run 'arm help clean' for usage.\n")
@@ -1908,4 +1914,39 @@ func parseDuration(s string) (time.Duration, error) {
 		return time.Duration(d) * 24 * time.Hour, nil
 	}
 	return time.ParseDuration(s)
+}
+
+func handleCleanSinks() {
+	var nuke bool
+
+	// Parse flags
+	args := os.Args[3:]
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--nuke":
+			nuke = true
+		default:
+			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", args[i])
+			os.Exit(1)
+		}
+	}
+
+	manifestMgr := manifest.NewFileManager()
+	svc := service.NewArmService(manifestMgr, nil, nil)
+	ctx := context.Background()
+
+	if nuke {
+		if err := svc.NukeSinks(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Sinks nuked successfully")
+		return
+	}
+
+	if err := svc.CleanSinks(ctx); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Sinks cleaned successfully")
 }

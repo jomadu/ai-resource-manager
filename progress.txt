@@ -547,3 +547,39 @@
 ### 2026-01-21 06:46 - Progress on US-019
 - Completed: All tests passing (9 test cases), typecheck passing
 - Next: Commit changes
+
+
+## 2026-01-21 06:46 - Completed US-019
+- Implemented `arm clean cache` command with --max-age and --nuke flags
+- Default max-age is 7d (7 days)
+- Supports duration formats: 30m, 2h, 7d, 1h30m (days converted to hours)
+- --max-age and --nuke are mutually exclusive
+- Calls service layer CleanCacheByAge or NukeCache methods
+- Created comprehensive tests (9 test cases total)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/clean_test.go, prd.json
+- **Learnings for future iterations:**
+  - Service layer has CleanCacheByAge(ctx, duration) and NukeCache(ctx) methods
+  - time.ParseDuration doesn't support days - need custom parsing for "d" suffix
+  - Same pattern as other commands: parse flags, validate, call service layer
+  - Test pattern consistent: build once, test with isolated scenarios
+---
+
+## 2026-01-21 06:49 - Starting US-020
+- Story: Clean sinks command
+- Plan: Implement `arm clean sinks` with --nuke flag. Call service layer CleanSinks or NukeSinks methods to remove orphaned files or entire ARM directories.
+---
+
+
+### 2026-01-21 06:49 - Progress on US-020
+- Completed: Implemented handleCleanSinks function and wired it up
+- Next: Create tests for clean sinks command
+
+
+### 2026-01-21 06:49 - Progress on US-020
+- Completed: Created tests for clean sinks command (5 test cases)
+- Next: Run tests and typecheck
+
+
+### 2026-01-21 06:49 - Progress on US-020
+- Completed: All tests passing (5 test cases), typecheck passing
+- Next: Commit changes
