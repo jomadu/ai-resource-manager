@@ -478,3 +478,38 @@
 ### 2026-01-21 06:38 - Progress on US-016
 - Completed: All tests passing (6 test cases), typecheck passing
 - Next: Commit changes
+
+
+## 2026-01-21 06:38 - Completed US-016
+- Implemented `arm outdated` command with --output flag (table, json, list)
+- Default output is table format with aligned columns
+- Displays packages with newer versions showing:
+  - Constraint: version constraint from manifest
+  - Current: currently installed version
+  - Wanted: latest version satisfying constraint
+  - Latest: latest available version
+- Table format calculates column widths dynamically
+- JSON format outputs structured array
+- List format shows compact one-line summaries
+- Created comprehensive tests (6 test cases total)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/outdated_test.go, prd.json
+- **Learnings for future iterations:**
+  - PackageMetadata has RegistryName field (not Registry)
+  - Version is a struct with Version string field (access via dep.Current.Version.Version)
+  - Service layer ListOutdated() returns []*OutdatedDependency
+  - OutdatedDependency has Current, Constraint, Wanted, Latest fields
+  - Same pattern as other commands: manifestMgr, lockfileMgr, nil factory
+---
+
+## 2026-01-21 06:42 - Starting US-017
+- Story: Set ruleset command
+- Plan: Implement `arm set ruleset REGISTRY/RULESET KEY VALUE` command. Support keys: version, priority, sinks, include, exclude. Parse package spec, validate key, call appropriate service layer method to update manifest.
+---
+
+### 2026-01-21 06:42 - Progress on US-017
+- Completed: Implemented handleSetRuleset and handleSetPromptset functions
+- Next: Create tests for set ruleset and set promptset commands
+
+### 2026-01-21 06:43 - Progress on US-017
+- Completed: All tests passing (16 test cases), typecheck passing
+- Next: Commit changes

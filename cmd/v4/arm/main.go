@@ -638,7 +638,7 @@ func handleRemoveSink() {
 
 func handleSet() {
 	if len(os.Args) < 3 {
-		fmt.Fprintf(os.Stderr, "Usage: arm set <registry|sink> ...\n")
+		fmt.Fprintf(os.Stderr, "Usage: arm set <registry|sink|ruleset|promptset> ...\n")
 		os.Exit(1)
 	}
 
@@ -647,6 +647,10 @@ func handleSet() {
 		handleSetRegistry()
 	case "sink":
 		handleSetSink()
+	case "ruleset":
+		handleSetRuleset()
+	case "promptset":
+		handleSetPromptset()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown set target: %s\n", os.Args[2])
 		os.Exit(1)
@@ -748,6 +752,126 @@ func handleSetSink() {
 	}
 
 	fmt.Printf("Updated sink '%s' %s\n", name, key)
+}
+
+func handleSetRuleset() {
+	if len(os.Args) < 6 {
+		fmt.Fprintf(os.Stderr, "Usage: arm set ruleset REGISTRY/RULESET KEY VALUE\n")
+		os.Exit(1)
+	}
+
+	packageSpec := os.Args[3]
+	key := os.Args[4]
+	value := os.Args[5]
+
+	parts := strings.Split(packageSpec, "/")
+	if len(parts) != 2 {
+		fmt.Fprintf(os.Stderr, "Invalid package spec: %s (expected REGISTRY/RULESET)\n", packageSpec)
+		os.Exit(1)
+	}
+	registryName := parts[0]
+	ruleset := parts[1]
+
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+	var err error
+
+	switch key {
+	case "version":
+		err = svc.SetRulesetVersion(ctx, registryName, ruleset, value)
+	case "priority":
+		var priority int
+		_, scanErr := fmt.Sscanf(value, "%d", &priority)
+		if scanErr != nil {
+			fmt.Fprintf(os.Stderr, "Invalid priority value: %s (must be integer)\n", value)
+			os.Exit(1)
+		}
+		err = svc.SetRulesetPriority(ctx, registryName, ruleset, priority)
+	case "sinks":
+		sinks := strings.Split(value, ",")
+		err = svc.SetRulesetSinks(ctx, registryName, ruleset, sinks)
+	case "include":
+		include := strings.Split(value, ",")
+		err = svc.SetRulesetInclude(ctx, registryName, ruleset, include)
+	case "exclude":
+		exclude := strings.Split(value, ",")
+		err = svc.SetRulesetExclude(ctx, registryName, ruleset, exclude)
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown key: %s (valid: version, priority, sinks, include, exclude)\n", key)
+		os.Exit(1)
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Updated ruleset '%s/%s' %s\n", registryName, ruleset, key)
+}
+
+func handleSetPromptset() {
+	if len(os.Args) < 6 {
+		fmt.Fprintf(os.Stderr, "Usage: arm set promptset REGISTRY/PROMPTSET KEY VALUE\n")
+		os.Exit(1)
+	}
+
+	packageSpec := os.Args[3]
+	key := os.Args[4]
+	value := os.Args[5]
+
+	parts := strings.Split(packageSpec, "/")
+	if len(parts) != 2 {
+		fmt.Fprintf(os.Stderr, "Invalid package spec: %s (expected REGISTRY/PROMPTSET)\n", packageSpec)
+		os.Exit(1)
+	}
+	registryName := parts[0]
+	promptset := parts[1]
+
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+	var err error
+
+	switch key {
+	case "version":
+		err = svc.SetPromptsetVersion(ctx, registryName, promptset, value)
+	case "sinks":
+		sinks := strings.Split(value, ",")
+		err = svc.SetPromptsetSinks(ctx, registryName, promptset, sinks)
+	case "include":
+		include := strings.Split(value, ",")
+		err = svc.SetPromptsetInclude(ctx, registryName, promptset, include)
+	case "exclude":
+		exclude := strings.Split(value, ",")
+		err = svc.SetPromptsetExclude(ctx, registryName, promptset, exclude)
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown key: %s (valid: version, sinks, include, exclude)\n", key)
+		os.Exit(1)
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Updated promptset '%s/%s' %s\n", registryName, promptset, key)
 }
 
 func handleList() {
