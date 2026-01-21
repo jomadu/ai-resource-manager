@@ -499,6 +499,12 @@ func (s *ArmService) UninstallAll(ctx context.Context) error {
 	return nil
 }
 
+// UninstallPackages uninstalls specific packages
+func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) error {
+	// TODO: Implement in US-002
+	return fmt.Errorf("UninstallPackages not yet implemented")
+}
+
 // UpdateAll updates all dependencies
 func (s *ArmService) UpdateAll(ctx context.Context) error {
 	rulesets, err := s.manifestMgr.GetAllRulesetDependenciesConfig(ctx)

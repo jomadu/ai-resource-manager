@@ -84,7 +84,7 @@ func printHelp() {
 	fmt.Println("  list                 List registries or sinks")
 	fmt.Println("  info                 Show detailed information")
 	fmt.Println("  install              Install rulesets or promptsets")
-	fmt.Println("  uninstall            Uninstall all packages")
+	fmt.Println("  uninstall            Uninstall packages")
 	fmt.Println("  update               Update packages within version constraints")
 	fmt.Println("  upgrade              Upgrade packages to latest versions")
 	fmt.Println("  outdated             Check for outdated dependencies")
@@ -178,12 +178,16 @@ func printCommandHelp(command string) {
 		fmt.Println("  arm install ruleset --priority 200 my-registry/clean-code@1.0.0 cursor-rules")
 		fmt.Println("  arm install promptset my-registry/code-review cursor-commands")
 	case "uninstall":
-		fmt.Println("Uninstall all packages")
+		fmt.Println("Uninstall packages")
 		fmt.Println()
 		fmt.Println("Usage:")
-		fmt.Println("  arm uninstall")
+		fmt.Println("  arm uninstall [packages...]")
 		fmt.Println()
-		fmt.Println("Removes all installed packages from sinks and clears dependency configuration.")
+		fmt.Println("Arguments:")
+		fmt.Println("  packages       Package names in format registry/package (optional)")
+		fmt.Println()
+		fmt.Println("If no packages specified, uninstalls all packages.")
+		fmt.Println("Removes specified packages from sinks and dependency configuration.")
 	case "update":
 		fmt.Println("Update packages within version constraints")
 		fmt.Println()
@@ -1622,6 +1626,9 @@ func parseVersion(input string) (string, error) {
 }
 
 func handleUninstall() {
+	// Parse package arguments (everything after "uninstall")
+	packages := os.Args[2:]
+
 	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
 	if manifestPath == "" {
 		manifestPath = "arm-manifest.json"
@@ -1635,12 +1642,23 @@ func handleUninstall() {
 	svc := service.NewArmService(manifestMgr, lockfileMgr, nil)
 	ctx := context.Background()
 
-	if err := svc.UninstallAll(ctx); err != nil {
+	// If no packages specified, uninstall all
+	if len(packages) == 0 {
+		if err := svc.UninstallAll(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("All packages uninstalled successfully")
+		return
+	}
+
+	// Uninstall specific packages
+	if err := svc.UninstallPackages(ctx, packages); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Println("All packages uninstalled successfully")
+	fmt.Println("Packages uninstalled successfully")
 }
 
 func handleUpdate() {
