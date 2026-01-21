@@ -1,0 +1,136 @@
+{
+  "project": "AI Resource Manager",
+  "branchName": "ralph/cloudsmith-v4-port",
+  "description": "Port v3 Cloudsmith registry implementation to v4 architecture with feature parity for install, update, list, and version resolution",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add CloudsmithRegistryConfig struct",
+      "description": "As a developer, I need a config struct to store Cloudsmith registry settings in the manifest.",
+      "acceptanceCriteria": [
+        "Add CloudsmithRegistryConfig struct with Name, Type, URL, Owner, Repository fields",
+        "Implement GetBaseURL() method returning URL or default https://api.cloudsmith.io",
+        "Add to manifest registry types",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add service layer AddCloudsmithRegistry method",
+      "description": "As a user, I want to add a Cloudsmith registry via the service layer so it's stored in the manifest.",
+      "acceptanceCriteria": [
+        "Add AddCloudsmithRegistry(ctx, name, url, owner, repo, force) method to ArmService",
+        "Method creates CloudsmithRegistryConfig and adds to manifest",
+        "Validates required parameters (name, url, owner, repo)",
+        "Returns error if registry exists and force=false",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Create CloudsmithRegistry struct and constructor",
+      "description": "As a developer, I need the registry implementation struct to handle Cloudsmith API interactions.",
+      "acceptanceCriteria": [
+        "Create CloudsmithRegistry struct with cache, config, resolver, client, semver, rcService, extractor fields",
+        "Create CloudsmithClient struct with baseURL, httpClient, token fields",
+        "Add NewCloudsmithRegistry constructor accepting config and cache",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Implement token authentication",
+      "description": "As a user, I want to authenticate using .armrc so I can access private Cloudsmith repositories.",
+      "acceptanceCriteria": [
+        "Add loadToken() method reading from .armrc using format [registry <url>/<owner>/<repo>]",
+        "Store token in CloudsmithClient",
+        "Add makeRequest() method setting Authorization: Token <token> header",
+        "Return clear error when token missing",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Implement ListVersions method",
+      "description": "As a user, I want to list available versions so I can see what versions exist.",
+      "acceptanceCriteria": [
+        "Add ListVersions(ctx, packageName) method calling Cloudsmith API",
+        "Call /v1/packages/<owner>/<repo>/?query=<name> endpoint",
+        "Handle paginated responses using Link header",
+        "Filter packages by format=raw and matching name/filename",
+        "Extract and sort versions by semver",
+        "Return []types.Version",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Implement ResolveVersion method",
+      "description": "As a user, I want to use version constraints so I can install compatible versions.",
+      "acceptanceCriteria": [
+        "Add ResolveVersion(ctx, packageName, constraint) method",
+        "Parse constraint using semver resolver",
+        "Call ListVersions to get available versions",
+        "Find best matching version using resolver.FindBestMatch",
+        "Return ResolvedVersion with constraint and version",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Implement GetContent method",
+      "description": "As a user, I want to download package files so I can install them to sinks.",
+      "acceptanceCriteria": [
+        "Add GetContent(ctx, packageName, version, selector) method",
+        "Check cache first using cache.GetPackageVersion",
+        "Download files using cdn_url from package metadata",
+        "Extract archives (tar.gz, zip) using extractor.ExtractAndMerge",
+        "Apply selector patterns to filter files",
+        "Cache result using cache.SetPackageVersion",
+        "Return []types.File",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Add registry factory support",
+      "description": "As a developer, I want the factory to create Cloudsmith registries so the service layer works correctly.",
+      "acceptanceCriteria": [
+        "Add case for type=cloudsmith in registry factory",
+        "Factory creates CloudsmithRegistry with config and cache",
+        "Return error for invalid config type",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
