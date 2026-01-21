@@ -603,6 +603,12 @@ func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) e
 	return nil
 }
 
+// UpdatePackages updates specific packages
+func (s *ArmService) UpdatePackages(ctx context.Context, packages []string) error {
+	// TODO: Implement in US-004
+	return fmt.Errorf("not yet implemented")
+}
+
 // UpdateAll updates all dependencies
 func (s *ArmService) UpdateAll(ctx context.Context) error {
 	rulesets, err := s.manifestMgr.GetAllRulesetDependenciesConfig(ctx)

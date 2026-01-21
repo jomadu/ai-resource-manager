@@ -192,9 +192,13 @@ func printCommandHelp(command string) {
 		fmt.Println("Update packages within version constraints")
 		fmt.Println()
 		fmt.Println("Usage:")
-		fmt.Println("  arm update")
+		fmt.Println("  arm update [packages...]")
 		fmt.Println()
-		fmt.Println("Updates all packages to the latest versions that satisfy the version constraints")
+		fmt.Println("Arguments:")
+		fmt.Println("  packages       Package names in format registry/package (optional)")
+		fmt.Println()
+		fmt.Println("If no packages specified, updates all packages.")
+		fmt.Println("Updates packages to the latest versions that satisfy the version constraints")
 		fmt.Println("specified in the manifest file. Updates the lock file with new versions.")
 	case "upgrade":
 		fmt.Println("Upgrade packages to latest versions")
@@ -1662,6 +1666,9 @@ func handleUninstall() {
 }
 
 func handleUpdate() {
+	// Parse package arguments (everything after "update")
+	packages := os.Args[2:]
+
 	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
 	if manifestPath == "" {
 		manifestPath = "arm-manifest.json"
@@ -1675,12 +1682,23 @@ func handleUpdate() {
 	svc := service.NewArmService(manifestMgr, lockfileMgr, nil)
 	ctx := context.Background()
 
-	if err := svc.UpdateAll(ctx); err != nil {
+	// If no packages specified, update all
+	if len(packages) == 0 {
+		if err := svc.UpdateAll(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("All packages updated successfully")
+		return
+	}
+
+	// Update specific packages
+	if err := svc.UpdatePackages(ctx, packages); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Println("All packages updated successfully")
+	fmt.Println("Packages updated successfully")
 }
 
 func handleUpgrade() {
