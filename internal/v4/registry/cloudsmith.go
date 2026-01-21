@@ -159,6 +159,20 @@ func (c *cloudsmithClient) listPackagesPage(ctx context.Context, path string) ([
 	return packages, nextPath, nil
 }
 
+func (c *CloudsmithRegistry) ResolveVersion(ctx context.Context, packageName, constraint string) (core.Version, error) {
+	versions, err := c.ListVersions(ctx, packageName)
+	if err != nil {
+		return core.Version{}, fmt.Errorf("failed to list versions: %w", err)
+	}
+
+	resolved, err := core.ResolveVersion(constraint, versions)
+	if err != nil {
+		return core.Version{}, fmt.Errorf("no matching version found for %s: %w", constraint, err)
+	}
+
+	return resolved, nil
+}
+
 func parseNextURLFromLinkHeader(linkHeader string) string {
 	if linkHeader == "" {
 		return ""

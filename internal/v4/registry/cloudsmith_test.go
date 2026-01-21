@@ -329,3 +329,96 @@ func TestParseNextURLFromLinkHeader(t *testing.T) {
 		})
 	}
 }
+
+func TestCloudsmithRegistry_ResolveVersion(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`[
+			{"name": "test-package", "version": "1.0.0", "format": "raw", "filename": "test-package-1.0.0.tar.gz"},
+			{"name": "test-package", "version": "2.0.0", "format": "raw", "filename": "test-package-2.0.0.tar.gz"},
+			{"name": "test-package", "version": "1.5.0", "format": "raw", "filename": "test-package-1.5.0.tar.gz"}
+		]`))
+	}))
+	defer server.Close()
+
+	reg := &CloudsmithRegistry{
+		name: "test-registry",
+		config: CloudsmithRegistryConfig{
+			RegistryConfig: RegistryConfig{
+				URL: server.URL,
+			},
+			Owner:      "myorg",
+			Repository: "myrepo",
+		},
+		configMgr: &mockConfigManager{
+			sections: map[string]map[string]string{
+				"registry " + server.URL + "/myorg/myrepo": {
+					"token": "test-token",
+				},
+			},
+		},
+		client: &cloudsmithClient{
+			baseURL:    server.URL,
+			httpClient: &http.Client{},
+		},
+	}
+
+	tests := []struct {
+		name        string
+		constraint  string
+		wantVersion string
+		wantErr     bool
+	}{
+		{
+			name:        "resolves exact version",
+			constraint:  "1.5.0",
+			wantVersion: "1.5.0",
+			wantErr:     false,
+		},
+		{
+			name:        "resolves caret constraint",
+			constraint:  "^1.0.0",
+			wantVersion: "1.5.0",
+			wantErr:     false,
+		},
+		{
+			name:        "resolves tilde constraint",
+			constraint:  "~1.0.0",
+			wantVersion: "1.0.0",
+			wantErr:     false,
+		},
+		{
+			name:        "resolves latest",
+			constraint:  "latest",
+			wantVersion: "2.0.0",
+			wantErr:     false,
+		},
+		{
+			name:       "returns error for no match",
+			constraint: "^3.0.0",
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			version, err := reg.ResolveVersion(context.Background(), "test-package", tt.constraint)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if version.Version != tt.wantVersion {
+				t.Errorf("version = %s, want %s", version.Version, tt.wantVersion)
+			}
+		})
+	}
+}

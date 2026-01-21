@@ -104,3 +104,16 @@
 ### 07:20 - Progress on US-005
 - Completed: All tests pass for ListVersions, pagination, and Link header parsing
 - Next: Commit story
+
+## 2026-01-21 07:37 - Starting US-006
+- Story: Implement ResolveVersion method
+- Plan: Add ResolveVersion method to CloudsmithRegistry, call ListVersions, use semver resolver to find best match, return ResolvedVersion
+---
+
+### 07:38 - Progress on US-006
+- Completed: Added ResolveVersion method to CloudsmithRegistry
+- Next: Run typecheck
+
+### 07:39 - Progress on US-006
+- Completed: Added tests for ResolveVersion method
+- Next: Run tests
