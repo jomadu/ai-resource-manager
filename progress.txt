@@ -415,3 +415,33 @@
 ### 2026-01-21 06:31 - Progress on US-014
 - Completed: All tests passing (2 test cases), typecheck passing
 - Next: Commit changes
+
+
+## 2026-01-21 06:31 - Completed US-014
+- Implemented `arm upgrade` command to upgrade packages to latest versions
+- Command calls service layer UpgradeAll() method
+- UpgradeAll ignores version constraints and upgrades to latest
+- Updates manifest with new major version constraints (^X.0.0)
+- Updates lockfile with new versions
+- Added command-specific help text
+- Created comprehensive tests (2 test cases for CLI validation)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/upgrade_test.go, prd.json
+- **Learnings for future iterations:**
+  - Service layer UpgradeAll() handles both rulesets and promptsets
+  - UpgradeAll requires lockfile to exist (same as UpdateAll)
+  - Upgrade updates manifest version constraints to ^X.0.0 format
+  - Same pattern as update command: manifestMgr, lockfileMgr, nil factory
+---
+
+## 2026-01-21 06:34 - Starting US-015
+- Story: List and info commands
+- Plan: Implement `arm list` to show all registries, sinks, and dependencies grouped, and `arm info` to show detailed info for all entities. Aggregate data from existing list/info commands.
+---
+
+### 2026-01-21 06:34 - Progress on US-015
+- Completed: Implemented handleListAll and handleInfoAll functions
+- Next: Create tests for list and info commands
+
+### 2026-01-21 06:34 - Progress on US-015
+- Completed: All tests passing (5 test cases), typecheck passing
+- Next: Commit changes

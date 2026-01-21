@@ -735,8 +735,8 @@ func handleSetSink() {
 
 func handleList() {
 	if len(os.Args) < 3 {
-		fmt.Fprintf(os.Stderr, "Usage: arm list <registry|sink>\n")
-		os.Exit(1)
+		handleListAll()
+		return
 	}
 
 	switch os.Args[2] {
@@ -747,6 +747,77 @@ func handleList() {
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown list target: %s\n", os.Args[2])
 		os.Exit(1)
+	}
+}
+
+func handleListAll() {
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+
+	// List registries
+	registries, err := svc.GetAllRegistriesConfig(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Registries:")
+	if len(registries) == 0 {
+		fmt.Println("  (none)")
+	} else {
+		for name := range registries {
+			fmt.Printf("  %s\n", name)
+		}
+	}
+
+	// List sinks
+	sinks, err := svc.GetAllSinkConfigs(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("\nSinks:")
+	if len(sinks) == 0 {
+		fmt.Println("  (none)")
+	} else {
+		for name := range sinks {
+			fmt.Printf("  %s\n", name)
+		}
+	}
+
+	// List dependencies
+	rulesets, err := manifestMgr.GetAllRulesetDependenciesConfig(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	promptsets, err := manifestMgr.GetAllPromptsetDependenciesConfig(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("\nDependencies:")
+	if len(rulesets) == 0 && len(promptsets) == 0 {
+		fmt.Println("  (none)")
+	} else {
+		for key := range rulesets {
+			fmt.Printf("  %s (ruleset)\n", key)
+		}
+		for key := range promptsets {
+			fmt.Printf("  %s (promptset)\n", key)
+		}
 	}
 }
 
@@ -781,8 +852,8 @@ func handleListRegistry() {
 
 func handleInfo() {
 	if len(os.Args) < 3 {
-		fmt.Fprintf(os.Stderr, "Usage: arm info <registry|sink> [NAME...]\n")
-		os.Exit(1)
+		handleInfoAll()
+		return
 	}
 
 	switch os.Args[2] {
@@ -793,6 +864,129 @@ func handleInfo() {
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown info target: %s\n", os.Args[2])
 		os.Exit(1)
+	}
+}
+
+func handleInfoAll() {
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+
+	// Show registries
+	registries, err := svc.GetAllRegistriesConfig(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Registries:")
+	if len(registries) == 0 {
+		fmt.Println("  (none)")
+	} else {
+		for name, config := range registries {
+			fmt.Printf("\n  %s:\n", name)
+			regType, _ := config["type"].(string)
+			fmt.Printf("    type: %s\n", regType)
+			if url, ok := config["url"].(string); ok {
+				fmt.Printf("    url: %s\n", url)
+			}
+			if regType == "git" {
+				if branches, ok := config["branches"].([]interface{}); ok && len(branches) > 0 {
+					fmt.Printf("    branches: %v\n", branches)
+				}
+			} else if regType == "gitlab" {
+				if projectID, ok := config["projectId"].(string); ok && projectID != "" {
+					fmt.Printf("    projectId: %s\n", projectID)
+				}
+				if groupID, ok := config["groupId"].(string); ok && groupID != "" {
+					fmt.Printf("    groupId: %s\n", groupID)
+				}
+				if apiVersion, ok := config["apiVersion"].(string); ok && apiVersion != "" {
+					fmt.Printf("    apiVersion: %s\n", apiVersion)
+				}
+			} else if regType == "cloudsmith" {
+				if owner, ok := config["owner"].(string); ok {
+					fmt.Printf("    owner: %s\n", owner)
+				}
+				if repo, ok := config["repository"].(string); ok {
+					fmt.Printf("    repository: %s\n", repo)
+				}
+			}
+		}
+	}
+
+	// Show sinks
+	sinks, err := svc.GetAllSinkConfigs(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("\nSinks:")
+	if len(sinks) == 0 {
+		fmt.Println("  (none)")
+	} else {
+		for name, config := range sinks {
+			fmt.Printf("\n  %s:\n", name)
+			fmt.Printf("    tool: %s\n", config.Tool)
+			fmt.Printf("    directory: %s\n", config.Directory)
+		}
+	}
+
+	// Show dependencies
+	rulesets, err := manifestMgr.GetAllRulesetDependenciesConfig(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	promptsets, err := manifestMgr.GetAllPromptsetDependenciesConfig(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("\nDependencies:")
+	if len(rulesets) == 0 && len(promptsets) == 0 {
+		fmt.Println("  (none)")
+	} else {
+		for key, config := range rulesets {
+			fmt.Printf("\n  %s:\n", key)
+			fmt.Printf("    type: ruleset\n")
+			fmt.Printf("    version: %s\n", config.Version)
+			fmt.Printf("    priority: %d\n", config.Priority)
+			if len(config.Sinks) > 0 {
+				fmt.Printf("    sinks: %v\n", config.Sinks)
+			}
+			if len(config.Include) > 0 {
+				fmt.Printf("    include: %v\n", config.Include)
+			}
+			if len(config.Exclude) > 0 {
+				fmt.Printf("    exclude: %v\n", config.Exclude)
+			}
+		}
+		for key, config := range promptsets {
+			fmt.Printf("\n  %s:\n", key)
+			fmt.Printf("    type: promptset\n")
+			fmt.Printf("    version: %s\n", config.Version)
+			if len(config.Sinks) > 0 {
+				fmt.Printf("    sinks: %v\n", config.Sinks)
+			}
+			if len(config.Include) > 0 {
+				fmt.Printf("    include: %v\n", config.Include)
+			}
+			if len(config.Exclude) > 0 {
+				fmt.Printf("    exclude: %v\n", config.Exclude)
+			}
+		}
 	}
 }
 
