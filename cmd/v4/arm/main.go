@@ -689,6 +689,8 @@ func handleList() {
 	switch os.Args[2] {
 	case "registry":
 		handleListRegistry()
+	case "sink":
+		handleListSink()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown list target: %s\n", os.Args[2])
 		os.Exit(1)
@@ -733,6 +735,8 @@ func handleInfo() {
 	switch os.Args[2] {
 	case "registry":
 		handleInfoRegistry()
+	case "sink":
+		handleInfoSink()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown info target: %s\n", os.Args[2])
 		os.Exit(1)
@@ -829,5 +833,85 @@ func handleInfoRegistry() {
 		if repo, ok := config["repository"].(string); ok && repo != "" {
 			fmt.Printf("  Repository: %s\n", repo)
 		}
+	}
+}
+
+func handleListSink() {
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+	sinks, err := svc.GetAllSinkConfigs(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if len(sinks) == 0 {
+		fmt.Println("No sinks configured")
+		return
+	}
+
+	for name := range sinks {
+		fmt.Println(name)
+	}
+}
+
+func handleInfoSink() {
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+
+	// Get names from args or all sinks
+	var names []string
+	if len(os.Args) > 3 {
+		names = os.Args[3:]
+	} else {
+		// Get all sink names
+		sinks, err := svc.GetAllSinkConfigs(ctx)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		for name := range sinks {
+			names = append(names, name)
+		}
+	}
+
+	if len(names) == 0 {
+		fmt.Println("No sinks configured")
+		return
+	}
+
+	// Display info for each sink
+	for i, name := range names {
+		if i > 0 {
+			fmt.Println()
+		}
+
+		config, err := svc.GetSinkConfig(ctx, name)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting sink '%s': %v\n", name, err)
+			continue
+		}
+
+		fmt.Printf("Sink: %s\n", name)
+		fmt.Printf("  Tool: %s\n", config.Tool)
+		fmt.Printf("  Directory: %s\n", config.Directory)
 	}
 }
