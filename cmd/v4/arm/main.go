@@ -34,6 +34,10 @@ func main() {
 		handleRemove()
 	case "set":
 		handleSet()
+	case "list":
+		handleList()
+	case "info":
+		handleInfo()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
 		fmt.Fprintf(os.Stderr, "Run 'arm help' for usage.\n")
@@ -61,6 +65,8 @@ func printHelp() {
 	fmt.Println("  add                  Add registries or sinks")
 	fmt.Println("  remove               Remove registries or sinks")
 	fmt.Println("  set                  Configure registries or sinks")
+	fmt.Println("  list                 List registries or sinks")
+	fmt.Println("  info                 Show detailed information")
 	fmt.Println()
 	fmt.Println("Run 'arm help <command>' for more information on a command.")
 }
@@ -114,6 +120,21 @@ func printCommandHelp(command string) {
 		fmt.Println()
 		fmt.Println("Example:")
 		fmt.Println("  arm set registry my-registry url https://github.com/new/repo")
+	case "list":
+		fmt.Println("List registries or sinks")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  arm list registry")
+		fmt.Println()
+		fmt.Println("Displays a simple list of configured registry names.")
+	case "info":
+		fmt.Println("Show detailed information")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  arm info registry [NAME...]")
+		fmt.Println()
+		fmt.Println("Displays detailed information about registries.")
+		fmt.Println("If no names are provided, shows all registries.")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
@@ -480,4 +501,156 @@ func handleSetRegistry() {
 	}
 
 	fmt.Printf("Updated registry '%s' %s\n", name, key)
+}
+
+func handleList() {
+	if len(os.Args) < 3 {
+		fmt.Fprintf(os.Stderr, "Usage: arm list <registry|sink>\n")
+		os.Exit(1)
+	}
+
+	switch os.Args[2] {
+	case "registry":
+		handleListRegistry()
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown list target: %s\n", os.Args[2])
+		os.Exit(1)
+	}
+}
+
+func handleListRegistry() {
+	// Get manifest path from env or use default
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+	registries, err := svc.GetAllRegistriesConfig(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if len(registries) == 0 {
+		fmt.Println("No registries configured")
+		return
+	}
+
+	for name := range registries {
+		fmt.Println(name)
+	}
+}
+
+func handleInfo() {
+	if len(os.Args) < 3 {
+		fmt.Fprintf(os.Stderr, "Usage: arm info <registry|sink> [NAME...]\n")
+		os.Exit(1)
+	}
+
+	switch os.Args[2] {
+	case "registry":
+		handleInfoRegistry()
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown info target: %s\n", os.Args[2])
+		os.Exit(1)
+	}
+}
+
+func handleInfoRegistry() {
+	// Get manifest path from env or use default
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+
+	// Get names from args or all registries
+	var names []string
+	if len(os.Args) > 3 {
+		names = os.Args[3:]
+	} else {
+		// Get all registry names
+		registries, err := svc.GetAllRegistriesConfig(ctx)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		for name := range registries {
+			names = append(names, name)
+		}
+	}
+
+	if len(names) == 0 {
+		fmt.Println("No registries configured")
+		return
+	}
+
+	// Display info for each registry
+	for i, name := range names {
+		if i > 0 {
+			fmt.Println()
+		}
+
+		config, err := svc.GetRegistryConfig(ctx, name)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting registry '%s': %v\n", name, err)
+			continue
+		}
+
+		fmt.Printf("Registry: %s\n", name)
+		
+		// Display type
+		if regType, ok := config["type"].(string); ok {
+			fmt.Printf("  Type: %s\n", regType)
+		}
+
+		// Display URL
+		if url, ok := config["url"].(string); ok {
+			fmt.Printf("  URL: %s\n", url)
+		}
+
+		// Display type-specific fields
+		if branches, ok := config["branches"].([]interface{}); ok && len(branches) > 0 {
+			fmt.Printf("  Branches: ")
+			for j, b := range branches {
+				if j > 0 {
+					fmt.Printf(", ")
+				}
+				fmt.Printf("%v", b)
+			}
+			fmt.Println()
+		}
+
+		if projectID, ok := config["projectId"].(string); ok && projectID != "" {
+			fmt.Printf("  Project ID: %s\n", projectID)
+		}
+
+		if groupID, ok := config["groupId"].(string); ok && groupID != "" {
+			fmt.Printf("  Group ID: %s\n", groupID)
+		}
+
+		if apiVersion, ok := config["apiVersion"].(string); ok && apiVersion != "" {
+			fmt.Printf("  API Version: %s\n", apiVersion)
+		}
+
+		if owner, ok := config["owner"].(string); ok && owner != "" {
+			fmt.Printf("  Owner: %s\n", owner)
+		}
+
+		if repo, ok := config["repository"].(string); ok && repo != "" {
+			fmt.Printf("  Repository: %s\n", repo)
+		}
+	}
 }
