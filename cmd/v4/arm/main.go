@@ -39,6 +39,8 @@ func main() {
 		handleList()
 	case "info":
 		handleInfo()
+	case "install":
+		handleInstall()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
 		fmt.Fprintf(os.Stderr, "Run 'arm help' for usage.\n")
@@ -68,6 +70,7 @@ func printHelp() {
 	fmt.Println("  set                  Configure registries or sinks")
 	fmt.Println("  list                 List registries or sinks")
 	fmt.Println("  info                 Show detailed information")
+	fmt.Println("  install              Install rulesets or promptsets")
 	fmt.Println()
 	fmt.Println("Run 'arm help <command>' for more information on a command.")
 }
@@ -138,6 +141,19 @@ func printCommandHelp(command string) {
 		fmt.Println()
 		fmt.Println("Displays detailed information about registries.")
 		fmt.Println("If no names are provided, shows all registries.")
+	case "install":
+		fmt.Println("Install rulesets or promptsets")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  arm install ruleset [--priority N] [--include PATTERN] [--exclude PATTERN] REGISTRY/RULESET[@VERSION] SINK...")
+		fmt.Println()
+		fmt.Println("Flags:")
+		fmt.Println("  --priority     Priority for ruleset (default: 100)")
+		fmt.Println("  --include      Include glob pattern (can be specified multiple times)")
+		fmt.Println("  --exclude      Exclude glob pattern (can be specified multiple times)")
+		fmt.Println()
+		fmt.Println("Example:")
+		fmt.Println("  arm install ruleset --priority 200 my-registry/clean-code@1.0.0 cursor-rules")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
@@ -914,4 +930,167 @@ func handleInfoSink() {
 		fmt.Printf("  Tool: %s\n", config.Tool)
 		fmt.Printf("  Directory: %s\n", config.Directory)
 	}
+}
+
+func handleInstall() {
+	if len(os.Args) < 3 {
+		fmt.Fprintf(os.Stderr, "Usage: arm install <ruleset|promptset> ...\n")
+		os.Exit(1)
+	}
+
+	switch os.Args[2] {
+	case "ruleset":
+		handleInstallRuleset()
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown install target: %s\n", os.Args[2])
+		os.Exit(1)
+	}
+}
+
+func handleInstallRuleset() {
+	var priority int = 100
+	var include []string
+	var exclude []string
+	var packageSpec string
+	var sinks []string
+
+	// Parse flags and positional args
+	i := 3
+	for i < len(os.Args) {
+		arg := os.Args[i]
+		if arg == "--priority" {
+			if i+1 >= len(os.Args) {
+				fmt.Fprintf(os.Stderr, "--priority requires a value\n")
+				os.Exit(1)
+			}
+			fmt.Sscanf(os.Args[i+1], "%d", &priority)
+			i += 2
+		} else if arg == "--include" {
+			if i+1 >= len(os.Args) {
+				fmt.Fprintf(os.Stderr, "--include requires a value\n")
+				os.Exit(1)
+			}
+			include = append(include, os.Args[i+1])
+			i += 2
+		} else if arg == "--exclude" {
+			if i+1 >= len(os.Args) {
+				fmt.Fprintf(os.Stderr, "--exclude requires a value\n")
+				os.Exit(1)
+			}
+			exclude = append(exclude, os.Args[i+1])
+			i += 2
+		} else if !strings.HasPrefix(arg, "--") {
+			if packageSpec == "" {
+				packageSpec = arg
+			} else {
+				sinks = append(sinks, arg)
+			}
+			i++
+		} else {
+			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", arg)
+			os.Exit(1)
+		}
+	}
+
+	if packageSpec == "" {
+		fmt.Fprintf(os.Stderr, "Package spec required (REGISTRY/RULESET[@VERSION])\n")
+		os.Exit(1)
+	}
+
+	if len(sinks) == 0 {
+		fmt.Fprintf(os.Stderr, "At least one sink required\n")
+		os.Exit(1)
+	}
+
+	// Parse package spec
+	registryName, err := parseRegistry(packageSpec)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	ruleset, err := parsePackage(packageSpec)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	version, err := parseVersion(packageSpec)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Initialize service
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm-manifest.json"
+	}
+
+	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(lockfilePath)
+
+	svc := service.NewArmService(manifestMgr, lockfileMgr, nil)
+	ctx := context.Background()
+
+	// Call service
+	if err := svc.InstallRuleset(ctx, registryName, ruleset, version, priority, include, exclude, sinks); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Installed %s/%s to sinks: %s\n", registryName, ruleset, strings.Join(sinks, ", "))
+}
+
+func parseRegistry(input string) (string, error) {
+	parts := strings.SplitN(input, "/", 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid format: %s (expected registry/package)", input)
+	}
+	if parts[0] == "" {
+		return "", fmt.Errorf("registry name cannot be empty")
+	}
+	return parts[0], nil
+}
+
+func parsePackage(input string) (string, error) {
+	parts := strings.SplitN(input, "/", 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid format: %s (expected registry/package)", input)
+	}
+
+	pkgWithVersion := parts[1]
+	if pkgWithVersion == "" {
+		return "", fmt.Errorf("package name cannot be empty")
+	}
+
+	if strings.Contains(pkgWithVersion, "@") {
+		pkg := strings.SplitN(pkgWithVersion, "@", 2)[0]
+		if pkg == "" {
+			return "", fmt.Errorf("package name cannot be empty")
+		}
+		return pkg, nil
+	}
+
+	return pkgWithVersion, nil
+}
+
+func parseVersion(input string) (string, error) {
+	if !strings.Contains(input, "@") {
+		return "", nil
+	}
+
+	parts := strings.SplitN(input, "@", 2)
+	if len(parts) != 2 {
+		return "", nil
+	}
+
+	version := parts[1]
+	if version == "" {
+		return "", fmt.Errorf("version cannot be empty after @")
+	}
+
+	return version, nil
 }
