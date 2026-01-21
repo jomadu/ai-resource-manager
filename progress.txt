@@ -11,3 +11,23 @@
 ### 07:10 - Progress on US-001
 - Completed: Added GetBaseURL() method to CloudsmithRegistryConfig (struct already existed)
 - Next: Run typecheck
+
+## 2026-01-21 07:11 - Completed US-001
+- What was implemented: Added GetBaseURL() method to CloudsmithRegistryConfig struct (struct already existed in manifest)
+- Files changed: internal/v4/manifest/manager.go
+- **Learnings for future iterations:**
+  - CloudsmithRegistryConfig struct already existed in v4 manifest
+  - Registry config structs don't have Name field - name is the map key in manifest
+  - GetBaseURL() pattern returns default "https://api.cloudsmith.io" when URL is empty
+  - v4 typecheck: use `go build ./internal/v4/...` to avoid v3 errors
+---
+
+## 2026-01-21 07:10 - Starting US-002
+- Story: Add service layer AddCloudsmithRegistry method
+- Plan: Add AddCloudsmithRegistry method to ArmService in internal/v4/service/service.go, validate params, create config, add to manifest
+---
+
+### 07:10 - Progress on US-002
+- Completed: Verified AddCloudsmithRegistry method already exists with all acceptance criteria met
+- Verified: Typecheck passes, tests exist and pass
+- Next: Commit story completion
