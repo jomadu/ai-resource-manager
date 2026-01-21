@@ -178,7 +178,7 @@ func containsAt(s, substr string) bool {
 	return false
 }
 
-func TestCloudsmithRegistry_ListVersions(t *testing.T) {
+func TestCloudsmithRegistry_ListPackageVersions(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v1/packages/myorg/myrepo/" {
 			t.Errorf("unexpected path: %s", r.URL.Path)
@@ -220,7 +220,7 @@ func TestCloudsmithRegistry_ListVersions(t *testing.T) {
 		},
 	}
 
-	versions, err := reg.ListVersions(context.Background(), "test-package")
+	versions, err := reg.ListPackageVersions(context.Background(), "test-package")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -238,7 +238,7 @@ func TestCloudsmithRegistry_ListVersions(t *testing.T) {
 	}
 }
 
-func TestCloudsmithRegistry_ListVersions_Pagination(t *testing.T) {
+func TestCloudsmithRegistry_ListPackageVersions_Pagination(t *testing.T) {
 	callCount := 0
 	var server *httptest.Server
 	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -282,7 +282,7 @@ func TestCloudsmithRegistry_ListVersions_Pagination(t *testing.T) {
 		},
 	}
 
-	versions, err := reg.ListVersions(context.Background(), "test-package")
+	versions, err := reg.ListPackageVersions(context.Background(), "test-package")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -427,7 +427,7 @@ func TestCloudsmithRegistry_ResolveVersion(t *testing.T) {
 	}
 }
 
-func TestCloudsmithRegistry_GetContent(t *testing.T) {
+func TestCloudsmithRegistry_GetPackage(t *testing.T) {
 	var serverURL string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/v1/packages/") {
@@ -470,7 +470,7 @@ func TestCloudsmithRegistry_GetContent(t *testing.T) {
 	}
 
 	version, _ := core.NewVersion("1.0.0")
-	pkg, err := registry.GetContent(context.Background(), "test-package", version, nil, nil)
+	pkg, err := registry.GetPackage(context.Background(), "test-package", version, nil, nil)
 	if err != nil {
 		t.Fatalf("GetContent failed: %v", err)
 	}
@@ -492,7 +492,7 @@ func TestCloudsmithRegistry_GetContent(t *testing.T) {
 	}
 }
 
-func TestCloudsmithRegistry_GetContent_WithIncludeExclude(t *testing.T) {
+func TestCloudsmithRegistry_GetPackage_WithIncludeExclude(t *testing.T) {
 	var serverURL string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/v1/packages/") {
@@ -545,7 +545,7 @@ func TestCloudsmithRegistry_GetContent_WithIncludeExclude(t *testing.T) {
 	}
 
 	version, _ := core.NewVersion("1.0.0")
-	pkg, err := registry.GetContent(context.Background(), "test-package", version, []string{"*.txt"}, nil)
+	pkg, err := registry.GetPackage(context.Background(), "test-package", version, []string{"*.txt"}, nil)
 	if err != nil {
 		t.Fatalf("GetContent failed: %v", err)
 	}
@@ -559,7 +559,7 @@ func TestCloudsmithRegistry_GetContent_WithIncludeExclude(t *testing.T) {
 	}
 }
 
-func TestCloudsmithRegistry_GetContent_Cache(t *testing.T) {
+func TestCloudsmithRegistry_GetPackage_Cache(t *testing.T) {
 	callCount := 0
 	var serverURL string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -606,14 +606,14 @@ func TestCloudsmithRegistry_GetContent_Cache(t *testing.T) {
 	version, _ := core.NewVersion("1.0.0")
 	
 	// First call - should hit server
-	_, err = registry.GetContent(context.Background(), "test-package", version, nil, nil)
+	_, err = registry.GetPackage(context.Background(), "test-package", version, nil, nil)
 	if err != nil {
 		t.Fatalf("GetContent failed: %v", err)
 	}
 	firstCallCount := callCount
 
 	// Second call - should use cache
-	_, err = registry.GetContent(context.Background(), "test-package", version, nil, nil)
+	_, err = registry.GetPackage(context.Background(), "test-package", version, nil, nil)
 	if err != nil {
 		t.Fatalf("GetContent failed on second call: %v", err)
 	}

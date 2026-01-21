@@ -35,6 +35,13 @@ func (f *DefaultFactory) CreateRegistry(name string, cfg map[string]interface{})
 		}
 		configMgr := config.NewFileManager()
 		return NewGitLabRegistry(name, gitlabConfig, configMgr)
+	case "cloudsmith":
+		var cloudsmithConfig CloudsmithRegistryConfig
+		if err := convertMapToStruct(cfg, &cloudsmithConfig); err != nil {
+			return nil, err
+		}
+		configMgr := config.NewFileManager()
+		return NewCloudsmithRegistry(name, cloudsmithConfig, configMgr)
 	default:
 		return nil, fmt.Errorf("unsupported registry type: %s", regType)
 	}

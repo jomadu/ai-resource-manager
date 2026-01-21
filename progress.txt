@@ -145,3 +145,35 @@
 ### 07:45 - Progress on US-007
 - Completed: All tests pass
 - Next: Commit story
+
+## 2026-01-21 07:45 - Completed US-007
+- What was implemented: GetContent method for CloudsmithRegistry with download, extraction, filtering, and caching
+- Files changed:
+  - internal/v4/registry/cloudsmith.go (added GetContent, downloadPackages, downloadFile, matchesPatterns, matchPattern methods)
+  - internal/v4/registry/cloudsmith_test.go (added 3 test functions for GetContent)
+- **Learnings for future iterations:**
+  - v4 uses core.NewExtractor() and ExtractAndMerge() for archive handling
+  - GetContent signature: (ctx, packageName, version, include, exclude) returns *core.Package
+  - Cache key must include include/exclude patterns for proper cache isolation
+  - CloudsmithRegistryConfig embeds RegistryConfig, so struct initialization needs RegistryConfig: RegistryConfig{...}
+  - httptest.NewServer creates server before handler runs, so use var serverURL string pattern to avoid undefined reference
+  - Pattern matching uses simple glob logic with **/ and /** support
+  - calculateIntegrity already exists in integrity.go - don't duplicate
+---
+
+## 2026-01-21 07:48 - Starting US-008
+- Story: Add registry factory support
+- Plan: Add cloudsmith case to registry factory in internal/v4/registry/factory.go, create CloudsmithRegistry with config and cache
+---
+
+### 07:48 - Progress on US-008
+- Completed: Added cloudsmith case to factory.go
+- Next: Run typecheck
+
+### 07:49 - Progress on US-008
+- Completed: Added cloudsmith case to factory, renamed methods to match Registry interface, added ListPackages method
+- Next: Create factory tests
+
+### 07:50 - Progress on US-008
+- Completed: All tests pass
+- Next: Commit story

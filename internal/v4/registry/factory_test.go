@@ -41,6 +41,26 @@ func TestDefaultFactory_CreateGitRegistry(t *testing.T) {
 	}
 }
 
+func TestDefaultFactory_CreateCloudsmithRegistry(t *testing.T) {
+	factory := &DefaultFactory{}
+
+	config := map[string]interface{}{
+		"type":       "cloudsmith",
+		"url":        "https://api.cloudsmith.io",
+		"owner":      "test-owner",
+		"repository": "test-repo",
+	}
+
+	registry, err := factory.CreateRegistry("test-cloudsmith", config)
+	if err != nil {
+		t.Fatalf("failed to create cloudsmith registry: %v", err)
+	}
+
+	if registry == nil {
+		t.Error("expected registry, got nil")
+	}
+}
+
 func TestDefaultFactory_UnsupportedType(t *testing.T) {
 	factory := &DefaultFactory{}
 

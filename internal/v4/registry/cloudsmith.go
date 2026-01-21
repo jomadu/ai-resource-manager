@@ -52,6 +52,10 @@ func NewCloudsmithRegistry(name string, cfg CloudsmithRegistryConfig, configMgr 
 	}, nil
 }
 
+func (c *CloudsmithRegistry) ListPackages(ctx context.Context) ([]*core.PackageMetadata, error) {
+	return []*core.PackageMetadata{}, nil
+}
+
 func (c *CloudsmithRegistry) loadToken(ctx context.Context) error {
 	if c.client.token != "" {
 		return nil
@@ -93,7 +97,7 @@ type cloudsmithPackage struct {
 	Size        int64  `json:"size"`
 }
 
-func (c *CloudsmithRegistry) ListVersions(ctx context.Context, packageName string) ([]core.Version, error) {
+func (c *CloudsmithRegistry) ListPackageVersions(ctx context.Context, packageName string) ([]core.Version, error) {
 	if err := c.loadToken(ctx); err != nil {
 		return nil, err
 	}
@@ -163,7 +167,7 @@ func (c *cloudsmithClient) listPackagesPage(ctx context.Context, path string) ([
 }
 
 func (c *CloudsmithRegistry) ResolveVersion(ctx context.Context, packageName, constraint string) (core.Version, error) {
-	versions, err := c.ListVersions(ctx, packageName)
+	versions, err := c.ListPackageVersions(ctx, packageName)
 	if err != nil {
 		return core.Version{}, fmt.Errorf("failed to list versions: %w", err)
 	}
@@ -176,7 +180,7 @@ func (c *CloudsmithRegistry) ResolveVersion(ctx context.Context, packageName, co
 	return resolved, nil
 }
 
-func (c *CloudsmithRegistry) GetContent(ctx context.Context, packageName string, version core.Version, include, exclude []string) (*core.Package, error) {
+func (c *CloudsmithRegistry) GetPackage(ctx context.Context, packageName string, version core.Version, include, exclude []string) (*core.Package, error) {
 	cacheKey := map[string]interface{}{
 		"registry": c.name,
 		"package":  packageName,
