@@ -501,8 +501,106 @@ func (s *ArmService) UninstallAll(ctx context.Context) error {
 
 // UninstallPackages uninstalls specific packages
 func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) error {
-	// TODO: Implement in US-002
-	return fmt.Errorf("UninstallPackages not yet implemented")
+	allSinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	successCount := 0
+	var lastErr error
+
+	for _, pkg := range packages {
+		registryName, packageName := manifest.ParseDependencyKey(pkg)
+		if registryName == "" || packageName == "" {
+			fmt.Fprintf(os.Stderr, "Warning: invalid package format '%s', expected registry/package\n", pkg)
+			lastErr = fmt.Errorf("invalid package format: %s", pkg)
+			continue
+		}
+
+		rulesetConfig, rulesetErr := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
+		promptsetConfig, promptsetErr := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
+
+		if rulesetErr != nil && promptsetErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: package not found '%s'\n", pkg)
+			lastErr = fmt.Errorf("package not found: %s", pkg)
+			continue
+		}
+
+		var sinks []string
+		var version string
+
+		if rulesetErr == nil {
+			sinks = rulesetConfig.Sinks
+			version = rulesetConfig.Version
+
+			for _, sinkName := range sinks {
+				sinkConfig, exists := allSinks[sinkName]
+				if !exists {
+					continue
+				}
+
+				sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+				if err := sinkMgr.Uninstall(core.PackageMetadata{
+					RegistryName: registryName,
+					Name:         packageName,
+					Version:      core.Version{Version: version},
+				}); err != nil {
+					lastErr = err
+					continue
+				}
+			}
+
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, version); err != nil {
+				lastErr = err
+				continue
+			}
+
+			if err := s.manifestMgr.RemoveDependencyConfig(ctx, registryName, packageName); err != nil {
+				lastErr = err
+				continue
+			}
+
+			successCount++
+		} else if promptsetErr == nil {
+			sinks = promptsetConfig.Sinks
+			version = promptsetConfig.Version
+
+			for _, sinkName := range sinks {
+				sinkConfig, exists := allSinks[sinkName]
+				if !exists {
+					continue
+				}
+
+				sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+				if err := sinkMgr.Uninstall(core.PackageMetadata{
+					RegistryName: registryName,
+					Name:         packageName,
+					Version:      core.Version{Version: version},
+				}); err != nil {
+					lastErr = err
+					continue
+				}
+			}
+
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, version); err != nil {
+				lastErr = err
+				continue
+			}
+
+			if err := s.manifestMgr.RemoveDependencyConfig(ctx, registryName, packageName); err != nil {
+				lastErr = err
+				continue
+			}
+
+			successCount++
+		}
+	}
+
+	if successCount == 0 && lastErr != nil {
+		return lastErr
+	}
+
+	return nil
 }
 
 // UpdateAll updates all dependencies
