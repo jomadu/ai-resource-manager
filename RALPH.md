@@ -1,119 +1,154 @@
-# Ralph Agent Instructions
+# RALPH Agent Protocol
 
-You are an autonomous coding agent working on a software project.
+You are an autonomous coding agent. Each iteration completes ONE user story from `prd.json`.
 
-## Your Task
+## CRITICAL: Execution Loop
 
-1. Read the PRD at `prd.json` (in the same directory as this file)
-2. Read the progress log at `progress.txt` (check Codebase Patterns section first)
-3. Check you're on the correct branch from PRD `branchName`. If not, check it out or create from main.
-4. Pick the **highest priority** user story where `passes: false`
-5. **Write to progress.txt:** Append which story you picked and what you plan to do
-6. Implement that single user story:
-   - Break work into logical chunks (e.g., "add types", "implement function", "add tests")
-   - After completing each chunk, append progress update to progress.txt
-   - Keep working until story complete
-7. Run quality checks (e.g., typecheck, lint, test - use whatever your project requires)
-8. Update AGENTS.md files if you discover reusable patterns (see below)
-9. If checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
-10. **Update prd.json:** Set `passes: true` for the completed story and write file
-11. **Write to progress.txt:** Append completion report with learnings
+Each iteration MUST follow this exact sequence:
 
-## Progress Report Format
+### 1. SETUP
+- [ ] Read `prd.json`
+- [ ] Read `progress.txt` (check Codebase Patterns section first)
+- [ ] Verify branch matches `prd.json` branchName (checkout/create if needed)
+- [ ] Count stories where `passes: false`
+- [ ] If count = 0, exit with `<promise>COMPLETE</promise>`
 
-APPEND to progress.txt (never replace, always append):
+### 2. SELECT
+- [ ] Pick highest priority story where `passes: false`
+- [ ] Append to progress.txt: story ID and plan (use format below)
 
-**When starting a story:**
+### 3. IMPLEMENT
+- [ ] Work in logical chunks (e.g., types → functions → tests)
+- [ ] After each chunk: append progress to progress.txt
+- [ ] Continue until story complete
+
+### 4. VERIFY
+- [ ] Run quality checks (typecheck, lint, test)
+- [ ] If fail 3 times: exit with `<promise>BLOCKED: [reason]</promise>`
+
+### 5. COMMIT
+- [ ] Commit with: `feat: [Story ID] - [Story Title]`
+- [ ] Update prd.json: set `passes: true` for completed story
+- [ ] Append completion report to progress.txt with learnings
+- [ ] Update AGENTS.md if reusable patterns discovered
+
+### 6. EXIT
+- [ ] Re-read prd.json from disk
+- [ ] Count stories where `passes: false`
+- [ ] State count explicitly in response
+- [ ] Output promise tag on own line at END:
+  - `<promise>CONTINUE</promise>` if count > 0
+  - `<promise>COMPLETE</promise>` if count = 0
+
+---
+
+## REQUIRED: File Formats
+
+### progress.txt (ALWAYS APPEND, NEVER REPLACE)
+
+**Story Start:**
 ```
 ## [Date/Time] - Starting [Story ID]
 - Story: [Story Title]
-- Plan: [Brief description of approach]
+- Plan: [Brief approach]
 ---
 ```
 
-**During implementation (after each chunk):**
+**Progress Chunk:**
 ```
 ### [Time] - Progress on [Story ID]
-- Completed: [What you just finished]
-- Next: [What you're doing next]
+- Completed: [What finished]
+- Next: [What's next]
 ```
 
-**When completing a story:**
+**Story Complete:**
 ```
 ## [Date/Time] - Completed [Story ID]
 - What was implemented
 - Files changed
 - **Learnings for future iterations:**
-  - Patterns discovered (e.g., "this codebase uses X for Y")
-  - Gotchas encountered (e.g., "don't forget to update Z when changing W")
-  - Useful context (e.g., "the evaluation panel is in component X")
+  - [Pattern/gotcha/context]
 ---
 ```
 
-The learnings section is critical - it helps future iterations avoid repeating mistakes and understand the codebase better.
-
-## Consolidate Patterns
-
-If you discover a **reusable pattern** that future iterations should know, add it to the `## Codebase Patterns` section at the TOP of progress.txt (create it if it doesn't exist). This section should consolidate the most important learnings:
-
+**Codebase Patterns (at TOP of file):**
 ```
 ## Codebase Patterns
-- Example: Use `sql<number>` template for aggregations
-- Example: Always use `IF NOT EXISTS` for migrations
-- Example: Export types from actions.ts for UI components
+- [General reusable pattern]
 ```
 
-Only add patterns that are **general and reusable**, not story-specific details.
+### Commit Message Format
+```
+feat: [Story ID] - [Story Title]
+```
 
-## Update AGENTS.md Files
+---
 
-Before committing, check if any edited files have learnings worth preserving in nearby AGENTS.md files:
+## GUIDANCE: Best Practices
 
-1. **Identify directories with edited files** - Look at which directories you modified
-2. **Check for existing AGENTS.md** - Look for AGENTS.md in those directories or parent directories
-3. **Add valuable learnings** - If you discovered something future developers/agents should know:
-   - API patterns or conventions specific to that module
-   - Gotchas or non-obvious requirements
-   - Dependencies between files
-   - Testing approaches for that area
-   - Configuration or environment requirements
+### Why Each Step Matters
 
-**Examples of good AGENTS.md additions:**
-- "When modifying X, also update Y to keep them in sync"
-- "This module uses pattern Z for all API calls"
-- "Tests require the dev server running on PORT 3000"
-- "Field names must match the template exactly"
+**Setup checks prevent:**
+- Working on wrong branch
+- Missing context from previous iterations
+- Duplicate work
 
-**Do NOT add:**
-- Story-specific implementation details
-- Temporary debugging notes
-- Information already in progress.txt
+**Progress logging enables:**
+- Debugging when things go wrong
+- Understanding what was tried
+- Building institutional knowledge
 
-Only update AGENTS.md if you have **genuinely reusable knowledge** that would help future work in that directory.
+**Chunk-based work allows:**
+- Incremental progress tracking
+- Easier debugging
+- Clear audit trail
 
-## Quality Requirements
+**Quality gates ensure:**
+- No broken code committed
+- Bounded retry attempts
+- Clean CI/CD pipeline
 
-- ALL commits must pass your project's quality checks (typecheck, lint, test)
-- Do NOT commit broken code
-- Keep changes focused and minimal
+**Exit verification prevents:**
+- Stale state bugs
+- Infinite loops
+- Premature completion
+
+### Knowledge Management
+
+**progress.txt Codebase Patterns:**
+- Add general, reusable patterns to TOP of file
+- Examples: "Use X for Y", "Always do Z when W"
+- Keep it scannable for future iterations
+
+**AGENTS.md Updates:**
+- Add module-specific knowledge only
+- Update when you discover non-obvious patterns
+- Examples:
+  - "Update Y when changing X"
+  - "This module uses pattern Z for all API calls"
+  - "Tests need PORT 3000"
+  - "Field names must match template exactly"
+- Do NOT add:
+  - Story-specific implementation details
+  - Temporary debugging notes
+  - Information already in progress.txt
+
+### Implementation Tips
+
 - Follow existing code patterns
+- Keep changes minimal and focused
+- Commit frequently within the story
+- Read Codebase Patterns before starting
 
-## Exit Conditions
+---
 
-Exit immediately in these cases:
+## CONSTRAINTS
 
-1. **After completing ONE story successfully** - Commit, update PRD, log progress, then STOP
-2. **Quality checks fail 3 times** - Report the issue and exit with: `<promise>BLOCKED: [reason]</promise>`
-3. **Cannot proceed** - Missing files, unclear requirements, or other blockers: `<promise>BLOCKED: [reason]</promise>`
-4. **All stories complete** - Exit with: `<promise>COMPLETE</promise>`
-
-Do NOT continue to the next story automatically. Each iteration handles exactly one story.
-
-**IMPORTANT:** Always output the promise tag on its own line at the END of your response so the script can detect it.
-
-## Important
-
-- Work on ONE story per iteration
-- Commit frequently
-- Keep CI green
-- Read the Codebase Patterns section in progress.txt before starting
+- ONE story per iteration (never continue automatically)
+- ALL commits must pass quality checks
+- NEVER commit broken code
+- NEVER commit partial or incomplete implementations
+- Story must be FULLY complete before committing
+- ALWAYS append to progress.txt (never replace)
+- ALWAYS re-read prd.json before exit
+- Promise tag MUST be on own line at END of response

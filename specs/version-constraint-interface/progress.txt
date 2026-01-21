@@ -111,3 +111,77 @@ Started: Tue Jan 20 13:43:23 PST 2026
   - Abbreviated versions (1, 1.2) are expanded to full semver (1.0.0, 1.2.0) with appropriate constraint type
   - Pre-existing ResolveVersion test failures are expected and will be fixed in US-005
 ---
+
+## 2026-01-20 14:12 - Starting US-004
+- Story: Add Constraint satisfaction check method
+- Plan: Implement IsSatisfiedBy method that checks if a version satisfies a constraint. Should handle Latest, Exact, Major, and Minor constraint types. Returns error for non-semver versions.
+---
+
+### 14:13 - Progress on US-004
+- Completed: Added tests for Latest, Major, and Minor constraint types to TestConstraint_IsSatisfiedBy
+- Next: Run tests to verify all acceptance criteria pass
+
+### 14:14 - Progress on US-004
+- Completed: All IsSatisfiedBy tests pass, typecheck passes
+- Next: Commit changes and update PRD
+
+## 2026-01-20 14:14 - Completed US-004
+- What was implemented:
+  - Added comprehensive tests for IsSatisfiedBy method covering Latest, Exact, Major, and Minor constraint types
+  - Tests verify Latest constraint accepts any semver version
+  - Tests verify Exact constraint checks for exact version match
+  - Tests verify Major constraint checks major version range (e.g., "1" allows 1.0.0 through 1.9.9)
+  - Tests verify Minor constraint checks minor version range (e.g., "1.2" allows 1.2.0 through 1.2.9)
+  - Existing error handling tests verify non-semver versions return errors
+  
+- Files changed:
+  - internal/v4/core/constraint_test.go (added 14 new test cases to TestConstraint_IsSatisfiedBy)
+  
+- **Learnings for future iterations:**
+  - IsSatisfiedBy method was already correctly implemented - only needed comprehensive tests
+  - Latest constraint is special - it accepts any semver version without checking ranges
+  - Major and Minor constraints use abbreviated version syntax (e.g., "1" or "1.2") which are expanded to full semver
+  - All constraint types except Latest require semver versions and return errors for non-semver
+  - ResolveVersion test failures are expected and documented - they will be fixed in US-005 when test data is corrected
+  - The implementation correctly handles all constraint types: Latest, Exact, Major, Minor (which includes Caret and Tilde)
+---
+
+## 2026-01-20 14:14 - Starting US-005
+- Story: Update ResolveVersion function
+- Plan: Update ResolveVersion to use Version.CompareTo method and handle errors from IsSatisfiedBy. Will examine current implementation and fix test data issues.
+---
+
+### 14:15 - Progress on US-005
+- Completed: Updated ResolveVersion to use CompareTo instead of Compare
+- Next: Fix test data to use NewVersion constructor instead of direct struct initialization
+
+### 14:16 - Progress on US-005
+- Completed: Updated ResolveVersion to use CompareTo, fixed test data to use NewVersion constructor
+- Next: Run full test suite and commit
+
+### 14:17 - Progress on US-005
+- Completed: Fixed IsSatisfiedBy to handle branch name exact matching, all tests pass
+- Next: Commit changes
+
+
+## 2026-01-20 14:17 - Completed US-005
+- What was implemented:
+  - Updated ResolveVersion to use CompareTo instead of Compare for sorting candidates
+  - Updated ResolveVersion to skip versions that return errors from IsSatisfiedBy (e.g., non-semver versions when constraint requires semver)
+  - Fixed IsSatisfiedBy to handle branch name exact matching (Latest constraint with a version does exact string match)
+  - Added mustVersion test helper function to create Version instances from strings
+  - Updated all TestResolveVersion_* test data to use mustVersion instead of direct struct initialization
+  - Added fmt import to version_test.go
+  
+- Files changed:
+  - internal/v4/core/version.go (updated ResolveVersion to use CompareTo and skip errors from IsSatisfiedBy)
+  - internal/v4/core/constraint.go (fixed IsSatisfiedBy to handle branch name exact matching)
+  - internal/v4/core/version_test.go (added mustVersion helper, updated all ResolveVersion test data, added fmt import)
+  
+- **Learnings for future iterations:**
+  - ResolveVersion now uses CompareTo for sorting, which provides error handling for non-semver comparisons
+  - IsSatisfiedBy errors should be skipped (not returned) to allow mixed semver/non-semver version lists
+  - Branch names are parsed as Latest constraints with a version - IsSatisfiedBy now does exact string matching for these
+  - The mustVersion helper makes test data much cleaner and ensures IsSemver is set correctly
+  - All ResolveVersion tests now pass, including edge cases with mixed semver/non-semver versions and branch names
+---

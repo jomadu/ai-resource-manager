@@ -98,12 +98,31 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   # Capture output silently, check for promises
   OUTPUT=$(cat "$PROMPT_FILE" | kiro-cli "${ARGS[@]}" 2>&1) || true
   
+  # Validate PRD state before accepting completion
+  INCOMPLETE_COUNT=$(jq '[.userStories[] | select(.passes == false)] | length' "$PRD_FILE" 2>/dev/null || echo "unknown")
+  
   # Check for completion
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
+    if [ "$INCOMPLETE_COUNT" = "0" ]; then
+      echo ""
+      echo "✓ Ralph completed all tasks!"
+      echo "Completed at iteration $i of $MAX_ITERATIONS"
+      exit 0
+    else
+      echo ""
+      echo "⚠ Ralph claimed COMPLETE but $INCOMPLETE_COUNT stories remain incomplete"
+      echo "Continuing to next iteration..."
+      sleep 2
+      continue
+    fi
+  fi
+  
+  # Check for continue (expected after completing one story)
+  if echo "$OUTPUT" | grep -q "<promise>CONTINUE</promise>"; then
     echo ""
-    echo "✓ Ralph completed all tasks!"
-    echo "Completed at iteration $i of $MAX_ITERATIONS"
-    exit 0
+    echo "→ Story complete. $INCOMPLETE_COUNT stories remain."
+    sleep 2
+    continue
   fi
   
   # Check for blocked
