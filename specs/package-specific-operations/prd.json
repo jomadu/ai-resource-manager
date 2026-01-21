@@ -1,0 +1,101 @@
+{
+  "project": "AI Resource Manager",
+  "branchName": "no-pterm",
+  "description": "Add support for targeting specific packages in uninstall, update, and upgrade commands without requiring resource type specification",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add package argument parsing to uninstall command",
+      "description": "As a developer, I want to uninstall specific packages without affecting other installed packages.",
+      "acceptanceCriteria": [
+        "Parse zero or more package arguments in uninstall command",
+        "Zero arguments maintains current behavior (all packages)",
+        "Package format is registry/package",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Implement filtered uninstall logic",
+      "description": "As a developer, I want uninstall to only remove specified packages.",
+      "acceptanceCriteria": [
+        "Lookup packages in manifest to determine type",
+        "Uninstall only specified packages from sinks",
+        "Remove only specified packages from manifest",
+        "Warn if package not found, continue with others",
+        "Exit code 0 if at least one succeeds, 1 if all fail",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add package argument parsing to update command",
+      "description": "As a developer, I want to update specific packages to their latest compatible versions.",
+      "acceptanceCriteria": [
+        "Parse zero or more package arguments in update command",
+        "Zero arguments maintains current behavior (all packages)",
+        "Package format is registry/package",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Implement filtered update logic",
+      "description": "As a developer, I want update to only affect specified packages.",
+      "acceptanceCriteria": [
+        "Lookup packages in manifest to determine type",
+        "Update only specified packages",
+        "Respect version constraints",
+        "Warn if package not found, continue with others",
+        "Exit code 0 if at least one succeeds, 1 if all fail",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Add package argument parsing to upgrade command",
+      "description": "As a developer, I want to upgrade specific packages to their absolute latest versions.",
+      "acceptanceCriteria": [
+        "Parse zero or more package arguments in upgrade command",
+        "Zero arguments maintains current behavior (all packages)",
+        "Package format is registry/package",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Implement filtered upgrade logic",
+      "description": "As a developer, I want upgrade to only affect specified packages.",
+      "acceptanceCriteria": [
+        "Lookup packages in manifest to determine type",
+        "Upgrade only specified packages",
+        "Ignore version constraints",
+        "Update constraint to ^X.0.0 based on new version",
+        "Warn if package not found, continue with others",
+        "Exit code 0 if at least one succeeds, 1 if all fail",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
