@@ -53,7 +53,28 @@ func NewCloudsmithRegistry(name string, cfg CloudsmithRegistryConfig, configMgr 
 }
 
 func (c *CloudsmithRegistry) ListPackages(ctx context.Context) ([]*core.PackageMetadata, error) {
-	return []*core.PackageMetadata{}, nil
+	if err := c.loadToken(ctx); err != nil {
+		return nil, err
+	}
+
+	packages, err := c.client.listAllPackages(ctx, c.config.Owner, c.config.Repository)
+	if err != nil {
+		return nil, err
+	}
+
+	seen := make(map[string]bool)
+	var result []*core.PackageMetadata
+	for _, pkg := range packages {
+		if pkg.Format == "raw" && !seen[pkg.Name] {
+			seen[pkg.Name] = true
+			result = append(result, &core.PackageMetadata{
+				RegistryName: c.name,
+				Name:         pkg.Name,
+			})
+		}
+	}
+
+	return result, nil
 }
 
 func (c *CloudsmithRegistry) loadToken(ctx context.Context) error {
@@ -128,6 +149,22 @@ func (c *CloudsmithRegistry) ListPackageVersions(ctx context.Context, packageNam
 	})
 
 	return versions, nil
+}
+
+func (c *cloudsmithClient) listAllPackages(ctx context.Context, owner, repo string) ([]cloudsmithPackage, error) {
+	path := fmt.Sprintf("/v1/packages/%s/%s/", owner, repo)
+	
+	var allPackages []cloudsmithPackage
+	for path != "" {
+		packages, nextPath, err := c.listPackagesPage(ctx, path)
+		if err != nil {
+			return nil, err
+		}
+		allPackages = append(allPackages, packages...)
+		path = nextPath
+	}
+
+	return allPackages, nil
 }
 
 func (c *cloudsmithClient) listPackages(ctx context.Context, owner, repo, packageName string) ([]cloudsmithPackage, error) {

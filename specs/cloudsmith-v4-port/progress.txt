@@ -177,3 +177,18 @@
 ### 07:50 - Progress on US-008
 - Completed: All tests pass
 - Next: Commit story
+
+## 2026-01-21 07:50 - Completed US-008
+- What was implemented: Added cloudsmith case to registry factory, renamed CloudsmithRegistry methods to match Registry interface
+- Files changed:
+  - internal/v4/registry/factory.go (added cloudsmith case)
+  - internal/v4/registry/cloudsmith.go (renamed ListVersions→ListPackageVersions, GetContent→GetPackage, added ListPackages)
+  - internal/v4/registry/cloudsmith_test.go (updated test names and method calls)
+  - internal/v4/registry/factory_test.go (added TestDefaultFactory_CreateCloudsmithRegistry)
+  - prd.json (marked US-008 as passes: true)
+- **Learnings for future iterations:**
+  - v4 Registry interface requires: ListPackages, ListPackageVersions, GetPackage
+  - Method naming must match interface exactly for implementation
+  - ListPackages can return empty slice for registries that don't support package listing
+  - Factory pattern: convertMapToStruct + NewXXXRegistry with configMgr
+---

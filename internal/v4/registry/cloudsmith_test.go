@@ -178,6 +178,128 @@ func containsAt(s, substr string) bool {
 	return false
 }
 
+func TestCloudsmithRegistry_ListPackages(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/packages/myorg/myrepo/" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		if r.URL.Query().Get("query") != "" {
+			t.Errorf("expected no query param, got: %s", r.URL.Query().Get("query"))
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`[
+			{"name": "package-a", "version": "1.0.0", "format": "raw", "filename": "package-a-1.0.0.tar.gz"},
+			{"name": "package-a", "version": "2.0.0", "format": "raw", "filename": "package-a-2.0.0.tar.gz"},
+			{"name": "package-b", "version": "1.0.0", "format": "raw", "filename": "package-b-1.0.0.tar.gz"},
+			{"name": "package-c", "version": "1.0.0", "format": "docker", "filename": "package-c-1.0.0"}
+		]`))
+	}))
+	defer server.Close()
+
+	reg := &CloudsmithRegistry{
+		name: "test-registry",
+		config: CloudsmithRegistryConfig{
+			RegistryConfig: RegistryConfig{
+				URL: server.URL,
+			},
+			Owner:      "myorg",
+			Repository: "myrepo",
+		},
+		configMgr: &mockConfigManager{
+			sections: map[string]map[string]string{
+				"registry " + server.URL + "/myorg/myrepo": {
+					"token": "test-token",
+				},
+			},
+		},
+		client: &cloudsmithClient{
+			baseURL:    server.URL,
+			httpClient: &http.Client{},
+		},
+	}
+
+	packages, err := reg.ListPackages(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(packages) != 2 {
+		t.Fatalf("expected 2 packages, got %d", len(packages))
+	}
+
+	names := make(map[string]bool)
+	for _, pkg := range packages {
+		names[pkg.Name] = true
+	}
+
+	if !names["package-a"] || !names["package-b"] {
+		t.Errorf("expected package-a and package-b, got: %v", names)
+	}
+	if names["package-c"] {
+		t.Errorf("package-c should be filtered out (not raw format)")
+	}
+}
+
+func TestCloudsmithRegistry_ListPackages_Pagination(t *testing.T) {
+	callCount := 0
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		w.Header().Set("Content-Type", "application/json")
+
+		if callCount == 1 {
+			w.Header().Set("Link", fmt.Sprintf("<%s/v1/packages/myorg/myrepo/?page=2>; rel=\"next\"", server.URL))
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`[
+				{"name": "package-a", "version": "1.0.0", "format": "raw", "filename": "package-a-1.0.0.tar.gz"}
+			]`))
+		} else {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`[
+				{"name": "package-b", "version": "1.0.0", "format": "raw", "filename": "package-b-1.0.0.tar.gz"}
+			]`))
+		}
+	}))
+	defer server.Close()
+
+	reg := &CloudsmithRegistry{
+		name: "test-registry",
+		config: CloudsmithRegistryConfig{
+			RegistryConfig: RegistryConfig{
+				URL: server.URL,
+			},
+			Owner:      "myorg",
+			Repository: "myrepo",
+		},
+		configMgr: &mockConfigManager{
+			sections: map[string]map[string]string{
+				"registry " + server.URL + "/myorg/myrepo": {
+					"token": "test-token",
+				},
+			},
+		},
+		client: &cloudsmithClient{
+			baseURL:    server.URL,
+			httpClient: &http.Client{},
+		},
+	}
+
+	packages, err := reg.ListPackages(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(packages) != 2 {
+		t.Fatalf("expected 2 packages, got %d", len(packages))
+	}
+
+	if callCount != 2 {
+		t.Errorf("expected 2 API calls, got %d", callCount)
+	}
+}
+
 func TestCloudsmithRegistry_ListPackageVersions(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v1/packages/myorg/myrepo/" {
