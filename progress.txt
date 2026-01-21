@@ -398,3 +398,20 @@
   - Tests must create both manifest and lockfile for update command
   - Same pattern as other commands: manifestMgr, lockfileMgr, nil factory
 ---
+
+## 2026-01-21 06:31 - Starting US-014
+- Story: Upgrade command
+- Plan: Implement `arm upgrade` to upgrade packages to latest versions ignoring constraints. Update manifest version constraints to major constraint (^X.0.0) and update lockfile. Call service layer UpgradeAll() method.
+---
+
+### 2026-01-21 06:31 - Progress on US-014
+- Completed: Implemented handleUpgrade function and wired it up
+- Next: Create tests for upgrade command
+
+### 2026-01-21 06:31 - Progress on US-014
+- Completed: Created tests for upgrade command
+- Next: Run tests and typecheck
+
+### 2026-01-21 06:31 - Progress on US-014
+- Completed: All tests passing (2 test cases), typecheck passing
+- Next: Commit changes

@@ -45,6 +45,8 @@ func main() {
 		handleUninstall()
 	case "update":
 		handleUpdate()
+	case "upgrade":
+		handleUpgrade()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
 		fmt.Fprintf(os.Stderr, "Run 'arm help' for usage.\n")
@@ -77,6 +79,7 @@ func printHelp() {
 	fmt.Println("  install              Install rulesets or promptsets")
 	fmt.Println("  uninstall            Uninstall all packages")
 	fmt.Println("  update               Update packages within version constraints")
+	fmt.Println("  upgrade              Upgrade packages to latest versions")
 	fmt.Println()
 	fmt.Println("Run 'arm help <command>' for more information on a command.")
 }
@@ -179,6 +182,15 @@ func printCommandHelp(command string) {
 		fmt.Println()
 		fmt.Println("Updates all packages to the latest versions that satisfy the version constraints")
 		fmt.Println("specified in the manifest file. Updates the lock file with new versions.")
+	case "upgrade":
+		fmt.Println("Upgrade packages to latest versions")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  arm upgrade")
+		fmt.Println()
+		fmt.Println("Upgrades all packages to the latest versions, ignoring version constraints.")
+		fmt.Println("Updates the manifest file with new major version constraints (^X.0.0).")
+		fmt.Println("Updates the lock file with new versions.")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
@@ -1275,4 +1287,26 @@ func handleUpdate() {
 	}
 
 	fmt.Println("All packages updated successfully")
+}
+
+func handleUpgrade() {
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm-manifest.json"
+	}
+
+	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(lockfilePath)
+
+	svc := service.NewArmService(manifestMgr, lockfileMgr, nil)
+	ctx := context.Background()
+
+	if err := svc.UpgradeAll(ctx); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("All packages upgraded successfully")
 }
