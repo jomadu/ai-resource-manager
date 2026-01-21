@@ -384,3 +384,17 @@
 ### 2026-01-21 06:29 - Progress on US-013
 - Completed: All tests passing (2 test cases), typecheck passing
 - Next: Commit changes
+
+
+## 2026-01-21 06:29 - Completed US-013
+- Implemented `arm update` command to update packages within version constraints
+- Command calls service layer UpdateAll() method
+- UpdateAll resolves latest versions within manifest constraints and updates lockfile
+- Created comprehensive tests (2 test cases for CLI validation)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/update_test.go, prd.json
+- **Learnings for future iterations:**
+  - Service layer UpdateAll() handles both rulesets and promptsets
+  - UpdateAll requires lockfile to exist (doesn't auto-create like InstallAll)
+  - Tests must create both manifest and lockfile for update command
+  - Same pattern as other commands: manifestMgr, lockfileMgr, nil factory
+---
