@@ -204,10 +204,13 @@ func printCommandHelp(command string) {
 		fmt.Println("Upgrade packages to latest versions")
 		fmt.Println()
 		fmt.Println("Usage:")
-		fmt.Println("  arm upgrade")
+		fmt.Println("  arm upgrade [registry/package ...]")
 		fmt.Println()
-		fmt.Println("Upgrades all packages to the latest versions, ignoring version constraints.")
+		fmt.Println("Upgrades packages to the latest versions, ignoring version constraints.")
 		fmt.Println("Updates the manifest file with new major version constraints (^X.0.0).")
+		fmt.Println()
+		fmt.Println("Arguments:")
+		fmt.Println("  registry/package  One or more packages to upgrade (omit to upgrade all)")
 		fmt.Println("Updates the lock file with new versions.")
 	case "outdated":
 		fmt.Println("Check for outdated dependencies")
@@ -1715,12 +1718,20 @@ func handleUpgrade() {
 	svc := service.NewArmService(manifestMgr, lockfileMgr, nil)
 	ctx := context.Background()
 
-	if err := svc.UpgradeAll(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
+	packages := os.Args[2:]
+	if len(packages) == 0 {
+		if err := svc.UpgradeAll(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("All packages upgraded successfully")
+	} else {
+		if err := svc.UpgradePackages(ctx, packages); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Specified packages upgraded successfully")
 	}
-
-	fmt.Println("All packages upgraded successfully")
 }
 
 func handleOutdated() {

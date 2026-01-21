@@ -1000,6 +1000,10 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 	return nil
 }
 
+func (s *ArmService) UpgradePackages(ctx context.Context, packages []string) error {
+	return nil
+}
+
 func (s *ArmService) fetchLatest(ctx context.Context, registryName, packageName string, include, exclude []string) (string, *core.Package, error) {
 	regConfig, err := s.manifestMgr.GetRegistryConfig(ctx, registryName)
 	if err != nil {
