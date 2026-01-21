@@ -14,6 +14,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// mustVersion creates a Version from a string, panicking on error
+func mustVersion(s string) core.Version {
+	v, err := core.NewVersion(s)
+	if err != nil {
+		panic(fmt.Sprintf("mustVersion(%q): %v", s, err))
+	}
+	return v
+}
+
 func TestNewPackageCache(t *testing.T) {
 	tempDir := t.TempDir()
 	packagesDir := filepath.Join(tempDir, "packages")
@@ -40,7 +49,7 @@ func TestPackageCache_SetPackageVersion(t *testing.T) {
 		"includes": []string{"**/*.yml"},
 		"excludes": []string{"**/test/**"},
 	}
-	version := core.Version{Major: 1, Minor: 0, Patch: 0}
+	version := mustVersion("v1.0.0")
 	files := []*core.File{
 		{Path: "rules.yml", Content: []byte("rule: value"), Size: 11},
 		{Path: "nested/rule.yml", Content: []byte("nested: rule"), Size: 12},
@@ -106,7 +115,7 @@ func TestPackageCache_GetPackageVersion(t *testing.T) {
 		"name":     "clean-code",
 		"includes": []string{"**/*.yml"},
 	}
-	version := core.Version{Major: 1, Minor: 0, Patch: 0}
+	version := mustVersion("v1.0.0")
 	originalFiles := []*core.File{
 		{Path: "rules.yml", Content: []byte("rule: value"), Size: 11},
 		{Path: "nested/rule.yml", Content: []byte("nested: rule"), Size: 12},
@@ -157,7 +166,7 @@ func TestPackageCache_GetPackageVersion_NotFound(t *testing.T) {
 	pkg := NewPackageCache(packagesDir)
 	
 	packageKey := map[string]interface{}{"name": "nonexistent"}
-	version := core.Version{Major: 1, Minor: 0, Patch: 0}
+	version := mustVersion("v1.0.0")
 	
 	ctx := context.Background()
 	files, err := pkg.GetPackageVersion(ctx, packageKey, version)
@@ -178,9 +187,9 @@ func TestPackageCache_ListPackageVersions(t *testing.T) {
 	
 	packageKey := map[string]interface{}{"name": "clean-code"}
 	versions := []core.Version{
-		{Major: 1, Minor: 0, Patch: 0},
-		{Major: 1, Minor: 1, Patch: 0},
-		{Major: 2, Minor: 0, Patch: 0},
+		mustVersion("v1.0.0"),
+		mustVersion("v1.1.0"),
+		mustVersion("v2.0.0"),
 	}
 	files := []*core.File{{Path: "test.yml", Content: []byte("test"), Size: 4}}
 	
@@ -228,7 +237,7 @@ func TestPackageCache_ListPackages(t *testing.T) {
 		map[string]interface{}{"name": "security"},
 		map[string]interface{}{"name": "typescript"},
 	}
-	version := core.Version{Major: 1, Minor: 0, Patch: 0}
+	version := mustVersion("v1.0.0")
 	files := []*core.File{{Path: "test.yml", Content: []byte("test"), Size: 4}}
 	
 	ctx := context.Background()
@@ -266,7 +275,7 @@ func TestPackageCache_RemovePackageVersion(t *testing.T) {
 	pkg := NewPackageCache(packagesDir)
 	
 	packageKey := map[string]interface{}{"name": "clean-code"}
-	version := core.Version{Major: 1, Minor: 0, Patch: 0}
+	version := mustVersion("v1.0.0")
 	files := []*core.File{{Path: "test.yml", Content: []byte("test"), Size: 4}}
 	
 	ctx := context.Background()
@@ -297,8 +306,8 @@ func TestPackageCache_RemovePackage(t *testing.T) {
 	
 	packageKey := map[string]interface{}{"name": "clean-code"}
 	versions := []core.Version{
-		{Major: 1, Minor: 0, Patch: 0},
-		{Major: 1, Minor: 1, Patch: 0},
+		mustVersion("v1.0.0"),
+		mustVersion("v1.1.0"),
 	}
 	files := []*core.File{{Path: "test.yml", Content: []byte("test"), Size: 4}}
 	
@@ -336,7 +345,7 @@ func TestPackageCache_RemoveOldVersionsByTimestamp(t *testing.T) {
 	files := []*core.File{{Path: "test.txt", Content: []byte("content")}}
 
 	// Store old version
-	oldVersion := core.Version{Major: 1, Minor: 0, Patch: 0}
+	oldVersion := mustVersion("v1.0.0")
 	err := pkg.SetPackageVersion(ctx, packageKey, oldVersion, files)
 	require.NoError(t, err)
 
@@ -344,7 +353,7 @@ func TestPackageCache_RemoveOldVersionsByTimestamp(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	// Store new version
-	newVersion := core.Version{Major: 1, Minor: 1, Patch: 0}
+	newVersion := mustVersion("v1.1.0")
 	err = pkg.SetPackageVersion(ctx, packageKey, newVersion, files)
 	require.NoError(t, err)
 
@@ -373,8 +382,8 @@ func TestPackageCache_RemoveUnusedVersionsByAccess(t *testing.T) {
 	files := []*core.File{{Path: "test.txt", Content: []byte("content")}}
 
 	// Store two versions
-	version1 := core.Version{Major: 1, Minor: 0, Patch: 0}
-	version2 := core.Version{Major: 1, Minor: 1, Patch: 0}
+	version1 := mustVersion("v1.0.0")
+	version2 := mustVersion("v1.1.0")
 	
 	err := pkg.SetPackageVersion(ctx, packageKey, version1, files)
 	require.NoError(t, err)
@@ -413,7 +422,7 @@ func TestPackageCache_RemoveAllVersionsRemovesPackage(t *testing.T) {
 	files := []*core.File{{Path: "test.txt", Content: []byte("content")}}
 
 	// Store version
-	version := core.Version{Major: 1, Minor: 0, Patch: 0}
+	version := mustVersion("v1.0.0")
 	err := pkg.SetPackageVersion(ctx, packageKey, version, files)
 	require.NoError(t, err)
 

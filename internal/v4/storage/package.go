@@ -167,9 +167,9 @@ func (p *PackageCache) ListPackageVersions(ctx context.Context, packageKey inter
 	var versions []core.Version
 	for _, entry := range entries {
 		if entry.IsDir() && strings.HasPrefix(entry.Name(), "v") {
-			var major, minor, patch int
-			if n, _ := fmt.Sscanf(entry.Name(), "v%d.%d.%d", &major, &minor, &patch); n == 3 {
-				versions = append(versions, core.Version{Major: major, Minor: minor, Patch: patch})
+			version, err := core.NewVersion(entry.Name())
+			if err == nil {
+				versions = append(versions, version)
 			}
 		}
 	}
