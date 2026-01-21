@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
 	"github.com/jomadu/ai-resource-manager/internal/v4/core"
 	"github.com/jomadu/ai-resource-manager/internal/v4/manifest"
 	"github.com/jomadu/ai-resource-manager/internal/v4/packagelockfile"
@@ -91,6 +92,7 @@ func printCommandHelp(command string) {
 		fmt.Println("  arm add registry git --url URL [--branches BRANCH...] [--force] NAME")
 		fmt.Println("  arm add registry gitlab --url URL [--project-id ID] [--group-id ID] [--api-version VERSION] [--force] NAME")
 		fmt.Println("  arm add registry cloudsmith --url URL --owner OWNER --repo REPO [--force] NAME")
+		fmt.Println("  arm add sink --tool TOOL [--force] NAME PATH")
 		fmt.Println()
 		fmt.Println("Flags:")
 		fmt.Println("  --url          Git/GitLab/Cloudsmith repository URL (required)")
@@ -100,7 +102,8 @@ func printCommandHelp(command string) {
 		fmt.Println("  --api-version  GitLab API version (gitlab only, optional)")
 		fmt.Println("  --owner        Cloudsmith owner (cloudsmith only, required)")
 		fmt.Println("  --repo         Cloudsmith repository (cloudsmith only, required)")
-		fmt.Println("  --force        Overwrite existing registry")
+		fmt.Println("  --tool         Sink tool: cursor, copilot, amazonq, markdown (required)")
+		fmt.Println("  --force        Overwrite existing registry or sink")
 	case "remove":
 		fmt.Println("Remove registries or sinks")
 		fmt.Println()
@@ -150,6 +153,8 @@ func handleAdd() {
 	switch os.Args[2] {
 	case "registry":
 		handleAddRegistry()
+	case "sink":
+		handleAddSink()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown add target: %s\n", os.Args[2])
 		os.Exit(1)
@@ -401,6 +406,92 @@ func handleAddCloudsmithRegistry() {
 
 	fmt.Printf("Added cloudsmith registry '%s'\n", name)
 }
+
+func handleAddSink() {
+	var tool string
+	var force bool
+	var name string
+	var path string
+
+	// Parse flags and positional args
+	i := 3
+	for i < len(os.Args) {
+		arg := os.Args[i]
+		if arg == "--tool" {
+			if i+1 >= len(os.Args) {
+				fmt.Fprintf(os.Stderr, "--tool requires a value\n")
+				os.Exit(1)
+			}
+			tool = os.Args[i+1]
+			i += 2
+		} else if arg == "--force" {
+			force = true
+			i++
+		} else if !strings.HasPrefix(arg, "--") {
+			if name == "" {
+				name = arg
+			} else if path == "" {
+				path = arg
+			} else {
+				fmt.Fprintf(os.Stderr, "Too many positional arguments\n")
+				os.Exit(1)
+			}
+			i++
+		} else {
+			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", arg)
+			os.Exit(1)
+		}
+	}
+
+	if tool == "" {
+		fmt.Fprintf(os.Stderr, "--tool is required\n")
+		os.Exit(1)
+	}
+	if name == "" {
+		fmt.Fprintf(os.Stderr, "NAME is required\n")
+		os.Exit(1)
+	}
+	if path == "" {
+		fmt.Fprintf(os.Stderr, "PATH is required\n")
+		os.Exit(1)
+	}
+
+	// Validate tool
+	var compilerTool compiler.Tool
+	switch tool {
+	case "cursor":
+		compilerTool = compiler.Cursor
+	case "copilot":
+		compilerTool = compiler.Copilot
+	case "amazonq":
+		compilerTool = compiler.AmazonQ
+	case "markdown":
+		compilerTool = compiler.Markdown
+	default:
+		fmt.Fprintf(os.Stderr, "Invalid tool: %s (must be cursor, copilot, amazonq, or markdown)\n", tool)
+		os.Exit(1)
+	}
+
+	// Get manifest path from env or use default
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+	if err := svc.AddSink(ctx, name, path, compilerTool, force); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Added sink '%s'\n", name)
+}
+
 
 
 func handleRemove() {
