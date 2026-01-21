@@ -76,3 +76,31 @@
 ### 07:15 - Progress on US-004
 - Completed: All tests pass
 - Next: Commit story
+
+## 2026-01-21 07:15 - Completed US-004
+- What was implemented: Token authentication for Cloudsmith registry with loadToken() and makeRequest() methods
+- Files changed: 
+  - internal/v4/registry/cloudsmith.go (added loadToken and makeRequest methods, added configMgr field)
+  - internal/v4/registry/cloudsmith_test.go (new file with tests)
+  - internal/v4/registry/mock_config.go (fixed GetValue to return errors like real implementation)
+- **Learnings for future iterations:**
+  - Token auth pattern: loadToken() checks if token already set, then loads from configMgr using GetSection
+  - Auth key format for Cloudsmith: "registry <url>/<owner>/<repo>"
+  - makeRequest() helper sets Authorization header: "Token <token>"
+  - Constructor must accept configMgr parameter to enable token loading
+  - Mock GetValue must return errors when key/section not found (not empty string)
+  - Table-driven tests with nil pointers can cause panics in method receivers - split into separate test function
+---
+
+## 2026-01-21 07:18 - Starting US-005
+- Story: Implement ListVersions method
+- Plan: Add ListVersions method to CloudsmithRegistry calling /v1/packages API, handle pagination via Link header, filter by format=raw and name match, extract and sort versions
+---
+
+### 07:19 - Progress on US-005
+- Completed: Added ListVersions method with pagination support, filtering by format=raw and name match, semver sorting
+- Next: Create tests
+
+### 07:20 - Progress on US-005
+- Completed: All tests pass for ListVersions, pagination, and Link header parsing
+- Next: Commit story

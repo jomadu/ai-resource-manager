@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -171,4 +172,160 @@ func containsAt(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+func TestCloudsmithRegistry_ListVersions(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/packages/myorg/myrepo/" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		if r.URL.Query().Get("query") != "test-package" {
+			t.Errorf("unexpected query: %s", r.URL.Query().Get("query"))
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`[
+			{"name": "test-package", "version": "1.0.0", "format": "raw", "filename": "test-package-1.0.0.tar.gz"},
+			{"name": "test-package", "version": "2.0.0", "format": "raw", "filename": "test-package-2.0.0.tar.gz"},
+			{"name": "test-package", "version": "1.5.0", "format": "raw", "filename": "test-package-1.5.0.tar.gz"},
+			{"name": "other-package", "version": "3.0.0", "format": "raw", "filename": "other-package-3.0.0.tar.gz"}
+		]`))
+	}))
+	defer server.Close()
+
+	reg := &CloudsmithRegistry{
+		name: "test-registry",
+		config: CloudsmithRegistryConfig{
+			RegistryConfig: RegistryConfig{
+				URL: server.URL,
+			},
+			Owner:      "myorg",
+			Repository: "myrepo",
+		},
+		configMgr: &mockConfigManager{
+			sections: map[string]map[string]string{
+				"registry " + server.URL + "/myorg/myrepo": {
+					"token": "test-token",
+				},
+			},
+		},
+		client: &cloudsmithClient{
+			baseURL:    server.URL,
+			httpClient: &http.Client{},
+		},
+	}
+
+	versions, err := reg.ListVersions(context.Background(), "test-package")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(versions) != 3 {
+		t.Fatalf("expected 3 versions, got %d", len(versions))
+	}
+
+	// Should be sorted descending by semver
+	expectedVersions := []string{"2.0.0", "1.5.0", "1.0.0"}
+	for i, expected := range expectedVersions {
+		if versions[i].Version != expected {
+			t.Errorf("version[%d] = %s, want %s", i, versions[i].Version, expected)
+		}
+	}
+}
+
+func TestCloudsmithRegistry_ListVersions_Pagination(t *testing.T) {
+	callCount := 0
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		w.Header().Set("Content-Type", "application/json")
+
+		if callCount == 1 {
+			w.Header().Set("Link", fmt.Sprintf("<%s/v1/packages/myorg/myrepo/?page=2>; rel=\"next\"", server.URL))
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`[
+				{"name": "test-package", "version": "1.0.0", "format": "raw", "filename": "test-package-1.0.0.tar.gz"}
+			]`))
+		} else {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`[
+				{"name": "test-package", "version": "2.0.0", "format": "raw", "filename": "test-package-2.0.0.tar.gz"}
+			]`))
+		}
+	}))
+	defer server.Close()
+
+	reg := &CloudsmithRegistry{
+		name: "test-registry",
+		config: CloudsmithRegistryConfig{
+			RegistryConfig: RegistryConfig{
+				URL: server.URL,
+			},
+			Owner:      "myorg",
+			Repository: "myrepo",
+		},
+		configMgr: &mockConfigManager{
+			sections: map[string]map[string]string{
+				"registry " + server.URL + "/myorg/myrepo": {
+					"token": "test-token",
+				},
+			},
+		},
+		client: &cloudsmithClient{
+			baseURL:    server.URL,
+			httpClient: &http.Client{},
+		},
+	}
+
+	versions, err := reg.ListVersions(context.Background(), "test-package")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(versions) != 2 {
+		t.Fatalf("expected 2 versions, got %d", len(versions))
+	}
+
+	if callCount != 2 {
+		t.Errorf("expected 2 API calls, got %d", callCount)
+	}
+}
+
+func TestParseNextURLFromLinkHeader(t *testing.T) {
+	tests := []struct {
+		name       string
+		linkHeader string
+		want       string
+	}{
+		{
+			name:       "extracts next URL",
+			linkHeader: `<https://api.cloudsmith.io/v1/packages/org/repo/?page=2>; rel="next"`,
+			want:       "/v1/packages/org/repo/?page=2",
+		},
+		{
+			name:       "handles multiple links",
+			linkHeader: `<https://api.cloudsmith.io/v1/packages/org/repo/?page=1>; rel="prev", <https://api.cloudsmith.io/v1/packages/org/repo/?page=3>; rel="next"`,
+			want:       "/v1/packages/org/repo/?page=3",
+		},
+		{
+			name:       "returns empty for no next link",
+			linkHeader: `<https://api.cloudsmith.io/v1/packages/org/repo/?page=1>; rel="prev"`,
+			want:       "",
+		},
+		{
+			name:       "returns empty for empty header",
+			linkHeader: "",
+			want:       "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseNextURLFromLinkHeader(tt.linkHeader)
+			if got != tt.want {
+				t.Errorf("parseNextURLFromLinkHeader() = %q, want %q", got, tt.want)
+			}
+		})
+	}
 }

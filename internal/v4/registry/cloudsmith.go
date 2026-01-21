@@ -2,11 +2,15 @@ package registry
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/config"
+	"github.com/jomadu/ai-resource-manager/internal/v4/core"
 	"github.com/jomadu/ai-resource-manager/internal/v4/storage"
 )
 
@@ -77,4 +81,103 @@ func (c *cloudsmithClient) makeRequest(ctx context.Context, method, path string)
 	}
 
 	return c.httpClient.Do(req)
+}
+
+type cloudsmithPackage struct {
+	Name     string `json:"name"`
+	Version  string `json:"version"`
+	Format   string `json:"format"`
+	Filename string `json:"filename"`
+}
+
+func (c *CloudsmithRegistry) ListVersions(ctx context.Context, packageName string) ([]core.Version, error) {
+	if err := c.loadToken(ctx); err != nil {
+		return nil, err
+	}
+
+	packages, err := c.client.listPackages(ctx, c.config.Owner, c.config.Repository, packageName)
+	if err != nil {
+		return nil, err
+	}
+
+	versionMap := make(map[string]bool)
+	for _, pkg := range packages {
+		if pkg.Format == "raw" && (pkg.Name == packageName || strings.HasPrefix(pkg.Filename, packageName)) {
+			versionMap[pkg.Version] = true
+		}
+	}
+
+	var versions []core.Version
+	for versionStr := range versionMap {
+		version, _ := core.NewVersion(versionStr)
+		versions = append(versions, version)
+	}
+
+	sort.Slice(versions, func(i, j int) bool {
+		if !versions[i].IsSemver || !versions[j].IsSemver {
+			return versions[i].Version < versions[j].Version
+		}
+		return versions[i].Compare(versions[j]) > 0
+	})
+
+	return versions, nil
+}
+
+func (c *cloudsmithClient) listPackages(ctx context.Context, owner, repo, packageName string) ([]cloudsmithPackage, error) {
+	path := fmt.Sprintf("/v1/packages/%s/%s/?query=%s", owner, repo, packageName)
+	
+	var allPackages []cloudsmithPackage
+	for path != "" {
+		packages, nextPath, err := c.listPackagesPage(ctx, path)
+		if err != nil {
+			return nil, err
+		}
+		allPackages = append(allPackages, packages...)
+		path = nextPath
+	}
+
+	return allPackages, nil
+}
+
+func (c *cloudsmithClient) listPackagesPage(ctx context.Context, path string) ([]cloudsmithPackage, string, error) {
+	resp, err := c.makeRequest(ctx, "GET", path)
+	if err != nil {
+		return nil, "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return nil, "", fmt.Errorf("cloudsmith API error: %d", resp.StatusCode)
+	}
+
+	var packages []cloudsmithPackage
+	if err := json.NewDecoder(resp.Body).Decode(&packages); err != nil {
+		return nil, "", err
+	}
+
+	nextPath := parseNextURLFromLinkHeader(resp.Header.Get("Link"))
+	return packages, nextPath, nil
+}
+
+func parseNextURLFromLinkHeader(linkHeader string) string {
+	if linkHeader == "" {
+		return ""
+	}
+
+	links := strings.Split(linkHeader, ",")
+	for _, link := range links {
+		link = strings.TrimSpace(link)
+		if strings.Contains(link, `rel="next"`) {
+			start := strings.Index(link, "<")
+			end := strings.Index(link, ">")
+			if start != -1 && end != -1 && start < end {
+				fullURL := link[start+1 : end]
+				if idx := strings.Index(fullURL, "/v1/"); idx != -1 {
+					return fullURL[idx:]
+				}
+			}
+		}
+	}
+
+	return ""
 }
