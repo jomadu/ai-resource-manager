@@ -503,6 +503,8 @@ func handleRemove() {
 	switch os.Args[2] {
 	case "registry":
 		handleRemoveRegistry()
+	case "sink":
+		handleRemoveSink()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown remove target: %s\n", os.Args[2])
 		os.Exit(1)
@@ -537,6 +539,33 @@ func handleRemoveRegistry() {
 	fmt.Printf("Removed registry '%s'\n", name)
 }
 
+func handleRemoveSink() {
+	if len(os.Args) < 4 {
+		fmt.Fprintf(os.Stderr, "Usage: arm remove sink NAME\n")
+		os.Exit(1)
+	}
+
+	name := os.Args[3]
+
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+	if err := svc.RemoveSink(ctx, name); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Removed sink '%s'\n", name)
+}
+
 func handleSet() {
 	if len(os.Args) < 3 {
 		fmt.Fprintf(os.Stderr, "Usage: arm set <registry|sink> ...\n")
@@ -546,6 +575,8 @@ func handleSet() {
 	switch os.Args[2] {
 	case "registry":
 		handleSetRegistry()
+	case "sink":
+		handleSetSink()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown set target: %s\n", os.Args[2])
 		os.Exit(1)
@@ -592,6 +623,61 @@ func handleSetRegistry() {
 	}
 
 	fmt.Printf("Updated registry '%s' %s\n", name, key)
+}
+
+func handleSetSink() {
+	if len(os.Args) < 6 {
+		fmt.Fprintf(os.Stderr, "Usage: arm set sink NAME KEY VALUE\n")
+		os.Exit(1)
+	}
+
+	name := os.Args[3]
+	key := os.Args[4]
+	value := os.Args[5]
+
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+	var err error
+
+	switch key {
+	case "tool":
+		var tool compiler.Tool
+		switch value {
+		case "cursor":
+			tool = compiler.Cursor
+		case "copilot":
+			tool = compiler.Copilot
+		case "amazonq":
+			tool = compiler.AmazonQ
+		case "markdown":
+			tool = compiler.Markdown
+		default:
+			fmt.Fprintf(os.Stderr, "Invalid tool: %s (valid: cursor, copilot, amazonq, markdown)\n", value)
+			os.Exit(1)
+		}
+		err = svc.SetSinkTool(ctx, name, tool)
+	case "directory":
+		err = svc.SetSinkDirectory(ctx, name, value)
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown key: %s (valid: tool, directory)\n", key)
+		os.Exit(1)
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Updated sink '%s' %s\n", name, key)
 }
 
 func handleList() {
