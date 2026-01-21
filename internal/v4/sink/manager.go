@@ -322,11 +322,16 @@ func (m *Manager) ListRulesets() ([]*InstalledRuleset, error) {
 			continue // Skip invalid entries
 		}
 
+		v, err := core.NewVersion(version)
+		if err != nil {
+			continue // Skip invalid versions
+		}
+
 		rulesets = append(rulesets, &InstalledRuleset{
 			Metadata: core.PackageMetadata{
 				RegistryName: registry,
 				Name:         name,
-				Version:      core.Version{Version: version},
+				Version:      v,
 			},
 			Priority: entry.Priority,
 			Files:    entry.Files,
@@ -350,11 +355,16 @@ func (m *Manager) ListPromptsets() ([]*InstalledPromptset, error) {
 			continue // Skip invalid entries
 		}
 
+		v, err := core.NewVersion(version)
+		if err != nil {
+			continue // Skip invalid versions
+		}
+
 		promptsets = append(promptsets, &InstalledPromptset{
 			Metadata: core.PackageMetadata{
 				RegistryName: registry,
 				Name:         name,
-				Version:      core.Version{Version: version},
+				Version:      v,
 			},
 			Files: entry.Files,
 		})

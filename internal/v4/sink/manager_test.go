@@ -1,6 +1,7 @@
 package sink
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +10,14 @@ import (
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
 	"github.com/jomadu/ai-resource-manager/internal/v4/core"
 )
+
+func mustVersion(s string) core.Version {
+	v, err := core.NewVersion(s)
+	if err != nil {
+		panic(fmt.Sprintf("invalid version %q: %v", s, err))
+	}
+	return v
+}
 
 func TestNewManager(t *testing.T) {
 	tests := []struct {
@@ -182,7 +191,7 @@ func TestIsInstalled(t *testing.T) {
 	metadata := core.PackageMetadata{
 		RegistryName: "test-reg",
 		Name:         "test-pkg",
-		Version:      core.Version{Version: "1.0.0"},
+		Version:      mustVersion("1.0.0"),
 	}
 
 	// Should return false for non-installed package
@@ -322,7 +331,7 @@ func TestUninstall(t *testing.T) {
 	metadata := core.PackageMetadata{
 		RegistryName: "test-reg",
 		Name:         "test-pkg",
-		Version:      core.Version{Version: "1.0.0"},
+		Version:      mustVersion("1.0.0"),
 	}
 	err := m.Uninstall(metadata)
 	if err != nil {
@@ -548,7 +557,7 @@ func TestInstallRuleset(t *testing.T) {
 		Metadata: core.PackageMetadata{
 			RegistryName: "test-reg",
 			Name:         "test-pkg",
-			Version:      core.Version{Version: "1.0.0"},
+			Version:      mustVersion("1.0.0"),
 		},
 		Files: []*core.File{
 			{
@@ -603,7 +612,7 @@ func TestInstallRulesetReplacesOldVersion(t *testing.T) {
 		Metadata: core.PackageMetadata{
 			RegistryName: "test-reg",
 			Name:         "test-pkg",
-			Version:      core.Version{Version: "1.0.0"},
+			Version:      mustVersion("1.0.0"),
 		},
 		Files: []*core.File{
 			{
@@ -619,7 +628,7 @@ func TestInstallRulesetReplacesOldVersion(t *testing.T) {
 		Metadata: core.PackageMetadata{
 			RegistryName: "test-reg",
 			Name:         "test-pkg",
-			Version:      core.Version{Version: "1.0.0"},
+			Version:      mustVersion("1.0.0"),
 		},
 		Files: []*core.File{
 			{
@@ -661,7 +670,7 @@ func TestInstallRulesetEmptyPackage(t *testing.T) {
 		Metadata: core.PackageMetadata{
 			RegistryName: "test-reg",
 			Name:         "empty-pkg",
-			Version:      core.Version{Version: "1.0.0"},
+			Version:      mustVersion("1.0.0"),
 		},
 		Files: []*core.File{},
 	}
@@ -692,7 +701,7 @@ func TestInstallPromptset(t *testing.T) {
 		Metadata: core.PackageMetadata{
 			RegistryName: "test-reg",
 			Name:         "test-prompts",
-			Version:      core.Version{Version: "1.0.0"},
+			Version:      mustVersion("1.0.0"),
 		},
 		Files: []*core.File{
 			{
@@ -739,7 +748,7 @@ func TestInstallPromptsetReplacesOldVersion(t *testing.T) {
 		Metadata: core.PackageMetadata{
 			RegistryName: "test-reg",
 			Name:         "test-prompts",
-			Version:      core.Version{Version: "1.0.0"},
+			Version:      mustVersion("1.0.0"),
 		},
 		Files: []*core.File{
 			{
@@ -755,7 +764,7 @@ func TestInstallPromptsetReplacesOldVersion(t *testing.T) {
 		Metadata: core.PackageMetadata{
 			RegistryName: "test-reg",
 			Name:         "test-prompts",
-			Version:      core.Version{Version: "1.0.0"},
+			Version:      mustVersion("1.0.0"),
 		},
 		Files: []*core.File{
 			{
@@ -790,7 +799,7 @@ func TestInstallPromptsetEmptyPackage(t *testing.T) {
 		Metadata: core.PackageMetadata{
 			RegistryName: "test-reg",
 			Name:         "empty-prompts",
-			Version:      core.Version{Version: "1.0.0"},
+			Version:      mustVersion("1.0.0"),
 		},
 		Files: []*core.File{},
 	}
