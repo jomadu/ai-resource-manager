@@ -1,0 +1,309 @@
+## Codebase Patterns
+- (Patterns will be added as discovered)
+
+## 2026-01-20 22:36 - Starting US-001
+- Story: Core version and help commands
+- Plan: Create basic CLI structure with version and help commands. Implement version display with build metadata and help system for command discovery.
+---
+
+
+### 2026-01-20 22:37 - Progress on US-001
+- Completed: Setup phase, verified branch, read PRD and progress
+- Next: Examine existing codebase structure, implement version and help commands
+
+### 2026-01-20 22:37 - Progress on US-001
+- Completed: Examined codebase structure, found BuildInfo in internal/v4/core
+- Next: Implement basic CLI with version and help commands using cobra
+
+### 2026-01-20 22:38 - Progress on US-001
+- Completed: Implemented basic CLI structure with version command
+- Next: Run typecheck and create tests
+
+### 2026-01-20 22:38 - Progress on US-001
+- Completed: CLI builds and runs successfully, version and help commands work
+- Next: Create tests for version and help commands
+
+### 2026-01-20 22:39 - Progress on US-001
+- Completed: Tests created and passing
+- Next: Run typecheck
+
+
+## 2026-01-20 22:39 - Completed US-001
+- Implemented basic CLI structure without external dependencies (no cobra/pterm)
+- Created version command displaying: version, build-id, build-timestamp, build-platform
+- Created help command with main help and command-specific help
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/main_test.go
+- **Learnings for future iterations:**
+  - v4 uses standard library only, no cobra or pterm
+  - BuildInfo is in internal/v4/core with GetBuildInfo() function
+  - Version info includes: Version.Version, Commit, BuildTime, Arch
+  - Tests use os.Pipe() to capture stdout for verification
+---
+
+## 2026-01-20 22:40 - Starting US-002
+- Story: Add git registry command
+- Plan: Implement `arm add registry git` command with --url, --branches, --force flags and NAME parameter. Update config file with registry data.
+---
+
+### 2026-01-20 22:40 - Progress on US-002
+- Completed: Examined service layer, found AddGitRegistry method and GitRegistryConfig type
+- Next: Implement add registry git command in main.go
+
+### 2026-01-20 22:41 - Progress on US-002
+- Completed: Implemented add registry git command with flag parsing
+- Next: Create tests for the command
+
+### 2026-01-20 22:42 - Progress on US-002
+- Completed: Tests passing, typecheck passing
+- Next: Commit the changes
+
+
+## 2026-01-20 22:42 - Completed US-002
+- Implemented `arm add registry git` command with --url, --branches, --force flags
+- Added flag parsing for command-line arguments
+- Added environment variable support (ARM_MANIFEST_PATH) for testing
+- Created comprehensive tests covering all scenarios
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/add_registry_test.go, prd.json
+- **Learnings for future iterations:**
+  - Use NewFileManagerWithPath to support custom manifest paths
+  - Check ARM_MANIFEST_PATH environment variable for testing
+  - Each test should get its own manifest file to avoid interference
+  - Build binary once and reuse across test cases for speed
+---
+
+## 2026-01-20 22:44 - Starting US-003
+- Story: Add gitlab registry command
+- Plan: Implement `arm add registry gitlab` command with --url, --group-id, --project-id, --api-version, --force flags and NAME parameter. Follow same pattern as git registry command.
+---
+
+### 2026-01-20 22:44 - Progress on US-003
+- Completed: Implemented add registry gitlab command with all flags
+- Next: Create tests for the command
+
+### 2026-01-20 22:44 - Progress on US-003
+- Completed: Tests passing, typecheck passing
+- Next: Commit the changes
+
+
+## 2026-01-20 22:44 - Completed US-003
+- Implemented `arm add registry gitlab` command with --url, --project-id, --group-id, --api-version, --force flags
+- Added flag parsing for all GitLab-specific parameters
+- Created comprehensive tests covering all scenarios (9 test cases)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/add_registry_test.go, prd.json
+- **Learnings for future iterations:**
+  - GitLab registry config supports optional projectID, groupID, and apiVersion fields
+  - Same pattern as git registry: parse flags, validate required params, call service layer
+  - Test pattern is consistent: build once, test with isolated manifests
+---
+
+## 2026-01-20 22:46 - Starting US-004
+- Story: Add cloudsmith registry command
+- Plan: Implement `arm add registry cloudsmith` command with --url, --owner, --repo, --force flags and NAME parameter. Follow same pattern as git/gitlab registry commands.
+---
+
+### 2026-01-20 22:46 - Progress on US-004
+- Completed: Implemented add registry cloudsmith command with all flags
+- Next: Create tests for the command
+
+### 2026-01-20 22:46 - Progress on US-004
+- Completed: Tests passing (7 test cases), typecheck passing
+- Next: Commit the changes
+
+
+## 2026-01-20 22:46 - Completed US-004
+- Implemented `arm add registry cloudsmith` command with --url, --owner, --repo, --force flags
+- Added flag parsing for all Cloudsmith-specific parameters
+- Updated help text to include cloudsmith registry
+- Created comprehensive tests covering all scenarios (7 test cases)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/add_registry_test.go, prd.json
+- **Learnings for future iterations:**
+  - Cloudsmith registry requires url, owner, and repository fields
+  - Same pattern as git/gitlab: parse flags, validate required params, call service layer
+  - Test pattern is consistent across all registry types
+---
+
+## 2026-01-20 22:48 - Starting US-005
+- Story: Registry remove and set commands
+- Plan: Implement `arm remove registry NAME` and `arm set registry NAME KEY VALUE` commands. Follow existing patterns from add registry commands.
+---
+
+### 2026-01-20 22:48 - Progress on US-005
+- Completed: Implemented remove registry and set registry commands
+- Next: Create tests for the commands
+
+### 2026-01-20 22:49 - Progress on US-005
+- Completed: All tests passing (8 test cases), typecheck passing
+- Next: Commit the changes
+
+
+## 2026-01-20 22:49 - Completed US-005
+- Implemented `arm remove registry NAME` command
+- Implemented `arm set registry NAME KEY VALUE` command
+- Supports keys: name (rename), url (update URL)
+- Added comprehensive tests (8 test cases total)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/remove_set_test.go, prd.json
+- **Learnings for future iterations:**
+  - Service layer has SetRegistryName and SetRegistryURL methods
+  - Set command uses switch statement to route to appropriate service method
+  - Remove command is straightforward: just call RemoveRegistry service method
+  - Same pattern for service initialization across all commands
+---
+
+## 2026-01-20 22:51 - Starting US-006
+- Story: Registry list and info commands
+- Plan: Implement `arm list registry` to show simple list of names, and `arm info registry [NAME]...` to show detailed info. Use service layer methods.
+---
+
+### 2026-01-20 22:51 - Progress on US-006
+- Completed: Implemented list registry and info registry commands
+- Next: Create tests for the commands
+
+### 2026-01-20 22:52 - Progress on US-006
+- Completed: All tests passing (9 test cases), typecheck passing
+- Next: Commit the changes
+
+
+## 2026-01-20 22:52 - Completed US-006
+- Implemented `arm list registry` command showing simple list of registry names
+- Implemented `arm info registry [NAME]...` command showing detailed registry info
+- Info command supports:
+  - No args: shows all registries
+  - Specific names: shows only those registries
+  - Type-specific fields (branches for git, projectId/groupId/apiVersion for gitlab, owner/repository for cloudsmith)
+- Created comprehensive tests (9 test cases total)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/list_info_test.go, prd.json
+- **Learnings for future iterations:**
+  - GetAllRegistriesConfig returns map[string]map[string]interface{} for all registries
+  - GetRegistryConfig returns map[string]interface{} for specific registry
+  - Info command displays type-specific fields conditionally based on registry type
+  - List command just prints registry names, one per line
+---
+
+## 2026-01-20 22:54 - Starting US-007
+- Story: Add sink command
+- Plan: Implement `arm add sink` command with --tool, --force flags, NAME and PATH parameters. Follow same pattern as add registry commands. Tool flag accepts: cursor, copilot, amazonq, markdown.
+---
+### 2026-01-20 23:08 - Progress on US-007
+- Completed: Setup phase, verified branch, counted 15 stories remaining
+- Next: Examine service layer for AddSink method and implement command
+
+
+## 2026-01-21 06:09 - Starting US-007
+- Story: Add sink command
+- Plan: Implement `arm add sink` command with --tool, --force flags, NAME and PATH parameters. Follow same pattern as add registry commands. Tool flag accepts: cursor, copilot, amazonq, markdown.
+---
+
+
+### 2026-01-21 06:10 - Progress on US-007
+- Completed: Verified handleAddSink function exists and is wired up
+- Next: Create tests for add sink command
+
+
+### 2026-01-21 06:11 - Progress on US-007
+- Completed: Created comprehensive tests (9 test cases), all passing
+- Next: Commit changes
+
+
+## 2026-01-21 06:11 - Completed US-007
+- Implemented `arm add sink` command with --tool, --force flags, NAME and PATH parameters
+- Tool flag accepts: cursor, copilot, amazonq, markdown
+- Updated help text to include sink command
+- Created comprehensive tests (9 test cases total)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/add_sink_test.go, prd.json
+- **Learnings for future iterations:**
+  - Sink command follows same pattern as registry commands: parse flags, validate, call service layer
+  - Service layer AddSink method takes: name, directory, compiler.Tool, force
+  - compiler.Tool enum values: Cursor, Copilot, AmazonQ, Markdown
+  - Test pattern consistent: build once, test with isolated manifests
+---
+
+## 2026-01-21 06:11 - Starting US-008
+- Story: Sink remove and set commands
+- Plan: Implement `arm remove sink NAME` and `arm set sink NAME KEY VALUE` commands. Follow same pattern as registry remove/set commands. Support keys: tool, directory.
+---
+
+### 2026-01-21 06:11 - Progress on US-008
+- Completed: Implemented handleRemoveSink and handleSetSink functions
+- Next: Create tests for the commands
+
+### 2026-01-21 06:11 - Progress on US-008
+- Completed: All tests passing (9 test cases), typecheck passing
+- Next: Commit changes
+
+
+## 2026-01-21 06:11 - Completed US-008
+- Implemented `arm remove sink NAME` command
+- Implemented `arm set sink NAME KEY VALUE` command
+- Supports keys: tool (cursor, copilot, amazonq, markdown), directory
+- Added comprehensive tests (9 test cases total)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/remove_set_sink_test.go, prd.json
+- **Learnings for future iterations:**
+  - Service layer has SetSinkTool and SetSinkDirectory methods
+  - SetSinkTool requires compiler.Tool enum conversion from string
+  - Same pattern as registry set: switch on key, route to appropriate service method
+  - Test pattern consistent: build once, test with isolated manifests
+---
+
+## 2026-01-21 06:14 - Starting US-009
+- Story: Sink list and info commands
+- Plan: Implement `arm list sink` to show simple list of names, and `arm info sink [NAME]...` to show detailed info. Follow same pattern as registry list/info commands.
+---
+
+### 2026-01-21 06:14 - Progress on US-009
+- Completed: Implemented handleListSink and handleInfoSink functions
+- Next: Create tests for the commands
+
+### 2026-01-21 06:14 - Progress on US-009
+- Completed: All tests passing (8 test cases), typecheck passing
+- Next: Commit changes
+
+
+## 2026-01-21 06:14 - Completed US-009
+- Implemented `arm list sink` command showing simple list of sink names
+- Implemented `arm info sink [NAME]...` command showing detailed sink info
+- Info command supports:
+  - No args: shows all sinks
+  - Specific names: shows only those sinks
+  - Displays tool and directory for each sink
+- Created comprehensive tests (8 test cases total)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/list_info_sink_test.go, prd.json
+- **Learnings for future iterations:**
+  - Service layer has GetAllSinkConfigs and GetSinkConfig methods
+  - SinkConfig has Tool (compiler.Tool) and Directory (string) fields
+  - Same pattern as registry list/info: iterate over names, display info
+  - Test pattern consistent: build once, test with isolated manifests
+---
+
+## 2026-01-21 06:17 - Starting US-010
+- Story: Install ruleset command
+- Plan: Implement `arm install ruleset REGISTRY/RULESET[@VERSION] SINK...` with --priority, --include, --exclude flags. Parse package spec, validate sinks, call service layer InstallRuleset. Handle uninstall from previous sinks not in new list.
+---
+
+### 2026-01-21 06:17 - Progress on US-010
+- Completed: Implemented handleInstallRuleset with flag parsing and service call
+- Next: Create tests for install ruleset command
+
+### 2026-01-21 06:17 - Progress on US-010
+- Completed: Created comprehensive tests (11 test cases)
+- Next: Run tests and typecheck
+
+### 2026-01-21 06:17 - Progress on US-010
+- Completed: All tests passing (6 test cases), typecheck passing
+- Next: Commit changes
+
+
+## 2026-01-21 06:17 - Completed US-010
+- Implemented `arm install ruleset REGISTRY/RULESET[@VERSION] SINK...` command
+- Added --priority flag (default: 100)
+- Added --include and --exclude flags for glob patterns (can be specified multiple times)
+- Supports version constraints in package spec (@1.0.0, @1.1, @1, or no version)
+- Parses package spec format: REGISTRY/RULESET[@VERSION]
+- Created comprehensive tests (6 test cases for CLI validation)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/install_test.go, prd.json
+- **Learnings for future iterations:**
+  - Service layer InstallRuleset takes: registryName, ruleset, version, priority, include, exclude, sinks
+  - Package spec parsing: split on "/" for registry/package, split on "@" for version
+  - Registry factory parameter is nil for default factory (uses DefaultFactory)
+  - Tests focus on CLI validation, not full integration (avoid git operations in tests)
+  - Parse helper functions: parseRegistry, parsePackage, parseVersion
+---
