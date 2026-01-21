@@ -583,3 +583,32 @@
 ### 2026-01-21 06:49 - Progress on US-020
 - Completed: All tests passing (5 test cases), typecheck passing
 - Next: Commit changes
+
+
+## 2026-01-21 06:49 - Completed US-020
+- Implemented `arm clean sinks` command with --nuke flag
+- CleanSinks removes orphaned files not in arm-index.json
+- NukeSinks removes entire ARM directory from sinks
+- Handles different sink layouts (flat for Copilot, hierarchical for others)
+- Updated help text to include sinks subcommand
+- Created comprehensive tests (5 test cases total)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/clean_sinks_test.go, prd.json
+- **Learnings for future iterations:**
+  - Service layer CleanSinks and NukeSinks methods handle all sink types
+  - NukeSinks has special logic for Copilot (flat layout) vs others (hierarchical)
+  - Service layer gracefully handles missing manifests (creates empty ones)
+  - Same pattern as other commands: manifestMgr, nil lockfileMgr, nil factory
+---
+
+## 2026-01-21 06:51 - Starting US-021
+- Story: Compile command
+- Plan: Implement `arm compile INPUT_PATH(s) OUTPUT_PATH` with --tool, --namespace, --force, --recursive, --validate-only, --include, --exclude, --fail-fast flags. Support files, directories, and mixed inputs. OUTPUT_PATH optional when --validate-only is set.
+---
+
+### 2026-01-21 06:51 - Progress on US-021
+- Completed: Implemented handleCompile function with all flags
+- Next: Create tests for compile command
+
+### 2026-01-21 06:52 - Progress on US-021
+- Completed: All tests passing (22 test cases), typecheck passing
+- Next: Commit changes

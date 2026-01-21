@@ -52,6 +52,8 @@ func main() {
 		handleOutdated()
 	case "clean":
 		handleClean()
+	case "compile":
+		handleCompile()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
 		fmt.Fprintf(os.Stderr, "Run 'arm help' for usage.\n")
@@ -87,6 +89,7 @@ func printHelp() {
 	fmt.Println("  upgrade              Upgrade packages to latest versions")
 	fmt.Println("  outdated             Check for outdated dependencies")
 	fmt.Println("  clean                Clean cache or sinks")
+	fmt.Println("  compile              Compile rulesets and promptsets")
 	fmt.Println()
 	fmt.Println("Run 'arm help <command>' for more information on a command.")
 }
@@ -228,6 +231,24 @@ func printCommandHelp(command string) {
 		fmt.Println("  --nuke         Remove entire ARM directory from sinks")
 		fmt.Println()
 		fmt.Println("Removes cached data or orphaned files from sinks.")
+	case "compile":
+		fmt.Println("Compile rulesets and promptsets")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  arm compile INPUT_PATH... [OUTPUT_PATH] [flags]")
+		fmt.Println()
+		fmt.Println("Flags:")
+		fmt.Println("  --tool         Target tool: markdown, cursor, amazonq, copilot")
+		fmt.Println("  --namespace    Namespace for compiled resources")
+		fmt.Println("  --force        Overwrite existing files")
+		fmt.Println("  --recursive    Process directories recursively")
+		fmt.Println("  --validate-only Validate without writing output (OUTPUT_PATH optional)")
+		fmt.Println("  --include      Include glob patterns (can be specified multiple times)")
+		fmt.Println("  --exclude      Exclude glob patterns (can be specified multiple times)")
+		fmt.Println("  --fail-fast    Stop on first error")
+		fmt.Println()
+		fmt.Println("Compiles ARM resources to tool-specific formats.")
+		fmt.Println("Supports files, directories, and mixed inputs.")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
@@ -1949,4 +1970,112 @@ func handleCleanSinks() {
 		os.Exit(1)
 	}
 	fmt.Println("Sinks cleaned successfully")
+}
+
+func handleCompile() {
+	var tool string
+	var namespace string
+	var force bool
+	var recursive bool
+	var validateOnly bool
+	var include []string
+	var exclude []string
+	var failFast bool
+	var paths []string
+	var outputPath string
+
+	// Parse flags and arguments
+	args := os.Args[2:]
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--tool":
+			if i+1 >= len(args) {
+				fmt.Fprintf(os.Stderr, "Error: --tool requires a value\n")
+				os.Exit(1)
+			}
+			tool = args[i+1]
+			i++
+		case "--namespace":
+			if i+1 >= len(args) {
+				fmt.Fprintf(os.Stderr, "Error: --namespace requires a value\n")
+				os.Exit(1)
+			}
+			namespace = args[i+1]
+			i++
+		case "--force":
+			force = true
+		case "--recursive":
+			recursive = true
+		case "--validate-only":
+			validateOnly = true
+		case "--include":
+			if i+1 >= len(args) {
+				fmt.Fprintf(os.Stderr, "Error: --include requires a value\n")
+				os.Exit(1)
+			}
+			include = append(include, args[i+1])
+			i++
+		case "--exclude":
+			if i+1 >= len(args) {
+				fmt.Fprintf(os.Stderr, "Error: --exclude requires a value\n")
+				os.Exit(1)
+			}
+			exclude = append(exclude, args[i+1])
+			i++
+		case "--fail-fast":
+			failFast = true
+		default:
+			if strings.HasPrefix(args[i], "--") {
+				fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", args[i])
+				os.Exit(1)
+			}
+			paths = append(paths, args[i])
+		}
+	}
+
+	// Validate required arguments
+	if len(paths) == 0 {
+		fmt.Fprintf(os.Stderr, "Error: at least one INPUT_PATH is required\n")
+		fmt.Fprintf(os.Stderr, "Run 'arm help compile' for usage.\n")
+		os.Exit(1)
+	}
+
+	// Determine output path
+	if !validateOnly {
+		if len(paths) < 2 {
+			fmt.Fprintf(os.Stderr, "Error: OUTPUT_PATH is required (or use --validate-only)\n")
+			fmt.Fprintf(os.Stderr, "Run 'arm help compile' for usage.\n")
+			os.Exit(1)
+		}
+		outputPath = paths[len(paths)-1]
+		paths = paths[:len(paths)-1]
+	}
+
+	// Create service and compile
+	svc := service.NewArmService(nil, nil, nil)
+	ctx := context.Background()
+
+	req := &service.CompileRequest{
+		Paths:        paths,
+		Tool:         tool,
+		OutputDir:    outputPath,
+		Namespace:    namespace,
+		Force:        force,
+		Recursive:    recursive,
+		ValidateOnly: validateOnly,
+		Include:      include,
+		Exclude:      exclude,
+		FailFast:     failFast,
+	}
+
+	if err := svc.CompileFiles(ctx, req); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if validateOnly {
+		fmt.Println("Validation successful")
+	} else {
+		fmt.Println("Compilation successful")
+	}
 }
