@@ -445,3 +445,36 @@
 ### 2026-01-21 06:34 - Progress on US-015
 - Completed: All tests passing (5 test cases), typecheck passing
 - Next: Commit changes
+
+
+## 2026-01-21 06:34 - Completed US-015
+- Implemented `arm list` command showing all registries, sinks, and dependencies grouped
+- Implemented `arm info` command showing detailed info for all entities
+- Updated handleList and handleInfo to call new handleListAll and handleInfoAll when no subcommand provided
+- Dependencies displayed with key (registry/package) and config details
+- Created comprehensive tests (5 test cases total)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/list_info_all_test.go, prd.json
+- **Learnings for future iterations:**
+  - Manifest version field is int, not string
+  - Dependency key format is "registry/package" - no separate registry/package fields in config
+  - BaseDependencyConfig has: Type, Version, Sinks, Include, Exclude
+  - RulesetDependencyConfig adds Priority field
+  - Same pattern for list/info: check args length, route to specific or all handler
+---
+
+## 2026-01-21 06:38 - Starting US-016
+- Story: Outdated check command
+- Plan: Implement `arm outdated` command with --output flag (table, json, list). Display packages with newer versions showing constraint, current, wanted, and latest versions. Default output is table format.
+---
+
+### 2026-01-21 06:38 - Progress on US-016
+- Completed: Implemented handleOutdated with --output flag support
+- Next: Create tests for outdated command
+
+### 2026-01-21 06:38 - Progress on US-016
+- Completed: Created tests for outdated command (7 test cases)
+- Next: Run tests and typecheck
+
+### 2026-01-21 06:38 - Progress on US-016
+- Completed: All tests passing (6 test cases), typecheck passing
+- Next: Commit changes

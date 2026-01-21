@@ -47,6 +47,8 @@ func main() {
 		handleUpdate()
 	case "upgrade":
 		handleUpgrade()
+	case "outdated":
+		handleOutdated()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
 		fmt.Fprintf(os.Stderr, "Run 'arm help' for usage.\n")
@@ -80,6 +82,7 @@ func printHelp() {
 	fmt.Println("  uninstall            Uninstall all packages")
 	fmt.Println("  update               Update packages within version constraints")
 	fmt.Println("  upgrade              Upgrade packages to latest versions")
+	fmt.Println("  outdated             Check for outdated dependencies")
 	fmt.Println()
 	fmt.Println("Run 'arm help <command>' for more information on a command.")
 }
@@ -191,6 +194,20 @@ func printCommandHelp(command string) {
 		fmt.Println("Upgrades all packages to the latest versions, ignoring version constraints.")
 		fmt.Println("Updates the manifest file with new major version constraints (^X.0.0).")
 		fmt.Println("Updates the lock file with new versions.")
+	case "outdated":
+		fmt.Println("Check for outdated dependencies")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  arm outdated [--output FORMAT]")
+		fmt.Println()
+		fmt.Println("Flags:")
+		fmt.Println("  --output       Output format: table (default), json, list")
+		fmt.Println()
+		fmt.Println("Displays packages with newer versions available, showing:")
+		fmt.Println("  - Constraint: version constraint from manifest")
+		fmt.Println("  - Current: currently installed version")
+		fmt.Println("  - Wanted: latest version satisfying constraint")
+		fmt.Println("  - Latest: latest available version")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
@@ -1503,4 +1520,161 @@ func handleUpgrade() {
 	}
 
 	fmt.Println("All packages upgraded successfully")
+}
+
+func handleOutdated() {
+	outputFormat := "table"
+
+	// Parse flags
+	i := 2
+	for i < len(os.Args) {
+		arg := os.Args[i]
+		if arg == "--output" {
+			if i+1 >= len(os.Args) {
+				fmt.Fprintf(os.Stderr, "--output requires a value\n")
+				os.Exit(1)
+			}
+			outputFormat = os.Args[i+1]
+			if outputFormat != "table" && outputFormat != "json" && outputFormat != "list" {
+				fmt.Fprintf(os.Stderr, "Invalid output format: %s (must be table, json, or list)\n", outputFormat)
+				os.Exit(1)
+			}
+			i += 2
+		} else {
+			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", arg)
+			os.Exit(1)
+		}
+	}
+
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm-manifest.json"
+	}
+
+	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(lockfilePath)
+
+	svc := service.NewArmService(manifestMgr, lockfileMgr, nil)
+	ctx := context.Background()
+
+	outdated, err := svc.ListOutdated(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if len(outdated) == 0 {
+		fmt.Println("All packages are up to date")
+		return
+	}
+
+	switch outputFormat {
+	case "json":
+		printOutdatedJSON(outdated)
+	case "list":
+		printOutdatedList(outdated)
+	default:
+		printOutdatedTable(outdated)
+	}
+}
+
+func printOutdatedTable(outdated []*service.OutdatedDependency) {
+	// Calculate column widths
+	maxPackage := len("Package")
+	maxConstraint := len("Constraint")
+	maxCurrent := len("Current")
+	maxWanted := len("Wanted")
+	maxLatest := len("Latest")
+
+	for _, dep := range outdated {
+		pkgName := dep.Current.RegistryName + "/" + dep.Current.Name
+		if len(pkgName) > maxPackage {
+			maxPackage = len(pkgName)
+		}
+		if len(dep.Constraint) > maxConstraint {
+			maxConstraint = len(dep.Constraint)
+		}
+		if len(dep.Current.Version.Version) > maxCurrent {
+			maxCurrent = len(dep.Current.Version.Version)
+		}
+		if len(dep.Wanted.Version.Version) > maxWanted {
+			maxWanted = len(dep.Wanted.Version.Version)
+		}
+		if len(dep.Latest.Version.Version) > maxLatest {
+			maxLatest = len(dep.Latest.Version.Version)
+		}
+	}
+
+	// Print header
+	fmt.Printf("%-*s  %-*s  %-*s  %-*s  %-*s\n",
+		maxPackage, "Package",
+		maxConstraint, "Constraint",
+		maxCurrent, "Current",
+		maxWanted, "Wanted",
+		maxLatest, "Latest")
+
+	// Print separator
+	for i := 0; i < maxPackage; i++ {
+		fmt.Print("-")
+	}
+	fmt.Print("  ")
+	for i := 0; i < maxConstraint; i++ {
+		fmt.Print("-")
+	}
+	fmt.Print("  ")
+	for i := 0; i < maxCurrent; i++ {
+		fmt.Print("-")
+	}
+	fmt.Print("  ")
+	for i := 0; i < maxWanted; i++ {
+		fmt.Print("-")
+	}
+	fmt.Print("  ")
+	for i := 0; i < maxLatest; i++ {
+		fmt.Print("-")
+	}
+	fmt.Println()
+
+	// Print rows
+	for _, dep := range outdated {
+		pkgName := dep.Current.RegistryName + "/" + dep.Current.Name
+		fmt.Printf("%-*s  %-*s  %-*s  %-*s  %-*s\n",
+			maxPackage, pkgName,
+			maxConstraint, dep.Constraint,
+			maxCurrent, dep.Current.Version.Version,
+			maxWanted, dep.Wanted.Version.Version,
+			maxLatest, dep.Latest.Version.Version)
+	}
+}
+
+func printOutdatedJSON(outdated []*service.OutdatedDependency) {
+	fmt.Println("[")
+	for i, dep := range outdated {
+		pkgName := dep.Current.RegistryName + "/" + dep.Current.Name
+		fmt.Printf("  {\n")
+		fmt.Printf("    \"package\": \"%s\",\n", pkgName)
+		fmt.Printf("    \"constraint\": \"%s\",\n", dep.Constraint)
+		fmt.Printf("    \"current\": \"%s\",\n", dep.Current.Version.Version)
+		fmt.Printf("    \"wanted\": \"%s\",\n", dep.Wanted.Version.Version)
+		fmt.Printf("    \"latest\": \"%s\"\n", dep.Latest.Version.Version)
+		if i < len(outdated)-1 {
+			fmt.Printf("  },\n")
+		} else {
+			fmt.Printf("  }\n")
+		}
+	}
+	fmt.Println("]")
+}
+
+func printOutdatedList(outdated []*service.OutdatedDependency) {
+	for _, dep := range outdated {
+		pkgName := dep.Current.RegistryName + "/" + dep.Current.Name
+		fmt.Printf("%s: %s -> %s (latest: %s)\n",
+			pkgName,
+			dep.Current.Version.Version,
+			dep.Wanted.Version.Version,
+			dep.Latest.Version.Version)
+	}
 }
