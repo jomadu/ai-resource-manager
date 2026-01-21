@@ -43,6 +43,8 @@ func main() {
 		handleInstall()
 	case "uninstall":
 		handleUninstall()
+	case "update":
+		handleUpdate()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
 		fmt.Fprintf(os.Stderr, "Run 'arm help' for usage.\n")
@@ -74,6 +76,7 @@ func printHelp() {
 	fmt.Println("  info                 Show detailed information")
 	fmt.Println("  install              Install rulesets or promptsets")
 	fmt.Println("  uninstall            Uninstall all packages")
+	fmt.Println("  update               Update packages within version constraints")
 	fmt.Println()
 	fmt.Println("Run 'arm help <command>' for more information on a command.")
 }
@@ -168,6 +171,14 @@ func printCommandHelp(command string) {
 		fmt.Println("  arm uninstall")
 		fmt.Println()
 		fmt.Println("Removes all installed packages from sinks and clears dependency configuration.")
+	case "update":
+		fmt.Println("Update packages within version constraints")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  arm update")
+		fmt.Println()
+		fmt.Println("Updates all packages to the latest versions that satisfy the version constraints")
+		fmt.Println("specified in the manifest file. Updates the lock file with new versions.")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
@@ -1242,4 +1253,26 @@ func handleUninstall() {
 	}
 
 	fmt.Println("All packages uninstalled successfully")
+}
+
+func handleUpdate() {
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm-manifest.json"
+	}
+
+	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(lockfilePath)
+
+	svc := service.NewArmService(manifestMgr, lockfileMgr, nil)
+	ctx := context.Background()
+
+	if err := svc.UpdateAll(ctx); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("All packages updated successfully")
 }
