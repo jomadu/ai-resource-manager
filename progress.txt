@@ -513,3 +513,37 @@
 ### 2026-01-21 06:43 - Progress on US-017
 - Completed: All tests passing (16 test cases), typecheck passing
 - Next: Commit changes
+
+
+## 2026-01-21 06:43 - Completed US-017
+- Implemented `arm set ruleset REGISTRY/RULESET KEY VALUE` command
+- Implemented `arm set promptset REGISTRY/PROMPTSET KEY VALUE` command (US-018 completed together)
+- Ruleset supports keys: version, priority, sinks, include, exclude
+- Promptset supports keys: version, sinks, include, exclude (no priority)
+- Sinks, include, exclude accept comma-separated values
+- Priority must be integer value
+- Created comprehensive tests (16 test cases total: 9 for ruleset, 7 for promptset)
+- Files changed: cmd/v4/arm/main.go, cmd/v4/arm/set_ruleset_test.go, prd.json
+- **Learnings for future iterations:**
+  - Variable shadowing issue: avoid using `registry` as variable name when `registry` package is imported
+  - Use `registryName` instead to avoid shadowing the package name
+  - Service layer has separate methods for each key: SetRulesetVersion, SetRulesetPriority, SetRulesetSinks, etc.
+  - Comma-separated values parsed with strings.Split(value, ",")
+  - Priority parsing uses fmt.Sscanf for integer conversion
+  - Both ruleset and promptset follow same pattern, just different supported keys
+---
+
+## 2026-01-21 06:45 - Starting US-019
+- Story: Clean cache command
+- Plan: Implement `arm clean cache` with --max-age (default 7d) and --nuke flags. Parse duration, validate mutual exclusivity, call service layer CleanCache method.
+---
+
+
+### 2026-01-21 06:45 - Progress on US-019
+- Completed: Implemented handleClean and handleCleanCache functions
+- Next: Create tests for clean cache command
+
+
+### 2026-01-21 06:46 - Progress on US-019
+- Completed: All tests passing (9 test cases), typecheck passing
+- Next: Commit changes

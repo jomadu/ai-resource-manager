@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/jomadu/ai-resource-manager/internal/v4/compiler"
 	"github.com/jomadu/ai-resource-manager/internal/v4/core"
@@ -49,6 +50,8 @@ func main() {
 		handleUpgrade()
 	case "outdated":
 		handleOutdated()
+	case "clean":
+		handleClean()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
 		fmt.Fprintf(os.Stderr, "Run 'arm help' for usage.\n")
@@ -83,6 +86,7 @@ func printHelp() {
 	fmt.Println("  update               Update packages within version constraints")
 	fmt.Println("  upgrade              Upgrade packages to latest versions")
 	fmt.Println("  outdated             Check for outdated dependencies")
+	fmt.Println("  clean                Clean cache or sinks")
 	fmt.Println()
 	fmt.Println("Run 'arm help <command>' for more information on a command.")
 }
@@ -208,6 +212,18 @@ func printCommandHelp(command string) {
 		fmt.Println("  - Current: currently installed version")
 		fmt.Println("  - Wanted: latest version satisfying constraint")
 		fmt.Println("  - Latest: latest available version")
+	case "clean":
+		fmt.Println("Clean cache or sinks")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  arm clean cache [--max-age DURATION] [--nuke]")
+		fmt.Println()
+		fmt.Println("Flags:")
+		fmt.Println("  --max-age      Remove cache older than duration (default: 7d)")
+		fmt.Println("                 Examples: 30m, 2h, 7d, 1h30m")
+		fmt.Println("  --nuke         Remove all cache (mutually exclusive with --max-age)")
+		fmt.Println()
+		fmt.Println("Removes cached data to free up space.")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
@@ -1801,4 +1817,95 @@ func printOutdatedList(outdated []*service.OutdatedDependency) {
 			dep.Wanted.Version.Version,
 			dep.Latest.Version.Version)
 	}
+}
+
+func handleClean() {
+	if len(os.Args) < 3 {
+		fmt.Fprintf(os.Stderr, "Error: clean requires a subcommand (cache)\n")
+		fmt.Fprintf(os.Stderr, "Run 'arm help clean' for usage.\n")
+		os.Exit(1)
+	}
+
+	switch os.Args[2] {
+	case "cache":
+		handleCleanCache()
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown clean subcommand: %s\n", os.Args[2])
+		fmt.Fprintf(os.Stderr, "Run 'arm help clean' for usage.\n")
+		os.Exit(1)
+	}
+}
+
+func handleCleanCache() {
+	var maxAge string
+	var nuke bool
+
+	// Parse flags
+	args := os.Args[3:]
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--max-age":
+			if i+1 >= len(args) {
+				fmt.Fprintf(os.Stderr, "Error: --max-age requires a value\n")
+				os.Exit(1)
+			}
+			maxAge = args[i+1]
+			i++
+		case "--nuke":
+			nuke = true
+		default:
+			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", args[i])
+			os.Exit(1)
+		}
+	}
+
+	// Validate mutual exclusivity
+	if maxAge != "" && nuke {
+		fmt.Fprintf(os.Stderr, "Error: --max-age and --nuke are mutually exclusive\n")
+		os.Exit(1)
+	}
+
+	// Default max-age to 7d
+	if maxAge == "" && !nuke {
+		maxAge = "7d"
+	}
+
+	svc := service.NewArmService(nil, nil, nil)
+	ctx := context.Background()
+
+	if nuke {
+		if err := svc.NukeCache(ctx); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Cache nuked successfully")
+		return
+	}
+
+	// Parse duration
+	duration, err := parseDuration(maxAge)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: invalid duration format: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := svc.CleanCacheByAge(ctx, duration); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Cache cleaned (removed items older than %s)\n", maxAge)
+}
+
+func parseDuration(s string) (time.Duration, error) {
+	// Support simple formats: 30m, 2h, 7d, 1h30m
+	// Convert days to hours since time.ParseDuration doesn't support days
+	if strings.HasSuffix(s, "d") {
+		days := strings.TrimSuffix(s, "d")
+		var d int
+		if _, err := fmt.Sscanf(days, "%d", &d); err != nil {
+			return 0, fmt.Errorf("invalid duration: %s", s)
+		}
+		return time.Duration(d) * 24 * time.Hour, nil
+	}
+	return time.ParseDuration(s)
 }
