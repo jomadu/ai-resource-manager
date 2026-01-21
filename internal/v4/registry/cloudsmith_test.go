@@ -2,10 +2,14 @@ package registry
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/jomadu/ai-resource-manager/internal/v4/core"
 )
 
 func TestCloudsmithRegistry_loadToken(t *testing.T) {
@@ -420,5 +424,201 @@ func TestCloudsmithRegistry_ResolveVersion(t *testing.T) {
 				t.Errorf("version = %s, want %s", version.Version, tt.wantVersion)
 			}
 		})
+	}
+}
+
+func TestCloudsmithRegistry_GetContent(t *testing.T) {
+	var serverURL string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "/v1/packages/") {
+			packages := []map[string]interface{}{
+				{
+					"name":     "test-package",
+					"version":  "1.0.0",
+					"format":   "raw",
+					"filename": "test-file.txt",
+					"cdn_url":  serverURL + "/download/test-file.txt",
+					"size":     11,
+				},
+			}
+			json.NewEncoder(w).Encode(packages)
+		} else if strings.Contains(r.URL.Path, "/download/") {
+			w.Write([]byte("test content"))
+		}
+	}))
+	defer server.Close()
+	serverURL = server.URL
+
+	configMgr := &mockConfigManager{
+		sections: map[string]map[string]string{
+			"registry " + server.URL + "/testowner/testrepo": {
+				"token": "test-token",
+			},
+		},
+	}
+
+	registry, err := NewCloudsmithRegistry("test", CloudsmithRegistryConfig{
+		RegistryConfig: RegistryConfig{
+			Type: "cloudsmith",
+			URL:  server.URL,
+		},
+		Owner:      "testowner",
+		Repository: "testrepo",
+	}, configMgr)
+	if err != nil {
+		t.Fatalf("Failed to create registry: %v", err)
+	}
+
+	version, _ := core.NewVersion("1.0.0")
+	pkg, err := registry.GetContent(context.Background(), "test-package", version, nil, nil)
+	if err != nil {
+		t.Fatalf("GetContent failed: %v", err)
+	}
+
+	if pkg.Metadata.Name != "test-package" {
+		t.Errorf("Expected package name test-package, got %s", pkg.Metadata.Name)
+	}
+
+	if len(pkg.Files) != 1 {
+		t.Fatalf("Expected 1 file, got %d", len(pkg.Files))
+	}
+
+	if pkg.Files[0].Path != "test-file.txt" {
+		t.Errorf("Expected file path test-file.txt, got %s", pkg.Files[0].Path)
+	}
+
+	if string(pkg.Files[0].Content) != "test content" {
+		t.Errorf("Expected content 'test content', got '%s'", string(pkg.Files[0].Content))
+	}
+}
+
+func TestCloudsmithRegistry_GetContent_WithIncludeExclude(t *testing.T) {
+	var serverURL string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "/v1/packages/") {
+			packages := []map[string]interface{}{
+				{
+					"name":     "test-package",
+					"version":  "1.0.0",
+					"format":   "raw",
+					"filename": "file1.txt",
+					"cdn_url":  serverURL + "/download/file1.txt",
+					"size":     5,
+				},
+				{
+					"name":     "test-package",
+					"version":  "1.0.0",
+					"format":   "raw",
+					"filename": "file2.md",
+					"cdn_url":  serverURL + "/download/file2.md",
+					"size":     5,
+				},
+			}
+			json.NewEncoder(w).Encode(packages)
+		} else if strings.Contains(r.URL.Path, "/download/file1.txt") {
+			w.Write([]byte("file1"))
+		} else if strings.Contains(r.URL.Path, "/download/file2.md") {
+			w.Write([]byte("file2"))
+		}
+	}))
+	defer server.Close()
+	serverURL = server.URL
+
+	configMgr := &mockConfigManager{
+		sections: map[string]map[string]string{
+			"registry " + server.URL + "/testowner/testrepo": {
+				"token": "test-token",
+			},
+		},
+	}
+
+	registry, err := NewCloudsmithRegistry("test", CloudsmithRegistryConfig{
+		RegistryConfig: RegistryConfig{
+			Type: "cloudsmith",
+			URL:  server.URL,
+		},
+		Owner:      "testowner",
+		Repository: "testrepo",
+	}, configMgr)
+	if err != nil {
+		t.Fatalf("Failed to create registry: %v", err)
+	}
+
+	version, _ := core.NewVersion("1.0.0")
+	pkg, err := registry.GetContent(context.Background(), "test-package", version, []string{"*.txt"}, nil)
+	if err != nil {
+		t.Fatalf("GetContent failed: %v", err)
+	}
+
+	if len(pkg.Files) != 1 {
+		t.Fatalf("Expected 1 file after filtering, got %d", len(pkg.Files))
+	}
+
+	if pkg.Files[0].Path != "file1.txt" {
+		t.Errorf("Expected file1.txt, got %s", pkg.Files[0].Path)
+	}
+}
+
+func TestCloudsmithRegistry_GetContent_Cache(t *testing.T) {
+	callCount := 0
+	var serverURL string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		if strings.Contains(r.URL.Path, "/v1/packages/") {
+			packages := []map[string]interface{}{
+				{
+					"name":     "test-package",
+					"version":  "1.0.0",
+					"format":   "raw",
+					"filename": "test-file.txt",
+					"cdn_url":  serverURL + "/download/test-file.txt",
+					"size":     11,
+				},
+			}
+			json.NewEncoder(w).Encode(packages)
+		} else if strings.Contains(r.URL.Path, "/download/") {
+			w.Write([]byte("test content"))
+		}
+	}))
+	defer server.Close()
+	serverURL = server.URL
+
+	configMgr := &mockConfigManager{
+		sections: map[string]map[string]string{
+			"registry " + server.URL + "/testowner/testrepo": {
+				"token": "test-token",
+			},
+		},
+	}
+
+	registry, err := NewCloudsmithRegistry("test", CloudsmithRegistryConfig{
+		RegistryConfig: RegistryConfig{
+			Type: "cloudsmith",
+			URL:  server.URL,
+		},
+		Owner:      "testowner",
+		Repository: "testrepo",
+	}, configMgr)
+	if err != nil {
+		t.Fatalf("Failed to create registry: %v", err)
+	}
+
+	version, _ := core.NewVersion("1.0.0")
+	
+	// First call - should hit server
+	_, err = registry.GetContent(context.Background(), "test-package", version, nil, nil)
+	if err != nil {
+		t.Fatalf("GetContent failed: %v", err)
+	}
+	firstCallCount := callCount
+
+	// Second call - should use cache
+	_, err = registry.GetContent(context.Background(), "test-package", version, nil, nil)
+	if err != nil {
+		t.Fatalf("GetContent failed on second call: %v", err)
+	}
+
+	if callCount != firstCallCount {
+		t.Errorf("Expected cache hit, but server was called again")
 	}
 }

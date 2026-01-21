@@ -117,3 +117,31 @@
 ### 07:39 - Progress on US-006
 - Completed: Added tests for ResolveVersion method
 - Next: Run tests
+
+## 2026-01-21 07:39 - Completed US-006
+- What was implemented: ResolveVersion method for CloudsmithRegistry using v4's core.ResolveVersion
+- Files changed:
+  - internal/v4/registry/cloudsmith.go (added ResolveVersion method)
+  - internal/v4/registry/cloudsmith_test.go (added tests for ResolveVersion)
+- **Learnings for future iterations:**
+  - v4 uses core.ResolveVersion(constraint, versions) instead of v3's resolver.FindBestMatch pattern
+  - ResolveVersion returns core.Version directly, not a ResolvedVersion struct
+  - core.ResolveVersion handles all constraint parsing and matching internally
+---
+
+## 2026-01-21 07:42 - Starting US-007
+- Story: Implement GetContent method
+- Plan: Add GetContent method checking cache first, download from cdn_url, extract archives, apply selector patterns, cache result
+---
+
+### 07:43 - Progress on US-007
+- Completed: Added GetContent method with download, extraction, filtering, and caching
+- Next: Run typecheck
+
+### 07:44 - Progress on US-007
+- Completed: Added tests for GetContent method
+- Next: Run tests
+
+### 07:45 - Progress on US-007
+- Completed: All tests pass
+- Next: Commit story
