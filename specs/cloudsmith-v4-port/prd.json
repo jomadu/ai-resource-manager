@@ -1,6 +1,6 @@
 {
   "project": "AI Resource Manager",
-  "branchName": "ralph/cloudsmith-v4-port",
+  "branchName": "no-pterm",
   "description": "Port v3 Cloudsmith registry implementation to v4 architecture with feature parity for install, update, list, and version resolution",
   "userStories": [
     {

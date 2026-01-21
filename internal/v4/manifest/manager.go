@@ -50,6 +50,13 @@ type CloudsmithRegistryConfig struct {
 	Repository string `json:"repository"`
 }
 
+func (c CloudsmithRegistryConfig) GetBaseURL() string {
+	if c.URL == "" {
+		return "https://api.cloudsmith.io"
+	}
+	return c.URL
+}
+
 // Manager interface for service layer
 type Manager interface {
 	// Registry operations
