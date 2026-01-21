@@ -1001,6 +1001,141 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 }
 
 func (s *ArmService) UpgradePackages(ctx context.Context, packages []string) error {
+	allSinks, err := s.manifestMgr.GetAllSinksConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	lockFile, err := s.lockfileMgr.GetLockFile(ctx)
+	if err != nil {
+		return err
+	}
+
+	successCount := 0
+	var lastErr error
+
+	for _, pkg := range packages {
+		registryName, packageName := manifest.ParseDependencyKey(pkg)
+		if registryName == "" || packageName == "" {
+			fmt.Fprintf(os.Stderr, "Warning: invalid package format '%s', expected registry/package\n", pkg)
+			lastErr = fmt.Errorf("invalid package format: %s", pkg)
+			continue
+		}
+
+		rulesetConfig, rulesetErr := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
+		promptsetConfig, promptsetErr := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
+
+		if rulesetErr != nil && promptsetErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: package not found '%s'\n", pkg)
+			lastErr = fmt.Errorf("package not found: %s", pkg)
+			continue
+		}
+
+		if rulesetErr == nil {
+			oldVersion := s.getOldVersionFromLock(lockFile, pkg)
+			newVersion, fetchedPkg, err := s.fetchLatest(ctx, registryName, packageName, rulesetConfig.Include, rulesetConfig.Exclude)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to upgrade '%s': %v\n", pkg, err)
+				lastErr = err
+				continue
+			}
+
+			if oldVersion == newVersion {
+				successCount++
+				continue
+			}
+
+			if oldVersion != "" {
+				if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+					lastErr = err
+					continue
+				}
+				if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+					lastErr = err
+					continue
+				}
+			}
+
+			for _, sinkName := range rulesetConfig.Sinks {
+				sinkConfig := allSinks[sinkName]
+				sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+				if err := sinkMgr.InstallRuleset(fetchedPkg, rulesetConfig.Priority); err != nil {
+					lastErr = err
+					continue
+				}
+			}
+
+			if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, newVersion, &packagelockfile.DependencyLockConfig{
+				Integrity: fetchedPkg.Integrity,
+			}); err != nil {
+				lastErr = err
+				continue
+			}
+
+			newConstraint := fmt.Sprintf("^%d.0.0", fetchedPkg.Metadata.Version.Major)
+			rulesetConfig.Version = newConstraint
+			if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, packageName, *rulesetConfig); err != nil {
+				lastErr = err
+				continue
+			}
+
+			successCount++
+		} else if promptsetErr == nil {
+			oldVersion := s.getOldVersionFromLock(lockFile, pkg)
+			newVersion, fetchedPkg, err := s.fetchLatest(ctx, registryName, packageName, promptsetConfig.Include, promptsetConfig.Exclude)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to upgrade '%s': %v\n", pkg, err)
+				lastErr = err
+				continue
+			}
+
+			if oldVersion == newVersion {
+				successCount++
+				continue
+			}
+
+			if oldVersion != "" {
+				if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+					lastErr = err
+					continue
+				}
+				if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+					lastErr = err
+					continue
+				}
+			}
+
+			for _, sinkName := range promptsetConfig.Sinks {
+				sinkConfig := allSinks[sinkName]
+				sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+				if err := sinkMgr.InstallPromptset(fetchedPkg); err != nil {
+					lastErr = err
+					continue
+				}
+			}
+
+			if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, newVersion, &packagelockfile.DependencyLockConfig{
+				Integrity: fetchedPkg.Integrity,
+			}); err != nil {
+				lastErr = err
+				continue
+			}
+
+			newConstraint := fmt.Sprintf("^%d.0.0", fetchedPkg.Metadata.Version.Major)
+			promptsetConfig.Version = newConstraint
+			if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registryName, packageName, *promptsetConfig); err != nil {
+				lastErr = err
+				continue
+			}
+
+			successCount++
+		}
+	}
+
+	if successCount == 0 && lastErr != nil {
+		return lastErr
+	}
+
 	return nil
 }
 
