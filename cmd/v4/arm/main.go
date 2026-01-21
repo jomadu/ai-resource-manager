@@ -30,6 +30,10 @@ func main() {
 		}
 	case "add":
 		handleAdd()
+	case "remove":
+		handleRemove()
+	case "set":
+		handleSet()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", os.Args[1])
 		fmt.Fprintf(os.Stderr, "Run 'arm help' for usage.\n")
@@ -55,6 +59,8 @@ func printHelp() {
 	fmt.Println("  version              Display version information")
 	fmt.Println("  help [command]       Display help for a command")
 	fmt.Println("  add                  Add registries or sinks")
+	fmt.Println("  remove               Remove registries or sinks")
+	fmt.Println("  set                  Configure registries or sinks")
 	fmt.Println()
 	fmt.Println("Run 'arm help <command>' for more information on a command.")
 }
@@ -89,6 +95,25 @@ func printCommandHelp(command string) {
 		fmt.Println("  --owner        Cloudsmith owner (cloudsmith only, required)")
 		fmt.Println("  --repo         Cloudsmith repository (cloudsmith only, required)")
 		fmt.Println("  --force        Overwrite existing registry")
+	case "remove":
+		fmt.Println("Remove registries or sinks")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  arm remove registry NAME")
+		fmt.Println()
+		fmt.Println("Removes the specified registry from the configuration.")
+	case "set":
+		fmt.Println("Configure registries or sinks")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  arm set registry NAME KEY VALUE")
+		fmt.Println()
+		fmt.Println("Supported keys:")
+		fmt.Println("  name           Rename the registry")
+		fmt.Println("  url            Update the registry URL")
+		fmt.Println()
+		fmt.Println("Example:")
+		fmt.Println("  arm set registry my-registry url https://github.com/new/repo")
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
@@ -356,3 +381,103 @@ func handleAddCloudsmithRegistry() {
 	fmt.Printf("Added cloudsmith registry '%s'\n", name)
 }
 
+
+func handleRemove() {
+	if len(os.Args) < 3 {
+		fmt.Fprintf(os.Stderr, "Usage: arm remove <registry|sink> ...\n")
+		os.Exit(1)
+	}
+
+	switch os.Args[2] {
+	case "registry":
+		handleRemoveRegistry()
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown remove target: %s\n", os.Args[2])
+		os.Exit(1)
+	}
+}
+
+func handleRemoveRegistry() {
+	if len(os.Args) < 4 {
+		fmt.Fprintf(os.Stderr, "Usage: arm remove registry NAME\n")
+		os.Exit(1)
+	}
+
+	name := os.Args[3]
+
+	// Get manifest path from env or use default
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+	if err := svc.RemoveRegistry(ctx, name); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Removed registry '%s'\n", name)
+}
+
+func handleSet() {
+	if len(os.Args) < 3 {
+		fmt.Fprintf(os.Stderr, "Usage: arm set <registry|sink> ...\n")
+		os.Exit(1)
+	}
+
+	switch os.Args[2] {
+	case "registry":
+		handleSetRegistry()
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown set target: %s\n", os.Args[2])
+		os.Exit(1)
+	}
+}
+
+func handleSetRegistry() {
+	if len(os.Args) < 6 {
+		fmt.Fprintf(os.Stderr, "Usage: arm set registry NAME KEY VALUE\n")
+		os.Exit(1)
+	}
+
+	name := os.Args[3]
+	key := os.Args[4]
+	value := os.Args[5]
+
+	// Get manifest path from env or use default
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManager()
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+	var err error
+
+	switch key {
+	case "name":
+		err = svc.SetRegistryName(ctx, name, value)
+	case "url":
+		err = svc.SetRegistryURL(ctx, name, value)
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown key: %s (valid: name, url)\n", key)
+		os.Exit(1)
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Updated registry '%s' %s\n", name, key)
+}
