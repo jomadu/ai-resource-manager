@@ -941,6 +941,8 @@ func handleInstall() {
 	switch os.Args[2] {
 	case "ruleset":
 		handleInstallRuleset()
+	case "promptset":
+		handleInstallPromptset()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown install target: %s\n", os.Args[2])
 		os.Exit(1)
@@ -1042,6 +1044,95 @@ func handleInstallRuleset() {
 	}
 
 	fmt.Printf("Installed %s/%s to sinks: %s\n", registryName, ruleset, strings.Join(sinks, ", "))
+}
+
+func handleInstallPromptset() {
+	var include []string
+	var exclude []string
+	var packageSpec string
+	var sinks []string
+
+	// Parse flags and positional args
+	i := 3
+	for i < len(os.Args) {
+		arg := os.Args[i]
+		if arg == "--include" {
+			if i+1 >= len(os.Args) {
+				fmt.Fprintf(os.Stderr, "--include requires a value\n")
+				os.Exit(1)
+			}
+			include = append(include, os.Args[i+1])
+			i += 2
+		} else if arg == "--exclude" {
+			if i+1 >= len(os.Args) {
+				fmt.Fprintf(os.Stderr, "--exclude requires a value\n")
+				os.Exit(1)
+			}
+			exclude = append(exclude, os.Args[i+1])
+			i += 2
+		} else if !strings.HasPrefix(arg, "--") {
+			if packageSpec == "" {
+				packageSpec = arg
+			} else {
+				sinks = append(sinks, arg)
+			}
+			i++
+		} else {
+			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", arg)
+			os.Exit(1)
+		}
+	}
+
+	if packageSpec == "" {
+		fmt.Fprintf(os.Stderr, "Package spec required (REGISTRY/PROMPTSET[@VERSION])\n")
+		os.Exit(1)
+	}
+
+	if len(sinks) == 0 {
+		fmt.Fprintf(os.Stderr, "At least one sink required\n")
+		os.Exit(1)
+	}
+
+	// Parse package spec
+	registryName, err := parseRegistry(packageSpec)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	promptset, err := parsePackage(packageSpec)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	version, err := parseVersion(packageSpec)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Initialize service
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm-manifest.json"
+	}
+
+	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(lockfilePath)
+
+	svc := service.NewArmService(manifestMgr, lockfileMgr, nil)
+	ctx := context.Background()
+
+	// Call service
+	if err := svc.InstallPromptset(ctx, registryName, promptset, version, include, exclude, sinks); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Installed %s/%s to sinks: %s\n", registryName, promptset, strings.Join(sinks, ", "))
 }
 
 func parseRegistry(input string) (string, error) {

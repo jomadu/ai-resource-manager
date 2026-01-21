@@ -307,3 +307,16 @@
   - Tests focus on CLI validation, not full integration (avoid git operations in tests)
   - Parse helper functions: parseRegistry, parsePackage, parseVersion
 ---
+
+## 2026-01-21 06:22 - Starting US-011
+- Story: Install promptset command
+- Plan: Implement `arm install promptset REGISTRY/PROMPTSET[@VERSION] SINK...` with --include, --exclude flags. Follow same pattern as install ruleset but without --priority flag. Parse package spec, validate sinks, call service layer InstallPromptset.
+---
+
+### 2026-01-21 06:22 - Progress on US-011
+- Completed: Implemented handleInstallPromptset function and wired it up
+- Next: Create tests for install promptset command
+
+### 2026-01-21 06:22 - Progress on US-011
+- Completed: All tests passing (6 test cases), typecheck passing
+- Next: Commit changes
