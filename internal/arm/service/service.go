@@ -517,83 +517,73 @@ func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) e
 			continue
 		}
 
-		rulesetConfig, rulesetErr := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
-		promptsetConfig, promptsetErr := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
-
-		if rulesetErr != nil && promptsetErr != nil {
+		depConfig, err := s.manifestMgr.GetDependencyConfig(ctx, registryName, packageName)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: package not found '%s'\n", pkg)
 			lastErr = fmt.Errorf("package not found: %s", pkg)
+			continue
+		}
+
+		depType, ok := depConfig["type"].(string)
+		if !ok {
+			fmt.Fprintf(os.Stderr, "Warning: invalid package type for '%s'\n", pkg)
+			lastErr = fmt.Errorf("invalid package type: %s", pkg)
 			continue
 		}
 
 		var sinks []string
 		var version string
 
-		if rulesetErr == nil {
+		if depType == "ruleset" {
+			rulesetConfig, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
+			if err != nil {
+				lastErr = err
+				continue
+			}
 			sinks = rulesetConfig.Sinks
 			version = rulesetConfig.Version
-
-			for _, sinkName := range sinks {
-				sinkConfig, exists := allSinks[sinkName]
-				if !exists {
-					continue
-				}
-
-				sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-				if err := sinkMgr.Uninstall(core.PackageMetadata{
-					RegistryName: registryName,
-					Name:         packageName,
-					Version:      core.Version{Version: version},
-				}); err != nil {
-					lastErr = err
-					continue
-				}
-			}
-
-			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, version); err != nil {
+		} else if depType == "promptset" {
+			promptsetConfig, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
+			if err != nil {
 				lastErr = err
 				continue
 			}
-
-			if err := s.manifestMgr.RemoveDependencyConfig(ctx, registryName, packageName); err != nil {
-				lastErr = err
-				continue
-			}
-
-			successCount++
-		} else if promptsetErr == nil {
 			sinks = promptsetConfig.Sinks
 			version = promptsetConfig.Version
+		} else {
+			fmt.Fprintf(os.Stderr, "Warning: unknown package type '%s' for '%s'\n", depType, pkg)
+			lastErr = fmt.Errorf("unknown package type: %s", depType)
+			continue
+		}
 
-			for _, sinkName := range sinks {
-				sinkConfig, exists := allSinks[sinkName]
-				if !exists {
-					continue
-				}
-
-				sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-				if err := sinkMgr.Uninstall(core.PackageMetadata{
-					RegistryName: registryName,
-					Name:         packageName,
-					Version:      core.Version{Version: version},
-				}); err != nil {
-					lastErr = err
-					continue
-				}
+		for _, sinkName := range sinks {
+			sinkConfig, exists := allSinks[sinkName]
+			if !exists {
+				continue
 			}
 
-			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, version); err != nil {
+			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+			if err := sinkMgr.Uninstall(core.PackageMetadata{
+				RegistryName: registryName,
+				Name:         packageName,
+				Version:      core.Version{Version: version},
+			}); err != nil {
+				lastErr = err
+				continue
+			}
+		}
+
+		if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, version); err != nil {
 				lastErr = err
 				continue
 			}
 
-			if err := s.manifestMgr.RemoveDependencyConfig(ctx, registryName, packageName); err != nil {
+		if err := s.manifestMgr.RemoveDependencyConfig(ctx, registryName, packageName); err != nil {
 				lastErr = err
 				continue
 			}
 
 			successCount++
-		}
 	}
 
 	if successCount == 0 && lastErr != nil {
@@ -626,100 +616,101 @@ func (s *ArmService) UpdatePackages(ctx context.Context, packages []string) erro
 			continue
 		}
 
-		rulesetConfig, rulesetErr := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
-		promptsetConfig, promptsetErr := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
-
-		if rulesetErr != nil && promptsetErr != nil {
+		depConfig, err := s.manifestMgr.GetDependencyConfig(ctx, registryName, packageName)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: package not found '%s'\n", pkg)
 			lastErr = fmt.Errorf("package not found: %s", pkg)
 			continue
 		}
 
-		if rulesetErr == nil {
-			oldVersion := s.getOldVersionFromLock(lockFile, pkg)
-			newVersion, fetchedPkg, err := s.resolveAndFetchUpdate(ctx, registryName, packageName, rulesetConfig.Version, rulesetConfig.Include, rulesetConfig.Exclude)
+		depType, ok := depConfig["type"].(string)
+		if !ok {
+			fmt.Fprintf(os.Stderr, "Warning: invalid package type for '%s'\n", pkg)
+			lastErr = fmt.Errorf("invalid package type: %s", pkg)
+			continue
+		}
+
+		var sinks []string
+		var version string
+		var include []string
+		var exclude []string
+		var priority int
+
+		if depType == "ruleset" {
+			rulesetConfig, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: failed to update '%s': %v\n", pkg, err)
 				lastErr = err
 				continue
 			}
-
-			if oldVersion == newVersion {
-				successCount++
-				continue
-			}
-
-			if oldVersion != "" {
-				if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
-					lastErr = err
-					continue
-				}
-				if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
-					lastErr = err
-					continue
-				}
-			}
-
-			for _, sinkName := range rulesetConfig.Sinks {
-				sinkConfig := allSinks[sinkName]
-				sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-				if err := sinkMgr.InstallRuleset(fetchedPkg, rulesetConfig.Priority); err != nil {
-					lastErr = err
-					continue
-				}
-			}
-
-			if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, newVersion, &packagelockfile.DependencyLockConfig{
-				Integrity: fetchedPkg.Integrity,
-			}); err != nil {
+			sinks = rulesetConfig.Sinks
+			version = rulesetConfig.Version
+			include = rulesetConfig.Include
+			exclude = rulesetConfig.Exclude
+			priority = rulesetConfig.Priority
+		} else if depType == "promptset" {
+			promptsetConfig, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
+			if err != nil {
 				lastErr = err
 				continue
 			}
+			sinks = promptsetConfig.Sinks
+			version = promptsetConfig.Version
+			include = promptsetConfig.Include
+			exclude = promptsetConfig.Exclude
+		} else {
+			fmt.Fprintf(os.Stderr, "Warning: unknown package type '%s' for '%s'\n", depType, pkg)
+			lastErr = fmt.Errorf("unknown package type: %s", depType)
+			continue
+		}
 
+		oldVersion := s.getOldVersionFromLock(lockFile, pkg)
+		newVersion, fetchedPkg, err := s.resolveAndFetchUpdate(ctx, registryName, packageName, version, include, exclude)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to update '%s': %v\n", pkg, err)
+			lastErr = err
+			continue
+		}
+
+		if oldVersion == newVersion {
 			successCount++
-		} else if promptsetErr == nil {
-			oldVersion := s.getOldVersionFromLock(lockFile, pkg)
-			newVersion, fetchedPkg, err := s.resolveAndFetchUpdate(ctx, registryName, packageName, promptsetConfig.Version, promptsetConfig.Include, promptsetConfig.Exclude)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: failed to update '%s': %v\n", pkg, err)
+			continue
+		}
+
+		if oldVersion != "" {
+			if err := s.uninstallFromSinks(sinks, allSinks, registryName, packageName, oldVersion); err != nil {
 				lastErr = err
 				continue
 			}
-
-			if oldVersion == newVersion {
-				successCount++
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+				lastErr = err
 				continue
 			}
+		}
 
-			if oldVersion != "" {
-				if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+		for _, sinkName := range sinks {
+			sinkConfig := allSinks[sinkName]
+			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+			if depType == "ruleset" {
+				if err := sinkMgr.InstallRuleset(fetchedPkg, priority); err != nil {
 					lastErr = err
 					continue
 				}
-				if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
-					lastErr = err
-					continue
-				}
-			}
-
-			for _, sinkName := range promptsetConfig.Sinks {
-				sinkConfig := allSinks[sinkName]
-				sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+			} else {
 				if err := sinkMgr.InstallPromptset(fetchedPkg); err != nil {
 					lastErr = err
 					continue
 				}
 			}
-
-			if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, newVersion, &packagelockfile.DependencyLockConfig{
-				Integrity: fetchedPkg.Integrity,
-			}); err != nil {
-				lastErr = err
-				continue
-			}
-
-			successCount++
 		}
+
+		if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, newVersion, &packagelockfile.DependencyLockConfig{
+			Integrity: fetchedPkg.Integrity,
+		}); err != nil {
+			lastErr = err
+			continue
+		}
+
+		successCount++
 	}
 
 	if successCount == 0 && lastErr != nil {
@@ -1022,114 +1013,115 @@ func (s *ArmService) UpgradePackages(ctx context.Context, packages []string) err
 			continue
 		}
 
-		rulesetConfig, rulesetErr := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
-		promptsetConfig, promptsetErr := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
-
-		if rulesetErr != nil && promptsetErr != nil {
+		depConfig, err := s.manifestMgr.GetDependencyConfig(ctx, registryName, packageName)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: package not found '%s'\n", pkg)
 			lastErr = fmt.Errorf("package not found: %s", pkg)
 			continue
 		}
 
-		if rulesetErr == nil {
-			oldVersion := s.getOldVersionFromLock(lockFile, pkg)
-			newVersion, fetchedPkg, err := s.fetchLatest(ctx, registryName, packageName, rulesetConfig.Include, rulesetConfig.Exclude)
+		depType, ok := depConfig["type"].(string)
+		if !ok {
+			fmt.Fprintf(os.Stderr, "Warning: invalid package type for '%s'\n", pkg)
+			lastErr = fmt.Errorf("invalid package type: %s", pkg)
+			continue
+		}
+
+		var sinks []string
+		var include []string
+		var exclude []string
+		var priority int
+
+		if depType == "ruleset" {
+			rulesetConfig, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: failed to upgrade '%s': %v\n", pkg, err)
 				lastErr = err
 				continue
 			}
-
-			if oldVersion == newVersion {
-				successCount++
-				continue
-			}
-
-			if oldVersion != "" {
-				if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
-					lastErr = err
-					continue
-				}
-				if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
-					lastErr = err
-					continue
-				}
-			}
-
-			for _, sinkName := range rulesetConfig.Sinks {
-				sinkConfig := allSinks[sinkName]
-				sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-				if err := sinkMgr.InstallRuleset(fetchedPkg, rulesetConfig.Priority); err != nil {
-					lastErr = err
-					continue
-				}
-			}
-
-			if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, newVersion, &packagelockfile.DependencyLockConfig{
-				Integrity: fetchedPkg.Integrity,
-			}); err != nil {
+			sinks = rulesetConfig.Sinks
+			include = rulesetConfig.Include
+			exclude = rulesetConfig.Exclude
+			priority = rulesetConfig.Priority
+		} else if depType == "promptset" {
+			promptsetConfig, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
+			if err != nil {
 				lastErr = err
 				continue
 			}
+			sinks = promptsetConfig.Sinks
+			include = promptsetConfig.Include
+			exclude = promptsetConfig.Exclude
+		} else {
+			fmt.Fprintf(os.Stderr, "Warning: unknown package type '%s' for '%s'\n", depType, pkg)
+			lastErr = fmt.Errorf("unknown package type: %s", depType)
+			continue
+		}
 
-			newConstraint := fmt.Sprintf("^%d.0.0", fetchedPkg.Metadata.Version.Major)
-			rulesetConfig.Version = newConstraint
-			if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, packageName, *rulesetConfig); err != nil {
-				lastErr = err
-				continue
-			}
+		oldVersion := s.getOldVersionFromLock(lockFile, pkg)
+		newVersion, fetchedPkg, err := s.fetchLatest(ctx, registryName, packageName, include, exclude)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to upgrade '%s': %v\n", pkg, err)
+			lastErr = err
+			continue
+		}
 
+		if oldVersion == newVersion {
 			successCount++
-		} else if promptsetErr == nil {
-			oldVersion := s.getOldVersionFromLock(lockFile, pkg)
-			newVersion, fetchedPkg, err := s.fetchLatest(ctx, registryName, packageName, promptsetConfig.Include, promptsetConfig.Exclude)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: failed to upgrade '%s': %v\n", pkg, err)
+			continue
+		}
+
+		if oldVersion != "" {
+			if err := s.uninstallFromSinks(sinks, allSinks, registryName, packageName, oldVersion); err != nil {
 				lastErr = err
 				continue
 			}
-
-			if oldVersion == newVersion {
-				successCount++
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+				lastErr = err
 				continue
 			}
+		}
 
-			if oldVersion != "" {
-				if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+		for _, sinkName := range sinks {
+			sinkConfig := allSinks[sinkName]
+			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+			if depType == "ruleset" {
+				if err := sinkMgr.InstallRuleset(fetchedPkg, priority); err != nil {
 					lastErr = err
 					continue
 				}
-				if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
-					lastErr = err
-					continue
-				}
-			}
-
-			for _, sinkName := range promptsetConfig.Sinks {
-				sinkConfig := allSinks[sinkName]
-				sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
+			} else {
 				if err := sinkMgr.InstallPromptset(fetchedPkg); err != nil {
 					lastErr = err
 					continue
 				}
 			}
+		}
 
-			if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, newVersion, &packagelockfile.DependencyLockConfig{
-				Integrity: fetchedPkg.Integrity,
-			}); err != nil {
+		if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, newVersion, &packagelockfile.DependencyLockConfig{
+			Integrity: fetchedPkg.Integrity,
+		}); err != nil {
+			lastErr = err
+			continue
+		}
+
+		newConstraint := fmt.Sprintf("^%d.0.0", fetchedPkg.Metadata.Version.Major)
+		if depType == "ruleset" {
+			rulesetConfig, _ := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
+			rulesetConfig.Version = newConstraint
+			if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, packageName, *rulesetConfig); err != nil {
 				lastErr = err
 				continue
 			}
-
-			newConstraint := fmt.Sprintf("^%d.0.0", fetchedPkg.Metadata.Version.Major)
+		} else {
+			promptsetConfig, _ := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
 			promptsetConfig.Version = newConstraint
 			if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registryName, packageName, *promptsetConfig); err != nil {
 				lastErr = err
 				continue
 			}
-
-			successCount++
 		}
+
+		successCount++
 	}
 
 	if successCount == 0 && lastErr != nil {
