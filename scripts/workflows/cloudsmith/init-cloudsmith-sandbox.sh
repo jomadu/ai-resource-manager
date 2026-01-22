@@ -73,8 +73,8 @@ log "Created .armrc with environment variable expansion for token"
 # Configure registry and sinks
 log "Configuring Cloudsmith registry..."
 ./arm add registry cloudsmith --url "$CLOUDSMITH_URL" --owner "$CLOUDSMITH_OWNER" --repo "$CLOUDSMITH_REPOSITORY" cloudsmith-registry
-./arm add sink --type cursor cursor-rules .cursor/rules
-./arm add sink --type amazonq q-rules .amazonq/rules
+./arm add sink --tool cursor cursor-rules .cursor/rules
+./arm add sink --tool amazonq q-rules .amazonq/rules
 
 success "Cloudsmith sandbox ready!"
 echo ""

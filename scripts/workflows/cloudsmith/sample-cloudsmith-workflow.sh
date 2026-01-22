@@ -77,20 +77,20 @@ show_debug() {
         echo ""
     done
     
-    # Cache directory
-    if [ -d "$HOME/.arm/cache" ]; then
-        echo -e "${YELLOW}--- Cache Directory Tree ---${NC}"
+    # Storage directory
+    if [ -d "$HOME/.arm/storage" ]; then
+        echo -e "${YELLOW}--- Storage Directory Tree ---${NC}"
         if command -v tree &> /dev/null; then
-            tree -a "$HOME/.arm/cache" || find "$HOME/.arm/cache" | sort
+            tree -a "$HOME/.arm/storage" || find "$HOME/.arm/storage" | sort
         else
-            find "$HOME/.arm/cache" | sort
+            find "$HOME/.arm/storage" | sort
         fi
         echo ""
         
-        # Cache index files
-        for cache_index in $(find "$HOME/.arm/cache" -name "*index*.json" 2>/dev/null); do
-            echo -e "${YELLOW}--- $cache_index ---${NC}"
-            cat "$cache_index"
+        # Storage index files
+        for storage_index in $(find "$HOME/.arm/storage" -name "*index*.json" 2>/dev/null); do
+            echo -e "${YELLOW}--- $storage_index ---${NC}"
+            cat "$storage_index"
             echo ""
         done
     fi
@@ -156,8 +156,8 @@ echo "  ./arm outdated                # Check for updates"
 echo ""
 echo "Management commands:"
 echo "  ./arm uninstall ruleset cloudsmith-registry/$RULESET_NAME"
-echo "  ./arm update                  # Update all resources"
-echo "  ./arm update ruleset          # Update rulesets only"
+echo "  ./arm update                                        # Update all resources"
+echo "  ./arm update cloudsmith-registry/$RULESET_NAME      # Update specific ruleset"
 echo ""
 echo "Configuration commands:"
 echo "  ./arm list registry           # Show configured registries"
