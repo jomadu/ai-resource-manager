@@ -187,12 +187,12 @@ func (r *Repo) GetFilesFromCommit(ctx context.Context, url, commit string) ([]*c
 	return files, nil
 }
 
-// ensureCloned clones repo if not exists, pulls if exists
+// ensureCloned clones repo if not exists, fetches if exists
 func (r *Repo) ensureCloned(ctx context.Context, url string) error {
 	// Check if repo directory exists and has .git
 	if _, err := os.Stat(filepath.Join(r.repoDir, ".git")); err == nil {
-		// Repo exists, pull updates
-		cmd := exec.Command("git", "pull")
+		// Repo exists, fetch updates
+		cmd := exec.Command("git", "fetch", "--all", "--tags")
 		cmd.Dir = r.repoDir
 		return cmd.Run()
 	}
