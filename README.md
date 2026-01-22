@@ -1,6 +1,6 @@
-![ARM Header](assets/header.png)
+# ARM (AI Resource Manager)
 
-# AI Resource Manager (ARM)
+![ARM Header](assets/header.png)
 
 ## What is ARM?
 
