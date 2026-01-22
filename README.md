@@ -49,7 +49,7 @@ curl -fsSL https://raw.githubusercontent.com/jomadu/ai-resource-manager/main/scr
 2. Extract and move the binary to your PATH
 3. Run `arm help` to verify installation
 
-### Verify Installation
+### Verify Installation 
 
 ```bash
 arm version
