@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Promptset
+metadata:
+    id: "code-review"
+    name: "Code Review"
+    description: "Comprehensive code review prompts for quality assurance"
+spec:
+    prompts:
+        securityReview:
+            name: "Security Review"
+            description: "Focus on security vulnerabilities and best practices"
+            body: |
+                Review this code for security vulnerabilities and potential issues. Look for:
+                - Input validation and sanitization
+                - Authentication and authorization flaws
+                - SQL injection and XSS vulnerabilities
+                - Insecure data storage or transmission
+                - Hardcoded secrets or credentials
+                - Insecure random number generation
+                - Missing security headers or configurations
+                - Potential buffer overflows or memory leaks
+                - Insecure file operations
+                - Weak cryptographic implementations
+        performanceReview:
+            name: "Performance Review"
+            description: "Analyze code for performance bottlenecks and optimization opportunities"
+            body: |
+                Analyze this code for performance issues and optimization opportunities. Consider:
+                - Algorithm efficiency and time complexity
+                - Memory usage and potential leaks
+                - Database query optimization
+                - Caching strategies and opportunities
+                - I/O operations and blocking calls
+                - Resource utilization patterns
+                - Scalability concerns
+                - Network latency and bandwidth usage
+                - CPU-intensive operations
+                - Memory allocation patterns
+        codeQualityReview:
+            name: "Code Quality Review"
+            description: "Evaluate code quality, maintainability, and best practices"
+            body: |
+                Evaluate this code for quality, maintainability, and adherence to best practices. Focus on:
+                - Code readability and clarity
+                - Function and class design
+                - Naming conventions and consistency
+                - Code organization and structure
+                - Documentation and comments
+                - Error handling and edge cases
+                - Code duplication and DRY principles
+                - Testability and unit test coverage
+                - SOLID principles adherence
+                - Code complexity and cyclomatic complexity
+        accessibilityReview:
+            name: "Accessibility Review"
+            description: "Check code for accessibility compliance and inclusive design"
+            body: |
+                Review this code for accessibility compliance and inclusive design principles. Examine:
+                - ARIA labels and semantic HTML
+                - Keyboard navigation support
+                - Screen reader compatibility
+                - Color contrast and visual accessibility
+                - Focus management and tab order
+                - Alternative text for images and media
+                - Form labels and error messaging
+                - Responsive design considerations
+                - Mobile accessibility features
+                - WCAG 2.1 compliance guidelines
