@@ -13,15 +13,15 @@ success() { echo -e "${GREEN}✓${NC} $1"; }
 error() { echo -e "${RED}✗${NC} $1"; }
 
 usage() {
-    echo "Usage: $0 <repo-path>"
+    echo "Usage: $0 [repo-path]"
     echo ""
     echo "Creates a local Git repository for ARM testing."
     echo ""
     echo "Arguments:"
-    echo "  repo-path    - Path for local repository (required)"
+    echo "  repo-path    - Path for local repository (default: ./)"
 }
 
-if [[ "$1" == "--help" || "$1" == "-h" || -z "$1" ]]; then
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     usage
     exit 0
 fi
@@ -312,7 +312,7 @@ create_local_repo() {
     success "Local repository created at: $repo_path"
 }
 
-REPO_PATH="$1"
+REPO_PATH="${1:-.}"
 
 log "Setting up local ARM test repository..."
 log "Repository path: $REPO_PATH"

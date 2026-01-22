@@ -63,21 +63,6 @@ This script:
 4. Configures the Cloudsmith registry
 5. Adds cursor and amazonq sinks
 
-### sample-cloudsmith-workflow.sh
-
-Runs a complete workflow including installation:
-
-```bash
-# Interactive mode (pauses between steps)
-./sample-cloudsmith-workflow.sh
-
-# Non-interactive mode (runs continuously)
-./sample-cloudsmith-workflow.sh --non-interactive
-
-# With debug output
-./sample-cloudsmith-workflow.sh --show-debug
-```
-
 ## Verifying Environment Variable Expansion
 
 After running `init-cloudsmith-sandbox.sh`, you can verify that env vars are properly expanded:

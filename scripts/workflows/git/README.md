@@ -2,16 +2,6 @@
 
 This directory contains scripts for testing ARM with Git registries.
 
-## Quick Start
-
-Run a complete sample workflow with a local Git registry:
-
-```bash
-./sample-git-workflow.sh
-```
-
-This creates a sandbox, sets up a local Git registry, and demonstrates installing rulesets and promptsets.
-
 ## Scripts
 
 ### Core Setup Scripts
@@ -21,11 +11,11 @@ This creates a sandbox, sets up a local Git registry, and demonstrates installin
 - Creates clean sandbox environment at `./sandbox/`
 - Foundation for all workflows
 
-**`init-local-git-registry.sh <repo-path>`**
+**`init-local-git-registry.sh [repo-path]`**
 - Creates a local Git repository with sample content
 - Includes multiple versions (v1.0.0, v1.0.1, v1.1.0, v2.0.0)
 - Contains both legacy format and ARM resource YAML files
-- Requires: repository path argument
+- Optional: repository path argument (defaults to current directory)
 
 ### Sandbox Setup Scripts
 
@@ -41,23 +31,12 @@ This creates a sandbox, sets up a local Git registry, and demonstrates installin
 - Configured via `.env` file (see `.env.example`)
 - Environment variables: `GIT_REGISTRY_URL`, `GIT_REGISTRY_NAME`
 
-### Workflow Scripts
-
-**`sample-git-workflow.sh`**
-- Complete workflow demonstration
-- Uses local Git registry
-- Installs rulesets and promptsets
-- Shows common commands
-
 ## Local Testing (No GitHub Required)
 
 Use local git repositories for quick testing without network access:
 
 ```bash
-# Run complete workflow with local registry
-./sample-git-workflow.sh
-
-# Or set up components manually:
+# Set up components manually:
 ./init-git-sandbox.sh
 ./init-local-git-registry.sh /tmp/my-test-repo
 cd sandbox
@@ -133,9 +112,6 @@ The local Git registry created by `init-local-git-registry.sh` contains:
 ## Examples
 
 ```bash
-# Basic workflow
-./sample-git-workflow.sh
-
 # Custom local registry path
 ./init-local-git-registry.sh /tmp/custom-repo
 # Edit .env:
