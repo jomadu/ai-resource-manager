@@ -96,7 +96,7 @@ type Manager interface {
 // Type-safe dependency configs for API
 type BaseDependencyConfig struct {
 	Type    ResourceType `json:"type"`
-	Version string       `json:"version"`
+	Version string       `json:"version,omitempty"`
 	Sinks   []string     `json:"sinks"`
 	Include []string     `json:"include,omitempty"`
 	Exclude []string     `json:"exclude,omitempty"`
