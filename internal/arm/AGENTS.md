@@ -1,1 +1,0 @@
-This is the main ARM implementation code.
