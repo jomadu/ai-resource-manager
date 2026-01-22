@@ -192,7 +192,7 @@ func (r *Repo) ensureCloned(ctx context.Context, url string) error {
 	// Check if repo directory exists and has .git
 	if _, err := os.Stat(filepath.Join(r.repoDir, ".git")); err == nil {
 		// Repo exists, fetch updates
-		cmd := exec.Command("git", "fetch", "--all", "--tags")
+		cmd := exec.Command("git", "fetch", "--all", "--tags", "--force")
 		cmd.Dir = r.repoDir
 		return cmd.Run()
 	}
