@@ -1,6 +1,7 @@
 package sink
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -818,5 +819,166 @@ func TestInstallPromptsetEmptyPackage(t *testing.T) {
 	key := pkgKey("test-reg", "empty-prompts", "1.0.0")
 	if len(index.Promptsets[key].Files) != 0 {
 		t.Errorf("expected 0 files, got %d", len(index.Promptsets[key].Files))
+	}
+}
+
+
+func TestInstallRulesetWithARMResource(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager(tmpDir, compiler.Cursor)
+
+	rulesetYAML := `apiVersion: v1
+kind: Ruleset
+metadata:
+  id: "testRuleset"
+  name: "Test Ruleset"
+spec:
+  rules:
+    rule1:
+      name: "Rule 1"
+      body: "This is rule 1"
+    rule2:
+      name: "Rule 2"
+      body: "This is rule 2"`
+
+	pkg := &core.Package{
+		Metadata: core.PackageMetadata{
+			RegistryName: "test-reg",
+			Name:         "test-pkg",
+			Version:      mustVersion("1.0.0"),
+		},
+		Files: []*core.File{
+			{
+				Path:    "rulesets/test.yml",
+				Content: []byte(rulesetYAML),
+			},
+		},
+	}
+
+	err := m.InstallRuleset(pkg, 100)
+	if err != nil {
+		t.Fatalf("InstallRuleset failed: %v", err)
+	}
+
+	// Check that the YAML file was NOT copied (it should be compiled instead)
+	yamlPath := filepath.Join(tmpDir, "arm", "test-reg", "test-pkg", "1.0.0", "rulesets", "test.yml")
+	if _, err := os.Stat(yamlPath); !os.IsNotExist(err) {
+		t.Errorf("YAML file should NOT exist at %s (should be compiled, not copied)", yamlPath)
+	}
+
+	// Check that compiled rule files exist
+	rule1Path := filepath.Join(tmpDir, "arm", "test-reg", "test-pkg", "1.0.0", "rulesets", "testRuleset_rule1.mdc")
+	if _, err := os.Stat(rule1Path); os.IsNotExist(err) {
+		t.Errorf("Compiled rule1 file should exist at %s", rule1Path)
+	} else {
+		content, _ := os.ReadFile(rule1Path)
+		if len(content) == 0 {
+			t.Errorf("Rule1 file should have content")
+		}
+		// Verify it's compiled format, not YAML
+		if !bytes.Contains(content, []byte("This is rule 1")) {
+			t.Errorf("Rule1 should contain the rule body")
+		}
+	}
+
+	rule2Path := filepath.Join(tmpDir, "arm", "test-reg", "test-pkg", "1.0.0", "rulesets", "testRuleset_rule2.mdc")
+	if _, err := os.Stat(rule2Path); os.IsNotExist(err) {
+		t.Errorf("Compiled rule2 file should exist at %s", rule2Path)
+	} else {
+		content, _ := os.ReadFile(rule2Path)
+		if len(content) == 0 {
+			t.Errorf("Rule2 file should have content")
+		}
+		if !bytes.Contains(content, []byte("This is rule 2")) {
+			t.Errorf("Rule2 should contain the rule body")
+		}
+	}
+
+	// Check index has 2 files (the two compiled rules)
+	index, _ := m.loadIndex()
+	key := pkgKey("test-reg", "test-pkg", "1.0.0")
+	entry := index.Rulesets[key]
+	if len(entry.Files) != 2 {
+		t.Errorf("expected 2 compiled rule files in index, got %d", len(entry.Files))
+	}
+}
+
+
+func TestInstallPromptsetWithARMResource(t *testing.T) {
+	tmpDir := t.TempDir()
+	m := NewManager(tmpDir, compiler.Cursor)
+
+	promptsetYAML := `apiVersion: v1
+kind: Promptset
+metadata:
+  id: "testPromptset"
+  name: "Test Promptset"
+spec:
+  prompts:
+    prompt1:
+      name: "Prompt 1"
+      body: "This is prompt 1"
+    prompt2:
+      name: "Prompt 2"
+      body: "This is prompt 2"`
+
+	pkg := &core.Package{
+		Metadata: core.PackageMetadata{
+			RegistryName: "test-reg",
+			Name:         "test-pkg",
+			Version:      mustVersion("1.0.0"),
+		},
+		Files: []*core.File{
+			{
+				Path:    "promptsets/test.yml",
+				Content: []byte(promptsetYAML),
+			},
+		},
+	}
+
+	err := m.InstallPromptset(pkg)
+	if err != nil {
+		t.Fatalf("InstallPromptset failed: %v", err)
+	}
+
+	// Check that the YAML file was NOT copied (it should be compiled instead)
+	yamlPath := filepath.Join(tmpDir, "arm", "test-reg", "test-pkg", "1.0.0", "promptsets", "test.yml")
+	if _, err := os.Stat(yamlPath); !os.IsNotExist(err) {
+		t.Errorf("YAML file should NOT exist at %s (should be compiled, not copied)", yamlPath)
+	}
+
+	// Check that compiled prompt files exist
+	prompt1Path := filepath.Join(tmpDir, "arm", "test-reg", "test-pkg", "1.0.0", "promptsets", "testPromptset_prompt1.md")
+	if _, err := os.Stat(prompt1Path); os.IsNotExist(err) {
+		t.Errorf("Compiled prompt1 file should exist at %s", prompt1Path)
+	} else {
+		content, _ := os.ReadFile(prompt1Path)
+		if len(content) == 0 {
+			t.Errorf("Prompt1 file should have content")
+		}
+		if !bytes.Contains(content, []byte("This is prompt 1")) {
+			t.Errorf("Prompt1 should contain the prompt body")
+		}
+	}
+
+	prompt2Path := filepath.Join(tmpDir, "arm", "test-reg", "test-pkg", "1.0.0", "promptsets", "testPromptset_prompt2.md")
+	if _, err := os.Stat(prompt2Path); os.IsNotExist(err) {
+		t.Errorf("Compiled prompt2 file should exist at %s", prompt2Path)
+	} else {
+		content, _ := os.ReadFile(prompt2Path)
+		if len(content) == 0 {
+			t.Errorf("Prompt2 file should have content")
+		}
+		if !bytes.Contains(content, []byte("This is prompt 2")) {
+			t.Errorf("Prompt2 should contain the prompt body")
+		}
+	}
+
+	// Check index has 2 files (the two compiled prompts)
+	index, _ := m.loadIndex()
+	key := pkgKey("test-reg", "test-pkg", "1.0.0")
+	entry := index.Promptsets[key]
+	if len(entry.Files) != 2 {
+		t.Errorf("expected 2 compiled prompt files in index, got %d", len(entry.Files))
 	}
 }

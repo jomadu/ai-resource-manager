@@ -1,9 +1,9 @@
 package filetype
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
+
+	"github.com/jomadu/ai-resource-manager/internal/arm/core"
 )
 
 func TestIsRulesetFile(t *testing.T) {
@@ -83,12 +83,6 @@ kind: Ruleset`,
 			want:     false,
 		},
 		{
-			name:     "file does not exist",
-			filename: "nonexistent.yml",
-			content:  "",
-			want:     false,
-		},
-		{
 			name:     "case insensitive extension",
 			filename: "test.YML",
 			content: `apiVersion: v1
@@ -105,21 +99,12 @@ spec:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var testFile string
-			if tt.content != "" && tt.filename != "nonexistent.yml" {
-				// Create temp file
-				tmpDir := t.TempDir()
-				testFile = filepath.Join(tmpDir, tt.filename)
-				err := os.WriteFile(testFile, []byte(tt.content), 0644)
-				if err != nil {
-					t.Fatalf("failed to create test file: %v", err)
-				}
-			} else if tt.filename == "nonexistent.yml" {
-				// Use non-existent path
-				testFile = filepath.Join(t.TempDir(), "nonexistent.yml")
+			file := &core.File{
+				Path:    tt.filename,
+				Content: []byte(tt.content),
 			}
 
-			got := IsRulesetFile(testFile)
+			got := IsRulesetFile(file)
 			if got != tt.want {
 				t.Errorf("IsRulesetFile() = %v, want %v", got, tt.want)
 			}
@@ -202,12 +187,6 @@ kind: Promptset`,
 			want:     false,
 		},
 		{
-			name:     "file does not exist",
-			filename: "nonexistent.yml",
-			content:  "",
-			want:     false,
-		},
-		{
 			name:     "case insensitive extension",
 			filename: "test.YAML",
 			content: `apiVersion: v1
@@ -224,21 +203,12 @@ spec:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var testFile string
-			if tt.content != "" && tt.filename != "nonexistent.yml" {
-				// Create temp file
-				tmpDir := t.TempDir()
-				testFile = filepath.Join(tmpDir, tt.filename)
-				err := os.WriteFile(testFile, []byte(tt.content), 0644)
-				if err != nil {
-					t.Fatalf("failed to create test file: %v", err)
-				}
-			} else if tt.filename == "nonexistent.yml" {
-				// Use non-existent path
-				testFile = filepath.Join(t.TempDir(), "nonexistent.yml")
+			file := &core.File{
+				Path:    tt.filename,
+				Content: []byte(tt.content),
 			}
 
-			got := IsPromptsetFile(testFile)
+			got := IsPromptsetFile(file)
 			if got != tt.want {
 				t.Errorf("IsPromptsetFile() = %v, want %v", got, tt.want)
 			}
@@ -304,31 +274,16 @@ This is a readme file.`,
 			content:  `invalid: yaml: content:`,
 			want:     false,
 		},
-		{
-			name:     "file does not exist",
-			filename: "nonexistent.yml",
-			content:  "",
-			want:     false,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var testFile string
-			if tt.content != "" && tt.filename != "nonexistent.yml" {
-				// Create temp file
-				tmpDir := t.TempDir()
-				testFile = filepath.Join(tmpDir, tt.filename)
-				err := os.WriteFile(testFile, []byte(tt.content), 0644)
-				if err != nil {
-					t.Fatalf("failed to create test file: %v", err)
-				}
-			} else if tt.filename == "nonexistent.yml" {
-				// Use non-existent path
-				testFile = filepath.Join(t.TempDir(), "nonexistent.yml")
+			file := &core.File{
+				Path:    tt.filename,
+				Content: []byte(tt.content),
 			}
 
-			got := IsResourceFile(testFile)
+			got := IsResourceFile(file)
 			if got != tt.want {
 				t.Errorf("IsResourceFile() = %v, want %v", got, tt.want)
 			}

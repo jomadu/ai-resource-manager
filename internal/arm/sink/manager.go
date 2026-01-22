@@ -127,8 +127,8 @@ func (m *Manager) InstallRuleset(pkg *core.Package, priority int) error {
 	namespace := fmt.Sprintf("%s/%s@%s", pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version)
 
 	for _, file := range pkg.Files {
-		if filetype.IsResourceFile(file.Path) {
-			if filetype.IsRulesetFile(file.Path) {
+		if filetype.IsResourceFile(file) {
+			if filetype.IsRulesetFile(file) {
 				rulesetResource, err := parser.ParseRuleset(file)
 				if err != nil {
 					return err
@@ -205,8 +205,8 @@ func (m *Manager) InstallPromptset(pkg *core.Package) error {
 	namespace := fmt.Sprintf("%s/%s@%s", pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version)
 
 	for _, file := range pkg.Files {
-		if filetype.IsResourceFile(file.Path) {
-			if filetype.IsPromptsetFile(file.Path) {
+		if filetype.IsResourceFile(file) {
+			if filetype.IsPromptsetFile(file) {
 				promptsetResource, err := parser.ParsePromptset(file)
 				if err != nil {
 					return err
