@@ -1,9 +1,0 @@
-{
-  "version": 1,
-  "registries": {
-    "test-registry": {
-      "type": "git",
-      "url": "https://github.com/test/repo"
-    }
-  }
-}

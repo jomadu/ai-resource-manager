@@ -165,7 +165,7 @@ func NewConstraint(versionStr string) (Constraint, error) {
 
 // ParseConstraint is deprecated, use NewConstraint instead
 func ParseConstraint(versionStr string) (Constraint, error) {
-	if versionStr == "latest" {
+	if versionStr == "" || versionStr == "latest" {
 		return Constraint{Type: Latest}, nil
 	}
 

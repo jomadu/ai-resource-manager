@@ -1376,7 +1376,7 @@ func handleInstall() {
 func handleInstallAll() {
 	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
 	if manifestPath == "" {
-		manifestPath = "arm-manifest.json"
+		manifestPath = "arm.json"
 	}
 
 	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
@@ -1472,7 +1472,7 @@ func handleInstallRuleset() {
 	// Initialize service
 	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
 	if manifestPath == "" {
-		manifestPath = "arm-manifest.json"
+		manifestPath = "arm.json"
 	}
 
 	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
@@ -1561,7 +1561,7 @@ func handleInstallPromptset() {
 	// Initialize service
 	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
 	if manifestPath == "" {
-		manifestPath = "arm-manifest.json"
+		manifestPath = "arm.json"
 	}
 
 	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
@@ -1638,7 +1638,7 @@ func handleUninstall() {
 
 	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
 	if manifestPath == "" {
-		manifestPath = "arm-manifest.json"
+		manifestPath = "arm.json"
 	}
 
 	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
@@ -1674,7 +1674,7 @@ func handleUpdate() {
 
 	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
 	if manifestPath == "" {
-		manifestPath = "arm-manifest.json"
+		manifestPath = "arm.json"
 	}
 
 	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
@@ -1707,7 +1707,7 @@ func handleUpdate() {
 func handleUpgrade() {
 	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
 	if manifestPath == "" {
-		manifestPath = "arm-manifest.json"
+		manifestPath = "arm.json"
 	}
 
 	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
@@ -1760,7 +1760,7 @@ func handleOutdated() {
 
 	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
 	if manifestPath == "" {
-		manifestPath = "arm-manifest.json"
+		manifestPath = "arm.json"
 	}
 
 	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
