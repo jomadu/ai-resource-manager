@@ -59,7 +59,7 @@ func (b *testRepoBuilder) Init() TestRepoBuilder {
 	err := os.MkdirAll(b.repoDir, 0o755)
 	require.NoError(b.t, err)
 
-	cmd := exec.Command("git", "init")
+	cmd := exec.Command("git", "init", "--initial-branch=main")
 	cmd.Dir = b.repoDir
 	err = cmd.Run()
 	require.NoError(b.t, err)

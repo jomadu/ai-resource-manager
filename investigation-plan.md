@@ -124,15 +124,13 @@ test: remove debug logging after fix
 ## Resolution
 
 ### Root Cause Found
-The issue was in `GetBranchHeadCommitHash` method in `internal/arm/storage/repo.go`. The method tried to resolve branch refs using:
-1. `origin/branch` - fails because Git doesn't recognize this shorthand
-2. `branch` - fails for remote tracking branches in cloned repos
+The issue was in the test helper `repo_test_helper.go`. The `Init()` method used `git init` without specifying an initial branch name. In CI environments, Git's default branch configuration varies (could be "master" or "main"), causing tests that assumed "main" existed to fail when trying to checkout or create branches.
 
 ### The Fix
-Changed the branch resolution order to use full Git ref paths:
-1. `refs/remotes/origin/branch` - for remote tracking branches (most common)
-2. `refs/heads/branch` - for local branches
-3. `branch` - final fallback for any other ref format
+Changed `git init` to `git init --initial-branch=main` in the `Init()` method to explicitly set the initial branch name to "main", ensuring consistent behavior across all environments.
+
+**File changed:** `internal/arm/storage/repo_test_helper.go`
+**Line changed:** Line 62 - added `--initial-branch=main` flag to git init command
 
 ### Test Results
 All 5 previously failing tests now pass:
@@ -145,10 +143,15 @@ All 5 previously failing tests now pass:
 Full test suite passes locally (all packages in `internal/arm/...`).
 
 ### Why This Fixes CI
-The issue affected both local and CI environments, but was more apparent in CI because:
-- CI runs tests in isolation with fresh clones
-- Local development might have had working directories with different Git states
-- The fix uses proper Git ref paths that work consistently in all environments
+The issue affected CI but not always locally because:
+- CI environments may have different Git default configurations
+- Local development machines might have `init.defaultBranch` set to "main" in global Git config
+- Tests assumed "main" branch existed after init, but Git's default could be "master"
+- Explicitly setting the branch name ensures consistent behavior everywhere
+
+### Changes Made
+1. Fixed `GetBranchHeadCommitHash` to use proper Git ref paths (previous fix - still valid)
+2. Fixed test helper to explicitly set initial branch to "main" (root cause fix)
 
 ### Next Steps
 Ready to commit and push to PR #130 for CI verification.
