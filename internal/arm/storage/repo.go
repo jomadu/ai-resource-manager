@@ -101,17 +101,28 @@ func (r *Repo) GetBranchHeadCommitHash(ctx context.Context, url, branch string) 
 		return "", err
 	}
 
-	cmd := exec.Command("git", "rev-parse", "origin/"+branch)
+	// Try refs/remotes/origin/branch first (most common for cloned repos)
+	cmd := exec.Command("git", "rev-parse", "refs/remotes/origin/"+branch)
 	cmd.Dir = r.repoDir
 	output, err := cmd.Output()
+	if err == nil {
+		return strings.TrimSpace(string(output)), nil
+	}
+
+	// Try refs/heads/branch for local branches
+	cmd = exec.Command("git", "rev-parse", "refs/heads/"+branch)
+	cmd.Dir = r.repoDir
+	output, err = cmd.Output()
+	if err == nil {
+		return strings.TrimSpace(string(output)), nil
+	}
+
+	// Final fallback to simple branch name
+	cmd = exec.Command("git", "rev-parse", branch)
+	cmd.Dir = r.repoDir
+	output, err = cmd.Output()
 	if err != nil {
-		// Try without origin/ prefix for local branches
-		cmd = exec.Command("git", "rev-parse", branch)
-		cmd.Dir = r.repoDir
-		output, err = cmd.Output()
-		if err != nil {
-			return "", err
-		}
+		return "", err
 	}
 
 	return strings.TrimSpace(string(output)), nil
