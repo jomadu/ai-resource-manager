@@ -243,7 +243,7 @@ func TestConstraint_IsSatisfiedBy(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			got, err := c.IsSatisfiedBy(v)
+			got, err := c.IsSatisfiedBy(&v)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("IsSatisfiedBy() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -276,7 +276,7 @@ func TestConstraint_IsSatisfiedBy_Errors(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			_, err = c.IsSatisfiedBy(v)
+			_, err = c.IsSatisfiedBy(&v)
 			if err == nil {
 				t.Error("expected error for non-semver version, got nil")
 			}

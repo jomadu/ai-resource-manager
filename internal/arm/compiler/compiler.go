@@ -39,13 +39,13 @@ func CompileRuleset(tool Tool, namespace string, ruleset *resource.RulesetResour
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate filename for rule %s: %w", ruleID, err)
 		}
-		
+
 		// Generate content
 		content, err := ruleGen.GenerateRule(namespace, ruleset, ruleID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate content for rule %s: %w", ruleID, err)
 		}
-		
+
 		compiledFiles = append(compiledFiles, &core.File{
 			Path:    filename,
 			Content: []byte(content),
@@ -87,13 +87,13 @@ func CompilePromptset(tool Tool, namespace string, promptset *resource.Promptset
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate filename for prompt %s: %w", promptID, err)
 		}
-		
+
 		// Generate content
 		content, err := promptGen.GeneratePrompt(namespace, promptset, promptID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate content for prompt %s: %w", promptID, err)
 		}
-		
+
 		compiledFiles = append(compiledFiles, &core.File{
 			Path:    filename,
 			Content: []byte(content),

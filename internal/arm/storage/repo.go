@@ -38,19 +38,19 @@ func (r *Repo) GetTags(ctx context.Context, url string) ([]string, error) {
 	if err := r.lock.Lock(ctx); err != nil {
 		return nil, err
 	}
-	defer r.lock.Unlock()
-	
+	defer func() { _ = r.lock.Unlock() }()
+
 	if err := r.ensureCloned(ctx, url); err != nil {
 		return nil, err
 	}
-	
+
 	cmd := exec.Command("git", "tag", "-l")
 	cmd.Dir = r.repoDir
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 	if len(lines) == 1 && lines[0] == "" {
 		return []string{}, nil
@@ -63,19 +63,19 @@ func (r *Repo) GetBranches(ctx context.Context, url string) ([]string, error) {
 	if err := r.lock.Lock(ctx); err != nil {
 		return nil, err
 	}
-	defer r.lock.Unlock()
-	
+	defer func() { _ = r.lock.Unlock() }()
+
 	if err := r.ensureCloned(ctx, url); err != nil {
 		return nil, err
 	}
-	
+
 	cmd := exec.Command("git", "branch", "-r", "--format=%(refname:short)")
 	cmd.Dir = r.repoDir
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 	var branches []string
 	for _, line := range lines {
@@ -95,12 +95,12 @@ func (r *Repo) GetBranchHeadCommitHash(ctx context.Context, url, branch string) 
 	if err := r.lock.Lock(ctx); err != nil {
 		return "", err
 	}
-	defer r.lock.Unlock()
-	
+	defer func() { _ = r.lock.Unlock() }()
+
 	if err := r.ensureCloned(ctx, url); err != nil {
 		return "", err
 	}
-	
+
 	cmd := exec.Command("git", "rev-parse", "origin/"+branch)
 	cmd.Dir = r.repoDir
 	output, err := cmd.Output()
@@ -113,7 +113,7 @@ func (r *Repo) GetBranchHeadCommitHash(ctx context.Context, url, branch string) 
 			return "", err
 		}
 	}
-	
+
 	return strings.TrimSpace(string(output)), nil
 }
 
@@ -122,19 +122,19 @@ func (r *Repo) GetTagCommitHash(ctx context.Context, url, tag string) (string, e
 	if err := r.lock.Lock(ctx); err != nil {
 		return "", err
 	}
-	defer r.lock.Unlock()
-	
+	defer func() { _ = r.lock.Unlock() }()
+
 	if err := r.ensureCloned(ctx, url); err != nil {
 		return "", err
 	}
-	
+
 	cmd := exec.Command("git", "rev-parse", tag)
 	cmd.Dir = r.repoDir
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
-	
+
 	return strings.TrimSpace(string(output)), nil
 }
 
@@ -143,12 +143,12 @@ func (r *Repo) GetFilesFromCommit(ctx context.Context, url, commit string) ([]*c
 	if err := r.lock.Lock(ctx); err != nil {
 		return nil, err
 	}
-	defer r.lock.Unlock()
-	
+	defer func() { _ = r.lock.Unlock() }()
+
 	if err := r.ensureCloned(ctx, url); err != nil {
 		return nil, err
 	}
-	
+
 	// Get list of files in commit
 	cmd := exec.Command("git", "ls-tree", "-r", "--name-only", commit)
 	cmd.Dir = r.repoDir
@@ -156,19 +156,19 @@ func (r *Repo) GetFilesFromCommit(ctx context.Context, url, commit string) ([]*c
 	if err != nil {
 		return nil, err
 	}
-	
+
 	filePaths := strings.Split(strings.TrimSpace(string(output)), "\n")
 	if len(filePaths) == 1 && filePaths[0] == "" {
 		return []*core.File{}, nil
 	}
-	
+
 	var files []*core.File
 	for _, path := range filePaths {
 		path = strings.TrimSpace(path)
 		if path == "" {
 			continue
 		}
-		
+
 		// Get file content from commit
 		cmd := exec.Command("git", "show", commit+":"+path)
 		cmd.Dir = r.repoDir
@@ -176,19 +176,19 @@ func (r *Repo) GetFilesFromCommit(ctx context.Context, url, commit string) ([]*c
 		if err != nil {
 			return nil, err
 		}
-		
+
 		files = append(files, &core.File{
 			Path:    path,
 			Content: content,
 			Size:    int64(len(content)),
 		})
 	}
-	
+
 	return files, nil
 }
 
 // ensureCloned clones repo if not exists, fetches if exists
-func (r *Repo) ensureCloned(ctx context.Context, url string) error {
+func (r *Repo) ensureCloned(_ context.Context, url string) error {
 	// Check if repo directory exists and has .git
 	if _, err := os.Stat(filepath.Join(r.repoDir, ".git")); err == nil {
 		// Repo exists, fetch updates
@@ -196,7 +196,7 @@ func (r *Repo) ensureCloned(ctx context.Context, url string) error {
 		cmd.Dir = r.repoDir
 		return cmd.Run()
 	}
-	
+
 	// Repo doesn't exist, clone it
 	cmd := exec.Command("git", "clone", url, r.repoDir)
 	return cmd.Run()

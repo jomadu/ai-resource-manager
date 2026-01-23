@@ -67,7 +67,7 @@ func TestListSink(t *testing.T) {
 			manifestPath := filepath.Join(testDir, "arm.json")
 
 			// Write manifest
-			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 				t.Fatalf("Failed to write manifest: %v", err)
 			}
 
@@ -201,7 +201,7 @@ func TestInfoSink(t *testing.T) {
 			manifestPath := filepath.Join(testDir, "arm.json")
 
 			// Write manifest
-			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 				t.Fatalf("Failed to write manifest: %v", err)
 			}
 

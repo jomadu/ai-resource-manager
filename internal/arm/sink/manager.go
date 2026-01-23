@@ -68,7 +68,7 @@ type InstalledPromptset struct {
 // NewManager creates a new sink manager
 func NewManager(directory string, tool compiler.Tool) *Manager {
 	// Create directory if it doesn't exist
-	os.MkdirAll(directory, 0755)
+	_ = os.MkdirAll(directory, 0o755)
 
 	// Determine layout: copilot is flat, others are hierarchical
 	layout := LayoutHierarchical
@@ -117,8 +117,8 @@ func NewManager(directory string, tool compiler.Tool) *Manager {
 // InstallRuleset installs a ruleset package with priority
 func (m *Manager) InstallRuleset(pkg *core.Package, priority int) error {
 	// Uninstall old version if exists
-	if m.IsInstalled(pkg.Metadata) {
-		if err := m.Uninstall(pkg.Metadata); err != nil {
+	if m.IsInstalled(&pkg.Metadata) {
+		if err := m.Uninstall(&pkg.Metadata); err != nil {
 			return err
 		}
 	}
@@ -148,10 +148,10 @@ func (m *Manager) InstallRuleset(pkg *core.Package, priority int) error {
 					combinedPath := filepath.Join(filepath.Dir(file.Path), filename)
 					fullPath := m.getFilePath(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version, combinedPath)
 
-					if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+					if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
 						return err
 					}
-					if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+					if err := os.WriteFile(fullPath, []byte(content), 0o644); err != nil {
 						return err
 					}
 
@@ -162,10 +162,10 @@ func (m *Manager) InstallRuleset(pkg *core.Package, priority int) error {
 		} else {
 			fullPath := m.getFilePath(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version, file.Path)
 
-			if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
 				return err
 			}
-			if err := os.WriteFile(fullPath, file.Content, 0644); err != nil {
+			if err := os.WriteFile(fullPath, file.Content, 0o644); err != nil {
 				return err
 			}
 
@@ -195,8 +195,8 @@ func (m *Manager) InstallRuleset(pkg *core.Package, priority int) error {
 // InstallPromptset installs a promptset package
 func (m *Manager) InstallPromptset(pkg *core.Package) error {
 	// Uninstall old version if exists
-	if m.IsInstalled(pkg.Metadata) {
-		if err := m.Uninstall(pkg.Metadata); err != nil {
+	if m.IsInstalled(&pkg.Metadata) {
+		if err := m.Uninstall(&pkg.Metadata); err != nil {
 			return err
 		}
 	}
@@ -226,10 +226,10 @@ func (m *Manager) InstallPromptset(pkg *core.Package) error {
 					combinedPath := filepath.Join(filepath.Dir(file.Path), filename)
 					fullPath := m.getFilePath(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version, combinedPath)
 
-					if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+					if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
 						return err
 					}
-					if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+					if err := os.WriteFile(fullPath, []byte(content), 0o644); err != nil {
 						return err
 					}
 
@@ -240,10 +240,10 @@ func (m *Manager) InstallPromptset(pkg *core.Package) error {
 		} else {
 			fullPath := m.getFilePath(pkg.Metadata.RegistryName, pkg.Metadata.Name, pkg.Metadata.Version.Version, file.Path)
 
-			if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
 				return err
 			}
-			if err := os.WriteFile(fullPath, file.Content, 0644); err != nil {
+			if err := os.WriteFile(fullPath, file.Content, 0o644); err != nil {
 				return err
 			}
 
@@ -266,7 +266,7 @@ func (m *Manager) InstallPromptset(pkg *core.Package) error {
 }
 
 // Uninstall removes a package from the sink
-func (m *Manager) Uninstall(metadata core.PackageMetadata) error {
+func (m *Manager) Uninstall(metadata *core.PackageMetadata) error {
 	index, err := m.loadIndex()
 	if err != nil {
 		return err
@@ -278,7 +278,7 @@ func (m *Manager) Uninstall(metadata core.PackageMetadata) error {
 	if entry, exists := index.Rulesets[key]; exists {
 		for _, filePath := range entry.Files {
 			fullPath := filepath.Join(m.directory, filePath)
-			os.Remove(fullPath) // Ignore errors
+			_ = os.Remove(fullPath) // Ignore errors
 		}
 		delete(index.Rulesets, key)
 	}
@@ -287,7 +287,7 @@ func (m *Manager) Uninstall(metadata core.PackageMetadata) error {
 	if entry, exists := index.Promptsets[key]; exists {
 		for _, filePath := range entry.Files {
 			fullPath := filepath.Join(m.directory, filePath)
-			os.Remove(fullPath) // Ignore errors
+			_ = os.Remove(fullPath) // Ignore errors
 		}
 		delete(index.Promptsets, key)
 	}
@@ -296,7 +296,7 @@ func (m *Manager) Uninstall(metadata core.PackageMetadata) error {
 }
 
 // IsInstalled checks if a package is installed
-func (m *Manager) IsInstalled(metadata core.PackageMetadata) bool {
+func (m *Manager) IsInstalled(metadata *core.PackageMetadata) bool {
 	index, err := m.loadIndex()
 	if err != nil {
 		return false
@@ -416,7 +416,7 @@ func (m *Manager) Clean() error {
 
 			// Remove if not tracked
 			if !trackedFiles[relPath] {
-				os.Remove(path)
+				_ = os.Remove(path)
 			}
 
 			return nil
@@ -460,7 +460,7 @@ func (m *Manager) loadIndex() (*Index, error) {
 
 func (m *Manager) saveIndex(index *Index) error {
 	// Create directory if it doesn't exist
-	if err := os.MkdirAll(filepath.Dir(m.indexPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(m.indexPath), 0o755); err != nil {
 		return err
 	}
 
@@ -469,7 +469,7 @@ func (m *Manager) saveIndex(index *Index) error {
 		return err
 	}
 
-	return os.WriteFile(m.indexPath, data, 0644)
+	return os.WriteFile(m.indexPath, data, 0o644)
 }
 
 // generateRulesetIndexRuleFile creates arm_index.* file for rulesets (priority explanation for AI agents)
@@ -481,7 +481,7 @@ func (m *Manager) generateRulesetIndexRuleFile() error {
 
 	if len(index.Rulesets) == 0 {
 		if _, err := os.Stat(m.rulesetIndexRulePath); err == nil {
-			os.Remove(m.rulesetIndexRulePath)
+			_ = os.Remove(m.rulesetIndexRulePath)
 		}
 		return nil
 	}
@@ -529,10 +529,10 @@ func (m *Manager) generateRulesetIndexRuleFile() error {
 		body += "\n"
 	}
 
-	if err := os.MkdirAll(filepath.Dir(m.rulesetIndexRulePath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(m.rulesetIndexRulePath), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(m.rulesetIndexRulePath, []byte(body), 0644)
+	return os.WriteFile(m.rulesetIndexRulePath, []byte(body), 0o644)
 }
 
 // Helper functions for path computation

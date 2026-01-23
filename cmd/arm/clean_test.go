@@ -86,10 +86,8 @@ func TestCleanCache(t *testing.T) {
 				if tt.errorMsg != "" && !contains(string(output), tt.errorMsg) {
 					t.Errorf("Expected error message to contain %q, got: %s", tt.errorMsg, output)
 				}
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error: %v. Output: %s", err, output)
-				}
+			} else if err != nil {
+				t.Errorf("Unexpected error: %v. Output: %s", err, output)
 			}
 		})
 	}

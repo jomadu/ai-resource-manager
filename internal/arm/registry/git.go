@@ -45,7 +45,7 @@ func NewGitRegistry(name string, config GitRegistryConfig) (*GitRegistry, error)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &GitRegistry{
 		name:         name,
 		config:       config,
@@ -71,7 +71,7 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var versions []core.Version
 	for _, tag := range tags {
 		version, _ := core.ParseVersion(tag)
@@ -80,7 +80,7 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 			versions = append(versions, version)
 		}
 	}
-	
+
 	// Get branches if configured
 	if len(g.config.Branches) > 0 {
 		// Get actual branches from repo
@@ -88,7 +88,7 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// Only add configured branches that actually exist (supports glob patterns)
 		for _, configBranch := range g.config.Branches {
 			for _, actualBranch := range actualBranches {
@@ -104,7 +104,7 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 			}
 		}
 	}
-	
+
 	return versions, nil
 }
 
@@ -125,14 +125,14 @@ func normalizePatterns(patterns []string) []string {
 // packageName is used only for response metadata, not for caching or filtering.
 // Cache key is based on version + include + exclude patterns, not package name.
 // This allows multiple "packages" with same patterns to share cached results.
-func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, version core.Version, include []string, exclude []string) (*core.Package, error) {
+func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, version *core.Version, include, exclude []string) (*core.Package, error) {
 	// Create cache key from version and normalized patterns (not package name)
 	cacheKey := struct {
 		Version core.Version `json:"version"`
 		Include []string     `json:"include"`
 		Exclude []string     `json:"exclude"`
-	}{version, normalizePatterns(include), normalizePatterns(exclude)}
-	
+	}{*version, normalizePatterns(include), normalizePatterns(exclude)}
+
 	// Try cache first
 	if files, err := g.packageCache.GetPackageVersion(ctx, cacheKey, version); err == nil {
 		integrity := calculateIntegrity(files)
@@ -140,26 +140,26 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 			Metadata: core.PackageMetadata{
 				RegistryName: g.name,
 				Name:         packageName,
-				Version:      version,
+				Version:      *version,
 			},
 			Files:     files,
 			Integrity: integrity,
 		}, nil
 	}
-	
+
 	// Get all files from git
 	files, err := g.repo.GetFilesFromCommit(ctx, g.config.URL, version.Version)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Extract archives and merge with loose files
 	extractor := core.NewExtractor()
 	files, err = extractor.ExtractAndMerge(files)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Apply include/exclude filtering
 	var filteredFiles []*core.File
 	for _, file := range files {
@@ -167,17 +167,17 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 			filteredFiles = append(filteredFiles, file)
 		}
 	}
-	
+
 	// Cache the filtered result
-	g.packageCache.SetPackageVersion(ctx, cacheKey, version, filteredFiles)
-	
+	_ = g.packageCache.SetPackageVersion(ctx, cacheKey, version, filteredFiles)
+
 	integrity := calculateIntegrity(filteredFiles)
-	
+
 	return &core.Package{
 		Metadata: core.PackageMetadata{
 			RegistryName: g.name,
 			Name:         packageName,
-			Version:      version,
+			Version:      *version,
 		},
 		Files:     filteredFiles,
 		Integrity: integrity,
@@ -186,12 +186,12 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 
 // matchesPatterns checks if file path matches include/exclude patterns.
 // Uses filepath.Match for glob pattern support. Invalid patterns are skipped.
-func (g *GitRegistry) matchesPatterns(filePath string, include []string, exclude []string) bool {
+func (g *GitRegistry) matchesPatterns(filePath string, include, exclude []string) bool {
 	// If no patterns, include all files
 	if len(include) == 0 && len(exclude) == 0 {
 		return true
 	}
-	
+
 	// Check exclude patterns first
 	for _, pattern := range exclude {
 		matched, err := filepath.Match(pattern, filePath)
@@ -203,12 +203,12 @@ func (g *GitRegistry) matchesPatterns(filePath string, include []string, exclude
 			return false
 		}
 	}
-	
+
 	// If no include patterns, file is included (not excluded)
 	if len(include) == 0 {
 		return true
 	}
-	
+
 	// Check include patterns
 	for _, pattern := range include {
 		matched, err := filepath.Match(pattern, filePath)
@@ -220,6 +220,6 @@ func (g *GitRegistry) matchesPatterns(filePath string, include []string, exclude
 			return true
 		}
 	}
-	
+
 	return false
 }

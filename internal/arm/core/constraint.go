@@ -23,42 +23,42 @@ type Constraint struct {
 
 // IsSatisfiedBy checks if a version satisfies this constraint
 // Returns error if version is not semver (except for Latest constraint)
-func (c *Constraint) IsSatisfiedBy(version Version) (bool, error) {
+func (c *Constraint) IsSatisfiedBy(version *Version) (bool, error) {
 	if c == nil {
 		return false, nil
 	}
-	
+
 	// Latest with a version means exact match (branch name)
 	if c.Type == Latest && c.Version != nil {
 		return version.Version == c.Version.Version, nil
 	}
-	
+
 	// Latest without version accepts any version
 	if c.Type == Latest {
 		return true, nil
 	}
-	
+
 	// All other constraint types require semver
 	if !version.IsSemver {
 		return false, fmt.Errorf("constraint requires semver version, got: %s", version.Version)
 	}
-	
+
 	switch c.Type {
 	case Exact:
 		if c.Version == nil {
 			return false, nil
 		}
-		return version.Compare(*c.Version) == 0, nil
+		return version.Compare(c.Version) == 0, nil
 	case Major:
 		if c.Version == nil {
 			return false, nil
 		}
-		return version.Major == c.Version.Major && version.Compare(*c.Version) >= 0, nil
+		return version.Major == c.Version.Major && version.Compare(c.Version) >= 0, nil
 	case Minor:
 		if c.Version == nil {
 			return false, nil
 		}
-		return version.Major == c.Version.Major && version.Minor == c.Version.Minor && version.Compare(*c.Version) >= 0, nil
+		return version.Major == c.Version.Major && version.Minor == c.Version.Minor && version.Compare(c.Version) >= 0, nil
 	default:
 		return false, nil
 	}
@@ -69,7 +69,7 @@ func (c *Constraint) ToString() string {
 	if c == nil {
 		return ""
 	}
-	
+
 	switch c.Type {
 	case Latest:
 		return "latest"

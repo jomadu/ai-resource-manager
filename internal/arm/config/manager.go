@@ -138,7 +138,7 @@ func (f *FileManager) getAllSectionsFromFile(filePath string) (map[string]map[st
 	sections := make(map[string]map[string]string)
 	for _, section := range cfg.Sections() {
 		// Skip default section if empty
-		if section.Name() == ini.DEFAULT_SECTION && len(section.Keys()) == 0 {
+		if section.Name() == ini.DefaultSection && len(section.Keys()) == 0 {
 			continue
 		}
 

@@ -32,7 +32,7 @@ token = project-token-123
 [registry https://gitlab.example.com/group/456]
 token = project-token-456
 `
-				if err := os.WriteFile(projectRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -58,7 +58,7 @@ token = project-token-456
 				content := `[registry https://gitlab.example.com/project/789]
 token = user-token-789
 `
-				if err := os.WriteFile(userRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(userRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write user .armrc: %v", err)
 				}
 
@@ -81,7 +81,7 @@ token = user-token-789
 				projectContent := `[registry https://gitlab.example.com/project/123]
 token = project-token-123
 `
-				if err := os.WriteFile(projectRc, []byte(projectContent), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(projectContent), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -92,7 +92,7 @@ token = user-token-123
 [registry https://gitlab.example.com/group/456]
 token = user-token-456
 `
-				if err := os.WriteFile(userRc, []byte(userContent), 0644); err != nil {
+				if err := os.WriteFile(userRc, []byte(userContent), 0o644); err != nil {
 					t.Fatalf("failed to write user .armrc: %v", err)
 				}
 
@@ -118,7 +118,7 @@ token = user-token-456
 				projectContent := `[registry https://gitlab.example.com/project/123]
 token = project-token-123
 `
-				if err := os.WriteFile(projectRc, []byte(projectContent), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(projectContent), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -126,7 +126,7 @@ token = project-token-123
 				userContent := `[registry https://gitlab.example.com/group/456]
 token = user-token-456
 `
-				if err := os.WriteFile(userRc, []byte(userContent), 0644); err != nil {
+				if err := os.WriteFile(userRc, []byte(userContent), 0o644); err != nil {
 					t.Fatalf("failed to write user .armrc: %v", err)
 				}
 
@@ -158,14 +158,14 @@ token = user-token-456
 				workingDir := t.TempDir()
 				userHomeDir := t.TempDir()
 
-				os.Setenv("TEST_TOKEN", "env-token-123")
-				t.Cleanup(func() { os.Unsetenv("TEST_TOKEN") })
+				_ = os.Setenv("TEST_TOKEN", "env-token-123")
+				t.Cleanup(func() { _ = os.Unsetenv("TEST_TOKEN") })
 
 				projectRc := filepath.Join(workingDir, ".armrc")
 				content := `[registry https://gitlab.example.com/project/123]
 token = ${TEST_TOKEN}
 `
-				if err := os.WriteFile(projectRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -188,7 +188,7 @@ token = ${TEST_TOKEN}
 				content := `[registry https://gitlab.example.com/project/123]
 token = ${MISSING_VAR}
 `
-				if err := os.WriteFile(projectRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -252,7 +252,7 @@ func TestFileManager_GetSection(t *testing.T) {
 				content := `[registry https://gitlab.example.com/project/123]
 token = project-token-123
 `
-				if err := os.WriteFile(projectRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -274,7 +274,7 @@ token = project-token-123
 				content := `[registry https://gitlab.example.com/project/789]
 token = user-token-789
 `
-				if err := os.WriteFile(userRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(userRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write user .armrc: %v", err)
 				}
 
@@ -296,7 +296,7 @@ token = user-token-789
 				projectContent := `[registry https://gitlab.example.com/project/123]
 token = project-token-123
 `
-				if err := os.WriteFile(projectRc, []byte(projectContent), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(projectContent), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -304,7 +304,7 @@ token = project-token-123
 				userContent := `[registry https://gitlab.example.com/project/123]
 token = user-token-123
 `
-				if err := os.WriteFile(userRc, []byte(userContent), 0644); err != nil {
+				if err := os.WriteFile(userRc, []byte(userContent), 0o644); err != nil {
 					t.Fatalf("failed to write user .armrc: %v", err)
 				}
 
@@ -327,7 +327,7 @@ token = user-token-123
 token = project-token-123
 api_version = v4
 `
-				if err := os.WriteFile(projectRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -346,14 +346,14 @@ api_version = v4
 				workingDir := t.TempDir()
 				userHomeDir := t.TempDir()
 
-				os.Setenv("TEST_TOKEN", "env-token-123")
-				t.Cleanup(func() { os.Unsetenv("TEST_TOKEN") })
+				_ = os.Setenv("TEST_TOKEN", "env-token-123")
+				t.Cleanup(func() { _ = os.Unsetenv("TEST_TOKEN") })
 
 				projectRc := filepath.Join(workingDir, ".armrc")
 				content := `[registry https://gitlab.example.com/project/123]
 token = ${TEST_TOKEN}
 `
-				if err := os.WriteFile(projectRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -375,7 +375,7 @@ token = ${TEST_TOKEN}
 				content := `[registry https://gitlab.example.com/project/123]
 token = project-token-123
 `
-				if err := os.WriteFile(projectRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -450,7 +450,7 @@ func TestFileManager_GetValue(t *testing.T) {
 				content := `[registry https://gitlab.example.com/project/123]
 token = project-token-123
 `
-				if err := os.WriteFile(projectRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -471,7 +471,7 @@ token = project-token-123
 				content := `[registry https://gitlab.example.com/project/789]
 token = user-token-789
 `
-				if err := os.WriteFile(userRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(userRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write user .armrc: %v", err)
 				}
 
@@ -492,7 +492,7 @@ token = user-token-789
 				projectContent := `[registry https://gitlab.example.com/project/123]
 token = project-token-123
 `
-				if err := os.WriteFile(projectRc, []byte(projectContent), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(projectContent), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -500,7 +500,7 @@ token = project-token-123
 				userContent := `[registry https://gitlab.example.com/project/123]
 token = user-token-123
 `
-				if err := os.WriteFile(userRc, []byte(userContent), 0644); err != nil {
+				if err := os.WriteFile(userRc, []byte(userContent), 0o644); err != nil {
 					t.Fatalf("failed to write user .armrc: %v", err)
 				}
 
@@ -517,14 +517,14 @@ token = user-token-123
 				workingDir := t.TempDir()
 				userHomeDir := t.TempDir()
 
-				os.Setenv("TEST_TOKEN", "env-token-123")
-				t.Cleanup(func() { os.Unsetenv("TEST_TOKEN") })
+				_ = os.Setenv("TEST_TOKEN", "env-token-123")
+				t.Cleanup(func() { _ = os.Unsetenv("TEST_TOKEN") })
 
 				projectRc := filepath.Join(workingDir, ".armrc")
 				content := `[registry https://gitlab.example.com/project/123]
 token = ${TEST_TOKEN}
 `
-				if err := os.WriteFile(projectRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -545,7 +545,7 @@ token = ${TEST_TOKEN}
 				content := `[registry https://gitlab.example.com/project/123]
 token = project-token-123
 `
-				if err := os.WriteFile(projectRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -567,7 +567,7 @@ token = project-token-123
 				content := `[registry https://gitlab.example.com/project/123]
 token = project-token-123
 `
-				if err := os.WriteFile(projectRc, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(projectRc, []byte(content), 0o644); err != nil {
 					t.Fatalf("failed to write project .armrc: %v", err)
 				}
 
@@ -612,7 +612,7 @@ token = project-token-123
 func TestFileManager_NewFileManager(t *testing.T) {
 	fm := NewFileManager()
 	if fm == nil {
-		t.Error("NewFileManager() returned nil")
+		t.Fatal("NewFileManager() returned nil")
 	}
 	if fm.workingDir == "" && fm.userHomeDir == "" {
 		t.Error("NewFileManager() should have at least one directory set")
@@ -625,7 +625,7 @@ func TestFileManager_NewFileManagerWithPaths(t *testing.T) {
 
 	fm := NewFileManagerWithPaths(workingDir, userHomeDir)
 	if fm == nil {
-		t.Error("NewFileManagerWithPaths() returned nil")
+		t.Fatal("NewFileManagerWithPaths() returned nil")
 	}
 	if fm.workingDir != workingDir {
 		t.Errorf("NewFileManagerWithPaths() workingDir = %v, want %v", fm.workingDir, workingDir)

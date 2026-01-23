@@ -34,5 +34,3 @@ func ParsePromptset(file *core.File) (*resource.PromptsetResource, error) {
 	}
 	return &promptset, nil
 }
-
-

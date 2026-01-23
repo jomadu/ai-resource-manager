@@ -24,26 +24,26 @@ func (g *CursorRuleGenerator) GenerateRule(namespace string, ruleset *resource.R
 
 func (g *CursorRuleGenerator) generateCursorFrontmatter(rule *resource.Rule) string {
 	var parts []string
-	
+
 	parts = append(parts, "---")
-	
+
 	if rule.Description != "" {
-		parts = append(parts, fmt.Sprintf(`description: "%s"`, rule.Description))
+		parts = append(parts, fmt.Sprintf(`description: %q`, rule.Description))
 	}
-	
+
 	// Add globs if scope is defined
 	if len(rule.Scope) > 0 && len(rule.Scope[0].Files) > 0 {
 		globs := strings.Join(rule.Scope[0].Files, ", ")
 		parts = append(parts, fmt.Sprintf("globs: %s", globs))
 	}
-	
+
 	// Add alwaysApply for must enforcement
 	if rule.Enforcement == "must" {
 		parts = append(parts, "alwaysApply: true")
 	}
-	
+
 	parts = append(parts, "---")
-	
+
 	return strings.Join(parts, "\n")
 }
 

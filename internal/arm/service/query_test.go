@@ -42,10 +42,10 @@ func TestListAll(t *testing.T) {
 		}
 
 		lockMgr := packagelockfile.NewFileManagerWithPath(lockPath)
-		lockMgr.UpsertDependencyLock(context.Background(), "test-reg", "ruleset1", "1.0.0", &packagelockfile.DependencyLockConfig{
+		_ = lockMgr.UpsertDependencyLock(context.Background(), "test-reg", "ruleset1", "1.0.0", &packagelockfile.DependencyLockConfig{
 			Integrity: "sha256-ruleset1",
 		})
-		lockMgr.UpsertDependencyLock(context.Background(), "test-reg", "promptset1", "2.0.0", &packagelockfile.DependencyLockConfig{
+		_ = lockMgr.UpsertDependencyLock(context.Background(), "test-reg", "promptset1", "2.0.0", &packagelockfile.DependencyLockConfig{
 			Integrity: "sha256-promptset1",
 		})
 
@@ -112,7 +112,7 @@ func TestGetDependencyInfo(t *testing.T) {
 		}
 
 		lockMgr := packagelockfile.NewFileManagerWithPath(lockPath)
-		lockMgr.UpsertDependencyLock(context.Background(), "test-reg", "ruleset1", "1.0.0", &packagelockfile.DependencyLockConfig{
+		_ = lockMgr.UpsertDependencyLock(context.Background(), "test-reg", "ruleset1", "1.0.0", &packagelockfile.DependencyLockConfig{
 			Integrity: "sha256-test",
 		})
 
@@ -176,7 +176,7 @@ func TestListOutdated(t *testing.T) {
 		}
 
 		lockMgr := packagelockfile.NewFileManagerWithPath(lockPath)
-		lockMgr.UpsertDependencyLock(context.Background(), "test-reg", "ruleset1", "1.0.0", &packagelockfile.DependencyLockConfig{
+		_ = lockMgr.UpsertDependencyLock(context.Background(), "test-reg", "ruleset1", "1.0.0", &packagelockfile.DependencyLockConfig{
 			Integrity: "sha256-test",
 		})
 
@@ -251,7 +251,7 @@ func TestListOutdated(t *testing.T) {
 		}
 
 		lockMgr := packagelockfile.NewFileManagerWithPath(lockPath)
-		lockMgr.UpsertDependencyLock(context.Background(), "test-reg", "ruleset1", "1.0.0", &packagelockfile.DependencyLockConfig{
+		_ = lockMgr.UpsertDependencyLock(context.Background(), "test-reg", "ruleset1", "1.0.0", &packagelockfile.DependencyLockConfig{
 			Integrity: "sha256-test",
 		})
 

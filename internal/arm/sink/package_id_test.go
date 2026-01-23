@@ -16,7 +16,7 @@ func TestPkgKey(t *testing.T) {
 	for _, tt := range tests {
 		got := pkgKey(tt.registry, tt.name, tt.version)
 		if got != tt.want {
-			t.Errorf("pkgKey(%q, %q, %q) = %q, want %q", 
+			t.Errorf("pkgKey(%q, %q, %q) = %q, want %q",
 				tt.registry, tt.name, tt.version, got, tt.want)
 		}
 	}
@@ -48,7 +48,7 @@ func TestParsePkgKey(t *testing.T) {
 				t.Errorf("parsePkgKey(%q) unexpected error: %v", tt.key, err)
 			}
 			if gotReg != tt.wantReg || gotName != tt.wantName || gotVersion != tt.wantVersion {
-				t.Errorf("parsePkgKey(%q) = (%q, %q, %q), want (%q, %q, %q)", 
+				t.Errorf("parsePkgKey(%q) = (%q, %q, %q), want (%q, %q, %q)",
 					tt.key, gotReg, gotName, gotVersion, tt.wantReg, tt.wantName, tt.wantVersion)
 			}
 		}

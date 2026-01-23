@@ -56,18 +56,18 @@ type testRepoBuilder struct {
 }
 
 func (b *testRepoBuilder) Init() TestRepoBuilder {
-	err := os.MkdirAll(b.repoDir, 0755)
+	err := os.MkdirAll(b.repoDir, 0o755)
 	require.NoError(b.t, err)
-	
+
 	cmd := exec.Command("git", "init")
 	cmd.Dir = b.repoDir
 	err = cmd.Run()
 	require.NoError(b.t, err)
-	
+
 	// Set test user config
 	b.runGitCmd("config", "user.name", "Test User")
 	b.runGitCmd("config", "user.email", "test@example.com")
-	
+
 	return b
 }
 
@@ -83,12 +83,12 @@ func (b *testRepoBuilder) Checkout(branch string) TestRepoBuilder {
 
 func (b *testRepoBuilder) AddFile(path, content string) TestRepoBuilder {
 	fullPath := filepath.Join(b.repoDir, path)
-	err := os.MkdirAll(filepath.Dir(fullPath), 0755)
+	err := os.MkdirAll(filepath.Dir(fullPath), 0o755)
 	require.NoError(b.t, err)
-	
-	err = os.WriteFile(fullPath, []byte(content), 0644)
+
+	err = os.WriteFile(fullPath, []byte(content), 0o644)
 	require.NoError(b.t, err)
-	
+
 	b.runGitCmd("add", path)
 	return b
 }

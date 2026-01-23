@@ -23,7 +23,7 @@ func TestUpgrade_Success(t *testing.T) {
 			}
 		}
 	}`
-	if err := os.WriteFile(manifestPath, []byte(manifestContent), 0644); err != nil {
+	if err := os.WriteFile(manifestPath, []byte(manifestContent), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -37,7 +37,7 @@ func TestUpgrade_Success(t *testing.T) {
 			}
 		}
 	}`
-	if err := os.WriteFile(lockfilePath, []byte(lockfileContent), 0644); err != nil {
+	if err := os.WriteFile(lockfilePath, []byte(lockfileContent), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -50,11 +50,9 @@ func TestUpgrade_Success(t *testing.T) {
 	// But we're testing the CLI parsing and invocation
 	if err == nil {
 		t.Logf("Output: %s", output)
-	} else {
+	} else if !strings.Contains(string(output), "Error:") {
 		// Expected to fail due to missing registry, but should show proper error
-		if !strings.Contains(string(output), "Error:") {
-			t.Errorf("Expected error message, got: %s", output)
-		}
+		t.Errorf("Expected error message, got: %s", output)
 	}
 }
 
@@ -72,7 +70,7 @@ func TestUpgrade_MissingLockfile(t *testing.T) {
 			}
 		}
 	}`
-	if err := os.WriteFile(manifestPath, []byte(manifestContent), 0644); err != nil {
+	if err := os.WriteFile(manifestPath, []byte(manifestContent), 0o644); err != nil {
 		t.Fatal(err)
 	}
 

@@ -1,8 +1,8 @@
 package storage
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,13 +26,13 @@ func mustVersion(s string) core.Version {
 func TestNewPackageCache(t *testing.T) {
 	tempDir := t.TempDir()
 	packagesDir := filepath.Join(tempDir, "packages")
-	
+
 	// Create packages directory
-	err := os.MkdirAll(packagesDir, 0755)
+	err := os.MkdirAll(packagesDir, 0o755)
 	if err != nil {
 		t.Fatalf("Failed to create packages directory: %v", err)
 	}
-	
+
 	pkg := NewPackageCache(packagesDir)
 	if pkg == nil {
 		t.Fatal("NewPackageCache() returned nil")
@@ -43,7 +43,7 @@ func TestPackageCache_SetPackageVersion(t *testing.T) {
 	tempDir := t.TempDir()
 	packagesDir := filepath.Join(tempDir, "packages")
 	pkg := NewPackageCache(packagesDir)
-	
+
 	packageKey := map[string]interface{}{
 		"name":     "clean-code",
 		"includes": []string{"**/*.yml"},
@@ -54,26 +54,26 @@ func TestPackageCache_SetPackageVersion(t *testing.T) {
 		{Path: "rules.yml", Content: []byte("rule: value"), Size: 11},
 		{Path: "nested/rule.yml", Content: []byte("nested: rule"), Size: 12},
 	}
-	
+
 	ctx := context.Background()
-	err := pkg.SetPackageVersion(ctx, packageKey, version, files)
+	err := pkg.SetPackageVersion(ctx, packageKey, &version, files)
 	if err != nil {
 		t.Errorf("SetPackageVersion() unexpected error: %v", err)
 	}
-	
+
 	// Verify package directory was created
 	packageHash, _ := GenerateKey(packageKey)
 	packageDir := filepath.Join(packagesDir, packageHash)
 	if _, err := os.Stat(packageDir); os.IsNotExist(err) {
 		t.Errorf("Package directory not created: %s", packageDir)
 	}
-	
+
 	// Verify version directory was created
 	versionDir := filepath.Join(packageDir, fmt.Sprintf("v%d.%d.%d", version.Major, version.Minor, version.Patch))
 	if _, err := os.Stat(versionDir); os.IsNotExist(err) {
 		t.Errorf("Version directory not created: %s", versionDir)
 	}
-	
+
 	// Verify files were stored
 	filesDir := filepath.Join(versionDir, "files")
 	for _, file := range files {
@@ -81,24 +81,24 @@ func TestPackageCache_SetPackageVersion(t *testing.T) {
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			t.Errorf("File not stored: %s", filePath)
 		}
-		
+
 		// Verify file content
 		content, err := os.ReadFile(filePath)
 		if err != nil {
 			t.Errorf("Failed to read file %s: %v", filePath, err)
 		}
-		if string(content) != string(file.Content) {
-			t.Errorf("File content mismatch for %s: got %s, want %s", 
+		if !bytes.Equal(content, file.Content) {
+			t.Errorf("File content mismatch for %s: got %s, want %s",
 				filePath, string(content), string(file.Content))
 		}
 	}
-	
+
 	// Verify package metadata.json was created
 	packageMetadataPath := filepath.Join(packageDir, "metadata.json")
 	if _, err := os.Stat(packageMetadataPath); os.IsNotExist(err) {
 		t.Errorf("Package metadata.json not created: %s", packageMetadataPath)
 	}
-	
+
 	// Verify version metadata.json was created
 	versionMetadataPath := filepath.Join(versionDir, "metadata.json")
 	if _, err := os.Stat(versionMetadataPath); os.IsNotExist(err) {
@@ -110,7 +110,7 @@ func TestPackageCache_GetPackageVersion(t *testing.T) {
 	tempDir := t.TempDir()
 	packagesDir := filepath.Join(tempDir, "packages")
 	pkg := NewPackageCache(packagesDir)
-	
+
 	packageKey := map[string]interface{}{
 		"name":     "clean-code",
 		"includes": []string{"**/*.yml"},
@@ -120,40 +120,40 @@ func TestPackageCache_GetPackageVersion(t *testing.T) {
 		{Path: "rules.yml", Content: []byte("rule: value"), Size: 11},
 		{Path: "nested/rule.yml", Content: []byte("nested: rule"), Size: 12},
 	}
-	
+
 	ctx := context.Background()
-	
+
 	// First set the package version
-	err := pkg.SetPackageVersion(ctx, packageKey, version, originalFiles)
+	err := pkg.SetPackageVersion(ctx, packageKey, &version, originalFiles)
 	if err != nil {
 		t.Fatalf("SetPackageVersion() failed: %v", err)
 	}
-	
+
 	// Then get it back
-	retrievedFiles, err := pkg.GetPackageVersion(ctx, packageKey, version)
+	retrievedFiles, err := pkg.GetPackageVersion(ctx, packageKey, &version)
 	if err != nil {
 		t.Errorf("GetPackageVersion() unexpected error: %v", err)
 	}
-	
+
 	if len(retrievedFiles) != len(originalFiles) {
-		t.Errorf("GetPackageVersion() returned %d files, want %d", 
+		t.Errorf("GetPackageVersion() returned %d files, want %d",
 			len(retrievedFiles), len(originalFiles))
 	}
-	
+
 	// Verify file contents match (order independent)
 	fileMap := make(map[string]*core.File)
 	for _, file := range retrievedFiles {
 		fileMap[file.Path] = file
 	}
-	
+
 	for _, originalFile := range originalFiles {
 		retrievedFile, exists := fileMap[originalFile.Path]
 		if !exists {
 			t.Errorf("Missing file: %s", originalFile.Path)
 			continue
 		}
-		
-		if string(retrievedFile.Content) != string(originalFile.Content) {
+
+		if !bytes.Equal(retrievedFile.Content, originalFile.Content) {
 			t.Errorf("File content mismatch for %s: got %s, want %s",
 				retrievedFile.Path, string(retrievedFile.Content), string(originalFile.Content))
 		}
@@ -164,17 +164,17 @@ func TestPackageCache_GetPackageVersion_NotFound(t *testing.T) {
 	tempDir := t.TempDir()
 	packagesDir := filepath.Join(tempDir, "packages")
 	pkg := NewPackageCache(packagesDir)
-	
+
 	packageKey := map[string]interface{}{"name": "nonexistent"}
 	version := mustVersion("v1.0.0")
-	
+
 	ctx := context.Background()
-	files, err := pkg.GetPackageVersion(ctx, packageKey, version)
-	
+	files, err := pkg.GetPackageVersion(ctx, packageKey, &version)
+
 	if err == nil {
 		t.Errorf("GetPackageVersion() expected error for nonexistent package")
 	}
-	
+
 	if files != nil {
 		t.Errorf("GetPackageVersion() returned files for nonexistent package")
 	}
@@ -184,7 +184,7 @@ func TestPackageCache_ListPackageVersions(t *testing.T) {
 	tempDir := t.TempDir()
 	packagesDir := filepath.Join(tempDir, "packages")
 	pkg := NewPackageCache(packagesDir)
-	
+
 	packageKey := map[string]interface{}{"name": "clean-code"}
 	versions := []core.Version{
 		mustVersion("v1.0.0"),
@@ -192,34 +192,34 @@ func TestPackageCache_ListPackageVersions(t *testing.T) {
 		mustVersion("v2.0.0"),
 	}
 	files := []*core.File{{Path: "test.yml", Content: []byte("test"), Size: 4}}
-	
+
 	ctx := context.Background()
-	
+
 	// Set multiple versions
 	for _, version := range versions {
-		err := pkg.SetPackageVersion(ctx, packageKey, version, files)
+		err := pkg.SetPackageVersion(ctx, packageKey, &version, files)
 		if err != nil {
 			t.Fatalf("SetPackageVersion() failed for %v: %v", version, err)
 		}
 	}
-	
+
 	// List versions
 	listedVersions, err := pkg.ListPackageVersions(ctx, packageKey)
 	if err != nil {
 		t.Errorf("ListPackageVersions() unexpected error: %v", err)
 	}
-	
+
 	if len(listedVersions) != len(versions) {
-		t.Errorf("ListPackageVersions() returned %d versions, want %d", 
+		t.Errorf("ListPackageVersions() returned %d versions, want %d",
 			len(listedVersions), len(versions))
 	}
-	
+
 	// Verify all versions are present (order may vary)
 	versionMap := make(map[core.Version]bool)
 	for _, v := range listedVersions {
 		versionMap[v] = true
 	}
-	
+
 	for _, expectedVersion := range versions {
 		if !versionMap[expectedVersion] {
 			t.Errorf("ListPackageVersions() missing version: %v", expectedVersion)
@@ -231,7 +231,7 @@ func TestPackageCache_ListPackages(t *testing.T) {
 	tempDir := t.TempDir()
 	packagesDir := filepath.Join(tempDir, "packages")
 	pkg := NewPackageCache(packagesDir)
-	
+
 	packageKeys := []interface{}{
 		map[string]interface{}{"name": "clean-code"},
 		map[string]interface{}{"name": "security"},
@@ -239,28 +239,28 @@ func TestPackageCache_ListPackages(t *testing.T) {
 	}
 	version := mustVersion("v1.0.0")
 	files := []*core.File{{Path: "test.yml", Content: []byte("test"), Size: 4}}
-	
+
 	ctx := context.Background()
-	
+
 	// Set multiple packages
 	for _, packageKey := range packageKeys {
-		err := pkg.SetPackageVersion(ctx, packageKey, version, files)
+		err := pkg.SetPackageVersion(ctx, packageKey, &version, files)
 		if err != nil {
 			t.Fatalf("SetPackageVersion() failed: %v", err)
 		}
 	}
-	
+
 	// List packages
 	listedPackages, err := pkg.ListPackages(ctx)
 	if err != nil {
 		t.Errorf("ListPackages() unexpected error: %v", err)
 	}
-	
+
 	if len(listedPackages) != len(packageKeys) {
-		t.Errorf("ListPackages() returned %d packages, want %d", 
+		t.Errorf("ListPackages() returned %d packages, want %d",
 			len(listedPackages), len(packageKeys))
 	}
-	
+
 	// Verify packages contain expected data (basic check)
 	for _, pkg := range listedPackages {
 		if pkg == nil {
@@ -273,27 +273,27 @@ func TestPackageCache_RemovePackageVersion(t *testing.T) {
 	tempDir := t.TempDir()
 	packagesDir := filepath.Join(tempDir, "packages")
 	pkg := NewPackageCache(packagesDir)
-	
+
 	packageKey := map[string]interface{}{"name": "clean-code"}
 	version := mustVersion("v1.0.0")
 	files := []*core.File{{Path: "test.yml", Content: []byte("test"), Size: 4}}
-	
+
 	ctx := context.Background()
-	
+
 	// Set package version
-	err := pkg.SetPackageVersion(ctx, packageKey, version, files)
+	err := pkg.SetPackageVersion(ctx, packageKey, &version, files)
 	if err != nil {
 		t.Fatalf("SetPackageVersion() failed: %v", err)
 	}
-	
+
 	// Remove package version
-	err = pkg.RemovePackageVersion(ctx, packageKey, version)
+	err = pkg.RemovePackageVersion(ctx, packageKey, &version)
 	if err != nil {
 		t.Errorf("RemovePackageVersion() unexpected error: %v", err)
 	}
-	
+
 	// Verify version is gone
-	_, err = pkg.GetPackageVersion(ctx, packageKey, version)
+	_, err = pkg.GetPackageVersion(ctx, packageKey, &version)
 	if err == nil {
 		t.Errorf("GetPackageVersion() should fail after RemovePackageVersion()")
 	}
@@ -303,33 +303,33 @@ func TestPackageCache_RemovePackage(t *testing.T) {
 	tempDir := t.TempDir()
 	packagesDir := filepath.Join(tempDir, "packages")
 	pkg := NewPackageCache(packagesDir)
-	
+
 	packageKey := map[string]interface{}{"name": "clean-code"}
 	versions := []core.Version{
 		mustVersion("v1.0.0"),
 		mustVersion("v1.1.0"),
 	}
 	files := []*core.File{{Path: "test.yml", Content: []byte("test"), Size: 4}}
-	
+
 	ctx := context.Background()
-	
+
 	// Set multiple versions
 	for _, version := range versions {
-		err := pkg.SetPackageVersion(ctx, packageKey, version, files)
+		err := pkg.SetPackageVersion(ctx, packageKey, &version, files)
 		if err != nil {
 			t.Fatalf("SetPackageVersion() failed: %v", err)
 		}
 	}
-	
+
 	// Remove entire package
 	err := pkg.RemovePackage(ctx, packageKey)
 	if err != nil {
 		t.Errorf("RemovePackage() unexpected error: %v", err)
 	}
-	
+
 	// Verify all versions are gone
 	for _, version := range versions {
-		_, err = pkg.GetPackageVersion(ctx, packageKey, version)
+		_, err = pkg.GetPackageVersion(ctx, packageKey, &version)
 		if err == nil {
 			t.Errorf("GetPackageVersion() should fail after RemovePackage() for version %v", version)
 		}
@@ -346,7 +346,7 @@ func TestPackageCache_RemoveOldVersionsByTimestamp(t *testing.T) {
 
 	// Store old version
 	oldVersion := mustVersion("v1.0.0")
-	err := pkg.SetPackageVersion(ctx, packageKey, oldVersion, files)
+	err := pkg.SetPackageVersion(ctx, packageKey, &oldVersion, files)
 	require.NoError(t, err)
 
 	// Wait to create age difference
@@ -354,7 +354,7 @@ func TestPackageCache_RemoveOldVersionsByTimestamp(t *testing.T) {
 
 	// Store new version
 	newVersion := mustVersion("v1.1.0")
-	err = pkg.SetPackageVersion(ctx, packageKey, newVersion, files)
+	err = pkg.SetPackageVersion(ctx, packageKey, &newVersion, files)
 	require.NoError(t, err)
 
 	// Remove versions older than 25ms (should remove old version only)
@@ -384,17 +384,17 @@ func TestPackageCache_RemoveUnusedVersionsByAccess(t *testing.T) {
 	// Store two versions
 	version1 := mustVersion("v1.0.0")
 	version2 := mustVersion("v1.1.0")
-	
-	err := pkg.SetPackageVersion(ctx, packageKey, version1, files)
+
+	err := pkg.SetPackageVersion(ctx, packageKey, &version1, files)
 	require.NoError(t, err)
-	err = pkg.SetPackageVersion(ctx, packageKey, version2, files)
+	err = pkg.SetPackageVersion(ctx, packageKey, &version2, files)
 	require.NoError(t, err)
 
 	// Wait to create access time difference
 	time.Sleep(50 * time.Millisecond)
 
 	// Access version2 only
-	_, err = pkg.GetPackageVersion(ctx, packageKey, version2)
+	_, err = pkg.GetPackageVersion(ctx, packageKey, &version2)
 	require.NoError(t, err)
 
 	// Remove versions not accessed in last 25ms (should remove version1 only)
@@ -423,7 +423,7 @@ func TestPackageCache_RemoveAllVersionsRemovesPackage(t *testing.T) {
 
 	// Store version
 	version := mustVersion("v1.0.0")
-	err := pkg.SetPackageVersion(ctx, packageKey, version, files)
+	err := pkg.SetPackageVersion(ctx, packageKey, &version, files)
 	require.NoError(t, err)
 
 	// Wait to create age
@@ -437,29 +437,4 @@ func TestPackageCache_RemoveAllVersionsRemovesPackage(t *testing.T) {
 	packages, err := pkg.ListPackages(ctx)
 	require.NoError(t, err)
 	assert.Len(t, packages, 0)
-}
-
-// Helper function for reading version metadata
-func readVersionMetadata(t *testing.T, baseDir string, packageKey interface{}, version core.Version) struct {
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
-	AccessedAt time.Time `json:"accessedAt"`
-} {
-	hashedKey, err := GenerateKey(packageKey)
-	require.NoError(t, err)
-	
-	versionDir := fmt.Sprintf("v%d.%d.%d", version.Major, version.Minor, version.Patch)
-	metadataPath := filepath.Join(baseDir, hashedKey, versionDir, "metadata.json")
-	data, err := os.ReadFile(metadataPath)
-	require.NoError(t, err)
-	
-	var metadata struct {
-		CreatedAt  time.Time `json:"createdAt"`
-		UpdatedAt  time.Time `json:"updatedAt"`
-		AccessedAt time.Time `json:"accessedAt"`
-	}
-	err = json.Unmarshal(data, &metadata)
-	require.NoError(t, err)
-	
-	return metadata
 }

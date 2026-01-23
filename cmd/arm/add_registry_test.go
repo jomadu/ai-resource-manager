@@ -54,7 +54,7 @@ func TestAddGitRegistry(t *testing.T) {
 	tmpDir := t.TempDir()
 	binPath := filepath.Join(tmpDir, "arm")
 	cmd := exec.Command("go", "build", "-o", binPath, ".")
-	cmd.Dir = filepath.Join(".") // Current directory is cmd/arm
+	cmd.Dir = "." // Current directory is cmd/arm
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build binary: %v", err)
 	}
@@ -85,10 +85,8 @@ func TestAddGitRegistry(t *testing.T) {
 				if tt.errContains != "" && !strings.Contains(string(output), tt.errContains) {
 					t.Errorf("Expected error containing %q, got: %s", tt.errContains, output)
 				}
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error: %v. Output: %s", err, output)
-				}
+			} else if err != nil {
+				t.Errorf("Unexpected error: %v. Output: %s", err, output)
 			}
 		})
 	}
@@ -155,7 +153,7 @@ func TestAddGitLabRegistry(t *testing.T) {
 	tmpDir := t.TempDir()
 	binPath := filepath.Join(tmpDir, "arm")
 	cmd := exec.Command("go", "build", "-o", binPath, ".")
-	cmd.Dir = filepath.Join(".") // Current directory is cmd/arm
+	cmd.Dir = "." // Current directory is cmd/arm
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build binary: %v", err)
 	}
@@ -186,15 +184,12 @@ func TestAddGitLabRegistry(t *testing.T) {
 				if tt.errContains != "" && !strings.Contains(string(output), tt.errContains) {
 					t.Errorf("Expected error containing %q, got: %s", tt.errContains, output)
 				}
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error: %v. Output: %s", err, output)
-				}
+			} else if err != nil {
+				t.Errorf("Unexpected error: %v. Output: %s", err, output)
 			}
 		})
 	}
 }
-
 
 func TestAddCloudsmithRegistry(t *testing.T) {
 	tests := []struct {
@@ -249,7 +244,7 @@ func TestAddCloudsmithRegistry(t *testing.T) {
 	tmpDir := t.TempDir()
 	binPath := filepath.Join(tmpDir, "arm")
 	cmd := exec.Command("go", "build", "-o", binPath, ".")
-	cmd.Dir = filepath.Join(".") // Current directory is cmd/arm
+	cmd.Dir = "." // Current directory is cmd/arm
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build binary: %v", err)
 	}
@@ -280,10 +275,8 @@ func TestAddCloudsmithRegistry(t *testing.T) {
 				if tt.errContains != "" && !strings.Contains(string(output), tt.errContains) {
 					t.Errorf("Expected error containing %q, got: %s", tt.errContains, output)
 				}
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error: %v. Output: %s", err, output)
-				}
+			} else if err != nil {
+				t.Errorf("Unexpected error: %v. Output: %s", err, output)
 			}
 		})
 	}

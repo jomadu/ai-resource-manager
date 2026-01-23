@@ -27,7 +27,7 @@ func TestInstallAll(t *testing.T) {
 	}
 	rulesetDepMap, _ := json.Marshal(rulesetDep)
 	var rulesetDepInterface map[string]interface{}
-	json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
+	_ = json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
 
 	promptsetDep := manifest.PromptsetDependencyConfig{
 		BaseDependencyConfig: manifest.BaseDependencyConfig{
@@ -38,7 +38,7 @@ func TestInstallAll(t *testing.T) {
 	}
 	promptsetDepMap, _ := json.Marshal(promptsetDep)
 	var promptsetDepInterface map[string]interface{}
-	json.Unmarshal(promptsetDepMap, &promptsetDepInterface)
+	_ = json.Unmarshal(promptsetDepMap, &promptsetDepInterface)
 
 	manifestMgr := &mockManifestManager{
 		manifest: &manifest.Manifest{
@@ -170,12 +170,12 @@ func (m *mockRegistry) ListPackageVersions(ctx context.Context, packageName stri
 	}
 	// Sort versions highest first (like real registries do)
 	sort.Slice(versions, func(i, j int) bool {
-		return versions[i].Compare(versions[j]) > 0
+		return versions[i].Compare(&versions[j]) > 0
 	})
 	return versions, nil
 }
 
-func (m *mockRegistry) GetPackage(ctx context.Context, packageName string, version core.Version, include, exclude []string) (*core.Package, error) {
+func (m *mockRegistry) GetPackage(ctx context.Context, packageName string, version *core.Version, include, exclude []string) (*core.Package, error) {
 	key := packageName + "@" + version.Version
 	return m.packages[key], nil
 }

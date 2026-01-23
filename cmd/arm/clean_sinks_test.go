@@ -34,7 +34,7 @@ func TestCleanSinks(t *testing.T) {
 			args: []string{"clean", "sinks"},
 			setupFunc: func(dir string) error {
 				manifestPath := filepath.Join(dir, "arm-manifest.json")
-				return os.WriteFile(manifestPath, []byte(`{"version":1,"registries":{},"sinks":{},"rulesets":{},"promptsets":{}}`), 0644)
+				return os.WriteFile(manifestPath, []byte(`{"version":1,"registries":{},"sinks":{},"rulesets":{},"promptsets":{}}`), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Sinks cleaned successfully",
@@ -45,7 +45,7 @@ func TestCleanSinks(t *testing.T) {
 			setupFunc: func(dir string) error {
 				manifestPath := filepath.Join(dir, "arm-manifest.json")
 				sinkDir := filepath.Join(dir, "test-sink")
-				if err := os.MkdirAll(sinkDir, 0755); err != nil {
+				if err := os.MkdirAll(sinkDir, 0o755); err != nil {
 					return err
 				}
 				manifest := `{
@@ -60,7 +60,7 @@ func TestCleanSinks(t *testing.T) {
 					"rulesets": {},
 					"promptsets": {}
 				}`
-				return os.WriteFile(manifestPath, []byte(manifest), 0644)
+				return os.WriteFile(manifestPath, []byte(manifest), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Sinks cleaned successfully",
@@ -71,7 +71,7 @@ func TestCleanSinks(t *testing.T) {
 			setupFunc: func(dir string) error {
 				manifestPath := filepath.Join(dir, "arm-manifest.json")
 				sinkDir := filepath.Join(dir, "test-sink")
-				if err := os.MkdirAll(sinkDir, 0755); err != nil {
+				if err := os.MkdirAll(sinkDir, 0o755); err != nil {
 					return err
 				}
 				manifest := `{
@@ -86,7 +86,7 @@ func TestCleanSinks(t *testing.T) {
 					"rulesets": {},
 					"promptsets": {}
 				}`
-				return os.WriteFile(manifestPath, []byte(manifest), 0644)
+				return os.WriteFile(manifestPath, []byte(manifest), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Sinks nuked successfully",

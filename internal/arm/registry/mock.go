@@ -39,12 +39,12 @@ func (m *MockRegistry) ListPackageVersions(ctx context.Context, packageName stri
 	if !exists {
 		return nil, fmt.Errorf("package %s not found", packageName)
 	}
-	
+
 	var result []core.Version
 	for _, pkg := range versions {
 		result = append(result, pkg.Metadata.Version)
 	}
-	
+
 	// Sort versions descending (latest first)
 	for i := 0; i < len(result); i++ {
 		for j := i + 1; j < len(result); j++ {
@@ -55,20 +55,20 @@ func (m *MockRegistry) ListPackageVersions(ctx context.Context, packageName stri
 			}
 		}
 	}
-	
+
 	return result, nil
 }
 
-func (m *MockRegistry) GetPackage(ctx context.Context, packageName string, version core.Version, include []string, exclude []string) (*core.Package, error) {
+func (m *MockRegistry) GetPackage(ctx context.Context, packageName string, version *core.Version, include, exclude []string) (*core.Package, error) {
 	versions, exists := m.packages[packageName]
 	if !exists {
 		return nil, fmt.Errorf("package %s not found", packageName)
 	}
-	
+
 	pkg, exists := versions[version.Version]
 	if !exists {
 		return nil, fmt.Errorf("package %s version %s not found", packageName, version.Version)
 	}
-	
+
 	return pkg, nil
 }

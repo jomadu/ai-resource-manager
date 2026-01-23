@@ -1,0 +1,1802 @@
+Run go test -v -race -coverprofile=coverage.out ./...
+=== RUN   TestAddGitRegistry
+=== RUN   TestAddGitRegistry/valid_git_registry
+=== RUN   TestAddGitRegistry/with_branches
+=== RUN   TestAddGitRegistry/missing_url
+=== RUN   TestAddGitRegistry/missing_name
+=== RUN   TestAddGitRegistry/duplicate_without_force
+=== RUN   TestAddGitRegistry/duplicate_with_force
+--- PASS: TestAddGitRegistry (16.34s)
+    --- PASS: TestAddGitRegistry/valid_git_registry (0.00s)
+    --- PASS: TestAddGitRegistry/with_branches (0.00s)
+    --- PASS: TestAddGitRegistry/missing_url (0.00s)
+    --- PASS: TestAddGitRegistry/missing_name (0.00s)
+    --- PASS: TestAddGitRegistry/duplicate_without_force (0.01s)
+    --- PASS: TestAddGitRegistry/duplicate_with_force (0.01s)
+=== RUN   TestAddGitLabRegistry
+=== RUN   TestAddGitLabRegistry/valid_gitlab_registry_with_url_only
+=== RUN   TestAddGitLabRegistry/with_project-id
+=== RUN   TestAddGitLabRegistry/with_group-id
+=== RUN   TestAddGitLabRegistry/with_api-version
+=== RUN   TestAddGitLabRegistry/with_all_options
+=== RUN   TestAddGitLabRegistry/missing_url
+=== RUN   TestAddGitLabRegistry/missing_name
+=== RUN   TestAddGitLabRegistry/duplicate_without_force
+=== RUN   TestAddGitLabRegistry/duplicate_with_force
+--- PASS: TestAddGitLabRegistry (0.50s)
+    --- PASS: TestAddGitLabRegistry/valid_gitlab_registry_with_url_only (0.00s)
+    --- PASS: TestAddGitLabRegistry/with_project-id (0.00s)
+    --- PASS: TestAddGitLabRegistry/with_group-id (0.00s)
+    --- PASS: TestAddGitLabRegistry/with_api-version (0.00s)
+    --- PASS: TestAddGitLabRegistry/with_all_options (0.00s)
+    --- PASS: TestAddGitLabRegistry/missing_url (0.00s)
+    --- PASS: TestAddGitLabRegistry/missing_name (0.00s)
+    --- PASS: TestAddGitLabRegistry/duplicate_without_force (0.01s)
+    --- PASS: TestAddGitLabRegistry/duplicate_with_force (0.01s)
+=== RUN   TestAddCloudsmithRegistry
+=== RUN   TestAddCloudsmithRegistry/valid_cloudsmith_registry
+=== RUN   TestAddCloudsmithRegistry/missing_url
+=== RUN   TestAddCloudsmithRegistry/missing_owner
+=== RUN   TestAddCloudsmithRegistry/missing_repo
+=== RUN   TestAddCloudsmithRegistry/missing_name
+=== RUN   TestAddCloudsmithRegistry/duplicate_without_force
+=== RUN   TestAddCloudsmithRegistry/duplicate_with_force
+--- PASS: TestAddCloudsmithRegistry (0.49s)
+    --- PASS: TestAddCloudsmithRegistry/valid_cloudsmith_registry (0.00s)
+    --- PASS: TestAddCloudsmithRegistry/missing_url (0.00s)
+    --- PASS: TestAddCloudsmithRegistry/missing_owner (0.00s)
+    --- PASS: TestAddCloudsmithRegistry/missing_repo (0.00s)
+    --- PASS: TestAddCloudsmithRegistry/missing_name (0.00s)
+    --- PASS: TestAddCloudsmithRegistry/duplicate_without_force (0.01s)
+    --- PASS: TestAddCloudsmithRegistry/duplicate_with_force (0.01s)
+=== RUN   TestAddSink
+=== RUN   TestAddSink/missing_tool_flag
+=== RUN   TestAddSink/missing_name
+=== RUN   TestAddSink/missing_path
+=== RUN   TestAddSink/invalid_tool
+=== RUN   TestAddSink/add_cursor_sink
+=== RUN   TestAddSink/add_amazonq_sink
+=== RUN   TestAddSink/add_copilot_sink
+=== RUN   TestAddSink/add_markdown_sink
+=== RUN   TestAddSink/add_sink_with_force_flag
+--- PASS: TestAddSink (0.46s)
+    --- PASS: TestAddSink/missing_tool_flag (0.00s)
+    --- PASS: TestAddSink/missing_name (0.00s)
+    --- PASS: TestAddSink/missing_path (0.00s)
+    --- PASS: TestAddSink/invalid_tool (0.00s)
+    --- PASS: TestAddSink/add_cursor_sink (0.00s)
+    --- PASS: TestAddSink/add_amazonq_sink (0.00s)
+    --- PASS: TestAddSink/add_copilot_sink (0.00s)
+    --- PASS: TestAddSink/add_markdown_sink (0.00s)
+    --- PASS: TestAddSink/add_sink_with_force_flag (0.00s)
+=== RUN   TestCleanSinks
+=== RUN   TestCleanSinks/clean_sinks_without_manifest
+=== RUN   TestCleanSinks/clean_sinks_with_empty_manifest
+=== RUN   TestCleanSinks/clean_sinks_with_configured_sinks
+=== RUN   TestCleanSinks/nuke_sinks
+=== RUN   TestCleanSinks/clean_sinks_with_unknown_flag
+--- PASS: TestCleanSinks (0.46s)
+    --- PASS: TestCleanSinks/clean_sinks_without_manifest (0.00s)
+    --- PASS: TestCleanSinks/clean_sinks_with_empty_manifest (0.00s)
+    --- PASS: TestCleanSinks/clean_sinks_with_configured_sinks (0.00s)
+    --- PASS: TestCleanSinks/nuke_sinks (0.00s)
+    --- PASS: TestCleanSinks/clean_sinks_with_unknown_flag (0.00s)
+=== RUN   TestCleanCache
+=== RUN   TestCleanCache/no_subcommand
+=== RUN   TestCleanCache/unknown_subcommand
+=== RUN   TestCleanCache/cache_with_default_max-age
+=== RUN   TestCleanCache/cache_with_custom_max-age
+=== RUN   TestCleanCache/cache_with_nuke
+=== RUN   TestCleanCache/cache_with_both_max-age_and_nuke
+=== RUN   TestCleanCache/cache_with_max-age_missing_value
+=== RUN   TestCleanCache/cache_with_invalid_duration
+=== RUN   TestCleanCache/cache_with_unknown_flag
+--- PASS: TestCleanCache (0.49s)
+    --- PASS: TestCleanCache/no_subcommand (0.00s)
+    --- PASS: TestCleanCache/unknown_subcommand (0.00s)
+    --- PASS: TestCleanCache/cache_with_default_max-age (0.00s)
+    --- PASS: TestCleanCache/cache_with_custom_max-age (0.00s)
+    --- PASS: TestCleanCache/cache_with_nuke (0.03s)
+    --- PASS: TestCleanCache/cache_with_both_max-age_and_nuke (0.00s)
+    --- PASS: TestCleanCache/cache_with_max-age_missing_value (0.00s)
+    --- PASS: TestCleanCache/cache_with_invalid_duration (0.00s)
+    --- PASS: TestCleanCache/cache_with_unknown_flag (0.00s)
+=== RUN   TestCompile
+=== RUN   TestCompile/no_arguments
+=== RUN   TestCompile/missing_output_path_without_validate-only
+=== RUN   TestCompile/validate-only_without_output_path
+=== RUN   TestCompile/with_output_path
+=== RUN   TestCompile/with_tool_flag
+=== RUN   TestCompile/with_namespace_flag
+=== RUN   TestCompile/with_force_flag
+=== RUN   TestCompile/with_recursive_flag
+=== RUN   TestCompile/with_include_flag
+=== RUN   TestCompile/with_exclude_flag
+=== RUN   TestCompile/with_fail-fast_flag
+=== RUN   TestCompile/multiple_input_paths
+=== RUN   TestCompile/multiple_include_patterns
+=== RUN   TestCompile/multiple_exclude_patterns
+=== RUN   TestCompile/all_flags_combined
+=== RUN   TestCompile/unknown_flag
+=== RUN   TestCompile/tool_flag_without_value
+=== RUN   TestCompile/namespace_flag_without_value
+=== RUN   TestCompile/include_flag_without_value
+=== RUN   TestCompile/exclude_flag_without_value
+--- PASS: TestCompile (0.51s)
+    --- PASS: TestCompile/no_arguments (0.00s)
+    --- PASS: TestCompile/missing_output_path_without_validate-only (0.00s)
+    --- PASS: TestCompile/validate-only_without_output_path (0.00s)
+    --- PASS: TestCompile/with_output_path (0.00s)
+    --- PASS: TestCompile/with_tool_flag (0.00s)
+    --- PASS: TestCompile/with_namespace_flag (0.00s)
+    --- PASS: TestCompile/with_force_flag (0.00s)
+    --- PASS: TestCompile/with_recursive_flag (0.00s)
+    --- PASS: TestCompile/with_include_flag (0.00s)
+    --- PASS: TestCompile/with_exclude_flag (0.00s)
+    --- PASS: TestCompile/with_fail-fast_flag (0.00s)
+    --- PASS: TestCompile/multiple_input_paths (0.00s)
+    --- PASS: TestCompile/multiple_include_patterns (0.00s)
+    --- PASS: TestCompile/multiple_exclude_patterns (0.00s)
+    --- PASS: TestCompile/all_flags_combined (0.00s)
+    --- PASS: TestCompile/unknown_flag (0.00s)
+    --- PASS: TestCompile/tool_flag_without_value (0.00s)
+    --- PASS: TestCompile/namespace_flag_without_value (0.00s)
+    --- PASS: TestCompile/include_flag_without_value (0.00s)
+    --- PASS: TestCompile/exclude_flag_without_value (0.00s)
+=== RUN   TestCompileHelp
+--- PASS: TestCompileHelp (0.46s)
+=== RUN   TestInstallAll
+--- PASS: TestInstallAll (0.45s)
+=== RUN   TestInstallAllNoManifest
+--- PASS: TestInstallAllNoManifest (0.45s)
+=== RUN   TestUninstall
+--- PASS: TestUninstall (0.45s)
+=== RUN   TestUninstallNoManifest
+--- PASS: TestUninstallNoManifest (0.44s)
+=== RUN   TestInstallPromptset
+=== RUN   TestInstallPromptset/missing_package_spec
+=== RUN   TestInstallPromptset/missing_sinks
+=== RUN   TestInstallPromptset/invalid_package_spec_format
+=== RUN   TestInstallPromptset/empty_registry_name
+=== RUN   TestInstallPromptset/empty_package_name
+=== RUN   TestInstallPromptset/empty_version_after_@
+--- PASS: TestInstallPromptset (0.45s)
+    --- PASS: TestInstallPromptset/missing_package_spec (0.00s)
+    --- PASS: TestInstallPromptset/missing_sinks (0.00s)
+    --- PASS: TestInstallPromptset/invalid_package_spec_format (0.00s)
+    --- PASS: TestInstallPromptset/empty_registry_name (0.00s)
+    --- PASS: TestInstallPromptset/empty_package_name (0.00s)
+    --- PASS: TestInstallPromptset/empty_version_after_@ (0.00s)
+=== RUN   TestInstallRuleset
+=== RUN   TestInstallRuleset/missing_package_spec
+=== RUN   TestInstallRuleset/missing_sinks
+=== RUN   TestInstallRuleset/invalid_package_spec_format
+=== RUN   TestInstallRuleset/empty_registry_name
+=== RUN   TestInstallRuleset/empty_package_name
+=== RUN   TestInstallRuleset/empty_version_after_@
+--- PASS: TestInstallRuleset (0.49s)
+    --- PASS: TestInstallRuleset/missing_package_spec (0.00s)
+    --- PASS: TestInstallRuleset/missing_sinks (0.00s)
+    --- PASS: TestInstallRuleset/invalid_package_spec_format (0.00s)
+    --- PASS: TestInstallRuleset/empty_registry_name (0.00s)
+    --- PASS: TestInstallRuleset/empty_package_name (0.00s)
+    --- PASS: TestInstallRuleset/empty_version_after_@ (0.00s)
+=== RUN   TestListAll
+=== RUN   TestListAll/empty_manifest
+=== RUN   TestListAll/with_registries_and_sinks
+=== RUN   TestListAll/with_dependencies
+--- PASS: TestListAll (0.48s)
+    --- PASS: TestListAll/empty_manifest (0.00s)
+    --- PASS: TestListAll/with_registries_and_sinks (0.00s)
+    --- PASS: TestListAll/with_dependencies (0.00s)
+=== RUN   TestInfoAll
+=== RUN   TestInfoAll/empty_manifest
+=== RUN   TestInfoAll/with_all_entities
+--- PASS: TestInfoAll (0.46s)
+    --- PASS: TestInfoAll/empty_manifest (0.00s)
+    --- PASS: TestInfoAll/with_all_entities (0.00s)
+=== RUN   TestListSink
+=== RUN   TestListSink/list_sinks_-_multiple_sinks
+=== RUN   TestListSink/list_sinks_-_single_sink
+=== RUN   TestListSink/list_sinks_-_no_sinks
+--- PASS: TestListSink (0.48s)
+    --- PASS: TestListSink/list_sinks_-_multiple_sinks (0.00s)
+    --- PASS: TestListSink/list_sinks_-_single_sink (0.00s)
+    --- PASS: TestListSink/list_sinks_-_no_sinks (0.00s)
+=== RUN   TestInfoSink
+=== RUN   TestInfoSink/info_sink_-_specific_sink
+=== RUN   TestInfoSink/info_sink_-_multiple_sinks
+=== RUN   TestInfoSink/info_sink_-_all_sinks_(no_args)
+=== RUN   TestInfoSink/info_sink_-_no_sinks
+=== RUN   TestInfoSink/info_sink_-_nonexistent_sink
+--- PASS: TestInfoSink (0.49s)
+    --- PASS: TestInfoSink/info_sink_-_specific_sink (0.00s)
+    --- PASS: TestInfoSink/info_sink_-_multiple_sinks (0.00s)
+    --- PASS: TestInfoSink/info_sink_-_all_sinks_(no_args) (0.00s)
+    --- PASS: TestInfoSink/info_sink_-_no_sinks (0.00s)
+    --- PASS: TestInfoSink/info_sink_-_nonexistent_sink (0.00s)
+=== RUN   TestListRegistry
+=== RUN   TestListRegistry/no_registries
+=== RUN   TestListRegistry/single_registry
+=== RUN   TestListRegistry/multiple_registries
+--- PASS: TestListRegistry (0.46s)
+    --- PASS: TestListRegistry/no_registries (0.00s)
+    --- PASS: TestListRegistry/single_registry (0.00s)
+    --- PASS: TestListRegistry/multiple_registries (0.00s)
+=== RUN   TestInfoRegistry
+=== RUN   TestInfoRegistry/no_registries
+=== RUN   TestInfoRegistry/git_registry_info
+=== RUN   TestInfoRegistry/gitlab_registry_info
+=== RUN   TestInfoRegistry/cloudsmith_registry_info
+=== RUN   TestInfoRegistry/all_registries_info
+=== RUN   TestInfoRegistry/multiple_specific_registries
+--- PASS: TestInfoRegistry (0.46s)
+    --- PASS: TestInfoRegistry/no_registries (0.00s)
+    --- PASS: TestInfoRegistry/git_registry_info (0.00s)
+    --- PASS: TestInfoRegistry/gitlab_registry_info (0.00s)
+    --- PASS: TestInfoRegistry/cloudsmith_registry_info (0.00s)
+    --- PASS: TestInfoRegistry/all_registries_info (0.00s)
+    --- PASS: TestInfoRegistry/multiple_specific_registries (0.00s)
+=== RUN   TestPrintVersion
+--- PASS: TestPrintVersion (0.00s)
+=== RUN   TestPrintHelp
+--- PASS: TestPrintHelp (0.00s)
+=== RUN   TestPrintCommandHelp
+=== RUN   TestPrintCommandHelp/version_help
+--- PASS: TestPrintCommandHelp (0.00s)
+    --- PASS: TestPrintCommandHelp/version_help (0.00s)
+=== RUN   TestBuildInfoIntegration
+--- PASS: TestBuildInfoIntegration (0.00s)
+=== RUN   TestOutdated
+=== RUN   TestOutdated/no_outdated_packages
+=== RUN   TestOutdated/table_output_format_(default)
+=== RUN   TestOutdated/json_output_format
+=== RUN   TestOutdated/list_output_format
+=== RUN   TestOutdated/invalid_output_format
+=== RUN   TestOutdated/missing_output_value
+--- PASS: TestOutdated (0.47s)
+    --- PASS: TestOutdated/no_outdated_packages (0.00s)
+    --- PASS: TestOutdated/table_output_format_(default) (0.00s)
+    --- PASS: TestOutdated/json_output_format (0.00s)
+    --- PASS: TestOutdated/list_output_format (0.00s)
+    --- PASS: TestOutdated/invalid_output_format (0.00s)
+    --- PASS: TestOutdated/missing_output_value (0.00s)
+=== RUN   TestRemoveSink
+=== RUN   TestRemoveSink/remove_existing_sink
+=== RUN   TestRemoveSink/remove_non-existent_sink
+=== RUN   TestRemoveSink/missing_sink_name
+--- PASS: TestRemoveSink (0.46s)
+    --- PASS: TestRemoveSink/remove_existing_sink (0.00s)
+    --- PASS: TestRemoveSink/remove_non-existent_sink (0.00s)
+    --- PASS: TestRemoveSink/missing_sink_name (0.00s)
+=== RUN   TestSetSink
+=== RUN   TestSetSink/set_sink_tool
+=== RUN   TestSetSink/set_sink_directory
+=== RUN   TestSetSink/set_invalid_tool
+=== RUN   TestSetSink/set_unknown_key
+=== RUN   TestSetSink/set_non-existent_sink
+=== RUN   TestSetSink/missing_arguments
+--- PASS: TestSetSink (0.50s)
+    --- PASS: TestSetSink/set_sink_tool (0.00s)
+    --- PASS: TestSetSink/set_sink_directory (0.00s)
+    --- PASS: TestSetSink/set_invalid_tool (0.00s)
+    --- PASS: TestSetSink/set_unknown_key (0.00s)
+    --- PASS: TestSetSink/set_non-existent_sink (0.00s)
+    --- PASS: TestSetSink/missing_arguments (0.00s)
+=== RUN   TestRemoveRegistry
+=== RUN   TestRemoveRegistry/remove_existing_registry
+=== RUN   TestRemoveRegistry/remove_non-existent_registry
+=== RUN   TestRemoveRegistry/missing_registry_name
+--- PASS: TestRemoveRegistry (0.45s)
+    --- PASS: TestRemoveRegistry/remove_existing_registry (0.00s)
+    --- PASS: TestRemoveRegistry/remove_non-existent_registry (0.00s)
+    --- PASS: TestRemoveRegistry/missing_registry_name (0.00s)
+=== RUN   TestSetRegistry
+=== RUN   TestSetRegistry/set_registry_url
+=== RUN   TestSetRegistry/set_registry_name
+=== RUN   TestSetRegistry/set_non-existent_registry
+=== RUN   TestSetRegistry/set_invalid_key
+=== RUN   TestSetRegistry/missing_arguments
+--- PASS: TestSetRegistry (0.47s)
+    --- PASS: TestSetRegistry/set_registry_url (0.00s)
+    --- PASS: TestSetRegistry/set_registry_name (0.00s)
+    --- PASS: TestSetRegistry/set_non-existent_registry (0.00s)
+    --- PASS: TestSetRegistry/set_invalid_key (0.00s)
+    --- PASS: TestSetRegistry/missing_arguments (0.00s)
+=== RUN   TestSetRuleset
+=== RUN   TestSetRuleset/missing_arguments
+=== RUN   TestSetRuleset/invalid_package_spec
+=== RUN   TestSetRuleset/set_version
+=== RUN   TestSetRuleset/set_priority
+=== RUN   TestSetRuleset/set_priority_invalid
+=== RUN   TestSetRuleset/set_sinks
+=== RUN   TestSetRuleset/set_include
+=== RUN   TestSetRuleset/set_exclude
+=== RUN   TestSetRuleset/unknown_key
+--- PASS: TestSetRuleset (0.49s)
+    --- PASS: TestSetRuleset/missing_arguments (0.00s)
+    --- PASS: TestSetRuleset/invalid_package_spec (0.00s)
+    --- PASS: TestSetRuleset/set_version (0.00s)
+    --- PASS: TestSetRuleset/set_priority (0.00s)
+    --- PASS: TestSetRuleset/set_priority_invalid (0.00s)
+    --- PASS: TestSetRuleset/set_sinks (0.00s)
+    --- PASS: TestSetRuleset/set_include (0.00s)
+    --- PASS: TestSetRuleset/set_exclude (0.00s)
+    --- PASS: TestSetRuleset/unknown_key (0.00s)
+=== RUN   TestSetPromptset
+=== RUN   TestSetPromptset/missing_arguments
+=== RUN   TestSetPromptset/invalid_package_spec
+=== RUN   TestSetPromptset/set_version
+=== RUN   TestSetPromptset/set_sinks
+=== RUN   TestSetPromptset/set_include
+=== RUN   TestSetPromptset/set_exclude
+=== RUN   TestSetPromptset/unknown_key
+--- PASS: TestSetPromptset (0.48s)
+    --- PASS: TestSetPromptset/missing_arguments (0.00s)
+    --- PASS: TestSetPromptset/invalid_package_spec (0.00s)
+    --- PASS: TestSetPromptset/set_version (0.00s)
+    --- PASS: TestSetPromptset/set_sinks (0.00s)
+    --- PASS: TestSetPromptset/set_include (0.00s)
+    --- PASS: TestSetPromptset/set_exclude (0.00s)
+    --- PASS: TestSetPromptset/unknown_key (0.00s)
+=== RUN   TestUpdateCommand
+=== RUN   TestUpdateCommand/update_with_no_manifest
+=== RUN   TestUpdateCommand/update_with_empty_manifest
+--- PASS: TestUpdateCommand (0.44s)
+    --- PASS: TestUpdateCommand/update_with_no_manifest (0.00s)
+    --- PASS: TestUpdateCommand/update_with_empty_manifest (0.00s)
+=== RUN   TestUpgrade_Success
+    upgrade_test.go:52: Output: All packages upgraded successfully
+--- PASS: TestUpgrade_Success (0.43s)
+=== RUN   TestUpgrade_MissingLockfile
+--- PASS: TestUpgrade_MissingLockfile (0.08s)
+PASS
+coverage: 2.9% of statements
+ok  	github.com/jomadu/ai-resource-manager/cmd/arm	30.577s	coverage: 2.9% of statements
+=== RUN   TestAmazonQRuleGenerator_GenerateRule
+--- PASS: TestAmazonQRuleGenerator_GenerateRule (0.00s)
+=== RUN   TestAmazonQRuleGenerator_GenerateRule_NotFound
+--- PASS: TestAmazonQRuleGenerator_GenerateRule_NotFound (0.00s)
+=== RUN   TestAmazonQPromptGenerator_GeneratePrompt
+--- PASS: TestAmazonQPromptGenerator_GeneratePrompt (0.00s)
+=== RUN   TestAmazonQPromptGenerator_GeneratePrompt_NotFound
+--- PASS: TestAmazonQPromptGenerator_GeneratePrompt_NotFound (0.00s)
+=== RUN   TestAmazonQRuleFilenameGenerator_GenerateRuleFilename
+--- PASS: TestAmazonQRuleFilenameGenerator_GenerateRuleFilename (0.00s)
+=== RUN   TestAmazonQRuleFilenameGenerator_GenerateRuleFilename_EmptyInputs
+--- PASS: TestAmazonQRuleFilenameGenerator_GenerateRuleFilename_EmptyInputs (0.00s)
+=== RUN   TestAmazonQPromptFilenameGenerator_GeneratePromptFilename
+--- PASS: TestAmazonQPromptFilenameGenerator_GeneratePromptFilename (0.00s)
+=== RUN   TestAmazonQPromptFilenameGenerator_GeneratePromptFilename_EmptyInputs
+--- PASS: TestAmazonQPromptFilenameGenerator_GeneratePromptFilename_EmptyInputs (0.00s)
+=== RUN   TestCompileRuleset
+--- PASS: TestCompileRuleset (0.00s)
+=== RUN   TestCompileRuleset_DifferentTools
+=== RUN   TestCompileRuleset_DifferentTools/cursor
+=== RUN   TestCompileRuleset_DifferentTools/amazonq
+=== RUN   TestCompileRuleset_DifferentTools/copilot
+=== RUN   TestCompileRuleset_DifferentTools/markdown
+--- PASS: TestCompileRuleset_DifferentTools (0.00s)
+    --- PASS: TestCompileRuleset_DifferentTools/cursor (0.00s)
+    --- PASS: TestCompileRuleset_DifferentTools/amazonq (0.00s)
+    --- PASS: TestCompileRuleset_DifferentTools/copilot (0.00s)
+    --- PASS: TestCompileRuleset_DifferentTools/markdown (0.00s)
+=== RUN   TestCompilePromptset
+--- PASS: TestCompilePromptset (0.00s)
+=== RUN   TestCompilePromptset_AllTools
+=== RUN   TestCompilePromptset_AllTools/cursor
+=== RUN   TestCompilePromptset_AllTools/amazonq
+=== RUN   TestCompilePromptset_AllTools/markdown
+=== RUN   TestCompilePromptset_AllTools/copilot
+--- PASS: TestCompilePromptset_AllTools (0.00s)
+    --- PASS: TestCompilePromptset_AllTools/cursor (0.00s)
+    --- PASS: TestCompilePromptset_AllTools/amazonq (0.00s)
+    --- PASS: TestCompilePromptset_AllTools/markdown (0.00s)
+    --- PASS: TestCompilePromptset_AllTools/copilot (0.00s)
+=== RUN   TestCopilotRuleGenerator_GenerateRule
+--- PASS: TestCopilotRuleGenerator_GenerateRule (0.00s)
+=== RUN   TestCopilotRuleGenerator_GenerateRule_NotFound
+--- PASS: TestCopilotRuleGenerator_GenerateRule_NotFound (0.00s)
+=== RUN   TestCopilotPromptGenerator_GeneratePrompt
+--- PASS: TestCopilotPromptGenerator_GeneratePrompt (0.00s)
+=== RUN   TestCopilotPromptGenerator_GeneratePrompt_NotFound
+--- PASS: TestCopilotPromptGenerator_GeneratePrompt_NotFound (0.00s)
+=== RUN   TestCopilotRuleFilenameGenerator_GenerateRuleFilename
+--- PASS: TestCopilotRuleFilenameGenerator_GenerateRuleFilename (0.00s)
+=== RUN   TestCopilotRuleFilenameGenerator_GenerateRuleFilename_EmptyInputs
+--- PASS: TestCopilotRuleFilenameGenerator_GenerateRuleFilename_EmptyInputs (0.00s)
+=== RUN   TestCopilotPromptFilenameGenerator_GeneratePromptFilename
+--- PASS: TestCopilotPromptFilenameGenerator_GeneratePromptFilename (0.00s)
+=== RUN   TestCopilotPromptFilenameGenerator_GeneratePromptFilename_EmptyInputs
+--- PASS: TestCopilotPromptFilenameGenerator_GeneratePromptFilename_EmptyInputs (0.00s)
+=== RUN   TestCursorRuleGenerator_GenerateRule
+--- PASS: TestCursorRuleGenerator_GenerateRule (0.00s)
+=== RUN   TestCursorRuleGenerator_GenerateRule_NotFound
+--- PASS: TestCursorRuleGenerator_GenerateRule_NotFound (0.00s)
+=== RUN   TestCursorPromptGenerator_GeneratePrompt
+--- PASS: TestCursorPromptGenerator_GeneratePrompt (0.00s)
+=== RUN   TestCursorPromptGenerator_GeneratePrompt_NotFound
+--- PASS: TestCursorPromptGenerator_GeneratePrompt_NotFound (0.00s)
+=== RUN   TestCursorRuleFilenameGenerator_GenerateRuleFilename
+--- PASS: TestCursorRuleFilenameGenerator_GenerateRuleFilename (0.00s)
+=== RUN   TestCursorRuleFilenameGenerator_GenerateRuleFilename_EmptyInputs
+--- PASS: TestCursorRuleFilenameGenerator_GenerateRuleFilename_EmptyInputs (0.00s)
+=== RUN   TestCursorPromptFilenameGenerator_GeneratePromptFilename
+--- PASS: TestCursorPromptFilenameGenerator_GeneratePromptFilename (0.00s)
+=== RUN   TestCursorPromptFilenameGenerator_GeneratePromptFilename_EmptyInputs
+--- PASS: TestCursorPromptFilenameGenerator_GeneratePromptFilename_EmptyInputs (0.00s)
+=== RUN   TestRuleGeneratorFactory
+=== RUN   TestRuleGeneratorFactory/cursor
+=== RUN   TestRuleGeneratorFactory/markdown
+=== RUN   TestRuleGeneratorFactory/amazonq
+=== RUN   TestRuleGeneratorFactory/copilot
+--- PASS: TestRuleGeneratorFactory (0.00s)
+    --- PASS: TestRuleGeneratorFactory/cursor (0.00s)
+    --- PASS: TestRuleGeneratorFactory/markdown (0.00s)
+    --- PASS: TestRuleGeneratorFactory/amazonq (0.00s)
+    --- PASS: TestRuleGeneratorFactory/copilot (0.00s)
+=== RUN   TestPromptGeneratorFactory
+=== RUN   TestPromptGeneratorFactory/cursor
+=== RUN   TestPromptGeneratorFactory/markdown
+=== RUN   TestPromptGeneratorFactory/amazonq
+=== RUN   TestPromptGeneratorFactory/copilot
+--- PASS: TestPromptGeneratorFactory (0.00s)
+    --- PASS: TestPromptGeneratorFactory/cursor (0.00s)
+    --- PASS: TestPromptGeneratorFactory/markdown (0.00s)
+    --- PASS: TestPromptGeneratorFactory/amazonq (0.00s)
+    --- PASS: TestPromptGeneratorFactory/copilot (0.00s)
+=== RUN   TestRuleFilenameGeneratorFactory
+=== RUN   TestRuleFilenameGeneratorFactory/cursor
+=== RUN   TestRuleFilenameGeneratorFactory/markdown
+=== RUN   TestRuleFilenameGeneratorFactory/amazonq
+=== RUN   TestRuleFilenameGeneratorFactory/copilot
+--- PASS: TestRuleFilenameGeneratorFactory (0.00s)
+    --- PASS: TestRuleFilenameGeneratorFactory/cursor (0.00s)
+    --- PASS: TestRuleFilenameGeneratorFactory/markdown (0.00s)
+    --- PASS: TestRuleFilenameGeneratorFactory/amazonq (0.00s)
+    --- PASS: TestRuleFilenameGeneratorFactory/copilot (0.00s)
+=== RUN   TestPromptFilenameGeneratorFactory
+=== RUN   TestPromptFilenameGeneratorFactory/cursor
+=== RUN   TestPromptFilenameGeneratorFactory/markdown
+=== RUN   TestPromptFilenameGeneratorFactory/amazonq
+=== RUN   TestPromptFilenameGeneratorFactory/copilot
+--- PASS: TestPromptFilenameGeneratorFactory (0.00s)
+    --- PASS: TestPromptFilenameGeneratorFactory/cursor (0.00s)
+    --- PASS: TestPromptFilenameGeneratorFactory/markdown (0.00s)
+    --- PASS: TestPromptFilenameGeneratorFactory/amazonq (0.00s)
+    --- PASS: TestPromptFilenameGeneratorFactory/copilot (0.00s)
+=== RUN   TestGenerateRuleMetadata_Basic
+--- PASS: TestGenerateRuleMetadata_Basic (0.00s)
+=== RUN   TestGenerateRuleMetadata_WithPriority
+--- PASS: TestGenerateRuleMetadata_WithPriority (0.00s)
+=== RUN   TestGenerateRuleMetadata_WithoutPriority
+--- PASS: TestGenerateRuleMetadata_WithoutPriority (0.00s)
+=== RUN   TestGenerateRuleMetadata_WithScope
+--- PASS: TestGenerateRuleMetadata_WithScope (0.00s)
+=== RUN   TestGenerateRuleMetadata_MultipleRules
+--- PASS: TestGenerateRuleMetadata_MultipleRules (0.00s)
+=== RUN   TestGenerateRuleMetadata_EnforcementUppercase
+=== RUN   TestGenerateRuleMetadata_EnforcementUppercase/must
+=== RUN   TestGenerateRuleMetadata_EnforcementUppercase/should
+=== RUN   TestGenerateRuleMetadata_EnforcementUppercase/may
+--- PASS: TestGenerateRuleMetadata_EnforcementUppercase (0.00s)
+    --- PASS: TestGenerateRuleMetadata_EnforcementUppercase/must (0.00s)
+    --- PASS: TestGenerateRuleMetadata_EnforcementUppercase/should (0.00s)
+    --- PASS: TestGenerateRuleMetadata_EnforcementUppercase/may (0.00s)
+=== RUN   TestMarkdownRuleGenerator_GenerateRule
+--- PASS: TestMarkdownRuleGenerator_GenerateRule (0.00s)
+=== RUN   TestMarkdownRuleGenerator_GenerateRule_NotFound
+--- PASS: TestMarkdownRuleGenerator_GenerateRule_NotFound (0.00s)
+=== RUN   TestMarkdownPromptGenerator_GeneratePrompt
+--- PASS: TestMarkdownPromptGenerator_GeneratePrompt (0.00s)
+=== RUN   TestMarkdownPromptGenerator_GeneratePrompt_NotFound
+--- PASS: TestMarkdownPromptGenerator_GeneratePrompt_NotFound (0.00s)
+=== RUN   TestMarkdownRuleFilenameGenerator_GenerateRuleFilename
+--- PASS: TestMarkdownRuleFilenameGenerator_GenerateRuleFilename (0.00s)
+=== RUN   TestMarkdownRuleFilenameGenerator_GenerateRuleFilename_EmptyInputs
+--- PASS: TestMarkdownRuleFilenameGenerator_GenerateRuleFilename_EmptyInputs (0.00s)
+=== RUN   TestMarkdownPromptFilenameGenerator_GeneratePromptFilename
+--- PASS: TestMarkdownPromptFilenameGenerator_GeneratePromptFilename (0.00s)
+=== RUN   TestMarkdownPromptFilenameGenerator_GeneratePromptFilename_EmptyInputs
+--- PASS: TestMarkdownPromptFilenameGenerator_GeneratePromptFilename_EmptyInputs (0.00s)
+PASS
+coverage: 95.8% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/compiler	1.031s	coverage: 95.8% of statements
+=== RUN   TestFileManager_GetAllSections
+=== RUN   TestFileManager_GetAllSections/success_-_project_file_only
+=== RUN   TestFileManager_GetAllSections/success_-_user_home_file_only
+=== RUN   TestFileManager_GetAllSections/success_-_project_overrides_user_home_(same_section)
+=== RUN   TestFileManager_GetAllSections/success_-_both_files_with_different_sections
+=== RUN   TestFileManager_GetAllSections/success_-_no_files_exist,_returns_empty_map
+=== RUN   TestFileManager_GetAllSections/success_-_environment_variable_expansion
+=== RUN   TestFileManager_GetAllSections/success_-_missing_env_var_expands_to_empty
+--- PASS: TestFileManager_GetAllSections (0.01s)
+    --- PASS: TestFileManager_GetAllSections/success_-_project_file_only (0.00s)
+    --- PASS: TestFileManager_GetAllSections/success_-_user_home_file_only (0.00s)
+    --- PASS: TestFileManager_GetAllSections/success_-_project_overrides_user_home_(same_section) (0.00s)
+    --- PASS: TestFileManager_GetAllSections/success_-_both_files_with_different_sections (0.00s)
+    --- PASS: TestFileManager_GetAllSections/success_-_no_files_exist,_returns_empty_map (0.00s)
+    --- PASS: TestFileManager_GetAllSections/success_-_environment_variable_expansion (0.00s)
+    --- PASS: TestFileManager_GetAllSections/success_-_missing_env_var_expands_to_empty (0.00s)
+=== RUN   TestFileManager_GetSection
+=== RUN   TestFileManager_GetSection/success_-_section_in_project_file
+=== RUN   TestFileManager_GetSection/success_-_section_in_user_home_file
+=== RUN   TestFileManager_GetSection/success_-_project_overrides_user_home_(same_section)
+=== RUN   TestFileManager_GetSection/success_-_multiple_keys_in_section
+=== RUN   TestFileManager_GetSection/success_-_environment_variable_expansion
+=== RUN   TestFileManager_GetSection/error_-_section_not_found_in_either_file
+=== RUN   TestFileManager_GetSection/error_-_no_files_exist
+--- PASS: TestFileManager_GetSection (0.01s)
+    --- PASS: TestFileManager_GetSection/success_-_section_in_project_file (0.00s)
+    --- PASS: TestFileManager_GetSection/success_-_section_in_user_home_file (0.00s)
+    --- PASS: TestFileManager_GetSection/success_-_project_overrides_user_home_(same_section) (0.00s)
+    --- PASS: TestFileManager_GetSection/success_-_multiple_keys_in_section (0.00s)
+    --- PASS: TestFileManager_GetSection/success_-_environment_variable_expansion (0.00s)
+    --- PASS: TestFileManager_GetSection/error_-_section_not_found_in_either_file (0.00s)
+    --- PASS: TestFileManager_GetSection/error_-_no_files_exist (0.00s)
+=== RUN   TestFileManager_GetValue
+=== RUN   TestFileManager_GetValue/success_-_key_exists_in_project_file
+=== RUN   TestFileManager_GetValue/success_-_key_exists_in_user_home_file
+=== RUN   TestFileManager_GetValue/success_-_project_overrides_user_home
+=== RUN   TestFileManager_GetValue/success_-_environment_variable_expansion
+=== RUN   TestFileManager_GetValue/error_-_section_not_found
+=== RUN   TestFileManager_GetValue/error_-_key_not_found_in_section
+--- PASS: TestFileManager_GetValue (0.00s)
+    --- PASS: TestFileManager_GetValue/success_-_key_exists_in_project_file (0.00s)
+    --- PASS: TestFileManager_GetValue/success_-_key_exists_in_user_home_file (0.00s)
+    --- PASS: TestFileManager_GetValue/success_-_project_overrides_user_home (0.00s)
+    --- PASS: TestFileManager_GetValue/success_-_environment_variable_expansion (0.00s)
+    --- PASS: TestFileManager_GetValue/error_-_section_not_found (0.00s)
+    --- PASS: TestFileManager_GetValue/error_-_key_not_found_in_section (0.00s)
+=== RUN   TestFileManager_NewFileManager
+--- PASS: TestFileManager_NewFileManager (0.00s)
+=== RUN   TestFileManager_NewFileManagerWithPaths
+--- PASS: TestFileManager_NewFileManagerWithPaths (0.00s)
+PASS
+coverage: 91.4% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/config	1.034s	coverage: 91.4% of statements
+=== RUN   TestIsArchive
+=== RUN   TestIsArchive/tar.gz_file
+=== RUN   TestIsArchive/zip_file
+=== RUN   TestIsArchive/yaml_file
+=== RUN   TestIsArchive/text_file
+=== RUN   TestIsArchive/empty_string
+=== RUN   TestIsArchive/just_.tar
+=== RUN   TestIsArchive/just_.gz
+=== RUN   TestIsArchive/multiple_extensions
+=== RUN   TestIsArchive/uppercase_TAR.GZ
+=== RUN   TestIsArchive/uppercase_ZIP
+=== RUN   TestIsArchive/very_long_filename
+=== RUN   TestIsArchive/path_with_directories
+=== RUN   TestIsArchive/hidden_file
+--- PASS: TestIsArchive (0.00s)
+    --- PASS: TestIsArchive/tar.gz_file (0.00s)
+    --- PASS: TestIsArchive/zip_file (0.00s)
+    --- PASS: TestIsArchive/yaml_file (0.00s)
+    --- PASS: TestIsArchive/text_file (0.00s)
+    --- PASS: TestIsArchive/empty_string (0.00s)
+    --- PASS: TestIsArchive/just_.tar (0.00s)
+    --- PASS: TestIsArchive/just_.gz (0.00s)
+    --- PASS: TestIsArchive/multiple_extensions (0.00s)
+    --- PASS: TestIsArchive/uppercase_TAR.GZ (0.00s)
+    --- PASS: TestIsArchive/uppercase_ZIP (0.00s)
+    --- PASS: TestIsArchive/very_long_filename (0.00s)
+    --- PASS: TestIsArchive/path_with_directories (0.00s)
+    --- PASS: TestIsArchive/hidden_file (0.00s)
+=== RUN   TestExtractTarGz
+=== RUN   TestExtractTarGz/single_file
+=== RUN   TestExtractTarGz/multiple_files
+=== RUN   TestExtractTarGz/nested_directories
+=== RUN   TestExtractTarGz/empty_archive
+=== RUN   TestExtractTarGz/empty_file
+=== RUN   TestExtractTarGz/file_with_spaces_in_name
+=== RUN   TestExtractTarGz/file_with_special_characters
+=== RUN   TestExtractTarGz/large_file
+=== RUN   TestExtractTarGz/many_files
+--- PASS: TestExtractTarGz (0.33s)
+    --- PASS: TestExtractTarGz/single_file (0.00s)
+    --- PASS: TestExtractTarGz/multiple_files (0.00s)
+    --- PASS: TestExtractTarGz/nested_directories (0.01s)
+    --- PASS: TestExtractTarGz/empty_archive (0.00s)
+    --- PASS: TestExtractTarGz/empty_file (0.00s)
+    --- PASS: TestExtractTarGz/file_with_spaces_in_name (0.00s)
+    --- PASS: TestExtractTarGz/file_with_special_characters (0.00s)
+    --- PASS: TestExtractTarGz/large_file (0.25s)
+    --- PASS: TestExtractTarGz/many_files (0.05s)
+=== RUN   TestExtractTarGzSecurity
+=== RUN   TestExtractTarGzSecurity/directory_traversal_with_..
+=== RUN   TestExtractTarGzSecurity/absolute_path
+=== RUN   TestExtractTarGzSecurity/dot_file
+--- PASS: TestExtractTarGzSecurity (0.02s)
+    --- PASS: TestExtractTarGzSecurity/directory_traversal_with_.. (0.01s)
+    --- PASS: TestExtractTarGzSecurity/absolute_path (0.01s)
+    --- PASS: TestExtractTarGzSecurity/dot_file (0.00s)
+=== RUN   TestExtractTarGzErrors
+=== RUN   TestExtractTarGzErrors/invalid_gzip
+=== RUN   TestExtractTarGzErrors/empty_content
+=== RUN   TestExtractTarGzErrors/corrupted_archive
+--- PASS: TestExtractTarGzErrors (0.00s)
+    --- PASS: TestExtractTarGzErrors/invalid_gzip (0.00s)
+    --- PASS: TestExtractTarGzErrors/empty_content (0.00s)
+    --- PASS: TestExtractTarGzErrors/corrupted_archive (0.00s)
+=== RUN   TestExtractZip
+=== RUN   TestExtractZip/single_file
+=== RUN   TestExtractZip/multiple_files
+=== RUN   TestExtractZip/empty_archive
+=== RUN   TestExtractZip/empty_file
+=== RUN   TestExtractZip/large_file
+--- PASS: TestExtractZip (0.29s)
+    --- PASS: TestExtractZip/single_file (0.00s)
+    --- PASS: TestExtractZip/multiple_files (0.00s)
+    --- PASS: TestExtractZip/empty_archive (0.00s)
+    --- PASS: TestExtractZip/empty_file (0.00s)
+    --- PASS: TestExtractZip/large_file (0.27s)
+=== RUN   TestExtractZipSecurity
+=== RUN   TestExtractZipSecurity/directory_traversal
+=== RUN   TestExtractZipSecurity/absolute_path
+--- PASS: TestExtractZipSecurity (0.02s)
+    --- PASS: TestExtractZipSecurity/directory_traversal (0.01s)
+    --- PASS: TestExtractZipSecurity/absolute_path (0.01s)
+=== RUN   TestExtractZipErrors
+=== RUN   TestExtractZipErrors/invalid_zip
+=== RUN   TestExtractZipErrors/empty_content
+=== RUN   TestExtractZipErrors/corrupted_archive
+--- PASS: TestExtractZipErrors (0.00s)
+    --- PASS: TestExtractZipErrors/invalid_zip (0.00s)
+    --- PASS: TestExtractZipErrors/empty_content (0.00s)
+    --- PASS: TestExtractZipErrors/corrupted_archive (0.00s)
+=== RUN   TestExtractAndMerge
+=== RUN   TestExtractAndMerge/only_loose_files
+=== RUN   TestExtractAndMerge/only_archives
+=== RUN   TestExtractAndMerge/mixed_loose_and_archives
+=== RUN   TestExtractAndMerge/archive_overrides_loose_file
+=== RUN   TestExtractAndMerge/empty_input
+=== RUN   TestExtractAndMerge/nil_input
+=== RUN   TestExtractAndMerge/multiple_archives_with_same_file
+--- PASS: TestExtractAndMerge (0.03s)
+    --- PASS: TestExtractAndMerge/only_loose_files (0.00s)
+    --- PASS: TestExtractAndMerge/only_archives (0.01s)
+    --- PASS: TestExtractAndMerge/mixed_loose_and_archives (0.00s)
+    --- PASS: TestExtractAndMerge/archive_overrides_loose_file (0.00s)
+    --- PASS: TestExtractAndMerge/empty_input (0.00s)
+    --- PASS: TestExtractAndMerge/nil_input (0.00s)
+    --- PASS: TestExtractAndMerge/multiple_archives_with_same_file (0.01s)
+=== RUN   TestExtractAndMergeOverrideBehavior
+--- PASS: TestExtractAndMergeOverrideBehavior (0.00s)
+=== RUN   TestExtractAndMergeErrors
+--- PASS: TestExtractAndMergeErrors (0.00s)
+=== RUN   TestNewConstraint
+=== RUN   TestNewConstraint/latest
+=== RUN   TestNewConstraint/exact_version
+=== RUN   TestNewConstraint/minor_version
+=== RUN   TestNewConstraint/major_version
+=== RUN   TestNewConstraint/branch_name_rejected
+=== RUN   TestNewConstraint/branch_name_with_slash_rejected
+=== RUN   TestNewConstraint/v_prefix_exact
+=== RUN   TestNewConstraint/v_prefix_minor
+=== RUN   TestNewConstraint/v_prefix_major
+=== RUN   TestNewConstraint/abbreviated_major
+=== RUN   TestNewConstraint/abbreviated_minor
+=== RUN   TestNewConstraint/abbreviated_major_with_v
+=== RUN   TestNewConstraint/abbreviated_minor_with_v
+=== RUN   TestNewConstraint/caret_exact
+=== RUN   TestNewConstraint/caret_with_v
+=== RUN   TestNewConstraint/tilde_exact
+=== RUN   TestNewConstraint/tilde_with_v
+--- PASS: TestNewConstraint (0.00s)
+    --- PASS: TestNewConstraint/latest (0.00s)
+    --- PASS: TestNewConstraint/exact_version (0.00s)
+    --- PASS: TestNewConstraint/minor_version (0.00s)
+    --- PASS: TestNewConstraint/major_version (0.00s)
+    --- PASS: TestNewConstraint/branch_name_rejected (0.00s)
+    --- PASS: TestNewConstraint/branch_name_with_slash_rejected (0.00s)
+    --- PASS: TestNewConstraint/v_prefix_exact (0.00s)
+    --- PASS: TestNewConstraint/v_prefix_minor (0.00s)
+    --- PASS: TestNewConstraint/v_prefix_major (0.00s)
+    --- PASS: TestNewConstraint/abbreviated_major (0.00s)
+    --- PASS: TestNewConstraint/abbreviated_minor (0.00s)
+    --- PASS: TestNewConstraint/abbreviated_major_with_v (0.00s)
+    --- PASS: TestNewConstraint/abbreviated_minor_with_v (0.00s)
+    --- PASS: TestNewConstraint/caret_exact (0.00s)
+    --- PASS: TestNewConstraint/caret_with_v (0.00s)
+    --- PASS: TestNewConstraint/tilde_exact (0.00s)
+    --- PASS: TestNewConstraint/tilde_with_v (0.00s)
+=== RUN   TestParseConstraint
+=== RUN   TestParseConstraint/latest
+=== RUN   TestParseConstraint/exact_version
+=== RUN   TestParseConstraint/minor_version
+=== RUN   TestParseConstraint/major_version
+=== RUN   TestParseConstraint/branch_name
+=== RUN   TestParseConstraint/branch_name_with_slash
+=== RUN   TestParseConstraint/v_prefix_exact
+=== RUN   TestParseConstraint/v_prefix_minor
+=== RUN   TestParseConstraint/v_prefix_major
+--- PASS: TestParseConstraint (0.00s)
+    --- PASS: TestParseConstraint/latest (0.00s)
+    --- PASS: TestParseConstraint/exact_version (0.00s)
+    --- PASS: TestParseConstraint/minor_version (0.00s)
+    --- PASS: TestParseConstraint/major_version (0.00s)
+    --- PASS: TestParseConstraint/branch_name (0.00s)
+    --- PASS: TestParseConstraint/branch_name_with_slash (0.00s)
+    --- PASS: TestParseConstraint/v_prefix_exact (0.00s)
+    --- PASS: TestParseConstraint/v_prefix_minor (0.00s)
+    --- PASS: TestParseConstraint/v_prefix_major (0.00s)
+=== RUN   TestParseConstraint_VersionValues
+=== RUN   TestParseConstraint_VersionValues/exact_version_has_correct_values
+=== RUN   TestParseConstraint_VersionValues/minor_version_has_correct_values
+=== RUN   TestParseConstraint_VersionValues/major_version_has_correct_values
+=== RUN   TestParseConstraint_VersionValues/branch_name_preserves_original
+=== RUN   TestParseConstraint_VersionValues/latest_has_no_version
+--- PASS: TestParseConstraint_VersionValues (0.00s)
+    --- PASS: TestParseConstraint_VersionValues/exact_version_has_correct_values (0.00s)
+    --- PASS: TestParseConstraint_VersionValues/minor_version_has_correct_values (0.00s)
+    --- PASS: TestParseConstraint_VersionValues/major_version_has_correct_values (0.00s)
+    --- PASS: TestParseConstraint_VersionValues/branch_name_preserves_original (0.00s)
+    --- PASS: TestParseConstraint_VersionValues/latest_has_no_version (0.00s)
+=== RUN   TestParseConstraint_Caret
+=== RUN   TestParseConstraint_Caret/^1.1.1_is_major
+=== RUN   TestParseConstraint_Caret/^1.0.0_is_major
+=== RUN   TestParseConstraint_Caret/^2.3.4_is_major
+=== RUN   TestParseConstraint_Caret/^0.1.0_is_major
+=== RUN   TestParseConstraint_Caret/^0.2.5_is_major
+=== RUN   TestParseConstraint_Caret/^0.0.1_is_major
+=== RUN   TestParseConstraint_Caret/^0.0.0_is_major
+--- PASS: TestParseConstraint_Caret (0.00s)
+    --- PASS: TestParseConstraint_Caret/^1.1.1_is_major (0.00s)
+    --- PASS: TestParseConstraint_Caret/^1.0.0_is_major (0.00s)
+    --- PASS: TestParseConstraint_Caret/^2.3.4_is_major (0.00s)
+    --- PASS: TestParseConstraint_Caret/^0.1.0_is_major (0.00s)
+    --- PASS: TestParseConstraint_Caret/^0.2.5_is_major (0.00s)
+    --- PASS: TestParseConstraint_Caret/^0.0.1_is_major (0.00s)
+    --- PASS: TestParseConstraint_Caret/^0.0.0_is_major (0.00s)
+=== RUN   TestParseConstraint_Tilde
+=== RUN   TestParseConstraint_Tilde/~1.0.1
+=== RUN   TestParseConstraint_Tilde/~1.2.3
+=== RUN   TestParseConstraint_Tilde/~0.0.1
+=== RUN   TestParseConstraint_Tilde/~2.5.0
+--- PASS: TestParseConstraint_Tilde (0.00s)
+    --- PASS: TestParseConstraint_Tilde/~1.0.1 (0.00s)
+    --- PASS: TestParseConstraint_Tilde/~1.2.3 (0.00s)
+    --- PASS: TestParseConstraint_Tilde/~0.0.1 (0.00s)
+    --- PASS: TestParseConstraint_Tilde/~2.5.0 (0.00s)
+=== RUN   TestConstraint_IsSatisfiedBy
+=== RUN   TestConstraint_IsSatisfiedBy/latest_allows_semver
+=== RUN   TestConstraint_IsSatisfiedBy/latest_allows_any_semver
+=== RUN   TestConstraint_IsSatisfiedBy/1.2.3_allows_1.2.3
+=== RUN   TestConstraint_IsSatisfiedBy/1.2.3_rejects_1.2.4
+=== RUN   TestConstraint_IsSatisfiedBy/1_allows_1.0.0
+=== RUN   TestConstraint_IsSatisfiedBy/1_allows_1.5.0
+=== RUN   TestConstraint_IsSatisfiedBy/1_allows_1.9.9
+=== RUN   TestConstraint_IsSatisfiedBy/1_rejects_2.0.0
+=== RUN   TestConstraint_IsSatisfiedBy/1_rejects_0.9.9
+=== RUN   TestConstraint_IsSatisfiedBy/1.2_allows_1.2.0
+=== RUN   TestConstraint_IsSatisfiedBy/1.2_allows_1.2.5
+=== RUN   TestConstraint_IsSatisfiedBy/1.2_allows_1.2.9
+=== RUN   TestConstraint_IsSatisfiedBy/1.2_rejects_1.3.0
+=== RUN   TestConstraint_IsSatisfiedBy/1.2_rejects_1.1.9
+=== RUN   TestConstraint_IsSatisfiedBy/^1.1.1_allows_1.1.1
+=== RUN   TestConstraint_IsSatisfiedBy/^1.1.1_allows_1.2.0
+=== RUN   TestConstraint_IsSatisfiedBy/^1.1.1_allows_1.9.9
+=== RUN   TestConstraint_IsSatisfiedBy/^1.1.1_rejects_2.0.0
+=== RUN   TestConstraint_IsSatisfiedBy/^1.1.1_rejects_1.1.0
+=== RUN   TestConstraint_IsSatisfiedBy/^1.1.1_rejects_1.0.0
+=== RUN   TestConstraint_IsSatisfiedBy/^0.1.0_allows_0.1.0
+=== RUN   TestConstraint_IsSatisfiedBy/^0.1.0_allows_0.9.9
+=== RUN   TestConstraint_IsSatisfiedBy/^0.1.0_rejects_1.0.0
+=== RUN   TestConstraint_IsSatisfiedBy/^0.0.1_allows_0.0.1
+=== RUN   TestConstraint_IsSatisfiedBy/^0.0.1_allows_0.0.9
+=== RUN   TestConstraint_IsSatisfiedBy/^0.0.1_allows_0.1.0
+=== RUN   TestConstraint_IsSatisfiedBy/^0.0.1_rejects_1.0.0
+=== RUN   TestConstraint_IsSatisfiedBy/~1.0.1_allows_1.0.1
+=== RUN   TestConstraint_IsSatisfiedBy/~1.0.1_allows_1.0.9
+=== RUN   TestConstraint_IsSatisfiedBy/~1.0.1_rejects_1.1.0
+=== RUN   TestConstraint_IsSatisfiedBy/~1.0.1_rejects_1.0.0
+--- PASS: TestConstraint_IsSatisfiedBy (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/latest_allows_semver (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/latest_allows_any_semver (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1.2.3_allows_1.2.3 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1.2.3_rejects_1.2.4 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1_allows_1.0.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1_allows_1.5.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1_allows_1.9.9 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1_rejects_2.0.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1_rejects_0.9.9 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1.2_allows_1.2.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1.2_allows_1.2.5 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1.2_allows_1.2.9 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1.2_rejects_1.3.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/1.2_rejects_1.1.9 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^1.1.1_allows_1.1.1 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^1.1.1_allows_1.2.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^1.1.1_allows_1.9.9 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^1.1.1_rejects_2.0.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^1.1.1_rejects_1.1.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^1.1.1_rejects_1.0.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^0.1.0_allows_0.1.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^0.1.0_allows_0.9.9 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^0.1.0_rejects_1.0.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^0.0.1_allows_0.0.1 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^0.0.1_allows_0.0.9 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^0.0.1_allows_0.1.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/^0.0.1_rejects_1.0.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/~1.0.1_allows_1.0.1 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/~1.0.1_allows_1.0.9 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/~1.0.1_rejects_1.1.0 (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy/~1.0.1_rejects_1.0.0 (0.00s)
+=== RUN   TestConstraint_IsSatisfiedBy_Errors
+=== RUN   TestConstraint_IsSatisfiedBy_Errors/non-semver_version_with_exact_constraint
+=== RUN   TestConstraint_IsSatisfiedBy_Errors/non-semver_version_with_major_constraint
+=== RUN   TestConstraint_IsSatisfiedBy_Errors/non-semver_version_with_minor_constraint
+--- PASS: TestConstraint_IsSatisfiedBy_Errors (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy_Errors/non-semver_version_with_exact_constraint (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy_Errors/non-semver_version_with_major_constraint (0.00s)
+    --- PASS: TestConstraint_IsSatisfiedBy_Errors/non-semver_version_with_minor_constraint (0.00s)
+=== RUN   TestConstraint_ToString
+=== RUN   TestConstraint_ToString/latest
+=== RUN   TestConstraint_ToString/exact_version
+=== RUN   TestConstraint_ToString/minor_version
+=== RUN   TestConstraint_ToString/major_version
+=== RUN   TestConstraint_ToString/caret_explicit
+=== RUN   TestConstraint_ToString/tilde_explicit
+=== RUN   TestConstraint_ToString/v_prefix_exact
+=== RUN   TestConstraint_ToString/v_prefix_with_caret
+=== RUN   TestConstraint_ToString/v_prefix_with_tilde
+--- PASS: TestConstraint_ToString (0.00s)
+    --- PASS: TestConstraint_ToString/latest (0.00s)
+    --- PASS: TestConstraint_ToString/exact_version (0.00s)
+    --- PASS: TestConstraint_ToString/minor_version (0.00s)
+    --- PASS: TestConstraint_ToString/major_version (0.00s)
+    --- PASS: TestConstraint_ToString/caret_explicit (0.00s)
+    --- PASS: TestConstraint_ToString/tilde_explicit (0.00s)
+    --- PASS: TestConstraint_ToString/v_prefix_exact (0.00s)
+    --- PASS: TestConstraint_ToString/v_prefix_with_caret (0.00s)
+    --- PASS: TestConstraint_ToString/v_prefix_with_tilde (0.00s)
+=== RUN   TestNewConstraint_ToString
+=== RUN   TestNewConstraint_ToString/latest
+=== RUN   TestNewConstraint_ToString/exact_version
+=== RUN   TestNewConstraint_ToString/v_prefix_exact
+=== RUN   TestNewConstraint_ToString/caret
+=== RUN   TestNewConstraint_ToString/caret_with_v
+=== RUN   TestNewConstraint_ToString/tilde
+=== RUN   TestNewConstraint_ToString/tilde_with_v
+=== RUN   TestNewConstraint_ToString/abbreviated_major
+=== RUN   TestNewConstraint_ToString/abbreviated_minor
+=== RUN   TestNewConstraint_ToString/abbreviated_major_with_v
+=== RUN   TestNewConstraint_ToString/abbreviated_minor_with_v
+--- PASS: TestNewConstraint_ToString (0.00s)
+    --- PASS: TestNewConstraint_ToString/latest (0.00s)
+    --- PASS: TestNewConstraint_ToString/exact_version (0.00s)
+    --- PASS: TestNewConstraint_ToString/v_prefix_exact (0.00s)
+    --- PASS: TestNewConstraint_ToString/caret (0.00s)
+    --- PASS: TestNewConstraint_ToString/caret_with_v (0.00s)
+    --- PASS: TestNewConstraint_ToString/tilde (0.00s)
+    --- PASS: TestNewConstraint_ToString/tilde_with_v (0.00s)
+    --- PASS: TestNewConstraint_ToString/abbreviated_major (0.00s)
+    --- PASS: TestNewConstraint_ToString/abbreviated_minor (0.00s)
+    --- PASS: TestNewConstraint_ToString/abbreviated_major_with_v (0.00s)
+    --- PASS: TestNewConstraint_ToString/abbreviated_minor_with_v (0.00s)
+=== RUN   TestPackageKey
+--- PASS: TestPackageKey (0.00s)
+=== RUN   TestParsePackageKey
+--- PASS: TestParsePackageKey (0.00s)
+=== RUN   TestPackageKeyRoundTrip
+--- PASS: TestPackageKeyRoundTrip (0.00s)
+=== RUN   TestParseVersion_RefactoredBehavior
+=== RUN   TestParseVersion_RefactoredBehavior/treats_constraint_strings_as_non-semver
+=== RUN   TestParseVersion_RefactoredBehavior/treats_abbreviated_versions_as_non-semver
+=== RUN   TestParseVersion_RefactoredBehavior/accepts_full_semver
+=== RUN   TestParseVersion_RefactoredBehavior/accepts_non-semver_strings
+--- PASS: TestParseVersion_RefactoredBehavior (0.00s)
+    --- PASS: TestParseVersion_RefactoredBehavior/treats_constraint_strings_as_non-semver (0.00s)
+    --- PASS: TestParseVersion_RefactoredBehavior/treats_abbreviated_versions_as_non-semver (0.00s)
+    --- PASS: TestParseVersion_RefactoredBehavior/accepts_full_semver (0.00s)
+    --- PASS: TestParseVersion_RefactoredBehavior/accepts_non-semver_strings (0.00s)
+=== RUN   TestParseConstraint_RefactoredBehavior
+=== RUN   TestParseConstraint_RefactoredBehavior/expands_abbreviated_versions
+=== RUN   TestParseConstraint_RefactoredBehavior/expands_with_caret_and_tilde
+--- PASS: TestParseConstraint_RefactoredBehavior (0.00s)
+    --- PASS: TestParseConstraint_RefactoredBehavior/expands_abbreviated_versions (0.00s)
+    --- PASS: TestParseConstraint_RefactoredBehavior/expands_with_caret_and_tilde (0.00s)
+=== RUN   TestCompareTo
+=== RUN   TestCompareTo/equal_versions
+=== RUN   TestCompareTo/v1_newer_than_v2
+=== RUN   TestCompareTo/v1_older_than_v2
+=== RUN   TestCompareTo/non-semver_v1
+=== RUN   TestCompareTo/non-semver_v2
+=== RUN   TestCompareTo/both_non-semver
+--- PASS: TestCompareTo (0.00s)
+    --- PASS: TestCompareTo/equal_versions (0.00s)
+    --- PASS: TestCompareTo/v1_newer_than_v2 (0.00s)
+    --- PASS: TestCompareTo/v1_older_than_v2 (0.00s)
+    --- PASS: TestCompareTo/non-semver_v1 (0.00s)
+    --- PASS: TestCompareTo/non-semver_v2 (0.00s)
+    --- PASS: TestCompareTo/both_non-semver (0.00s)
+=== RUN   TestIsNewerThan
+=== RUN   TestIsNewerThan/v1_newer_than_v2
+=== RUN   TestIsNewerThan/v1_older_than_v2
+=== RUN   TestIsNewerThan/equal_versions
+=== RUN   TestIsNewerThan/non-semver_v1
+=== RUN   TestIsNewerThan/non-semver_v2
+--- PASS: TestIsNewerThan (0.00s)
+    --- PASS: TestIsNewerThan/v1_newer_than_v2 (0.00s)
+    --- PASS: TestIsNewerThan/v1_older_than_v2 (0.00s)
+    --- PASS: TestIsNewerThan/equal_versions (0.00s)
+    --- PASS: TestIsNewerThan/non-semver_v1 (0.00s)
+    --- PASS: TestIsNewerThan/non-semver_v2 (0.00s)
+=== RUN   TestIsOlderThan
+=== RUN   TestIsOlderThan/v1_older_than_v2
+=== RUN   TestIsOlderThan/v1_newer_than_v2
+=== RUN   TestIsOlderThan/equal_versions
+=== RUN   TestIsOlderThan/non-semver_v1
+=== RUN   TestIsOlderThan/non-semver_v2
+--- PASS: TestIsOlderThan (0.00s)
+    --- PASS: TestIsOlderThan/v1_older_than_v2 (0.00s)
+    --- PASS: TestIsOlderThan/v1_newer_than_v2 (0.00s)
+    --- PASS: TestIsOlderThan/equal_versions (0.00s)
+    --- PASS: TestIsOlderThan/non-semver_v1 (0.00s)
+    --- PASS: TestIsOlderThan/non-semver_v2 (0.00s)
+=== RUN   TestToString
+=== RUN   TestToString/semver_version
+=== RUN   TestToString/semver_with_v_prefix
+=== RUN   TestToString/non-semver_version
+=== RUN   TestToString/branch_name
+--- PASS: TestToString (0.00s)
+    --- PASS: TestToString/semver_version (0.00s)
+    --- PASS: TestToString/semver_with_v_prefix (0.00s)
+    --- PASS: TestToString/non-semver_version (0.00s)
+    --- PASS: TestToString/branch_name (0.00s)
+=== RUN   TestParseVersion
+=== RUN   TestParseVersion/#00
+=== RUN   TestParseVersion/1.2.3
+=== RUN   TestParseVersion/v1.2.3
+=== RUN   TestParseVersion/1.2.3-alpha
+=== RUN   TestParseVersion/1.2.3+build123
+=== RUN   TestParseVersion/v2.0.0-beta.1+exp.sha.5114f85
+=== RUN   TestParseVersion/1.2
+=== RUN   TestParseVersion/v1.2
+=== RUN   TestParseVersion/5
+=== RUN   TestParseVersion/v3
+=== RUN   TestParseVersion/main
+=== RUN   TestParseVersion/develop
+=== RUN   TestParseVersion/feature/new-stuff
+=== RUN   TestParseVersion/1.2.x
+--- PASS: TestParseVersion (0.00s)
+    --- PASS: TestParseVersion/#00 (0.00s)
+    --- PASS: TestParseVersion/1.2.3 (0.00s)
+    --- PASS: TestParseVersion/v1.2.3 (0.00s)
+    --- PASS: TestParseVersion/1.2.3-alpha (0.00s)
+    --- PASS: TestParseVersion/1.2.3+build123 (0.00s)
+    --- PASS: TestParseVersion/v2.0.0-beta.1+exp.sha.5114f85 (0.00s)
+    --- PASS: TestParseVersion/1.2 (0.00s)
+    --- PASS: TestParseVersion/v1.2 (0.00s)
+    --- PASS: TestParseVersion/5 (0.00s)
+    --- PASS: TestParseVersion/v3 (0.00s)
+    --- PASS: TestParseVersion/main (0.00s)
+    --- PASS: TestParseVersion/develop (0.00s)
+    --- PASS: TestParseVersion/feature/new-stuff (0.00s)
+    --- PASS: TestParseVersion/1.2.x (0.00s)
+=== RUN   TestResolveVersion_Normal
+=== RUN   TestResolveVersion_Normal/exact_match
+=== RUN   TestResolveVersion_Normal/latest_returns_newest
+=== RUN   TestResolveVersion_Normal/major_constraint_returns_newest_in_major
+=== RUN   TestResolveVersion_Normal/minor_constraint_returns_newest_in_minor
+=== RUN   TestResolveVersion_Normal/branch_name_exact_match
+--- PASS: TestResolveVersion_Normal (0.00s)
+    --- PASS: TestResolveVersion_Normal/exact_match (0.00s)
+    --- PASS: TestResolveVersion_Normal/latest_returns_newest (0.00s)
+    --- PASS: TestResolveVersion_Normal/major_constraint_returns_newest_in_major (0.00s)
+    --- PASS: TestResolveVersion_Normal/minor_constraint_returns_newest_in_minor (0.00s)
+    --- PASS: TestResolveVersion_Normal/branch_name_exact_match (0.00s)
+=== RUN   TestResolveVersion_Edge
+=== RUN   TestResolveVersion_Edge/single_version_available
+=== RUN   TestResolveVersion_Edge/no_matching_versions
+=== RUN   TestResolveVersion_Edge/major_constraint_with_no_matches
+=== RUN   TestResolveVersion_Edge/minor_constraint_with_no_matches
+=== RUN   TestResolveVersion_Edge/branch_name_not_found
+=== RUN   TestResolveVersion_Edge/mixed_semantic_and_non-semantic_versions
+=== RUN   TestResolveVersion_Edge/versions_with_same_major.minor.patch
+--- PASS: TestResolveVersion_Edge (0.00s)
+    --- PASS: TestResolveVersion_Edge/single_version_available (0.00s)
+    --- PASS: TestResolveVersion_Edge/no_matching_versions (0.00s)
+    --- PASS: TestResolveVersion_Edge/major_constraint_with_no_matches (0.00s)
+    --- PASS: TestResolveVersion_Edge/minor_constraint_with_no_matches (0.00s)
+    --- PASS: TestResolveVersion_Edge/branch_name_not_found (0.00s)
+    --- PASS: TestResolveVersion_Edge/mixed_semantic_and_non-semantic_versions (0.00s)
+    --- PASS: TestResolveVersion_Edge/versions_with_same_major.minor.patch (0.00s)
+=== RUN   TestResolveVersion_Extreme
+=== RUN   TestResolveVersion_Extreme/empty_available_versions
+=== RUN   TestResolveVersion_Extreme/many_versions
+=== RUN   TestResolveVersion_Extreme/large_version_numbers
+=== RUN   TestResolveVersion_Extreme/all_versions_match_constraint
+=== RUN   TestResolveVersion_Extreme/unsorted_available_versions
+=== RUN   TestResolveVersion_Extreme/duplicate_versions
+=== RUN   TestResolveVersion_Extreme/only_non-semantic_versions
+=== RUN   TestResolveVersion_Extreme/constraint_older_than_all_available
+--- PASS: TestResolveVersion_Extreme (0.00s)
+    --- PASS: TestResolveVersion_Extreme/empty_available_versions (0.00s)
+    --- PASS: TestResolveVersion_Extreme/many_versions (0.00s)
+    --- PASS: TestResolveVersion_Extreme/large_version_numbers (0.00s)
+    --- PASS: TestResolveVersion_Extreme/all_versions_match_constraint (0.00s)
+    --- PASS: TestResolveVersion_Extreme/unsorted_available_versions (0.00s)
+    --- PASS: TestResolveVersion_Extreme/duplicate_versions (0.00s)
+    --- PASS: TestResolveVersion_Extreme/only_non-semantic_versions (0.00s)
+    --- PASS: TestResolveVersion_Extreme/constraint_older_than_all_available (0.00s)
+PASS
+coverage: 81.8% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/core	1.729s	coverage: 81.8% of statements
+=== RUN   TestIsRulesetFile
+=== RUN   TestIsRulesetFile/valid_ruleset_yml
+=== RUN   TestIsRulesetFile/valid_ruleset_yaml
+=== RUN   TestIsRulesetFile/wrong_extension
+=== RUN   TestIsRulesetFile/wrong_kind
+=== RUN   TestIsRulesetFile/missing_required_fields
+=== RUN   TestIsRulesetFile/invalid_yaml
+=== RUN   TestIsRulesetFile/case_insensitive_extension
+--- PASS: TestIsRulesetFile (0.00s)
+    --- PASS: TestIsRulesetFile/valid_ruleset_yml (0.00s)
+    --- PASS: TestIsRulesetFile/valid_ruleset_yaml (0.00s)
+    --- PASS: TestIsRulesetFile/wrong_extension (0.00s)
+    --- PASS: TestIsRulesetFile/wrong_kind (0.00s)
+    --- PASS: TestIsRulesetFile/missing_required_fields (0.00s)
+    --- PASS: TestIsRulesetFile/invalid_yaml (0.00s)
+    --- PASS: TestIsRulesetFile/case_insensitive_extension (0.00s)
+=== RUN   TestIsPromptsetFile
+=== RUN   TestIsPromptsetFile/valid_promptset_yml
+=== RUN   TestIsPromptsetFile/valid_promptset_yaml
+=== RUN   TestIsPromptsetFile/wrong_extension
+=== RUN   TestIsPromptsetFile/wrong_kind
+=== RUN   TestIsPromptsetFile/missing_required_fields
+=== RUN   TestIsPromptsetFile/invalid_yaml
+=== RUN   TestIsPromptsetFile/case_insensitive_extension
+--- PASS: TestIsPromptsetFile (0.00s)
+    --- PASS: TestIsPromptsetFile/valid_promptset_yml (0.00s)
+    --- PASS: TestIsPromptsetFile/valid_promptset_yaml (0.00s)
+    --- PASS: TestIsPromptsetFile/wrong_extension (0.00s)
+    --- PASS: TestIsPromptsetFile/wrong_kind (0.00s)
+    --- PASS: TestIsPromptsetFile/missing_required_fields (0.00s)
+    --- PASS: TestIsPromptsetFile/invalid_yaml (0.00s)
+    --- PASS: TestIsPromptsetFile/case_insensitive_extension (0.00s)
+=== RUN   TestIsResourceFile
+=== RUN   TestIsResourceFile/ruleset_file
+=== RUN   TestIsResourceFile/promptset_file
+=== RUN   TestIsResourceFile/regular_yaml_file
+=== RUN   TestIsResourceFile/non-yaml_file
+=== RUN   TestIsResourceFile/invalid_yaml
+--- PASS: TestIsResourceFile (0.00s)
+    --- PASS: TestIsResourceFile/ruleset_file (0.00s)
+    --- PASS: TestIsResourceFile/promptset_file (0.00s)
+    --- PASS: TestIsResourceFile/regular_yaml_file (0.00s)
+    --- PASS: TestIsResourceFile/non-yaml_file (0.00s)
+    --- PASS: TestIsResourceFile/invalid_yaml (0.00s)
+PASS
+coverage: 100.0% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/filetype	1.023s	coverage: 100.0% of statements
+=== RUN   TestFileManager_GetAllRegistriesConfig
+--- PASS: TestFileManager_GetAllRegistriesConfig (0.00s)
+=== RUN   TestFileManager_RemoveRegistryConfig
+--- PASS: TestFileManager_RemoveRegistryConfig (0.00s)
+=== RUN   TestFileManager_UpsertSinkConfig
+--- PASS: TestFileManager_UpsertSinkConfig (0.00s)
+=== RUN   TestFileManager_RemoveSinkConfig
+--- PASS: TestFileManager_RemoveSinkConfig (0.00s)
+=== RUN   TestFileManager_UpsertRulesetDependencyConfig
+--- PASS: TestFileManager_UpsertRulesetDependencyConfig (0.00s)
+=== RUN   TestFileManager_UpsertPromptsetDependencyConfig
+--- PASS: TestFileManager_UpsertPromptsetDependencyConfig (0.00s)
+=== RUN   TestFileManager_RemoveDependencyConfig
+--- PASS: TestFileManager_RemoveDependencyConfig (0.00s)
+=== RUN   TestFileManager_GetRegistryConfig_NotFound
+--- PASS: TestFileManager_GetRegistryConfig_NotFound (0.00s)
+=== RUN   TestFileManager_GetRulesetDependencyConfig_WrongType
+--- PASS: TestFileManager_GetRulesetDependencyConfig_WrongType (0.00s)
+=== RUN   TestFileManager_UpdateRegistryConfigName_WithDependencies
+--- PASS: TestFileManager_UpdateRegistryConfigName_WithDependencies (0.00s)
+=== RUN   TestFileManager_LoadManifest_FileNotExists
+--- PASS: TestFileManager_LoadManifest_FileNotExists (0.00s)
+=== RUN   TestFileManager_UpsertDependency_Overwrite
+--- PASS: TestFileManager_UpsertDependency_Overwrite (0.00s)
+=== RUN   TestFileManager_GetGitRegistryConfig
+--- PASS: TestFileManager_GetGitRegistryConfig (0.00s)
+=== RUN   TestFileManager_GetGitRegistryConfig_WrongType
+--- PASS: TestFileManager_GetGitRegistryConfig_WrongType (0.00s)
+=== RUN   TestFileManager_GetGitLabRegistryConfig
+--- PASS: TestFileManager_GetGitLabRegistryConfig (0.00s)
+=== RUN   TestFileManager_GetCloudsmithRegistryConfig
+--- PASS: TestFileManager_GetCloudsmithRegistryConfig (0.00s)
+=== RUN   TestFileManager_UpsertGitRegistryConfig
+--- PASS: TestFileManager_UpsertGitRegistryConfig (0.00s)
+=== RUN   TestFileManager_UpsertGitLabRegistryConfig
+--- PASS: TestFileManager_UpsertGitLabRegistryConfig (0.00s)
+=== RUN   TestFileManager_UpsertCloudsmithRegistryConfig
+--- PASS: TestFileManager_UpsertCloudsmithRegistryConfig (0.00s)
+PASS
+coverage: 60.9% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/manifest	1.029s	coverage: 60.9% of statements
+=== RUN   TestFileManager_UpsertDependencyLock
+=== RUN   TestFileManager_UpsertDependencyLock/create_new_lockfile
+=== RUN   TestFileManager_UpsertDependencyLock/update_existing_dependency
+--- PASS: TestFileManager_UpsertDependencyLock (0.00s)
+    --- PASS: TestFileManager_UpsertDependencyLock/create_new_lockfile (0.00s)
+    --- PASS: TestFileManager_UpsertDependencyLock/update_existing_dependency (0.00s)
+=== RUN   TestFileManager_GetDependencyLock
+=== RUN   TestFileManager_GetDependencyLock/dependency_exists
+=== RUN   TestFileManager_GetDependencyLock/file_does_not_exist
+=== RUN   TestFileManager_GetDependencyLock/dependency_not_found
+--- PASS: TestFileManager_GetDependencyLock (0.00s)
+    --- PASS: TestFileManager_GetDependencyLock/dependency_exists (0.00s)
+    --- PASS: TestFileManager_GetDependencyLock/file_does_not_exist (0.00s)
+    --- PASS: TestFileManager_GetDependencyLock/dependency_not_found (0.00s)
+=== RUN   TestFileManager_RemoveDependencyLock
+=== RUN   TestFileManager_RemoveDependencyLock/remove_dependency
+=== RUN   TestFileManager_RemoveDependencyLock/dependency_not_found
+--- PASS: TestFileManager_RemoveDependencyLock (0.00s)
+    --- PASS: TestFileManager_RemoveDependencyLock/remove_dependency (0.00s)
+    --- PASS: TestFileManager_RemoveDependencyLock/dependency_not_found (0.00s)
+=== RUN   TestFileManager_UpdateRegistryName
+--- PASS: TestFileManager_UpdateRegistryName (0.00s)
+PASS
+coverage: 84.5% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/packagelockfile	1.043s	coverage: 84.5% of statements
+=== RUN   TestParseRuleset
+=== RUN   TestParseRuleset/valid_ruleset
+=== RUN   TestParseRuleset/invalid_yaml
+=== RUN   TestParseRuleset/wrong_kind
+=== RUN   TestParseRuleset/missing_required_fields
+=== RUN   TestParseRuleset/empty_rules
+--- PASS: TestParseRuleset (0.00s)
+    --- PASS: TestParseRuleset/valid_ruleset (0.00s)
+    --- PASS: TestParseRuleset/invalid_yaml (0.00s)
+    --- PASS: TestParseRuleset/wrong_kind (0.00s)
+    --- PASS: TestParseRuleset/missing_required_fields (0.00s)
+    --- PASS: TestParseRuleset/empty_rules (0.00s)
+=== RUN   TestParsePromptset
+=== RUN   TestParsePromptset/valid_promptset
+=== RUN   TestParsePromptset/invalid_yaml
+=== RUN   TestParsePromptset/wrong_kind
+=== RUN   TestParsePromptset/missing_required_fields
+=== RUN   TestParsePromptset/empty_prompts
+--- PASS: TestParsePromptset (0.00s)
+    --- PASS: TestParsePromptset/valid_promptset (0.00s)
+    --- PASS: TestParsePromptset/invalid_yaml (0.00s)
+    --- PASS: TestParsePromptset/wrong_kind (0.00s)
+    --- PASS: TestParsePromptset/missing_required_fields (0.00s)
+    --- PASS: TestParsePromptset/empty_prompts (0.00s)
+PASS
+coverage: 100.0% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/parser	1.031s	coverage: 100.0% of statements
+=== RUN   TestCloudsmithRegistry_loadToken
+=== RUN   TestCloudsmithRegistry_loadToken/loads_token_from_config
+=== RUN   TestCloudsmithRegistry_loadToken/returns_error_when_token_not_found
+=== RUN   TestCloudsmithRegistry_loadToken/skips_loading_if_token_already_set
+--- PASS: TestCloudsmithRegistry_loadToken (0.00s)
+    --- PASS: TestCloudsmithRegistry_loadToken/loads_token_from_config (0.00s)
+    --- PASS: TestCloudsmithRegistry_loadToken/returns_error_when_token_not_found (0.00s)
+    --- PASS: TestCloudsmithRegistry_loadToken/skips_loading_if_token_already_set (0.00s)
+=== RUN   TestCloudsmithRegistry_loadToken_NoConfigManager
+--- PASS: TestCloudsmithRegistry_loadToken_NoConfigManager (0.00s)
+=== RUN   TestCloudsmithClient_makeRequest
+=== RUN   TestCloudsmithClient_makeRequest/sets_authorization_header_with_token
+=== RUN   TestCloudsmithClient_makeRequest/no_authorization_header_when_no_token
+--- PASS: TestCloudsmithClient_makeRequest (0.01s)
+    --- PASS: TestCloudsmithClient_makeRequest/sets_authorization_header_with_token (0.01s)
+    --- PASS: TestCloudsmithClient_makeRequest/no_authorization_header_when_no_token (0.00s)
+=== RUN   TestCloudsmithRegistry_ListPackages
+--- PASS: TestCloudsmithRegistry_ListPackages (0.00s)
+=== RUN   TestCloudsmithRegistry_ListPackages_Pagination
+--- PASS: TestCloudsmithRegistry_ListPackages_Pagination (0.01s)
+=== RUN   TestCloudsmithRegistry_ListPackageVersions
+--- PASS: TestCloudsmithRegistry_ListPackageVersions (0.00s)
+=== RUN   TestCloudsmithRegistry_ListPackageVersions_Pagination
+--- PASS: TestCloudsmithRegistry_ListPackageVersions_Pagination (0.00s)
+=== RUN   TestParseNextURLFromLinkHeader
+=== RUN   TestParseNextURLFromLinkHeader/extracts_next_URL
+=== RUN   TestParseNextURLFromLinkHeader/handles_multiple_links
+=== RUN   TestParseNextURLFromLinkHeader/returns_empty_for_no_next_link
+=== RUN   TestParseNextURLFromLinkHeader/returns_empty_for_empty_header
+--- PASS: TestParseNextURLFromLinkHeader (0.00s)
+    --- PASS: TestParseNextURLFromLinkHeader/extracts_next_URL (0.00s)
+    --- PASS: TestParseNextURLFromLinkHeader/handles_multiple_links (0.00s)
+    --- PASS: TestParseNextURLFromLinkHeader/returns_empty_for_no_next_link (0.00s)
+    --- PASS: TestParseNextURLFromLinkHeader/returns_empty_for_empty_header (0.00s)
+=== RUN   TestCloudsmithRegistry_ResolveVersion
+=== RUN   TestCloudsmithRegistry_ResolveVersion/resolves_exact_version
+=== RUN   TestCloudsmithRegistry_ResolveVersion/resolves_caret_constraint
+=== RUN   TestCloudsmithRegistry_ResolveVersion/resolves_tilde_constraint
+=== RUN   TestCloudsmithRegistry_ResolveVersion/resolves_latest
+=== RUN   TestCloudsmithRegistry_ResolveVersion/returns_error_for_no_match
+--- PASS: TestCloudsmithRegistry_ResolveVersion (0.02s)
+    --- PASS: TestCloudsmithRegistry_ResolveVersion/resolves_exact_version (0.00s)
+    --- PASS: TestCloudsmithRegistry_ResolveVersion/resolves_caret_constraint (0.00s)
+    --- PASS: TestCloudsmithRegistry_ResolveVersion/resolves_tilde_constraint (0.00s)
+    --- PASS: TestCloudsmithRegistry_ResolveVersion/resolves_latest (0.00s)
+    --- PASS: TestCloudsmithRegistry_ResolveVersion/returns_error_for_no_match (0.00s)
+=== RUN   TestCloudsmithRegistry_GetPackage
+--- PASS: TestCloudsmithRegistry_GetPackage (0.01s)
+=== RUN   TestCloudsmithRegistry_GetPackage_WithIncludeExclude
+--- PASS: TestCloudsmithRegistry_GetPackage_WithIncludeExclude (0.00s)
+=== RUN   TestCloudsmithRegistry_GetPackage_Cache
+--- PASS: TestCloudsmithRegistry_GetPackage_Cache (0.01s)
+=== RUN   TestDefaultFactory_CreateGitLabRegistry
+--- PASS: TestDefaultFactory_CreateGitLabRegistry (0.00s)
+=== RUN   TestDefaultFactory_CreateGitRegistry
+--- PASS: TestDefaultFactory_CreateGitRegistry (0.00s)
+=== RUN   TestDefaultFactory_CreateCloudsmithRegistry
+--- PASS: TestDefaultFactory_CreateCloudsmithRegistry (0.00s)
+=== RUN   TestDefaultFactory_UnsupportedType
+--- PASS: TestDefaultFactory_UnsupportedType (0.00s)
+=== RUN   TestGitRegistry_ListPackageVersions
+--- PASS: TestGitRegistry_ListPackageVersions (0.19s)
+=== RUN   TestGitRegistry_GetPackage
+--- PASS: TestGitRegistry_GetPackage (0.23s)
+=== RUN   TestGitRegistry_SemanticVersionTags
+--- PASS: TestGitRegistry_SemanticVersionTags (0.15s)
+=== RUN   TestGitRegistry_VersionWithoutVPrefix
+--- PASS: TestGitRegistry_VersionWithoutVPrefix (0.14s)
+=== RUN   TestGitRegistry_PartialVersions
+--- PASS: TestGitRegistry_PartialVersions (0.11s)
+=== RUN   TestGitRegistry_MixedVersionFormats
+--- PASS: TestGitRegistry_MixedVersionFormats (0.12s)
+=== RUN   TestGitRegistry_NonSemanticTags
+--- PASS: TestGitRegistry_NonSemanticTags (0.13s)
+=== RUN   TestGitRegistry_BranchSupport
+    repo_test_helper.go:125: 
+        	Error Trace:	/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test_helper.go:125
+        	            				/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test_helper.go:80
+        	            				/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/registry/git_test.go:344
+        	Error:      	Received unexpected error:
+        	            	exit status 1
+        	Test:       	TestGitRegistry_BranchSupport
+--- FAIL: TestGitRegistry_BranchSupport (0.09s)
+=== RUN   TestGitRegistry_BranchNotFound
+    git_test.go:427: expected at least 1 version, got 0
+--- FAIL: TestGitRegistry_BranchNotFound (0.14s)
+=== RUN   TestGitRegistry_VersionPriority
+    git_test.go:491: expected at least 3 versions (2 semantic tags + 1 branch), got 2
+    git_test.go:493:   version[0]: v1.0.0 (Major:1 Minor:0 Patch:0)
+    git_test.go:493:   version[1]: v2.0.0 (Major:2 Minor:0 Patch:0)
+--- FAIL: TestGitRegistry_VersionPriority (0.77s)
+=== RUN   TestNormalizePatterns
+=== RUN   TestNormalizePatterns/empty_slice
+=== RUN   TestNormalizePatterns/nil_slice
+=== RUN   TestNormalizePatterns/single_pattern
+=== RUN   TestNormalizePatterns/sort_patterns
+=== RUN   TestNormalizePatterns/normalize_backslashes
+=== RUN   TestNormalizePatterns/trim_whitespace
+=== RUN   TestNormalizePatterns/mixed_separators_and_whitespace
+=== RUN   TestNormalizePatterns/duplicates_preserved
+--- PASS: TestNormalizePatterns (0.00s)
+    --- PASS: TestNormalizePatterns/empty_slice (0.00s)
+    --- PASS: TestNormalizePatterns/nil_slice (0.00s)
+    --- PASS: TestNormalizePatterns/single_pattern (0.00s)
+    --- PASS: TestNormalizePatterns/sort_patterns (0.00s)
+    --- PASS: TestNormalizePatterns/normalize_backslashes (0.00s)
+    --- PASS: TestNormalizePatterns/trim_whitespace (0.00s)
+    --- PASS: TestNormalizePatterns/mixed_separators_and_whitespace (0.00s)
+    --- PASS: TestNormalizePatterns/duplicates_preserved (0.00s)
+=== RUN   TestGitRegistry_CacheKeyNormalization
+--- PASS: TestGitRegistry_CacheKeyNormalization (0.67s)
+=== RUN   TestGitRegistry_IncludePatterns
+--- PASS: TestGitRegistry_IncludePatterns (0.21s)
+=== RUN   TestGitRegistry_ExcludePatterns
+--- PASS: TestGitRegistry_ExcludePatterns (0.18s)
+=== RUN   TestGitRegistry_CombinedPatterns
+--- PASS: TestGitRegistry_CombinedPatterns (0.18s)
+=== RUN   TestGitRegistry_NoPatterns
+--- PASS: TestGitRegistry_NoPatterns (0.18s)
+=== RUN   TestGitRegistry_MultipleFileTypes
+--- PASS: TestGitRegistry_MultipleFileTypes (0.16s)
+=== RUN   TestGitRegistry_NestedDirectories
+--- PASS: TestGitRegistry_NestedDirectories (0.22s)
+=== RUN   TestGitRegistry_ArchiveSupport
+    git_test.go:960: TODO: implement
+--- SKIP: TestGitRegistry_ArchiveSupport (0.00s)
+=== RUN   TestGitRegistry_EmptyRepository
+--- PASS: TestGitRegistry_EmptyRepository (0.08s)
+=== RUN   TestGitRegistry_NoTags
+--- PASS: TestGitRegistry_NoTags (0.17s)
+=== RUN   TestGitRegistry_NonExistentVersion
+--- PASS: TestGitRegistry_NonExistentVersion (0.15s)
+=== RUN   TestGitLabRegistry_ListPackages
+--- PASS: TestGitLabRegistry_ListPackages (0.00s)
+=== RUN   TestGitLabRegistry_ListPackageVersions
+--- PASS: TestGitLabRegistry_ListPackageVersions (0.00s)
+=== RUN   TestGitLabRegistry_GetPackage
+--- PASS: TestGitLabRegistry_GetPackage (0.01s)
+=== RUN   TestGitLabRegistry_GroupPackages
+--- PASS: TestGitLabRegistry_GroupPackages (0.00s)
+=== RUN   TestGitLabRegistry_IncludeExcludePatterns
+--- PASS: TestGitLabRegistry_IncludeExcludePatterns (0.01s)
+FAIL
+coverage: 75.6% of statements
+FAIL	github.com/jomadu/ai-resource-manager/internal/arm/registry	4.471s
+?   	github.com/jomadu/ai-resource-manager/internal/arm/resource	[no test files]
+=== RUN   TestCleanCacheByAge
+--- PASS: TestCleanCacheByAge (0.02s)
+=== RUN   TestNukeCache
+--- PASS: TestNukeCache (0.00s)
+=== RUN   TestCleanSinks
+--- PASS: TestCleanSinks (0.01s)
+=== RUN   TestNukeSinks
+--- PASS: TestNukeSinks (0.00s)
+=== RUN   TestCleanCacheByTimeSinceLastAccess
+--- PASS: TestCleanCacheByTimeSinceLastAccess (0.01s)
+=== RUN   TestInstallPromptset
+=== RUN   TestInstallPromptset/install_promptset_successfully
+=== RUN   TestInstallPromptset/fail_when_registry_does_not_exist
+=== RUN   TestInstallPromptset/fail_when_sink_does_not_exist
+--- PASS: TestInstallPromptset (0.01s)
+    --- PASS: TestInstallPromptset/install_promptset_successfully (0.00s)
+    --- PASS: TestInstallPromptset/fail_when_registry_does_not_exist (0.00s)
+    --- PASS: TestInstallPromptset/fail_when_sink_does_not_exist (0.00s)
+=== RUN   TestInstallRuleset
+=== RUN   TestInstallRuleset/install_ruleset_successfully
+=== RUN   TestInstallRuleset/fail_when_registry_does_not_exist
+=== RUN   TestInstallRuleset/fail_when_sink_does_not_exist
+--- PASS: TestInstallRuleset (0.00s)
+    --- PASS: TestInstallRuleset/install_ruleset_successfully (0.00s)
+    --- PASS: TestInstallRuleset/fail_when_registry_does_not_exist (0.00s)
+    --- PASS: TestInstallRuleset/fail_when_sink_does_not_exist (0.00s)
+=== RUN   TestInstallAll
+--- PASS: TestInstallAll (0.01s)
+=== RUN   TestSetPromptsetVersion
+=== RUN   TestSetPromptsetVersion/update_version_for_existing_promptset
+=== RUN   TestSetPromptsetVersion/fail_when_promptset_does_not_exist
+--- PASS: TestSetPromptsetVersion (0.00s)
+    --- PASS: TestSetPromptsetVersion/update_version_for_existing_promptset (0.00s)
+    --- PASS: TestSetPromptsetVersion/fail_when_promptset_does_not_exist (0.00s)
+=== RUN   TestSetPromptsetInclude
+=== RUN   TestSetPromptsetInclude/update_include_patterns_for_existing_promptset
+--- PASS: TestSetPromptsetInclude (0.00s)
+    --- PASS: TestSetPromptsetInclude/update_include_patterns_for_existing_promptset (0.00s)
+=== RUN   TestSetPromptsetExclude
+=== RUN   TestSetPromptsetExclude/update_exclude_patterns_for_existing_promptset
+--- PASS: TestSetPromptsetExclude (0.00s)
+    --- PASS: TestSetPromptsetExclude/update_exclude_patterns_for_existing_promptset (0.00s)
+=== RUN   TestSetPromptsetSinks
+=== RUN   TestSetPromptsetSinks/update_sinks_for_existing_promptset
+=== RUN   TestSetPromptsetSinks/fail_when_sink_does_not_exist
+--- PASS: TestSetPromptsetSinks (0.00s)
+    --- PASS: TestSetPromptsetSinks/update_sinks_for_existing_promptset (0.00s)
+    --- PASS: TestSetPromptsetSinks/fail_when_sink_does_not_exist (0.00s)
+=== RUN   TestListAll
+=== RUN   TestListAll/list_all_dependencies_with_config_and_lock_info
+=== RUN   TestListAll/list_all_when_no_dependencies
+--- PASS: TestListAll (0.00s)
+    --- PASS: TestListAll/list_all_dependencies_with_config_and_lock_info (0.00s)
+    --- PASS: TestListAll/list_all_when_no_dependencies (0.00s)
+=== RUN   TestGetDependencyInfo
+=== RUN   TestGetDependencyInfo/get_existing_dependency_info
+=== RUN   TestGetDependencyInfo/get_non-existent_dependency
+--- PASS: TestGetDependencyInfo (0.00s)
+    --- PASS: TestGetDependencyInfo/get_existing_dependency_info (0.00s)
+    --- PASS: TestGetDependencyInfo/get_non-existent_dependency (0.00s)
+=== RUN   TestListOutdated
+=== RUN   TestListOutdated/list_outdated_dependencies
+=== RUN   TestListOutdated/list_outdated_when_all_up_to_date
+--- PASS: TestListOutdated (0.00s)
+    --- PASS: TestListOutdated/list_outdated_dependencies (0.00s)
+    --- PASS: TestListOutdated/list_outdated_when_all_up_to_date (0.00s)
+=== RUN   TestAddGitRegistry
+=== RUN   TestAddGitRegistry/add_new_git_registry
+=== RUN   TestAddGitRegistry/add_git_registry_with_no_branches
+=== RUN   TestAddGitRegistry/add_when_registry_exists_without_force
+=== RUN   TestAddGitRegistry/add_when_registry_exists_with_force
+=== RUN   TestAddGitRegistry/load_fails
+=== RUN   TestAddGitRegistry/save_fails
+--- PASS: TestAddGitRegistry (0.01s)
+    --- PASS: TestAddGitRegistry/add_new_git_registry (0.00s)
+    --- PASS: TestAddGitRegistry/add_git_registry_with_no_branches (0.00s)
+    --- PASS: TestAddGitRegistry/add_when_registry_exists_without_force (0.00s)
+    --- PASS: TestAddGitRegistry/add_when_registry_exists_with_force (0.00s)
+    --- PASS: TestAddGitRegistry/load_fails (0.00s)
+    --- PASS: TestAddGitRegistry/save_fails (0.00s)
+=== RUN   TestAddGitLabRegistry
+=== RUN   TestAddGitLabRegistry/add_new_gitlab_registry
+=== RUN   TestAddGitLabRegistry/add_gitlab_registry_with_empty_optional_fields
+=== RUN   TestAddGitLabRegistry/add_when_registry_exists_without_force
+=== RUN   TestAddGitLabRegistry/add_when_registry_exists_with_force
+--- PASS: TestAddGitLabRegistry (0.00s)
+    --- PASS: TestAddGitLabRegistry/add_new_gitlab_registry (0.00s)
+    --- PASS: TestAddGitLabRegistry/add_gitlab_registry_with_empty_optional_fields (0.00s)
+    --- PASS: TestAddGitLabRegistry/add_when_registry_exists_without_force (0.00s)
+    --- PASS: TestAddGitLabRegistry/add_when_registry_exists_with_force (0.00s)
+=== RUN   TestAddCloudsmithRegistry
+=== RUN   TestAddCloudsmithRegistry/add_new_cloudsmith_registry
+=== RUN   TestAddCloudsmithRegistry/add_when_registry_exists_without_force
+=== RUN   TestAddCloudsmithRegistry/add_when_registry_exists_with_force
+--- PASS: TestAddCloudsmithRegistry (0.00s)
+    --- PASS: TestAddCloudsmithRegistry/add_new_cloudsmith_registry (0.00s)
+    --- PASS: TestAddCloudsmithRegistry/add_when_registry_exists_without_force (0.00s)
+    --- PASS: TestAddCloudsmithRegistry/add_when_registry_exists_with_force (0.00s)
+=== RUN   TestRemoveRegistry
+=== RUN   TestRemoveRegistry/remove_existing_registry
+=== RUN   TestRemoveRegistry/remove_non-existent_registry
+=== RUN   TestRemoveRegistry/load_fails
+=== RUN   TestRemoveRegistry/save_fails
+--- PASS: TestRemoveRegistry (0.00s)
+    --- PASS: TestRemoveRegistry/remove_existing_registry (0.00s)
+    --- PASS: TestRemoveRegistry/remove_non-existent_registry (0.00s)
+    --- PASS: TestRemoveRegistry/load_fails (0.00s)
+    --- PASS: TestRemoveRegistry/save_fails (0.00s)
+=== RUN   TestGetRegistryConfig
+=== RUN   TestGetRegistryConfig/get_existing_registry
+=== RUN   TestGetRegistryConfig/get_non-existent_registry
+=== RUN   TestGetRegistryConfig/load_fails
+--- PASS: TestGetRegistryConfig (0.00s)
+    --- PASS: TestGetRegistryConfig/get_existing_registry (0.00s)
+    --- PASS: TestGetRegistryConfig/get_non-existent_registry (0.00s)
+    --- PASS: TestGetRegistryConfig/load_fails (0.00s)
+=== RUN   TestGetAllRegistriesConfig
+=== RUN   TestGetAllRegistriesConfig/get_all_when_registries_exist
+=== RUN   TestGetAllRegistriesConfig/get_all_when_no_registries
+=== RUN   TestGetAllRegistriesConfig/load_fails
+--- PASS: TestGetAllRegistriesConfig (0.00s)
+    --- PASS: TestGetAllRegistriesConfig/get_all_when_registries_exist (0.00s)
+    --- PASS: TestGetAllRegistriesConfig/get_all_when_no_registries (0.00s)
+    --- PASS: TestGetAllRegistriesConfig/load_fails (0.00s)
+=== RUN   TestSetRegistryName
+=== RUN   TestSetRegistryName/rename_existing_registry
+=== RUN   TestSetRegistryName/rename_non-existent_registry
+=== RUN   TestSetRegistryName/rename_to_existing_name
+--- PASS: TestSetRegistryName (0.00s)
+    --- PASS: TestSetRegistryName/rename_existing_registry (0.00s)
+    --- PASS: TestSetRegistryName/rename_non-existent_registry (0.00s)
+    --- PASS: TestSetRegistryName/rename_to_existing_name (0.00s)
+=== RUN   TestSetRegistryURL
+=== RUN   TestSetRegistryURL/set_url_for_existing_registry
+=== RUN   TestSetRegistryURL/set_url_for_non-existent_registry
+--- PASS: TestSetRegistryURL (0.00s)
+    --- PASS: TestSetRegistryURL/set_url_for_existing_registry (0.00s)
+    --- PASS: TestSetRegistryURL/set_url_for_non-existent_registry (0.00s)
+=== RUN   TestSetGitRegistryBranches
+=== RUN   TestSetGitRegistryBranches/set_branches_for_git_registry
+=== RUN   TestSetGitRegistryBranches/set_branches_for_non-git_registry
+=== RUN   TestSetGitRegistryBranches/set_branches_for_non-existent_registry
+--- PASS: TestSetGitRegistryBranches (0.00s)
+    --- PASS: TestSetGitRegistryBranches/set_branches_for_git_registry (0.00s)
+    --- PASS: TestSetGitRegistryBranches/set_branches_for_non-git_registry (0.00s)
+    --- PASS: TestSetGitRegistryBranches/set_branches_for_non-existent_registry (0.00s)
+=== RUN   TestSetGitLabRegistryProjectID
+=== RUN   TestSetGitLabRegistryProjectID/set_project_id_for_gitlab_registry
+=== RUN   TestSetGitLabRegistryProjectID/set_project_id_for_non-gitlab_registry
+--- PASS: TestSetGitLabRegistryProjectID (0.00s)
+    --- PASS: TestSetGitLabRegistryProjectID/set_project_id_for_gitlab_registry (0.00s)
+    --- PASS: TestSetGitLabRegistryProjectID/set_project_id_for_non-gitlab_registry (0.00s)
+=== RUN   TestSetGitLabRegistryGroupID
+=== RUN   TestSetGitLabRegistryGroupID/set_group_id_for_gitlab_registry
+=== RUN   TestSetGitLabRegistryGroupID/set_group_id_for_non-gitlab_registry
+--- PASS: TestSetGitLabRegistryGroupID (0.00s)
+    --- PASS: TestSetGitLabRegistryGroupID/set_group_id_for_gitlab_registry (0.00s)
+    --- PASS: TestSetGitLabRegistryGroupID/set_group_id_for_non-gitlab_registry (0.00s)
+=== RUN   TestSetGitLabRegistryAPIVersion
+=== RUN   TestSetGitLabRegistryAPIVersion/set_api_version_for_gitlab_registry
+=== RUN   TestSetGitLabRegistryAPIVersion/set_api_version_for_non-gitlab_registry
+--- PASS: TestSetGitLabRegistryAPIVersion (0.00s)
+    --- PASS: TestSetGitLabRegistryAPIVersion/set_api_version_for_gitlab_registry (0.00s)
+    --- PASS: TestSetGitLabRegistryAPIVersion/set_api_version_for_non-gitlab_registry (0.00s)
+=== RUN   TestSetCloudsmithRegistryOwner
+=== RUN   TestSetCloudsmithRegistryOwner/set_owner_for_cloudsmith_registry
+=== RUN   TestSetCloudsmithRegistryOwner/set_owner_for_non-cloudsmith_registry
+--- PASS: TestSetCloudsmithRegistryOwner (0.00s)
+    --- PASS: TestSetCloudsmithRegistryOwner/set_owner_for_cloudsmith_registry (0.00s)
+    --- PASS: TestSetCloudsmithRegistryOwner/set_owner_for_non-cloudsmith_registry (0.00s)
+=== RUN   TestSetCloudsmithRegistryRepository
+=== RUN   TestSetCloudsmithRegistryRepository/set_repository_for_cloudsmith_registry
+=== RUN   TestSetCloudsmithRegistryRepository/set_repository_for_non-cloudsmith_registry
+--- PASS: TestSetCloudsmithRegistryRepository (0.00s)
+    --- PASS: TestSetCloudsmithRegistryRepository/set_repository_for_cloudsmith_registry (0.00s)
+    --- PASS: TestSetCloudsmithRegistryRepository/set_repository_for_non-cloudsmith_registry (0.00s)
+=== RUN   TestSetRulesetVersion
+=== RUN   TestSetRulesetVersion/update_version_for_existing_ruleset
+=== RUN   TestSetRulesetVersion/fail_when_ruleset_does_not_exist
+--- PASS: TestSetRulesetVersion (0.00s)
+    --- PASS: TestSetRulesetVersion/update_version_for_existing_ruleset (0.00s)
+    --- PASS: TestSetRulesetVersion/fail_when_ruleset_does_not_exist (0.00s)
+=== RUN   TestSetRulesetPriority
+=== RUN   TestSetRulesetPriority/update_priority_for_existing_ruleset
+=== RUN   TestSetRulesetPriority/fail_when_ruleset_does_not_exist
+--- PASS: TestSetRulesetPriority (0.00s)
+    --- PASS: TestSetRulesetPriority/update_priority_for_existing_ruleset (0.00s)
+    --- PASS: TestSetRulesetPriority/fail_when_ruleset_does_not_exist (0.00s)
+=== RUN   TestSetRulesetInclude
+=== RUN   TestSetRulesetInclude/update_include_patterns_for_existing_ruleset
+--- PASS: TestSetRulesetInclude (0.01s)
+    --- PASS: TestSetRulesetInclude/update_include_patterns_for_existing_ruleset (0.01s)
+=== RUN   TestSetRulesetExclude
+=== RUN   TestSetRulesetExclude/update_exclude_patterns_for_existing_ruleset
+--- PASS: TestSetRulesetExclude (0.00s)
+    --- PASS: TestSetRulesetExclude/update_exclude_patterns_for_existing_ruleset (0.00s)
+=== RUN   TestSetRulesetSinks
+=== RUN   TestSetRulesetSinks/update_sinks_for_existing_ruleset
+=== RUN   TestSetRulesetSinks/fail_when_sink_does_not_exist
+--- PASS: TestSetRulesetSinks (0.00s)
+    --- PASS: TestSetRulesetSinks/update_sinks_for_existing_ruleset (0.00s)
+    --- PASS: TestSetRulesetSinks/fail_when_sink_does_not_exist (0.00s)
+=== RUN   TestAddSink
+=== RUN   TestAddSink/add_new_sink
+=== RUN   TestAddSink/add_when_sink_exists_without_force
+=== RUN   TestAddSink/add_when_sink_exists_with_force
+=== RUN   TestAddSink/load_fails
+=== RUN   TestAddSink/save_fails
+--- PASS: TestAddSink (0.00s)
+    --- PASS: TestAddSink/add_new_sink (0.00s)
+    --- PASS: TestAddSink/add_when_sink_exists_without_force (0.00s)
+    --- PASS: TestAddSink/add_when_sink_exists_with_force (0.00s)
+    --- PASS: TestAddSink/load_fails (0.00s)
+    --- PASS: TestAddSink/save_fails (0.00s)
+=== RUN   TestRemoveSink
+=== RUN   TestRemoveSink/remove_existing_sink
+=== RUN   TestRemoveSink/remove_non-existent_sink
+=== RUN   TestRemoveSink/load_fails
+=== RUN   TestRemoveSink/save_fails
+--- PASS: TestRemoveSink (0.00s)
+    --- PASS: TestRemoveSink/remove_existing_sink (0.00s)
+    --- PASS: TestRemoveSink/remove_non-existent_sink (0.00s)
+    --- PASS: TestRemoveSink/load_fails (0.00s)
+    --- PASS: TestRemoveSink/save_fails (0.00s)
+=== RUN   TestGetSinkConfig
+=== RUN   TestGetSinkConfig/get_existing_sink
+=== RUN   TestGetSinkConfig/get_non-existent_sink
+=== RUN   TestGetSinkConfig/load_fails
+--- PASS: TestGetSinkConfig (0.00s)
+    --- PASS: TestGetSinkConfig/get_existing_sink (0.00s)
+    --- PASS: TestGetSinkConfig/get_non-existent_sink (0.00s)
+    --- PASS: TestGetSinkConfig/load_fails (0.00s)
+=== RUN   TestGetAllSinkConfigs
+=== RUN   TestGetAllSinkConfigs/get_all_when_sinks_exist
+=== RUN   TestGetAllSinkConfigs/get_all_when_no_sinks
+=== RUN   TestGetAllSinkConfigs/load_fails
+--- PASS: TestGetAllSinkConfigs (0.00s)
+    --- PASS: TestGetAllSinkConfigs/get_all_when_sinks_exist (0.00s)
+    --- PASS: TestGetAllSinkConfigs/get_all_when_no_sinks (0.00s)
+    --- PASS: TestGetAllSinkConfigs/load_fails (0.00s)
+=== RUN   TestSetSinkName
+=== RUN   TestSetSinkName/rename_existing_sink
+=== RUN   TestSetSinkName/rename_non-existent_sink
+=== RUN   TestSetSinkName/rename_to_existing_name
+=== RUN   TestSetSinkName/load_fails
+=== RUN   TestSetSinkName/save_fails
+--- PASS: TestSetSinkName (0.00s)
+    --- PASS: TestSetSinkName/rename_existing_sink (0.00s)
+    --- PASS: TestSetSinkName/rename_non-existent_sink (0.00s)
+    --- PASS: TestSetSinkName/rename_to_existing_name (0.00s)
+    --- PASS: TestSetSinkName/load_fails (0.00s)
+    --- PASS: TestSetSinkName/save_fails (0.00s)
+=== RUN   TestSetSinkDirectory
+=== RUN   TestSetSinkDirectory/update_existing_sink_directory
+=== RUN   TestSetSinkDirectory/update_non-existent_sink
+=== RUN   TestSetSinkDirectory/load_fails
+=== RUN   TestSetSinkDirectory/save_fails
+--- PASS: TestSetSinkDirectory (0.00s)
+    --- PASS: TestSetSinkDirectory/update_existing_sink_directory (0.00s)
+    --- PASS: TestSetSinkDirectory/update_non-existent_sink (0.00s)
+    --- PASS: TestSetSinkDirectory/load_fails (0.00s)
+    --- PASS: TestSetSinkDirectory/save_fails (0.00s)
+=== RUN   TestSetSinkTool
+=== RUN   TestSetSinkTool/update_existing_sink_tool
+=== RUN   TestSetSinkTool/update_non-existent_sink
+=== RUN   TestSetSinkTool/load_fails
+=== RUN   TestSetSinkTool/save_fails
+--- PASS: TestSetSinkTool (0.00s)
+    --- PASS: TestSetSinkTool/update_existing_sink_tool (0.00s)
+    --- PASS: TestSetSinkTool/update_non-existent_sink (0.00s)
+    --- PASS: TestSetSinkTool/load_fails (0.00s)
+    --- PASS: TestSetSinkTool/save_fails (0.00s)
+=== RUN   TestUninstallAll_Normal
+--- PASS: TestUninstallAll_Normal (0.00s)
+=== RUN   TestUninstallAll_EmptyDependencies
+--- PASS: TestUninstallAll_EmptyDependencies (0.00s)
+=== RUN   TestUninstallAll_MissingSink
+--- PASS: TestUninstallAll_MissingSink (0.00s)
+=== RUN   TestUninstallAll_MalformedDependency
+--- PASS: TestUninstallAll_MalformedDependency (0.00s)
+=== RUN   TestUninstallAll_ManyDependencies
+--- PASS: TestUninstallAll_ManyDependencies (0.15s)
+=== RUN   TestUpdateAll_Normal
+--- PASS: TestUpdateAll_Normal (0.01s)
+=== RUN   TestUpdateAll_AlreadyUpToDate
+--- PASS: TestUpdateAll_AlreadyUpToDate (0.00s)
+=== RUN   TestUpdateAll_EmptyDependencies
+--- PASS: TestUpdateAll_EmptyDependencies (0.00s)
+=== RUN   TestUpdateAll_MissingLockfileEntry
+--- PASS: TestUpdateAll_MissingLockfileEntry (0.01s)
+=== RUN   TestUpdateAll_MixedTypes
+--- PASS: TestUpdateAll_MixedTypes (0.00s)
+=== RUN   TestUpdateAll_ManyDependencies
+--- PASS: TestUpdateAll_ManyDependencies (0.74s)
+=== RUN   TestUpgradeAll_Normal
+--- PASS: TestUpgradeAll_Normal (0.05s)
+=== RUN   TestUpgradeAll_AlreadyLatest
+--- PASS: TestUpgradeAll_AlreadyLatest (0.00s)
+=== RUN   TestUpgradeAll_EmptyDependencies
+--- PASS: TestUpgradeAll_EmptyDependencies (0.00s)
+=== RUN   TestUpgradeAll_MissingLockfileEntry
+--- PASS: TestUpgradeAll_MissingLockfileEntry (0.04s)
+PASS
+coverage: 54.0% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/service	2.213s	coverage: 54.0% of statements
+=== RUN   TestNewManager
+=== RUN   TestNewManager/cursor_creates_hierarchical
+=== RUN   TestNewManager/amazonq_creates_hierarchical
+=== RUN   TestNewManager/copilot_creates_flat
+--- PASS: TestNewManager (0.00s)
+    --- PASS: TestNewManager/cursor_creates_hierarchical (0.00s)
+    --- PASS: TestNewManager/amazonq_creates_hierarchical (0.00s)
+    --- PASS: TestNewManager/copilot_creates_flat (0.00s)
+=== RUN   TestGetFilePath
+=== RUN   TestGetFilePath/flat_layout_short_path
+=== RUN   TestGetFilePath/flat_layout_long_path_gets_truncated
+=== RUN   TestGetFilePath/flat_layout_very_long_filename_gets_truncated
+=== RUN   TestGetFilePath/hierarchical_layout
+--- PASS: TestGetFilePath (0.00s)
+    --- PASS: TestGetFilePath/flat_layout_short_path (0.00s)
+    --- PASS: TestGetFilePath/flat_layout_long_path_gets_truncated (0.00s)
+    --- PASS: TestGetFilePath/flat_layout_very_long_filename_gets_truncated (0.00s)
+    --- PASS: TestGetFilePath/hierarchical_layout (0.00s)
+=== RUN   TestHashPackageAndPath
+--- PASS: TestHashPackageAndPath (0.00s)
+=== RUN   TestIsInstalled
+--- PASS: TestIsInstalled (0.00s)
+=== RUN   TestLoadSaveIndex
+--- PASS: TestLoadSaveIndex (0.00s)
+=== RUN   TestListRulesets
+--- PASS: TestListRulesets (0.00s)
+=== RUN   TestListPromptsets
+--- PASS: TestListPromptsets (0.00s)
+=== RUN   TestUninstall
+--- PASS: TestUninstall (0.00s)
+=== RUN   TestClean
+--- PASS: TestClean (0.00s)
+=== RUN   TestFilenameTruncation
+=== RUN   TestFilenameTruncation/short_path_no_truncation
+=== RUN   TestFilenameTruncation/long_path_uses_filename_only
+=== RUN   TestFilenameTruncation/very_long_filename_gets_truncated
+--- PASS: TestFilenameTruncation (0.00s)
+    --- PASS: TestFilenameTruncation/short_path_no_truncation (0.00s)
+    --- PASS: TestFilenameTruncation/long_path_uses_filename_only (0.00s)
+    --- PASS: TestFilenameTruncation/very_long_filename_gets_truncated (0.00s)
+=== RUN   TestGenerateRulesetIndexRuleFile
+--- PASS: TestGenerateRulesetIndexRuleFile (0.00s)
+=== RUN   TestGenerateRulesetIndexRuleFileRemovesWhenEmpty
+--- PASS: TestGenerateRulesetIndexRuleFileRemovesWhenEmpty (0.00s)
+=== RUN   TestInstallRuleset
+--- PASS: TestInstallRuleset (0.00s)
+=== RUN   TestInstallRulesetReplacesOldVersion
+--- PASS: TestInstallRulesetReplacesOldVersion (0.00s)
+=== RUN   TestInstallRulesetEmptyPackage
+--- PASS: TestInstallRulesetEmptyPackage (0.00s)
+=== RUN   TestInstallPromptset
+--- PASS: TestInstallPromptset (0.00s)
+=== RUN   TestInstallPromptsetReplacesOldVersion
+--- PASS: TestInstallPromptsetReplacesOldVersion (0.00s)
+=== RUN   TestInstallPromptsetEmptyPackage
+--- PASS: TestInstallPromptsetEmptyPackage (0.00s)
+=== RUN   TestInstallRulesetWithARMResource
+--- PASS: TestInstallRulesetWithARMResource (0.01s)
+=== RUN   TestInstallPromptsetWithARMResource
+--- PASS: TestInstallPromptsetWithARMResource (0.01s)
+=== RUN   TestPkgKey
+--- PASS: TestPkgKey (0.00s)
+=== RUN   TestParsePkgKey
+--- PASS: TestParsePkgKey (0.00s)
+=== RUN   TestPkgKeyRoundTrip
+--- PASS: TestPkgKeyRoundTrip (0.00s)
+PASS
+coverage: 84.6% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/sink	1.110s	coverage: 84.6% of statements
+=== RUN   TestGenerateKey
+=== RUN   TestGenerateKey/simple_string
+=== RUN   TestGenerateKey/simple_map
+=== RUN   TestGenerateKey/complex_map_with_arrays
+=== RUN   TestGenerateKey/nil_input
+=== RUN   TestGenerateKey/empty_map
+=== RUN   TestGenerateKey/nested_map
+=== RUN   TestGenerateKey/unmarshalable_input
+--- PASS: TestGenerateKey (0.00s)
+    --- PASS: TestGenerateKey/simple_string (0.00s)
+    --- PASS: TestGenerateKey/simple_map (0.00s)
+    --- PASS: TestGenerateKey/complex_map_with_arrays (0.00s)
+    --- PASS: TestGenerateKey/nil_input (0.00s)
+    --- PASS: TestGenerateKey/empty_map (0.00s)
+    --- PASS: TestGenerateKey/nested_map (0.00s)
+    --- PASS: TestGenerateKey/unmarshalable_input (0.00s)
+=== RUN   TestGenerateKey_Consistency
+--- PASS: TestGenerateKey_Consistency (0.00s)
+=== RUN   TestGenerateKey_DifferentInputs
+--- PASS: TestGenerateKey_DifferentInputs (0.00s)
+=== RUN   TestGenerateKey_OrderIndependent
+--- PASS: TestGenerateKey_OrderIndependent (0.00s)
+=== RUN   TestFileLock_BasicLockUnlock
+--- PASS: TestFileLock_BasicLockUnlock (0.00s)
+=== RUN   TestFileLock_ConcurrentAccess
+--- PASS: TestFileLock_ConcurrentAccess (0.11s)
+=== RUN   TestFileLock_Timeout
+--- PASS: TestFileLock_Timeout (0.21s)
+=== RUN   TestFileLock_MultipleUnlock
+--- PASS: TestFileLock_MultipleUnlock (0.00s)
+=== RUN   TestFileLock_ContextCancellation
+--- PASS: TestFileLock_ContextCancellation (0.00s)
+=== RUN   TestNewPackageCache
+--- PASS: TestNewPackageCache (0.00s)
+=== RUN   TestPackageCache_SetPackageVersion
+--- PASS: TestPackageCache_SetPackageVersion (0.00s)
+=== RUN   TestPackageCache_GetPackageVersion
+--- PASS: TestPackageCache_GetPackageVersion (0.01s)
+=== RUN   TestPackageCache_GetPackageVersion_NotFound
+--- PASS: TestPackageCache_GetPackageVersion_NotFound (0.00s)
+=== RUN   TestPackageCache_ListPackageVersions
+--- PASS: TestPackageCache_ListPackageVersions (0.01s)
+=== RUN   TestPackageCache_ListPackages
+--- PASS: TestPackageCache_ListPackages (0.00s)
+=== RUN   TestPackageCache_RemovePackageVersion
+--- PASS: TestPackageCache_RemovePackageVersion (0.00s)
+=== RUN   TestPackageCache_RemovePackage
+--- PASS: TestPackageCache_RemovePackage (0.00s)
+=== RUN   TestPackageCache_RemoveOldVersionsByTimestamp
+--- PASS: TestPackageCache_RemoveOldVersionsByTimestamp (0.06s)
+=== RUN   TestPackageCache_RemoveUnusedVersionsByAccess
+--- PASS: TestPackageCache_RemoveUnusedVersionsByAccess (0.05s)
+=== RUN   TestPackageCache_RemoveAllVersionsRemovesPackage
+--- PASS: TestPackageCache_RemoveAllVersionsRemovesPackage (0.05s)
+=== RUN   TestNewRegistry
+=== RUN   TestNewRegistry/simple_registry_key
+=== RUN   TestNewRegistry/complex_registry_key
+=== RUN   TestNewRegistry/nil_registry_key
+=== RUN   TestNewRegistry/unmarshalable_registry_key
+--- PASS: TestNewRegistry (0.01s)
+    --- PASS: TestNewRegistry/simple_registry_key (0.00s)
+    --- PASS: TestNewRegistry/complex_registry_key (0.00s)
+    --- PASS: TestNewRegistry/nil_registry_key (0.01s)
+    --- PASS: TestNewRegistry/unmarshalable_registry_key (0.00s)
+=== RUN   TestNewRegistryWithPath
+--- PASS: TestNewRegistryWithPath (0.00s)
+=== RUN   TestRegistry_GetPaths
+--- PASS: TestRegistry_GetPaths (0.00s)
+=== RUN   TestRegistry_ConsistentKeys
+--- PASS: TestRegistry_ConsistentKeys (0.01s)
+=== RUN   TestRegistry_DifferentKeys
+--- PASS: TestRegistry_DifferentKeys (0.00s)
+=== RUN   TestNewRepo
+--- PASS: TestNewRepo (0.00s)
+=== RUN   TestGetTags_RepoNotCloned
+--- PASS: TestGetTags_RepoNotCloned (0.12s)
+=== RUN   TestGetTags_NoTags
+--- PASS: TestGetTags_NoTags (0.09s)
+=== RUN   TestGetBranches_RepoNotCloned
+    repo_test_helper.go:125: 
+        	Error Trace:	/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test_helper.go:125
+        	            				/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test_helper.go:80
+        	            				/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test.go:79
+        	Error:      	Received unexpected error:
+        	            	exit status 1
+        	Test:       	TestGetBranches_RepoNotCloned
+--- FAIL: TestGetBranches_RepoNotCloned (0.07s)
+=== RUN   TestGetBranchHeadCommitHash_ValidBranch
+    repo_test.go:111: 
+        	Error Trace:	/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test.go:111
+        	Error:      	Received unexpected error:
+        	            	exit status 128
+        	Test:       	TestGetBranchHeadCommitHash_ValidBranch
+    repo_test.go:112: 
+        	Error Trace:	/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test.go:112
+        	Error:      	Should NOT be empty, but was 
+        	Test:       	TestGetBranchHeadCommitHash_ValidBranch
+    repo_test.go:113: 
+        	Error Trace:	/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test.go:113
+        	Error:      	"" should have 40 item(s), but has 0
+        	Test:       	TestGetBranchHeadCommitHash_ValidBranch
+--- FAIL: TestGetBranchHeadCommitHash_ValidBranch (0.07s)
+=== RUN   TestGetBranchHeadCommitHash_InvalidBranch
+--- PASS: TestGetBranchHeadCommitHash_InvalidBranch (0.07s)
+=== RUN   TestGetTagCommitHash_ValidTag
+--- PASS: TestGetTagCommitHash_ValidTag (0.12s)
+=== RUN   TestGetTagCommitHash_InvalidTag
+--- PASS: TestGetTagCommitHash_InvalidTag (0.07s)
+=== RUN   TestGetFilesFromCommit_ValidCommit
+--- PASS: TestGetFilesFromCommit_ValidCommit (0.19s)
+=== RUN   TestGetFilesFromCommit_InvalidCommit
+--- PASS: TestGetFilesFromCommit_InvalidCommit (0.07s)
+FAIL
+coverage: 80.2% of statements
+FAIL	github.com/jomadu/ai-resource-manager/internal/arm/storage	1.475s
+FAIL

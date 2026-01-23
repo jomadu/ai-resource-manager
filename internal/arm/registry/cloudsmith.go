@@ -97,7 +97,7 @@ func (c *CloudsmithRegistry) loadToken(ctx context.Context) error {
 }
 
 func (c *cloudsmithClient) makeRequest(ctx context.Context, method, path string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, nil)
+	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (c *CloudsmithRegistry) ListPackageVersions(ctx context.Context, packageNam
 		if !versions[i].IsSemver || !versions[j].IsSemver {
 			return versions[i].Version < versions[j].Version
 		}
-		return versions[i].Compare(versions[j]) > 0
+		return versions[i].Compare(&versions[j]) > 0
 	})
 
 	return versions, nil
@@ -153,7 +153,7 @@ func (c *CloudsmithRegistry) ListPackageVersions(ctx context.Context, packageNam
 
 func (c *cloudsmithClient) listAllPackages(ctx context.Context, owner, repo string) ([]cloudsmithPackage, error) {
 	path := fmt.Sprintf("/v1/packages/%s/%s/", owner, repo)
-	
+
 	var allPackages []cloudsmithPackage
 	for path != "" {
 		packages, nextPath, err := c.listPackagesPage(ctx, path)
@@ -169,7 +169,7 @@ func (c *cloudsmithClient) listAllPackages(ctx context.Context, owner, repo stri
 
 func (c *cloudsmithClient) listPackages(ctx context.Context, owner, repo, packageName string) ([]cloudsmithPackage, error) {
 	path := fmt.Sprintf("/v1/packages/%s/%s/?query=%s", owner, repo, packageName)
-	
+
 	var allPackages []cloudsmithPackage
 	for path != "" {
 		packages, nextPath, err := c.listPackagesPage(ctx, path)
@@ -188,7 +188,7 @@ func (c *cloudsmithClient) listPackagesPage(ctx context.Context, path string) ([
 	if err != nil {
 		return nil, "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {
 		return nil, "", fmt.Errorf("cloudsmith API error: %d", resp.StatusCode)
@@ -217,7 +217,7 @@ func (c *CloudsmithRegistry) ResolveVersion(ctx context.Context, packageName, co
 	return resolved, nil
 }
 
-func (c *CloudsmithRegistry) GetPackage(ctx context.Context, packageName string, version core.Version, include, exclude []string) (*core.Package, error) {
+func (c *CloudsmithRegistry) GetPackage(ctx context.Context, packageName string, version *core.Version, include, exclude []string) (*core.Package, error) {
 	cacheKey := map[string]interface{}{
 		"registry": c.name,
 		"package":  packageName,
@@ -233,7 +233,7 @@ func (c *CloudsmithRegistry) GetPackage(ctx context.Context, packageName string,
 			Metadata: core.PackageMetadata{
 				RegistryName: c.name,
 				Name:         packageName,
-				Version:      version,
+				Version:      *version,
 			},
 			Files:     files,
 			Integrity: integrity,
@@ -266,7 +266,7 @@ func (c *CloudsmithRegistry) GetPackage(ctx context.Context, packageName string,
 	}
 
 	// Cache the filtered result
-	c.packageCache.SetPackageVersion(ctx, cacheKey, version, filteredFiles)
+	_ = c.packageCache.SetPackageVersion(ctx, cacheKey, version, filteredFiles)
 
 	integrity := calculateIntegrity(filteredFiles)
 
@@ -274,7 +274,7 @@ func (c *CloudsmithRegistry) GetPackage(ctx context.Context, packageName string,
 		Metadata: core.PackageMetadata{
 			RegistryName: c.name,
 			Name:         packageName,
-			Version:      version,
+			Version:      *version,
 		},
 		Files:     filteredFiles,
 		Integrity: integrity,
@@ -311,7 +311,7 @@ func (c *cloudsmithClient) downloadPackages(ctx context.Context, owner, repo, pa
 }
 
 func (c *cloudsmithClient) downloadFile(ctx context.Context, url string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func (c *cloudsmithClient) downloadFile(ctx context.Context, url string) ([]byte
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {
 		return nil, fmt.Errorf("download failed: %d", resp.StatusCode)

@@ -24,9 +24,9 @@ func TestPackageKey(t *testing.T) {
 
 func TestParsePackageKey(t *testing.T) {
 	tests := []struct {
-		key         string
-		wantReg     string
-		wantPkg     string
+		key     string
+		wantReg string
+		wantPkg string
 	}{
 		{"registry1/package1", "registry1", "package1"},
 		{"my-registry/my-package", "my-registry", "my-package"},
@@ -40,7 +40,7 @@ func TestParsePackageKey(t *testing.T) {
 	for _, tt := range tests {
 		gotReg, gotPkg := ParsePackageKey(tt.key)
 		if gotReg != tt.wantReg || gotPkg != tt.wantPkg {
-			t.Errorf("ParsePackageKey(%q) = (%q, %q), want (%q, %q)", 
+			t.Errorf("ParsePackageKey(%q) = (%q, %q), want (%q, %q)",
 				tt.key, gotReg, gotPkg, tt.wantReg, tt.wantPkg)
 		}
 	}
@@ -59,9 +59,9 @@ func TestPackageKeyRoundTrip(t *testing.T) {
 	for _, tt := range tests {
 		key := PackageKey(tt.registry, tt.pkg)
 		gotReg, gotPkg := ParsePackageKey(key)
-		
+
 		if gotReg != tt.registry || gotPkg != tt.pkg {
-			t.Errorf("Round trip failed: %q/%q -> %q -> %q/%q", 
+			t.Errorf("Round trip failed: %q/%q -> %q -> %q/%q",
 				tt.registry, tt.pkg, key, gotReg, gotPkg)
 		}
 	}

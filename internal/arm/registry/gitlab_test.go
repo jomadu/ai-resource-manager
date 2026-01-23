@@ -17,12 +17,12 @@ func TestGitLabRegistry_ListPackages(t *testing.T) {
 			{"id": 1, "name": "test-package", "version": "1.0.0", "package_type": "generic"},
 			{"id": 2, "name": "other-package", "version": "2.0.0", "package_type": "generic"},
 		}
-		json.NewEncoder(w).Encode(packages)
+		_ = json.NewEncoder(w).Encode(packages)
 	}))
 	defer server.Close()
 
 	tempDir, _ := os.MkdirTemp("", "gitlab-test")
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	config := GitLabRegistryConfig{
 		RegistryConfig: RegistryConfig{URL: server.URL, Type: "gitlab"},
@@ -32,7 +32,7 @@ func TestGitLabRegistry_ListPackages(t *testing.T) {
 	configMgr := newMockConfigManager()
 	configMgr.SetValue("registry "+server.URL+"/project/123", "token", "test-token")
 
-	registry, err := NewGitLabRegistryWithPath(tempDir, "test", config, configMgr)
+	registry, err := NewGitLabRegistryWithPath(tempDir, "test", &config, configMgr)
 	if err != nil {
 		t.Fatalf("failed to create registry: %v", err)
 	}
@@ -54,12 +54,12 @@ func TestGitLabRegistry_ListPackageVersions(t *testing.T) {
 			{"id": 2, "name": "test-package", "version": "2.0.0", "package_type": "generic"},
 			{"id": 3, "name": "other-package", "version": "1.0.0", "package_type": "generic"},
 		}
-		json.NewEncoder(w).Encode(packages)
+		_ = json.NewEncoder(w).Encode(packages)
 	}))
 	defer server.Close()
 
 	tempDir, _ := os.MkdirTemp("", "gitlab-test")
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	config := GitLabRegistryConfig{
 		RegistryConfig: RegistryConfig{URL: server.URL, Type: "gitlab"},
@@ -69,7 +69,7 @@ func TestGitLabRegistry_ListPackageVersions(t *testing.T) {
 	configMgr := newMockConfigManager()
 	configMgr.SetValue("registry "+server.URL+"/project/123", "token", "test-token")
 
-	registry, err := NewGitLabRegistryWithPath(tempDir, "test", config, configMgr)
+	registry, err := NewGitLabRegistryWithPath(tempDir, "test", &config, configMgr)
 	if err != nil {
 		t.Fatalf("failed to create registry: %v", err)
 	}
@@ -86,24 +86,25 @@ func TestGitLabRegistry_ListPackageVersions(t *testing.T) {
 
 func TestGitLabRegistry_GetPackage(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/v4/projects/123/packages" {
+		switch r.URL.Path {
+		case "/api/v4/projects/123/packages":
 			packages := []map[string]interface{}{
 				{"id": 1, "name": "test-package", "version": "1.0.0", "package_type": "generic"},
 			}
-			json.NewEncoder(w).Encode(packages)
-		} else if r.URL.Path == "/api/v4/projects/123/packages/1/package_files" {
+			_ = json.NewEncoder(w).Encode(packages)
+		case "/api/v4/projects/123/packages/1/package_files":
 			files := []map[string]interface{}{
 				{"id": 1, "file_name": "test.yml", "size": 12},
 			}
-			json.NewEncoder(w).Encode(files)
-		} else if r.URL.Path == "/api/v4/projects/123/packages/generic/test-package/1.0.0/test.yml" {
-			w.Write([]byte("test content"))
+			_ = json.NewEncoder(w).Encode(files)
+		case "/api/v4/projects/123/packages/generic/test-package/1.0.0/test.yml":
+			_, _ = w.Write([]byte("test content"))
 		}
 	}))
 	defer server.Close()
 
 	tempDir, _ := os.MkdirTemp("", "gitlab-test")
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	config := GitLabRegistryConfig{
 		RegistryConfig: RegistryConfig{URL: server.URL, Type: "gitlab"},
@@ -113,13 +114,13 @@ func TestGitLabRegistry_GetPackage(t *testing.T) {
 	configMgr := newMockConfigManager()
 	configMgr.SetValue("registry "+server.URL+"/project/123", "token", "test-token")
 
-	registry, err := NewGitLabRegistryWithPath(tempDir, "test", config, configMgr)
+	registry, err := NewGitLabRegistryWithPath(tempDir, "test", &config, configMgr)
 	if err != nil {
 		t.Fatalf("failed to create registry: %v", err)
 	}
 
 	version, _ := core.ParseVersion("1.0.0")
-	pkg, err := registry.GetPackage(context.Background(), "test-package", version, nil, nil)
+	pkg, err := registry.GetPackage(context.Background(), "test-package", &version, nil, nil)
 	if err != nil {
 		t.Fatalf("failed to get package: %v", err)
 	}
@@ -138,12 +139,12 @@ func TestGitLabRegistry_GroupPackages(t *testing.T) {
 		packages := []map[string]interface{}{
 			{"id": 1, "name": "group-package", "version": "1.0.0", "package_type": "generic"},
 		}
-		json.NewEncoder(w).Encode(packages)
+		_ = json.NewEncoder(w).Encode(packages)
 	}))
 	defer server.Close()
 
 	tempDir, _ := os.MkdirTemp("", "gitlab-test")
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	config := GitLabRegistryConfig{
 		RegistryConfig: RegistryConfig{URL: server.URL, Type: "gitlab"},
@@ -153,7 +154,7 @@ func TestGitLabRegistry_GroupPackages(t *testing.T) {
 	configMgr := newMockConfigManager()
 	configMgr.SetValue("registry "+server.URL+"/group/456", "token", "test-token")
 
-	registry, err := NewGitLabRegistryWithPath(tempDir, "test", config, configMgr)
+	registry, err := NewGitLabRegistryWithPath(tempDir, "test", &config, configMgr)
 	if err != nil {
 		t.Fatalf("failed to create registry: %v", err)
 	}
@@ -170,27 +171,28 @@ func TestGitLabRegistry_GroupPackages(t *testing.T) {
 
 func TestGitLabRegistry_IncludeExcludePatterns(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/v4/projects/123/packages" {
+		switch r.URL.Path {
+		case "/api/v4/projects/123/packages":
 			packages := []map[string]interface{}{
 				{"id": 1, "name": "test-package", "version": "1.0.0", "package_type": "generic"},
 			}
-			json.NewEncoder(w).Encode(packages)
-		} else if r.URL.Path == "/api/v4/projects/123/packages/1/package_files" {
+			_ = json.NewEncoder(w).Encode(packages)
+		case "/api/v4/projects/123/packages/1/package_files":
 			files := []map[string]interface{}{
 				{"id": 1, "file_name": "rule.yml", "size": 4},
 				{"id": 2, "file_name": "test.md", "size": 4},
 			}
-			json.NewEncoder(w).Encode(files)
-		} else if r.URL.Path == "/api/v4/projects/123/packages/generic/test-package/1.0.0/rule.yml" {
-			w.Write([]byte("rule"))
-		} else if r.URL.Path == "/api/v4/projects/123/packages/generic/test-package/1.0.0/test.md" {
-			w.Write([]byte("test"))
+			_ = json.NewEncoder(w).Encode(files)
+		case "/api/v4/projects/123/packages/generic/test-package/1.0.0/rule.yml":
+			_, _ = w.Write([]byte("rule"))
+		case "/api/v4/projects/123/packages/generic/test-package/1.0.0/test.md":
+			_, _ = w.Write([]byte("test"))
 		}
 	}))
 	defer server.Close()
 
 	tempDir, _ := os.MkdirTemp("", "gitlab-test")
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	config := GitLabRegistryConfig{
 		RegistryConfig: RegistryConfig{URL: server.URL, Type: "gitlab"},
@@ -200,13 +202,13 @@ func TestGitLabRegistry_IncludeExcludePatterns(t *testing.T) {
 	configMgr := newMockConfigManager()
 	configMgr.SetValue("registry "+server.URL+"/project/123", "token", "test-token")
 
-	registry, err := NewGitLabRegistryWithPath(tempDir, "test", config, configMgr)
+	registry, err := NewGitLabRegistryWithPath(tempDir, "test", &config, configMgr)
 	if err != nil {
 		t.Fatalf("failed to create registry: %v", err)
 	}
 
 	version, _ := core.ParseVersion("1.0.0")
-	pkg, err := registry.GetPackage(context.Background(), "test-package", version, []string{"*.yml"}, nil)
+	pkg, err := registry.GetPackage(context.Background(), "test-package", &version, []string{"*.yml"}, nil)
 	if err != nil {
 		t.Fatalf("failed to get package: %v", err)
 	}

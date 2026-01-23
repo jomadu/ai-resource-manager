@@ -35,7 +35,7 @@ func TestCleanCacheByAge(t *testing.T) {
 
 	// Create old version (8 days old)
 	oldVersion := core.Version{Major: 1, Minor: 0, Patch: 0}
-	if err := packageCache.SetPackageVersion(ctx, packageKey, oldVersion, []*core.File{
+	if err := packageCache.SetPackageVersion(ctx, packageKey, &oldVersion, []*core.File{
 		{Path: "test.txt", Content: []byte("old")},
 	}); err != nil {
 		t.Fatal(err)
@@ -48,7 +48,7 @@ func TestCleanCacheByAge(t *testing.T) {
 
 	// Create new version (1 day old)
 	newVersion := core.Version{Major: 2, Minor: 0, Patch: 0}
-	if err := packageCache.SetPackageVersion(ctx, packageKey, newVersion, []*core.File{
+	if err := packageCache.SetPackageVersion(ctx, packageKey, &newVersion, []*core.File{
 		{Path: "test.txt", Content: []byte("new")},
 	}); err != nil {
 		t.Fatal(err)
@@ -94,7 +94,7 @@ func TestNukeCache(t *testing.T) {
 	packageKey := map[string]interface{}{"name": "test-package"}
 	version := core.Version{Major: 1, Minor: 0, Patch: 0}
 
-	if err := packageCache.SetPackageVersion(ctx, packageKey, version, []*core.File{
+	if err := packageCache.SetPackageVersion(ctx, packageKey, &version, []*core.File{
 		{Path: "test.txt", Content: []byte("test")},
 	}); err != nil {
 		t.Fatal(err)
@@ -139,7 +139,7 @@ func setMetadataTime(t *testing.T, metadataPath string, timestamp time.Time) {
 		t.Fatal(err)
 	}
 
-	if err := os.WriteFile(metadataPath, newData, 0644); err != nil {
+	if err := os.WriteFile(metadataPath, newData, 0o644); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -178,10 +178,10 @@ func TestCleanSinks(t *testing.T) {
 	// Create orphaned file
 	armDir := filepath.Join(sinkDir, "arm")
 	orphanedFile := filepath.Join(armDir, "orphaned.md")
-	if err := os.MkdirAll(filepath.Dir(orphanedFile), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(orphanedFile), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(orphanedFile, []byte("orphaned"), 0644); err != nil {
+	if err := os.WriteFile(orphanedFile, []byte("orphaned"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -296,7 +296,7 @@ func TestCleanCacheByTimeSinceLastAccess(t *testing.T) {
 
 	// Create old accessed version (8 days since last access)
 	oldVersion := core.Version{Major: 1, Minor: 0, Patch: 0}
-	if err := packageCache.SetPackageVersion(ctx, packageKey, oldVersion, []*core.File{
+	if err := packageCache.SetPackageVersion(ctx, packageKey, &oldVersion, []*core.File{
 		{Path: "test.txt", Content: []byte("old")},
 	}); err != nil {
 		t.Fatal(err)
@@ -308,7 +308,7 @@ func TestCleanCacheByTimeSinceLastAccess(t *testing.T) {
 
 	// Create recently accessed version (1 day since last access)
 	newVersion := core.Version{Major: 2, Minor: 0, Patch: 0}
-	if err := packageCache.SetPackageVersion(ctx, packageKey, newVersion, []*core.File{
+	if err := packageCache.SetPackageVersion(ctx, packageKey, &newVersion, []*core.File{
 		{Path: "test.txt", Content: []byte("new")},
 	}); err != nil {
 		t.Fatal(err)
@@ -353,7 +353,7 @@ func setMetadataAccessTime(t *testing.T, metadataPath string, timestamp time.Tim
 		t.Fatal(err)
 	}
 
-	if err := os.WriteFile(metadataPath, newData, 0644); err != nil {
+	if err := os.WriteFile(metadataPath, newData, 0o644); err != nil {
 		t.Fatal(err)
 	}
 }

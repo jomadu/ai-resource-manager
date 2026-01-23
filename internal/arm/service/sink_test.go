@@ -48,7 +48,7 @@ func (m *mockManifestManager) GetGitRegistryConfig(ctx context.Context, name str
 	}
 	configMap, _ := json.Marshal(cfg)
 	var result manifest.GitRegistryConfig
-	json.Unmarshal(configMap, &result)
+	_ = json.Unmarshal(configMap, &result)
 	return result, nil
 }
 
@@ -66,7 +66,7 @@ func (m *mockManifestManager) GetGitLabRegistryConfig(ctx context.Context, name 
 	}
 	configMap, _ := json.Marshal(cfg)
 	var result manifest.GitLabRegistryConfig
-	json.Unmarshal(configMap, &result)
+	_ = json.Unmarshal(configMap, &result)
 	return result, nil
 }
 
@@ -84,7 +84,7 @@ func (m *mockManifestManager) GetCloudsmithRegistryConfig(ctx context.Context, n
 	}
 	configMap, _ := json.Marshal(cfg)
 	var result manifest.CloudsmithRegistryConfig
-	json.Unmarshal(configMap, &result)
+	_ = json.Unmarshal(configMap, &result)
 	return result, nil
 }
 
@@ -103,19 +103,19 @@ func (m *mockManifestManager) UpsertGitRegistryConfig(ctx context.Context, name 
 	config.Type = "git"
 	configMap, _ := json.Marshal(config)
 	var result map[string]interface{}
-	json.Unmarshal(configMap, &result)
+	_ = json.Unmarshal(configMap, &result)
 	m.manifest.Registries[name] = result
 	return nil
 }
 
-func (m *mockManifestManager) UpsertGitLabRegistryConfig(ctx context.Context, name string, config manifest.GitLabRegistryConfig) error {
+func (m *mockManifestManager) UpsertGitLabRegistryConfig(ctx context.Context, name string, config *manifest.GitLabRegistryConfig) error {
 	if m.saveErr != nil {
 		return m.saveErr
 	}
 	config.Type = "gitlab"
 	configMap, _ := json.Marshal(config)
 	var result map[string]interface{}
-	json.Unmarshal(configMap, &result)
+	_ = json.Unmarshal(configMap, &result)
 	m.manifest.Registries[name] = result
 	return nil
 }
@@ -127,12 +127,12 @@ func (m *mockManifestManager) UpsertCloudsmithRegistryConfig(ctx context.Context
 	config.Type = "cloudsmith"
 	configMap, _ := json.Marshal(config)
 	var result map[string]interface{}
-	json.Unmarshal(configMap, &result)
+	_ = json.Unmarshal(configMap, &result)
 	m.manifest.Registries[name] = result
 	return nil
 }
 
-func (m *mockManifestManager) UpdateRegistryConfigName(ctx context.Context, name string, newName string) error {
+func (m *mockManifestManager) UpdateRegistryConfigName(ctx context.Context, name, newName string) error {
 	if m.loadErr != nil {
 		return m.loadErr
 	}
@@ -191,7 +191,7 @@ func (m *mockManifestManager) UpsertSinkConfig(ctx context.Context, name string,
 	return nil
 }
 
-func (m *mockManifestManager) UpdateSinkConfigName(ctx context.Context, name string, newName string) error {
+func (m *mockManifestManager) UpdateSinkConfigName(ctx context.Context, name, newName string) error {
 	if m.loadErr != nil {
 		return m.loadErr
 	}
@@ -255,7 +255,7 @@ func (m *mockManifestManager) UpsertDependencyConfig(ctx context.Context, regist
 	return nil
 }
 
-func (m *mockManifestManager) UpsertRulesetDependencyConfig(ctx context.Context, registry, packageName string, config manifest.RulesetDependencyConfig) error {
+func (m *mockManifestManager) UpsertRulesetDependencyConfig(ctx context.Context, registry, packageName string, config *manifest.RulesetDependencyConfig) error {
 	key := registry + "/" + packageName
 	if m.saveErr != nil {
 		return m.saveErr
@@ -266,12 +266,12 @@ func (m *mockManifestManager) UpsertRulesetDependencyConfig(ctx context.Context,
 	config.Type = manifest.ResourceTypeRuleset
 	configMap, _ := json.Marshal(config)
 	var result map[string]interface{}
-	json.Unmarshal(configMap, &result)
+	_ = json.Unmarshal(configMap, &result)
 	m.manifest.Dependencies[key] = result
 	return nil
 }
 
-func (m *mockManifestManager) UpsertPromptsetDependencyConfig(ctx context.Context, registry, packageName string, config manifest.PromptsetDependencyConfig) error {
+func (m *mockManifestManager) UpsertPromptsetDependencyConfig(ctx context.Context, registry, packageName string, config *manifest.PromptsetDependencyConfig) error {
 	key := registry + "/" + packageName
 	if m.saveErr != nil {
 		return m.saveErr
@@ -282,7 +282,7 @@ func (m *mockManifestManager) UpsertPromptsetDependencyConfig(ctx context.Contex
 	config.Type = manifest.ResourceTypePromptset
 	configMap, _ := json.Marshal(config)
 	var result map[string]interface{}
-	json.Unmarshal(configMap, &result)
+	_ = json.Unmarshal(configMap, &result)
 	m.manifest.Dependencies[key] = result
 	return nil
 }
@@ -331,7 +331,7 @@ func (m *mockManifestManager) GetRulesetDependencyConfig(ctx context.Context, re
 	}
 	configMap, _ := json.Marshal(cfg)
 	var result manifest.RulesetDependencyConfig
-	json.Unmarshal(configMap, &result)
+	_ = json.Unmarshal(configMap, &result)
 	return &result, nil
 }
 
@@ -346,7 +346,7 @@ func (m *mockManifestManager) GetPromptsetDependencyConfig(ctx context.Context, 
 	}
 	configMap, _ := json.Marshal(cfg)
 	var result manifest.PromptsetDependencyConfig
-	json.Unmarshal(configMap, &result)
+	_ = json.Unmarshal(configMap, &result)
 	return &result, nil
 }
 
@@ -362,7 +362,7 @@ func (m *mockManifestManager) GetAllRulesetDependenciesConfig(ctx context.Contex
 		}
 		configMap, _ := json.Marshal(rawConfig)
 		var result manifest.RulesetDependencyConfig
-		json.Unmarshal(configMap, &result)
+		_ = json.Unmarshal(configMap, &result)
 		rulesets[key] = &result
 	}
 	return rulesets, nil
@@ -380,7 +380,7 @@ func (m *mockManifestManager) GetAllPromptsetDependenciesConfig(ctx context.Cont
 		}
 		configMap, _ := json.Marshal(rawConfig)
 		var result manifest.PromptsetDependencyConfig
-		json.Unmarshal(configMap, &result)
+		_ = json.Unmarshal(configMap, &result)
 		promptsets[key] = &result
 	}
 	return promptsets, nil

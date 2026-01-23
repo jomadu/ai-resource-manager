@@ -9,7 +9,7 @@ import (
 )
 
 type LockFile struct {
-	Version      int                              `json:"version"`
+	Version      int                             `json:"version"`
 	Dependencies map[string]DependencyLockConfig `json:"dependencies,omitempty"`
 }
 
@@ -143,7 +143,7 @@ func (f *FileManager) writeLockFile(lockfile *LockFile) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(f.lockPath, data, 0644)
+	return os.WriteFile(f.lockPath, data, 0o644)
 }
 
 // isLockfileEmpty checks if the lockfile has no packages

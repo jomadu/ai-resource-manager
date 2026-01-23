@@ -4,9 +4,9 @@ import "testing"
 
 func TestRuleGeneratorFactory(t *testing.T) {
 	factory := NewRuleGeneratorFactory()
-	
+
 	validTools := []Tool{Cursor, Markdown, AmazonQ, Copilot}
-	
+
 	for _, tool := range validTools {
 		t.Run(string(tool), func(t *testing.T) {
 			generator, err := factory.NewRuleGenerator(tool)
@@ -18,7 +18,7 @@ func TestRuleGeneratorFactory(t *testing.T) {
 			}
 		})
 	}
-	
+
 	// Test invalid tool
 	_, err := factory.NewRuleGenerator("invalid")
 	if err == nil {
@@ -28,9 +28,9 @@ func TestRuleGeneratorFactory(t *testing.T) {
 
 func TestPromptGeneratorFactory(t *testing.T) {
 	factory := NewPromptGeneratorFactory()
-	
+
 	validTools := []Tool{Cursor, Markdown, AmazonQ, Copilot}
-	
+
 	for _, tool := range validTools {
 		t.Run(string(tool), func(t *testing.T) {
 			generator, err := factory.NewPromptGenerator(tool)
@@ -42,7 +42,7 @@ func TestPromptGeneratorFactory(t *testing.T) {
 			}
 		})
 	}
-	
+
 	// Test invalid tool
 	_, err := factory.NewPromptGenerator("invalid")
 	if err == nil {
@@ -52,9 +52,9 @@ func TestPromptGeneratorFactory(t *testing.T) {
 
 func TestRuleFilenameGeneratorFactory(t *testing.T) {
 	factory := NewRuleFilenameGeneratorFactory()
-	
+
 	validTools := []Tool{Cursor, Markdown, AmazonQ, Copilot}
-	
+
 	for _, tool := range validTools {
 		t.Run(string(tool), func(t *testing.T) {
 			generator, err := factory.NewRuleFilenameGenerator(tool)
@@ -66,7 +66,7 @@ func TestRuleFilenameGeneratorFactory(t *testing.T) {
 			}
 		})
 	}
-	
+
 	// Test invalid tool
 	_, err := factory.NewRuleFilenameGenerator("invalid")
 	if err == nil {
@@ -76,9 +76,9 @@ func TestRuleFilenameGeneratorFactory(t *testing.T) {
 
 func TestPromptFilenameGeneratorFactory(t *testing.T) {
 	factory := NewPromptFilenameGeneratorFactory()
-	
+
 	validTools := []Tool{Cursor, Markdown, AmazonQ, Copilot}
-	
+
 	for _, tool := range validTools {
 		t.Run(string(tool), func(t *testing.T) {
 			generator, err := factory.NewPromptFilenameGenerator(tool)
@@ -90,7 +90,7 @@ func TestPromptFilenameGeneratorFactory(t *testing.T) {
 			}
 		})
 	}
-	
+
 	// Test invalid tool
 	_, err := factory.NewPromptFilenameGenerator("invalid")
 	if err == nil {

@@ -27,11 +27,11 @@ func TestUpdateCommand(t *testing.T) {
 		expectError    bool
 	}{
 		{
-			name: "update with no manifest",
-			setupManifest: "",
-			setupLockfile: "",
+			name:           "update with no manifest",
+			setupManifest:  "",
+			setupLockfile:  "",
 			expectedOutput: "",
-			expectError: true,
+			expectError:    true,
 		},
 		{
 			name: "update with empty manifest",
@@ -45,7 +45,7 @@ func TestUpdateCommand(t *testing.T) {
 				"dependencies": {}
 			}`,
 			expectedOutput: "All packages updated successfully",
-			expectError: false,
+			expectError:    false,
 		},
 	}
 
@@ -53,23 +53,23 @@ func TestUpdateCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup manifest if provided
 			if tt.setupManifest != "" {
-				if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+				if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 					t.Fatalf("Failed to write manifest: %v", err)
 				}
 			} else {
 				// Remove manifest if it exists
-				os.Remove(manifestPath)
+				_ = os.Remove(manifestPath)
 			}
 
 			// Setup lockfile if provided
 			lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
 			if tt.setupLockfile != "" {
-				if err := os.WriteFile(lockfilePath, []byte(tt.setupLockfile), 0644); err != nil {
+				if err := os.WriteFile(lockfilePath, []byte(tt.setupLockfile), 0o644); err != nil {
 					t.Fatalf("Failed to write lockfile: %v", err)
 				}
 			} else {
 				// Remove lockfile if it exists
-				os.Remove(lockfilePath)
+				_ = os.Remove(lockfilePath)
 			}
 
 			// Run update command

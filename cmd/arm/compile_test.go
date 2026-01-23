@@ -11,7 +11,7 @@ func TestCompile(t *testing.T) {
 	// Build the binary once for all tests
 	tmpDir := t.TempDir()
 	binaryPath := filepath.Join(tmpDir, "arm")
-	
+
 	cmd := exec.Command("go", "build", "-o", binaryPath, ".")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build binary: %v\n%s", err, output)
@@ -36,69 +36,69 @@ func TestCompile(t *testing.T) {
 			errContains: "OUTPUT_PATH is required",
 		},
 		{
-			name:        "validate-only without output path",
-			args:        []string{"compile", "--validate-only", "input.yml"},
-			wantErr:     false,
+			name:    "validate-only without output path",
+			args:    []string{"compile", "--validate-only", "input.yml"},
+			wantErr: false,
 		},
 		{
-			name:        "with output path",
-			args:        []string{"compile", "input.yml", "output"},
-			wantErr:     false,
+			name:    "with output path",
+			args:    []string{"compile", "input.yml", "output"},
+			wantErr: false,
 		},
 		{
-			name:        "with tool flag",
-			args:        []string{"compile", "--tool", "cursor", "input.yml", "output"},
-			wantErr:     false,
+			name:    "with tool flag",
+			args:    []string{"compile", "--tool", "cursor", "input.yml", "output"},
+			wantErr: false,
 		},
 		{
-			name:        "with namespace flag",
-			args:        []string{"compile", "--namespace", "test", "input.yml", "output"},
-			wantErr:     false,
+			name:    "with namespace flag",
+			args:    []string{"compile", "--namespace", "test", "input.yml", "output"},
+			wantErr: false,
 		},
 		{
-			name:        "with force flag",
-			args:        []string{"compile", "--force", "input.yml", "output"},
-			wantErr:     false,
+			name:    "with force flag",
+			args:    []string{"compile", "--force", "input.yml", "output"},
+			wantErr: false,
 		},
 		{
-			name:        "with recursive flag",
-			args:        []string{"compile", "--recursive", "input.yml", "output"},
-			wantErr:     false,
+			name:    "with recursive flag",
+			args:    []string{"compile", "--recursive", "input.yml", "output"},
+			wantErr: false,
 		},
 		{
-			name:        "with include flag",
-			args:        []string{"compile", "--include", "*.yml", "input.yml", "output"},
-			wantErr:     false,
+			name:    "with include flag",
+			args:    []string{"compile", "--include", "*.yml", "input.yml", "output"},
+			wantErr: false,
 		},
 		{
-			name:        "with exclude flag",
-			args:        []string{"compile", "--exclude", "test*", "input.yml", "output"},
-			wantErr:     false,
+			name:    "with exclude flag",
+			args:    []string{"compile", "--exclude", "test*", "input.yml", "output"},
+			wantErr: false,
 		},
 		{
-			name:        "with fail-fast flag",
-			args:        []string{"compile", "--fail-fast", "input.yml", "output"},
-			wantErr:     false,
+			name:    "with fail-fast flag",
+			args:    []string{"compile", "--fail-fast", "input.yml", "output"},
+			wantErr: false,
 		},
 		{
-			name:        "multiple input paths",
-			args:        []string{"compile", "input1.yml", "input2.yml", "output"},
-			wantErr:     false,
+			name:    "multiple input paths",
+			args:    []string{"compile", "input1.yml", "input2.yml", "output"},
+			wantErr: false,
 		},
 		{
-			name:        "multiple include patterns",
-			args:        []string{"compile", "--include", "*.yml", "--include", "*.yaml", "input.yml", "output"},
-			wantErr:     false,
+			name:    "multiple include patterns",
+			args:    []string{"compile", "--include", "*.yml", "--include", "*.yaml", "input.yml", "output"},
+			wantErr: false,
 		},
 		{
-			name:        "multiple exclude patterns",
-			args:        []string{"compile", "--exclude", "test*", "--exclude", "tmp*", "input.yml", "output"},
-			wantErr:     false,
+			name:    "multiple exclude patterns",
+			args:    []string{"compile", "--exclude", "test*", "--exclude", "tmp*", "input.yml", "output"},
+			wantErr: false,
 		},
 		{
-			name:        "all flags combined",
-			args:        []string{"compile", "--tool", "amazonq", "--namespace", "test", "--force", "--recursive", "--include", "*.yml", "--exclude", "test*", "--fail-fast", "input.yml", "output"},
-			wantErr:     false,
+			name:    "all flags combined",
+			args:    []string{"compile", "--tool", "amazonq", "--namespace", "test", "--force", "--recursive", "--include", "*.yml", "--exclude", "test*", "--fail-fast", "input.yml", "output"},
+			wantErr: false,
 		},
 		{
 			name:        "unknown flag",
@@ -144,12 +144,10 @@ func TestCompile(t *testing.T) {
 				if tt.errContains != "" && !strings.Contains(string(output), tt.errContains) {
 					t.Errorf("Expected error containing %q, got: %s", tt.errContains, output)
 				}
-			} else {
-				if err != nil {
-					// Note: These tests will fail because CompileFiles is not implemented yet
-					// That's expected - we're testing CLI validation, not full functionality
-					t.Logf("Command failed (expected until CompileFiles is implemented): %v\nOutput: %s", err, output)
-				}
+			} else if err != nil {
+				// Note: These tests will fail because CompileFiles is not implemented yet
+				// That's expected - we're testing CLI validation, not full functionality
+				t.Logf("Command failed (expected until CompileFiles is implemented): %v\nOutput: %s", err, output)
 			}
 		})
 	}
@@ -158,7 +156,7 @@ func TestCompile(t *testing.T) {
 func TestCompileHelp(t *testing.T) {
 	tmpDir := t.TempDir()
 	binaryPath := filepath.Join(tmpDir, "arm")
-	
+
 	cmd := exec.Command("go", "build", "-o", binaryPath, ".")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build binary: %v\n%s", err, output)

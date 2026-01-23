@@ -156,7 +156,7 @@ func TestCloudsmithClient_makeRequest(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
 				t.Errorf("status code = %d, want %d", resp.StatusCode, http.StatusOK)
@@ -189,7 +189,7 @@ func TestCloudsmithRegistry_ListPackages(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[
+		_, _ = w.Write([]byte(`[
 			{"name": "package-a", "version": "1.0.0", "format": "raw", "filename": "package-a-1.0.0.tar.gz"},
 			{"name": "package-a", "version": "2.0.0", "format": "raw", "filename": "package-a-2.0.0.tar.gz"},
 			{"name": "package-b", "version": "1.0.0", "format": "raw", "filename": "package-b-1.0.0.tar.gz"},
@@ -252,12 +252,12 @@ func TestCloudsmithRegistry_ListPackages_Pagination(t *testing.T) {
 		if callCount == 1 {
 			w.Header().Set("Link", fmt.Sprintf("<%s/v1/packages/myorg/myrepo/?page=2>; rel=\"next\"", server.URL))
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`[
+			_, _ = w.Write([]byte(`[
 				{"name": "package-a", "version": "1.0.0", "format": "raw", "filename": "package-a-1.0.0.tar.gz"}
 			]`))
 		} else {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`[
+			_, _ = w.Write([]byte(`[
 				{"name": "package-b", "version": "1.0.0", "format": "raw", "filename": "package-b-1.0.0.tar.gz"}
 			]`))
 		}
@@ -311,7 +311,7 @@ func TestCloudsmithRegistry_ListPackageVersions(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[
+		_, _ = w.Write([]byte(`[
 			{"name": "test-package", "version": "1.0.0", "format": "raw", "filename": "test-package-1.0.0.tar.gz"},
 			{"name": "test-package", "version": "2.0.0", "format": "raw", "filename": "test-package-2.0.0.tar.gz"},
 			{"name": "test-package", "version": "1.5.0", "format": "raw", "filename": "test-package-1.5.0.tar.gz"},
@@ -370,12 +370,12 @@ func TestCloudsmithRegistry_ListPackageVersions_Pagination(t *testing.T) {
 		if callCount == 1 {
 			w.Header().Set("Link", fmt.Sprintf("<%s/v1/packages/myorg/myrepo/?page=2>; rel=\"next\"", server.URL))
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`[
+			_, _ = w.Write([]byte(`[
 				{"name": "test-package", "version": "1.0.0", "format": "raw", "filename": "test-package-1.0.0.tar.gz"}
 			]`))
 		} else {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`[
+			_, _ = w.Write([]byte(`[
 				{"name": "test-package", "version": "2.0.0", "format": "raw", "filename": "test-package-2.0.0.tar.gz"}
 			]`))
 		}
@@ -460,7 +460,7 @@ func TestCloudsmithRegistry_ResolveVersion(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[
+		_, _ = w.Write([]byte(`[
 			{"name": "test-package", "version": "1.0.0", "format": "raw", "filename": "test-package-1.0.0.tar.gz"},
 			{"name": "test-package", "version": "2.0.0", "format": "raw", "filename": "test-package-2.0.0.tar.gz"},
 			{"name": "test-package", "version": "1.5.0", "format": "raw", "filename": "test-package-1.5.0.tar.gz"}
@@ -563,9 +563,9 @@ func TestCloudsmithRegistry_GetPackage(t *testing.T) {
 					"size":     11,
 				},
 			}
-			json.NewEncoder(w).Encode(packages)
+			_ = json.NewEncoder(w).Encode(packages)
 		} else if strings.Contains(r.URL.Path, "/download/") {
-			w.Write([]byte("test content"))
+			_, _ = w.Write([]byte("test content"))
 		}
 	}))
 	defer server.Close()
@@ -592,7 +592,7 @@ func TestCloudsmithRegistry_GetPackage(t *testing.T) {
 	}
 
 	version, _ := core.NewVersion("1.0.0")
-	pkg, err := registry.GetPackage(context.Background(), "test-package", version, nil, nil)
+	pkg, err := registry.GetPackage(context.Background(), "test-package", &version, nil, nil)
 	if err != nil {
 		t.Fatalf("GetContent failed: %v", err)
 	}
@@ -617,7 +617,8 @@ func TestCloudsmithRegistry_GetPackage(t *testing.T) {
 func TestCloudsmithRegistry_GetPackage_WithIncludeExclude(t *testing.T) {
 	var serverURL string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.URL.Path, "/v1/packages/") {
+		switch {
+		case strings.Contains(r.URL.Path, "/v1/packages/"):
 			packages := []map[string]interface{}{
 				{
 					"name":     "test-package",
@@ -636,11 +637,11 @@ func TestCloudsmithRegistry_GetPackage_WithIncludeExclude(t *testing.T) {
 					"size":     5,
 				},
 			}
-			json.NewEncoder(w).Encode(packages)
-		} else if strings.Contains(r.URL.Path, "/download/file1.txt") {
-			w.Write([]byte("file1"))
-		} else if strings.Contains(r.URL.Path, "/download/file2.md") {
-			w.Write([]byte("file2"))
+			_ = json.NewEncoder(w).Encode(packages)
+		case strings.Contains(r.URL.Path, "/download/file1.txt"):
+			_, _ = w.Write([]byte("file1"))
+		case strings.Contains(r.URL.Path, "/download/file2.md"):
+			_, _ = w.Write([]byte("file2"))
 		}
 	}))
 	defer server.Close()
@@ -667,7 +668,7 @@ func TestCloudsmithRegistry_GetPackage_WithIncludeExclude(t *testing.T) {
 	}
 
 	version, _ := core.NewVersion("1.0.0")
-	pkg, err := registry.GetPackage(context.Background(), "test-package", version, []string{"*.txt"}, nil)
+	pkg, err := registry.GetPackage(context.Background(), "test-package", &version, []string{"*.txt"}, nil)
 	if err != nil {
 		t.Fatalf("GetContent failed: %v", err)
 	}
@@ -697,9 +698,9 @@ func TestCloudsmithRegistry_GetPackage_Cache(t *testing.T) {
 					"size":     11,
 				},
 			}
-			json.NewEncoder(w).Encode(packages)
+			_ = json.NewEncoder(w).Encode(packages)
 		} else if strings.Contains(r.URL.Path, "/download/") {
-			w.Write([]byte("test content"))
+			_, _ = w.Write([]byte("test content"))
 		}
 	}))
 	defer server.Close()
@@ -726,16 +727,16 @@ func TestCloudsmithRegistry_GetPackage_Cache(t *testing.T) {
 	}
 
 	version, _ := core.NewVersion("1.0.0")
-	
+
 	// First call - should hit server
-	_, err = registry.GetPackage(context.Background(), "test-package", version, nil, nil)
+	_, err = registry.GetPackage(context.Background(), "test-package", &version, nil, nil)
 	if err != nil {
 		t.Fatalf("GetContent failed: %v", err)
 	}
 	firstCallCount := callCount
 
 	// Second call - should use cache
-	_, err = registry.GetPackage(context.Background(), "test-package", version, nil, nil)
+	_, err = registry.GetPackage(context.Background(), "test-package", &version, nil, nil)
 	if err != nil {
 		t.Fatalf("GetContent failed on second call: %v", err)
 	}
