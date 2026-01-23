@@ -24,7 +24,7 @@ func TestCompileRuleset(t *testing.T) {
 					Body:        "Rule 1 content",
 				},
 				"rule2": {
-					Name:        "Test Rule 2", 
+					Name:        "Test Rule 2",
 					Description: "Second rule",
 					Enforcement: "should",
 					Body:        "Rule 2 content",
@@ -139,7 +139,7 @@ func TestCompilePromptset(t *testing.T) {
 				},
 				"prompt2": {
 					Name:        "Test Prompt 2",
-					Description: "Second prompt", 
+					Description: "Second prompt",
 					Body:        "Prompt 2 content",
 				},
 			},

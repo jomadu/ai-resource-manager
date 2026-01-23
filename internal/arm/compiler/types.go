@@ -53,4 +53,3 @@ type RuleFilenameGeneratorFactory interface {
 type PromptFilenameGeneratorFactory interface {
 	NewPromptFilenameGenerator(tool Tool) (PromptFilenameGenerator, error)
 }
-

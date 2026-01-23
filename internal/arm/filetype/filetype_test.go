@@ -256,17 +256,17 @@ spec:
 		{
 			name:     "regular yaml file",
 			filename: "config.yml",
-			content:  `database:
+			content: `database:
   host: localhost
   port: 5432`,
-			want:     false,
+			want: false,
 		},
 		{
 			name:     "non-yaml file",
 			filename: "readme.md",
-			content:  `# README
+			content: `# README
 This is a readme file.`,
-			want:     false,
+			want: false,
 		},
 		{
 			name:     "invalid yaml",

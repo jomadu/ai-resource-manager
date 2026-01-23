@@ -39,13 +39,13 @@ func NewRegistryWithPath(baseDir string, registryKey interface{}) (*Registry, er
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Create registry directory
 	registryDir := filepath.Join(baseDir, "storage", "registries", key)
-	if err := os.MkdirAll(registryDir, 0755); err != nil {
+	if err := os.MkdirAll(registryDir, 0o755); err != nil {
 		return nil, err
 	}
-	
+
 	// Create metadata.json from registryKey fields
 	var metadata RegistryMetadata
 	if keyMap, ok := registryKey.(map[string]interface{}); ok {
@@ -68,17 +68,17 @@ func NewRegistryWithPath(baseDir string, registryKey interface{}) (*Registry, er
 			metadata.Repository = repository
 		}
 	}
-	
+
 	metadataPath := filepath.Join(registryDir, "metadata.json")
 	data, err := json.MarshalIndent(metadata, "", "  ")
 	if err != nil {
 		return nil, err
 	}
-	
-	if err := os.WriteFile(metadataPath, data, 0644); err != nil {
+
+	if err := os.WriteFile(metadataPath, data, 0o644); err != nil {
 		return nil, err
 	}
-	
+
 	return &Registry{
 		registryKey: registryKey,
 		registryDir: registryDir,

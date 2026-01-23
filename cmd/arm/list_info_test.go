@@ -12,7 +12,7 @@ func TestListRegistry(t *testing.T) {
 	// Build the binary once
 	tmpDir := t.TempDir()
 	binaryPath := filepath.Join(tmpDir, "arm")
-	
+
 	cmd := exec.Command("go", "build", "-o", binaryPath, ".")
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build binary: %v", err)
@@ -65,7 +65,7 @@ func TestListRegistry(t *testing.T) {
 			// Create test manifest
 			testDir := t.TempDir()
 			manifestPath := filepath.Join(testDir, "arm.json")
-			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 				t.Fatalf("Failed to write manifest: %v", err)
 			}
 
@@ -78,7 +78,7 @@ func TestListRegistry(t *testing.T) {
 			}
 
 			outputStr := strings.TrimSpace(string(output))
-			
+
 			// Check all expected strings are present
 			for _, expected := range tt.expectedOutput {
 				if !strings.Contains(outputStr, expected) {
@@ -93,7 +93,7 @@ func TestInfoRegistry(t *testing.T) {
 	// Build the binary once
 	tmpDir := t.TempDir()
 	binaryPath := filepath.Join(tmpDir, "arm")
-	
+
 	cmd := exec.Command("go", "build", "-o", binaryPath, ".")
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build binary: %v", err)
@@ -234,7 +234,7 @@ func TestInfoRegistry(t *testing.T) {
 			// Create test manifest
 			testDir := t.TempDir()
 			manifestPath := filepath.Join(testDir, "arm.json")
-			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 				t.Fatalf("Failed to write manifest: %v", err)
 			}
 
@@ -249,7 +249,7 @@ func TestInfoRegistry(t *testing.T) {
 			}
 
 			outputStr := strings.TrimSpace(string(output))
-			
+
 			// Check all expected strings are present
 			for _, expected := range tt.expectedOutput {
 				if !strings.Contains(outputStr, expected) {

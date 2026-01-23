@@ -37,7 +37,7 @@ func TestInstallAll(t *testing.T) {
 			"promptsets": {}
 		}
 	}`
-	if err := os.WriteFile(manifestPath, []byte(manifestContent), 0644); err != nil {
+	if err := os.WriteFile(manifestPath, []byte(manifestContent), 0o644); err != nil {
 		t.Fatalf("Failed to write manifest: %v", err)
 	}
 
@@ -107,7 +107,7 @@ func TestUninstall(t *testing.T) {
 			"promptsets": {}
 		}
 	}`
-	if err := os.WriteFile(manifestPath, []byte(manifestContent), 0644); err != nil {
+	if err := os.WriteFile(manifestPath, []byte(manifestContent), 0o644); err != nil {
 		t.Fatalf("Failed to write manifest: %v", err)
 	}
 

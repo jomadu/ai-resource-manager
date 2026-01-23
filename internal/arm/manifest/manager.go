@@ -13,7 +13,7 @@ import (
 type ResourceType string
 
 const (
-	ResourceTypeRuleset  ResourceType = "ruleset"
+	ResourceTypeRuleset   ResourceType = "ruleset"
 	ResourceTypePromptset ResourceType = "promptset"
 )
 
@@ -67,7 +67,7 @@ type Manager interface {
 	GetCloudsmithRegistryConfig(ctx context.Context, name string) (CloudsmithRegistryConfig, error)
 	UpsertRegistryConfig(ctx context.Context, name string, config map[string]interface{}) error
 	UpsertGitRegistryConfig(ctx context.Context, name string, config GitRegistryConfig) error
-	UpsertGitLabRegistryConfig(ctx context.Context, name string, config GitLabRegistryConfig) error
+	UpsertGitLabRegistryConfig(ctx context.Context, name string, config *GitLabRegistryConfig) error
 	UpsertCloudsmithRegistryConfig(ctx context.Context, name string, config CloudsmithRegistryConfig) error
 	UpdateRegistryConfigName(ctx context.Context, name string, newName string) error
 	RemoveRegistryConfig(ctx context.Context, name string) error
@@ -87,8 +87,8 @@ type Manager interface {
 	GetRulesetDependencyConfig(ctx context.Context, registry, packageName string) (*RulesetDependencyConfig, error)
 	GetPromptsetDependencyConfig(ctx context.Context, registry, packageName string) (*PromptsetDependencyConfig, error)
 	UpsertDependencyConfig(ctx context.Context, registry, packageName string, config map[string]interface{}) error
-	UpsertRulesetDependencyConfig(ctx context.Context, registry, packageName string, config RulesetDependencyConfig) error
-	UpsertPromptsetDependencyConfig(ctx context.Context, registry, packageName string, config PromptsetDependencyConfig) error
+	UpsertRulesetDependencyConfig(ctx context.Context, registry, packageName string, config *RulesetDependencyConfig) error
+	UpsertPromptsetDependencyConfig(ctx context.Context, registry, packageName string, config *PromptsetDependencyConfig) error
 	UpdateDependencyConfigName(ctx context.Context, registry, packageName, newRegistry, newPackageName string) error
 	RemoveDependencyConfig(ctx context.Context, registry, packageName string) error
 }
@@ -221,7 +221,7 @@ func (f *FileManager) UpsertGitRegistryConfig(ctx context.Context, name string, 
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) UpsertGitLabRegistryConfig(ctx context.Context, name string, config GitLabRegistryConfig) error {
+func (f *FileManager) UpsertGitLabRegistryConfig(ctx context.Context, name string, config *GitLabRegistryConfig) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -253,7 +253,7 @@ func (f *FileManager) UpsertCloudsmithRegistryConfig(ctx context.Context, name s
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) UpdateRegistryConfigName(ctx context.Context, name string, newName string) error {
+func (f *FileManager) UpdateRegistryConfigName(ctx context.Context, name, newName string) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -284,8 +284,6 @@ func (f *FileManager) UpdateRegistryConfigName(ctx context.Context, name string,
 	return f.saveManifest(manifest)
 }
 
-
-
 func (f *FileManager) RemoveRegistryConfig(ctx context.Context, name string) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
@@ -297,7 +295,7 @@ func (f *FileManager) RemoveRegistryConfig(ctx context.Context, name string) err
 	}
 
 	delete(manifest.Registries, name)
-	
+
 	// Remove all packages from this registry
 	for key := range manifest.Dependencies {
 		regName, _ := ParseDependencyKey(key)
@@ -305,7 +303,7 @@ func (f *FileManager) RemoveRegistryConfig(ctx context.Context, name string) err
 			delete(manifest.Dependencies, key)
 		}
 	}
-	
+
 	return f.saveManifest(manifest)
 }
 
@@ -344,7 +342,7 @@ func (f *FileManager) UpsertSinkConfig(ctx context.Context, name string, config 
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) UpdateSinkConfigName(ctx context.Context, name string, newName string) error {
+func (f *FileManager) UpdateSinkConfigName(ctx context.Context, name, newName string) error {
 	manifest, err := f.loadManifest()
 	if err != nil {
 		return err
@@ -418,7 +416,7 @@ func (f *FileManager) UpsertDependencyConfig(ctx context.Context, registry, pack
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) UpsertRulesetDependencyConfig(ctx context.Context, registry, packageName string, config RulesetDependencyConfig) error {
+func (f *FileManager) UpsertRulesetDependencyConfig(ctx context.Context, registry, packageName string, config *RulesetDependencyConfig) error {
 	key := DependencyKey(registry, packageName)
 	manifest, err := f.loadManifest()
 	if err != nil {
@@ -439,7 +437,7 @@ func (f *FileManager) UpsertRulesetDependencyConfig(ctx context.Context, registr
 	return f.saveManifest(manifest)
 }
 
-func (f *FileManager) UpsertPromptsetDependencyConfig(ctx context.Context, registry, packageName string, config PromptsetDependencyConfig) error {
+func (f *FileManager) UpsertPromptsetDependencyConfig(ctx context.Context, registry, packageName string, config *PromptsetDependencyConfig) error {
 	key := DependencyKey(registry, packageName)
 	manifest, err := f.loadManifest()
 	if err != nil {
@@ -642,7 +640,7 @@ func (f *FileManager) saveManifest(manifest *Manifest) error {
 		return err
 	}
 
-	return os.WriteFile(f.manifestPath, data, 0644)
+	return os.WriteFile(f.manifestPath, data, 0o644)
 }
 
 // convertMapToGitRegistryConfig converts map[string]interface{} to GitRegistryConfig.

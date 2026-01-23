@@ -274,7 +274,7 @@ func createTestLockfile(t *testing.T, lockfile *LockFile) string {
 		t.Fatalf("Failed to marshal lockfile: %v", err)
 	}
 
-	err = os.WriteFile(lockPath, data, 0644)
+	err = os.WriteFile(lockPath, data, 0o644)
 	if err != nil {
 		t.Fatalf("Failed to write lockfile: %v", err)
 	}

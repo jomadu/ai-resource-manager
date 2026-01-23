@@ -45,7 +45,7 @@ type gitLabPackageFile struct {
 	Size     int64  `json:"size"`
 }
 
-func NewGitLabRegistry(name string, cfg GitLabRegistryConfig, configMgr config.Manager) (*GitLabRegistry, error) {
+func NewGitLabRegistry(name string, cfg *GitLabRegistryConfig, configMgr config.Manager) (*GitLabRegistry, error) {
 	registry, err := storage.NewRegistry(cfg)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func NewGitLabRegistry(name string, cfg GitLabRegistryConfig, configMgr config.M
 
 	return &GitLabRegistry{
 		name:      name,
-		config:    cfg,
+		config:    *cfg,
 		configMgr: configMgr,
 		client: &gitLabClient{
 			baseURL:    ensureProtocol(cfg.URL),
@@ -69,7 +69,7 @@ func NewGitLabRegistry(name string, cfg GitLabRegistryConfig, configMgr config.M
 	}, nil
 }
 
-func NewGitLabRegistryWithPath(baseDir, name string, cfg GitLabRegistryConfig, configMgr config.Manager) (*GitLabRegistry, error) {
+func NewGitLabRegistryWithPath(baseDir, name string, cfg *GitLabRegistryConfig, configMgr config.Manager) (*GitLabRegistry, error) {
 	registry, err := storage.NewRegistryWithPath(baseDir, cfg)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func NewGitLabRegistryWithPath(baseDir, name string, cfg GitLabRegistryConfig, c
 
 	return &GitLabRegistry{
 		name:      name,
-		config:    cfg,
+		config:    *cfg,
 		configMgr: configMgr,
 		client: &gitLabClient{
 			baseURL:    ensureProtocol(cfg.URL),
@@ -166,19 +166,19 @@ func (g *GitLabRegistry) ListPackageVersions(ctx context.Context, packageName st
 	return versions, nil
 }
 
-func (g *GitLabRegistry) GetPackage(ctx context.Context, packageName string, version core.Version, include []string, exclude []string) (*core.Package, error) {
+func (g *GitLabRegistry) GetPackage(ctx context.Context, packageName string, version *core.Version, include, exclude []string) (*core.Package, error) {
 	cacheKey := struct {
 		Version core.Version `json:"version"`
 		Include []string     `json:"include"`
 		Exclude []string     `json:"exclude"`
-	}{version, normalizePatterns(include), normalizePatterns(exclude)}
+	}{*version, normalizePatterns(include), normalizePatterns(exclude)}
 
 	if files, err := g.packageCache.GetPackageVersion(ctx, cacheKey, version); err == nil {
 		return &core.Package{
 			Metadata: core.PackageMetadata{
 				RegistryName: g.name,
 				Name:         packageName,
-				Version:      version,
+				Version:      *version,
 			},
 			Files:     files,
 			Integrity: calculateIntegrity(files),
@@ -224,13 +224,13 @@ func (g *GitLabRegistry) GetPackage(ctx context.Context, packageName string, ver
 		}
 	}
 
-	g.packageCache.SetPackageVersion(ctx, cacheKey, version, filteredFiles)
+	_ = g.packageCache.SetPackageVersion(ctx, cacheKey, version, filteredFiles)
 
 	return &core.Package{
 		Metadata: core.PackageMetadata{
 			RegistryName: g.name,
 			Name:         packageName,
-			Version:      version,
+			Version:      *version,
 		},
 		Files:     filteredFiles,
 		Integrity: calculateIntegrity(filteredFiles),
@@ -239,11 +239,12 @@ func (g *GitLabRegistry) GetPackage(ctx context.Context, packageName string, ver
 
 func (c *gitLabClient) listPackages(ctx context.Context, projectID, groupID string) ([]gitLabPackage, error) {
 	var apiURL string
-	if projectID != "" {
+	switch {
+	case projectID != "":
 		apiURL = fmt.Sprintf("%s/api/%s/projects/%s/packages", c.baseURL, c.apiVersion, url.QueryEscape(projectID))
-	} else if groupID != "" {
+	case groupID != "":
 		apiURL = fmt.Sprintf("%s/api/%s/groups/%s/packages", c.baseURL, c.apiVersion, url.QueryEscape(groupID))
-	} else {
+	default:
 		return nil, fmt.Errorf("either project_id or group_id must be specified")
 	}
 
@@ -265,10 +266,10 @@ func (c *gitLabClient) listPackages(ctx context.Context, projectID, groupID stri
 
 		var packages []gitLabPackage
 		if err := json.NewDecoder(resp.Body).Decode(&packages); err != nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			return nil, err
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		allPackages = append(allPackages, packages...)
 
@@ -283,7 +284,7 @@ func (c *gitLabClient) listPackages(ctx context.Context, projectID, groupID stri
 
 func (c *gitLabClient) downloadPackage(ctx context.Context, projectID, groupID string, packageID int, packageName, version string) ([]*core.File, error) {
 	filesURL := c.buildPackageFilesURL(projectID, groupID, packageID)
-	
+
 	req, err := http.NewRequestWithContext(ctx, "GET", filesURL, http.NoBody)
 	if err != nil {
 		return nil, err
@@ -293,7 +294,7 @@ func (c *gitLabClient) downloadPackage(ctx context.Context, projectID, groupID s
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var packageFiles []gitLabPackageFile
 	if err := json.NewDecoder(resp.Body).Decode(&packageFiles); err != nil {
@@ -303,7 +304,7 @@ func (c *gitLabClient) downloadPackage(ctx context.Context, projectID, groupID s
 	var files []*core.File
 	for _, pkgFile := range packageFiles {
 		downloadURL := c.buildDownloadURL(projectID, groupID, packageName, version, pkgFile.FileName)
-		
+
 		req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, http.NoBody)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create request for %s: %w", pkgFile.FileName, err)
@@ -315,7 +316,7 @@ func (c *gitLabClient) downloadPackage(ctx context.Context, projectID, groupID s
 		}
 
 		content, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if err != nil {
 			return nil, fmt.Errorf("failed to read %s: %w", pkgFile.FileName, err)
 		}
@@ -357,7 +358,7 @@ func (c *gitLabClient) makeRequest(req *http.Request) (*http.Response, error) {
 
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		return nil, fmt.Errorf("GitLab API error %d: %s", resp.StatusCode, string(body))
 	}
 
@@ -371,7 +372,7 @@ func ensureProtocol(baseURL string) string {
 	return baseURL
 }
 
-func matchesPatterns(filePath string, include []string, exclude []string) bool {
+func matchesPatterns(filePath string, include, exclude []string) bool {
 	if len(include) == 0 && len(exclude) == 0 {
 		return true
 	}

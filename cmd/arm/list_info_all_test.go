@@ -98,7 +98,7 @@ func TestListAll(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create temp manifest
 			manifestPath := filepath.Join(tmpDir, "arm-"+tt.name+".json")
-			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 				t.Fatalf("Failed to write manifest: %v", err)
 			}
 
@@ -198,7 +198,7 @@ func TestInfoAll(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create temp manifest
 			manifestPath := filepath.Join(tmpDir, "arm-"+tt.name+".json")
-			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 				t.Fatalf("Failed to write manifest: %v", err)
 			}
 

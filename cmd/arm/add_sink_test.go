@@ -157,7 +157,7 @@ func TestAddSink(t *testing.T) {
 			manifestPath := filepath.Join(tmpDir, "arm.json")
 
 			// Create empty manifest
-			if err := os.WriteFile(manifestPath, []byte(`{"sinks":{},"registries":{},"dependencies":{}}`), 0644); err != nil {
+			if err := os.WriteFile(manifestPath, []byte(`{"sinks":{},"registries":{},"dependencies":{}}`), 0o644); err != nil {
 				t.Fatalf("Failed to create manifest: %v", err)
 			}
 

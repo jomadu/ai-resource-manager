@@ -91,7 +91,7 @@ func (s *ArmService) AddGitLabRegistry(ctx context.Context, name, url, projectID
 		APIVersion: apiVersion,
 	}
 
-	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, config)
+	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, &config)
 }
 
 // AddCloudsmithRegistry adds a Cloudsmith registry
@@ -120,12 +120,12 @@ func (s *ArmService) RemoveRegistry(ctx context.Context, name string) error {
 }
 
 // SetRegistryName sets registry name
-func (s *ArmService) SetRegistryName(ctx context.Context, name string, newName string) error {
+func (s *ArmService) SetRegistryName(ctx context.Context, name, newName string) error {
 	return s.manifestMgr.UpdateRegistryConfigName(ctx, name, newName)
 }
 
 // SetRegistryURL sets registry URL
-func (s *ArmService) SetRegistryURL(ctx context.Context, name string, url string) error {
+func (s *ArmService) SetRegistryURL(ctx context.Context, name, url string) error {
 	reg, err := s.manifestMgr.GetRegistryConfig(ctx, name)
 	if err != nil {
 		return err
@@ -147,40 +147,40 @@ func (s *ArmService) SetGitRegistryBranches(ctx context.Context, name string, br
 }
 
 // SetGitLabRegistryProjectID sets GitLab registry project ID
-func (s *ArmService) SetGitLabRegistryProjectID(ctx context.Context, name string, projectID string) error {
+func (s *ArmService) SetGitLabRegistryProjectID(ctx context.Context, name, projectID string) error {
 	config, err := s.manifestMgr.GetGitLabRegistryConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
 	config.ProjectID = projectID
-	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, config)
+	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, &config)
 }
 
 // SetGitLabRegistryGroupID sets GitLab registry group ID
-func (s *ArmService) SetGitLabRegistryGroupID(ctx context.Context, name string, groupID string) error {
+func (s *ArmService) SetGitLabRegistryGroupID(ctx context.Context, name, groupID string) error {
 	config, err := s.manifestMgr.GetGitLabRegistryConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
 	config.GroupID = groupID
-	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, config)
+	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, &config)
 }
 
 // SetGitLabRegistryAPIVersion sets GitLab registry API version
-func (s *ArmService) SetGitLabRegistryAPIVersion(ctx context.Context, name string, apiVersion string) error {
+func (s *ArmService) SetGitLabRegistryAPIVersion(ctx context.Context, name, apiVersion string) error {
 	config, err := s.manifestMgr.GetGitLabRegistryConfig(ctx, name)
 	if err != nil {
 		return err
 	}
 
 	config.APIVersion = apiVersion
-	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, config)
+	return s.manifestMgr.UpsertGitLabRegistryConfig(ctx, name, &config)
 }
 
 // SetCloudsmithRegistryOwner sets Cloudsmith registry owner
-func (s *ArmService) SetCloudsmithRegistryOwner(ctx context.Context, name string, owner string) error {
+func (s *ArmService) SetCloudsmithRegistryOwner(ctx context.Context, name, owner string) error {
 	config, err := s.manifestMgr.GetCloudsmithRegistryConfig(ctx, name)
 	if err != nil {
 		return err
@@ -191,7 +191,7 @@ func (s *ArmService) SetCloudsmithRegistryOwner(ctx context.Context, name string
 }
 
 // SetCloudsmithRegistryRepository sets Cloudsmith registry repository
-func (s *ArmService) SetCloudsmithRegistryRepository(ctx context.Context, name string, repository string) error {
+func (s *ArmService) SetCloudsmithRegistryRepository(ctx context.Context, name, repository string) error {
 	config, err := s.manifestMgr.GetCloudsmithRegistryConfig(ctx, name)
 	if err != nil {
 		return err
@@ -248,12 +248,12 @@ func (s *ArmService) GetAllSinkConfigs(ctx context.Context) (map[string]manifest
 }
 
 // SetSinkName sets sink name
-func (s *ArmService) SetSinkName(ctx context.Context, name string, newName string) error {
+func (s *ArmService) SetSinkName(ctx context.Context, name, newName string) error {
 	return s.manifestMgr.UpdateSinkConfigName(ctx, name, newName)
 }
 
 // SetSinkDirectory sets sink directory
-func (s *ArmService) SetSinkDirectory(ctx context.Context, name string, directory string) error {
+func (s *ArmService) SetSinkDirectory(ctx context.Context, name, directory string) error {
 	sink, err := s.manifestMgr.GetSinkConfig(ctx, name)
 	if err != nil {
 		return err
@@ -308,7 +308,7 @@ func (s *ArmService) InstallAll(ctx context.Context) error {
 }
 
 // resolveAndFetchPackage validates registry/sinks, resolves version, and fetches package
-func (s *ArmService) resolveAndFetchPackage(ctx context.Context, registryName, packageName, version string, include, exclude, sinks []string) (*core.Package, string, map[string]manifest.SinkConfig, error) {
+func (s *ArmService) resolveAndFetchPackage(ctx context.Context, registryName, packageName, version string, include, exclude, sinks []string) (pkg *core.Package, resolvedVersion string, sinkConfigs map[string]manifest.SinkConfig, err error) {
 	regConfig, err := s.manifestMgr.GetRegistryConfig(ctx, registryName)
 	if err != nil {
 		return nil, "", nil, err
@@ -335,21 +335,21 @@ func (s *ArmService) resolveAndFetchPackage(ctx context.Context, registryName, p
 		return nil, "", nil, err
 	}
 
-	resolvedVersion, err := core.ResolveVersion(version, availableVersions)
+	resolvedVer, err := core.ResolveVersion(version, availableVersions)
 	if err != nil {
 		return nil, "", nil, err
 	}
 
-	pkg, err := reg.GetPackage(ctx, packageName, resolvedVersion, include, exclude)
+	pkg, err = reg.GetPackage(ctx, packageName, &resolvedVer, include, exclude)
 	if err != nil {
 		return nil, "", nil, err
 	}
 
-	return pkg, resolvedVersion.Version, allSinks, nil
+	return pkg, resolvedVer.Version, allSinks, nil
 }
 
 // InstallRuleset installs a ruleset
-func (s *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, version string, priority int, include []string, exclude []string, sinks []string) error {
+func (s *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, version string, priority int, include, exclude, sinks []string) error {
 	pkg, resolvedVersion, allSinks, err := s.resolveAndFetchPackage(ctx, registryName, ruleset, version, include, exclude, sinks)
 	if err != nil {
 		return err
@@ -365,7 +365,7 @@ func (s *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 		Priority: priority,
 	}
 
-	if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, ruleset, depConfig); err != nil {
+	if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, ruleset, &depConfig); err != nil {
 		return err
 	}
 
@@ -387,7 +387,7 @@ func (s *ArmService) InstallRuleset(ctx context.Context, registryName, ruleset, 
 }
 
 // InstallPromptset installs a promptset
-func (s *ArmService) InstallPromptset(ctx context.Context, registryName, promptset, version string, include []string, exclude []string, sinks []string) error {
+func (s *ArmService) InstallPromptset(ctx context.Context, registryName, promptset, version string, include, exclude, sinks []string) error {
 	pkg, resolvedVersion, allSinks, err := s.resolveAndFetchPackage(ctx, registryName, promptset, version, include, exclude, sinks)
 	if err != nil {
 		return err
@@ -402,7 +402,7 @@ func (s *ArmService) InstallPromptset(ctx context.Context, registryName, prompts
 		},
 	}
 
-	if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registryName, promptset, depConfig); err != nil {
+	if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registryName, promptset, &depConfig); err != nil {
 		return err
 	}
 
@@ -450,7 +450,7 @@ func (s *ArmService) UninstallAll(ctx context.Context) error {
 			}
 
 			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-			if err := sinkMgr.Uninstall(core.PackageMetadata{
+			if err := sinkMgr.Uninstall(&core.PackageMetadata{
 				RegistryName: registryName,
 				Name:         packageName,
 				Version:      core.Version{Version: rulesetConfig.Version},
@@ -478,7 +478,7 @@ func (s *ArmService) UninstallAll(ctx context.Context) error {
 			}
 
 			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-			if err := sinkMgr.Uninstall(core.PackageMetadata{
+			if err := sinkMgr.Uninstall(&core.PackageMetadata{
 				RegistryName: registryName,
 				Name:         packageName,
 				Version:      core.Version{Version: promptsetConfig.Version},
@@ -534,7 +534,8 @@ func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) e
 		var sinks []string
 		var version string
 
-		if depType == "ruleset" {
+		switch depType {
+		case "ruleset":
 			rulesetConfig, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
 			if err != nil {
 				lastErr = err
@@ -542,7 +543,7 @@ func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) e
 			}
 			sinks = rulesetConfig.Sinks
 			version = rulesetConfig.Version
-		} else if depType == "promptset" {
+		case "promptset":
 			promptsetConfig, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
 			if err != nil {
 				lastErr = err
@@ -550,7 +551,7 @@ func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) e
 			}
 			sinks = promptsetConfig.Sinks
 			version = promptsetConfig.Version
-		} else {
+		default:
 			fmt.Fprintf(os.Stderr, "Warning: unknown package type '%s' for '%s'\n", depType, pkg)
 			lastErr = fmt.Errorf("unknown package type: %s", depType)
 			continue
@@ -563,7 +564,7 @@ func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) e
 			}
 
 			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-			if err := sinkMgr.Uninstall(core.PackageMetadata{
+			if err := sinkMgr.Uninstall(&core.PackageMetadata{
 				RegistryName: registryName,
 				Name:         packageName,
 				Version:      core.Version{Version: version},
@@ -574,16 +575,16 @@ func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) e
 		}
 
 		if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, version); err != nil {
-				lastErr = err
-				continue
-			}
+			lastErr = err
+			continue
+		}
 
 		if err := s.manifestMgr.RemoveDependencyConfig(ctx, registryName, packageName); err != nil {
-				lastErr = err
-				continue
-			}
+			lastErr = err
+			continue
+		}
 
-			successCount++
+		successCount++
 	}
 
 	if successCount == 0 && lastErr != nil {
@@ -636,7 +637,8 @@ func (s *ArmService) UpdatePackages(ctx context.Context, packages []string) erro
 		var exclude []string
 		var priority int
 
-		if depType == "ruleset" {
+		switch depType {
+		case "ruleset":
 			rulesetConfig, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
 			if err != nil {
 				lastErr = err
@@ -647,7 +649,7 @@ func (s *ArmService) UpdatePackages(ctx context.Context, packages []string) erro
 			include = rulesetConfig.Include
 			exclude = rulesetConfig.Exclude
 			priority = rulesetConfig.Priority
-		} else if depType == "promptset" {
+		case "promptset":
 			promptsetConfig, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
 			if err != nil {
 				lastErr = err
@@ -657,7 +659,7 @@ func (s *ArmService) UpdatePackages(ctx context.Context, packages []string) erro
 			version = promptsetConfig.Version
 			include = promptsetConfig.Include
 			exclude = promptsetConfig.Exclude
-		} else {
+		default:
 			fmt.Fprintf(os.Stderr, "Warning: unknown package type '%s' for '%s'\n", depType, pkg)
 			lastErr = fmt.Errorf("unknown package type: %s", depType)
 			continue
@@ -853,7 +855,7 @@ func (s *ArmService) resolveAndFetchUpdate(ctx context.Context, registryName, pa
 		return "", nil, err
 	}
 
-	pkg, err := reg.GetPackage(ctx, packageName, resolvedVersion, include, exclude)
+	pkg, err := reg.GetPackage(ctx, packageName, &resolvedVersion, include, exclude)
 	if err != nil {
 		return "", nil, err
 	}
@@ -869,7 +871,7 @@ func (s *ArmService) uninstallFromSinks(sinkNames []string, allSinks map[string]
 		}
 
 		sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-		if err := sinkMgr.Uninstall(core.PackageMetadata{
+		if err := sinkMgr.Uninstall(&core.PackageMetadata{
 			RegistryName: registryName,
 			Name:         packageName,
 			Version:      core.Version{Version: version},
@@ -940,7 +942,7 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 
 		newConstraint := fmt.Sprintf("^%d.0.0", pkg.Metadata.Version.Major)
 		rulesetConfig.Version = newConstraint
-		if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, packageName, *rulesetConfig); err != nil {
+		if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, packageName, rulesetConfig); err != nil {
 			return err
 		}
 	}
@@ -983,7 +985,7 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 
 		newConstraint := fmt.Sprintf("^%d.0.0", pkg.Metadata.Version.Major)
 		promptsetConfig.Version = newConstraint
-		if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registryName, packageName, *promptsetConfig); err != nil {
+		if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registryName, packageName, promptsetConfig); err != nil {
 			return err
 		}
 	}
@@ -1032,7 +1034,8 @@ func (s *ArmService) UpgradePackages(ctx context.Context, packages []string) err
 		var exclude []string
 		var priority int
 
-		if depType == "ruleset" {
+		switch depType {
+		case "ruleset":
 			rulesetConfig, err := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
 			if err != nil {
 				lastErr = err
@@ -1042,7 +1045,7 @@ func (s *ArmService) UpgradePackages(ctx context.Context, packages []string) err
 			include = rulesetConfig.Include
 			exclude = rulesetConfig.Exclude
 			priority = rulesetConfig.Priority
-		} else if depType == "promptset" {
+		case "promptset":
 			promptsetConfig, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
 			if err != nil {
 				lastErr = err
@@ -1051,7 +1054,7 @@ func (s *ArmService) UpgradePackages(ctx context.Context, packages []string) err
 			sinks = promptsetConfig.Sinks
 			include = promptsetConfig.Include
 			exclude = promptsetConfig.Exclude
-		} else {
+		default:
 			fmt.Fprintf(os.Stderr, "Warning: unknown package type '%s' for '%s'\n", depType, pkg)
 			lastErr = fmt.Errorf("unknown package type: %s", depType)
 			continue
@@ -1108,14 +1111,14 @@ func (s *ArmService) UpgradePackages(ctx context.Context, packages []string) err
 		if depType == "ruleset" {
 			rulesetConfig, _ := s.manifestMgr.GetRulesetDependencyConfig(ctx, registryName, packageName)
 			rulesetConfig.Version = newConstraint
-			if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, packageName, *rulesetConfig); err != nil {
+			if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, packageName, rulesetConfig); err != nil {
 				lastErr = err
 				continue
 			}
 		} else {
 			promptsetConfig, _ := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
 			promptsetConfig.Version = newConstraint
-			if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registryName, packageName, *promptsetConfig); err != nil {
+			if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registryName, packageName, promptsetConfig); err != nil {
 				lastErr = err
 				continue
 			}
@@ -1153,7 +1156,7 @@ func (s *ArmService) fetchLatest(ctx context.Context, registryName, packageName 
 
 	latestVersion := availableVersions[0]
 
-	pkg, err := reg.GetPackage(ctx, packageName, latestVersion, include, exclude)
+	pkg, err := reg.GetPackage(ctx, packageName, &latestVersion, include, exclude)
 	if err != nil {
 		return "", nil, err
 	}
@@ -1176,7 +1179,7 @@ func (s *ArmService) ListAll(ctx context.Context) ([]*DependencyInfo, error) {
 	var result []*DependencyInfo
 	for key, config := range allDeps {
 		registryName, packageName := manifest.ParseDependencyKey(key)
-		
+
 		var lockInfo packagelockfile.DependencyLockConfig
 		if lockFile != nil && lockFile.Dependencies != nil {
 			for lockKey, lockCfg := range lockFile.Dependencies {
@@ -1252,7 +1255,7 @@ func (s *ArmService) ListOutdated(ctx context.Context) ([]*OutdatedDependency, e
 	var result []*OutdatedDependency
 	for key, config := range allDeps {
 		registryName, packageName := manifest.ParseDependencyKey(key)
-		
+
 		versionConstraint, ok := config["version"].(string)
 		if !ok {
 			continue
@@ -1335,7 +1338,7 @@ func (s *ArmService) SetRulesetVersion(ctx context.Context, registry, ruleset, v
 		return err
 	}
 	config.Version = version
-	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, *config)
+	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, config)
 }
 
 // SetRulesetPriority sets ruleset priority
@@ -1345,7 +1348,7 @@ func (s *ArmService) SetRulesetPriority(ctx context.Context, registry, ruleset s
 		return err
 	}
 	config.Priority = priority
-	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, *config)
+	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, config)
 }
 
 // SetRulesetInclude sets ruleset include patterns
@@ -1355,7 +1358,7 @@ func (s *ArmService) SetRulesetInclude(ctx context.Context, registry, ruleset st
 		return err
 	}
 	config.Include = include
-	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, *config)
+	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, config)
 }
 
 // SetRulesetExclude sets ruleset exclude patterns
@@ -1365,7 +1368,7 @@ func (s *ArmService) SetRulesetExclude(ctx context.Context, registry, ruleset st
 		return err
 	}
 	config.Exclude = exclude
-	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, *config)
+	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, config)
 }
 
 // SetRulesetSinks sets ruleset sinks
@@ -1384,7 +1387,7 @@ func (s *ArmService) SetRulesetSinks(ctx context.Context, registry, ruleset stri
 		return err
 	}
 	config.Sinks = sinks
-	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, *config)
+	return s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registry, ruleset, config)
 }
 
 // SetPromptsetName sets promptset name
@@ -1399,7 +1402,7 @@ func (s *ArmService) SetPromptsetVersion(ctx context.Context, registry, promptse
 		return err
 	}
 	config.Version = version
-	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, *config)
+	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, config)
 }
 
 // SetPromptsetInclude sets promptset include patterns
@@ -1409,7 +1412,7 @@ func (s *ArmService) SetPromptsetInclude(ctx context.Context, registry, promptse
 		return err
 	}
 	config.Include = include
-	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, *config)
+	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, config)
 }
 
 // SetPromptsetExclude sets promptset exclude patterns
@@ -1419,7 +1422,7 @@ func (s *ArmService) SetPromptsetExclude(ctx context.Context, registry, promptse
 		return err
 	}
 	config.Exclude = exclude
-	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, *config)
+	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, config)
 }
 
 // SetPromptsetSinks sets promptset sinks
@@ -1438,7 +1441,7 @@ func (s *ArmService) SetPromptsetSinks(ctx context.Context, registry, promptset 
 		return err
 	}
 	config.Sinks = sinks
-	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, *config)
+	return s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registry, promptset, config)
 }
 
 // --------
@@ -1527,7 +1530,7 @@ func (s *ArmService) NukeCache(ctx context.Context) error {
 	return s.nukeCacheWithPath(ctx, storageDir)
 }
 
-func (s *ArmService) nukeCacheWithPath(ctx context.Context, storageDir string) error {
+func (s *ArmService) nukeCacheWithPath(_ context.Context, storageDir string) error {
 	return os.RemoveAll(storageDir)
 }
 
@@ -1567,13 +1570,13 @@ func (s *ArmService) NukeSinks(ctx context.Context) error {
 			for _, entry := range entries {
 				name := entry.Name()
 				if len(name) >= 4 && name[:4] == "arm_" || name == "arm-index.json" {
-					os.Remove(filepath.Join(sinkConfig.Directory, name))
+					_ = os.Remove(filepath.Join(sinkConfig.Directory, name))
 				}
 			}
 		} else {
 			// Hierarchical layout: remove arm/ directory
 			armDir := filepath.Join(sinkConfig.Directory, "arm")
-			os.RemoveAll(armDir)
+			_ = os.RemoveAll(armDir)
 		}
 	}
 	return nil

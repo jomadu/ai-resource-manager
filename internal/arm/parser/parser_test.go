@@ -221,9 +221,9 @@ spec:
 }
 
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && s[:len(substr)] == substr || 
-		   (len(s) > len(substr) && s[len(s)-len(substr):] == substr) ||
-		   (len(substr) < len(s) && findInString(s, substr))
+	return len(s) >= len(substr) && s[:len(substr)] == substr ||
+		(len(s) > len(substr) && s[len(s)-len(substr):] == substr) ||
+		(len(substr) < len(s) && findInString(s, substr))
 }
 
 func findInString(s, substr string) bool {

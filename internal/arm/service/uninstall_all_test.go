@@ -24,7 +24,7 @@ func TestUninstallAll_Normal(t *testing.T) {
 	}
 	rulesetDepMap, _ := json.Marshal(rulesetDep)
 	var rulesetDepInterface map[string]interface{}
-	json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
+	_ = json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
 
 	promptsetDep := manifest.PromptsetDependencyConfig{
 		BaseDependencyConfig: manifest.BaseDependencyConfig{
@@ -35,7 +35,7 @@ func TestUninstallAll_Normal(t *testing.T) {
 	}
 	promptsetDepMap, _ := json.Marshal(promptsetDep)
 	var promptsetDepInterface map[string]interface{}
-	json.Unmarshal(promptsetDepMap, &promptsetDepInterface)
+	_ = json.Unmarshal(promptsetDepMap, &promptsetDepInterface)
 
 	manifestMgr := &mockManifestManager{
 		manifest: &manifest.Manifest{
@@ -112,7 +112,7 @@ func TestUninstallAll_MissingSink(t *testing.T) {
 	}
 	rulesetDepMap, _ := json.Marshal(rulesetDep)
 	var rulesetDepInterface map[string]interface{}
-	json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
+	_ = json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
 
 	manifestMgr := &mockManifestManager{
 		manifest: &manifest.Manifest{
@@ -199,7 +199,7 @@ func TestUninstallAll_ManyDependencies(t *testing.T) {
 		}
 		depMap, _ := json.Marshal(dep)
 		var depInterface map[string]interface{}
-		json.Unmarshal(depMap, &depInterface)
+		_ = json.Unmarshal(depMap, &depInterface)
 		deps[key] = depInterface
 		locks[key+"@1.0.0"] = &packagelockfile.DependencyLockConfig{Integrity: "hash"}
 	}

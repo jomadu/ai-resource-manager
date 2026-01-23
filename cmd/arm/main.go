@@ -312,27 +312,28 @@ func handleAddGitRegistry() {
 	i := 4
 	for i < len(os.Args) {
 		arg := os.Args[i]
-		if arg == "--url" {
+		switch {
+		case arg == "--url":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--url requires a value\n")
 				os.Exit(1)
 			}
 			url = os.Args[i+1]
 			i += 2
-		} else if arg == "--branches" {
+		case arg == "--branches":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--branches requires a value\n")
 				os.Exit(1)
 			}
 			branches = strings.Split(os.Args[i+1], ",")
 			i += 2
-		} else if arg == "--force" {
+		case arg == "--force":
 			force = true
 			i++
-		} else if !strings.HasPrefix(arg, "--") {
+		case !strings.HasPrefix(arg, "--"):
 			name = arg
 			i++
-		} else {
+		default:
 			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", arg)
 			os.Exit(1)
 		}
@@ -379,41 +380,42 @@ func handleAddGitLabRegistry() {
 	i := 4
 	for i < len(os.Args) {
 		arg := os.Args[i]
-		if arg == "--url" {
+		switch {
+		case arg == "--url":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--url requires a value\n")
 				os.Exit(1)
 			}
 			url = os.Args[i+1]
 			i += 2
-		} else if arg == "--project-id" {
+		case arg == "--project-id":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--project-id requires a value\n")
 				os.Exit(1)
 			}
 			projectID = os.Args[i+1]
 			i += 2
-		} else if arg == "--group-id" {
+		case arg == "--group-id":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--group-id requires a value\n")
 				os.Exit(1)
 			}
 			groupID = os.Args[i+1]
 			i += 2
-		} else if arg == "--api-version" {
+		case arg == "--api-version":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--api-version requires a value\n")
 				os.Exit(1)
 			}
 			apiVersion = os.Args[i+1]
 			i += 2
-		} else if arg == "--force" {
+		case arg == "--force":
 			force = true
 			i++
-		} else if !strings.HasPrefix(arg, "--") {
+		case !strings.HasPrefix(arg, "--"):
 			name = arg
 			i++
-		} else {
+		default:
 			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", arg)
 			os.Exit(1)
 		}
@@ -459,34 +461,35 @@ func handleAddCloudsmithRegistry() {
 	i := 4
 	for i < len(os.Args) {
 		arg := os.Args[i]
-		if arg == "--url" {
+		switch {
+		case arg == "--url":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--url requires a value\n")
 				os.Exit(1)
 			}
 			url = os.Args[i+1]
 			i += 2
-		} else if arg == "--owner" {
+		case arg == "--owner":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--owner requires a value\n")
 				os.Exit(1)
 			}
 			owner = os.Args[i+1]
 			i += 2
-		} else if arg == "--repo" {
+		case arg == "--repo":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--repo requires a value\n")
 				os.Exit(1)
 			}
 			repo = os.Args[i+1]
 			i += 2
-		} else if arg == "--force" {
+		case arg == "--force":
 			force = true
 			i++
-		} else if !strings.HasPrefix(arg, "--") {
+		case !strings.HasPrefix(arg, "--"):
 			name = arg
 			i++
-		} else {
+		default:
 			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", arg)
 			os.Exit(1)
 		}
@@ -539,27 +542,29 @@ func handleAddSink() {
 	i := 3
 	for i < len(os.Args) {
 		arg := os.Args[i]
-		if arg == "--tool" {
+		switch {
+		case arg == "--tool":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--tool requires a value\n")
 				os.Exit(1)
 			}
 			tool = os.Args[i+1]
 			i += 2
-		} else if arg == "--force" {
+		case arg == "--force":
 			force = true
 			i++
-		} else if !strings.HasPrefix(arg, "--") {
-			if name == "" {
+		case !strings.HasPrefix(arg, "--"):
+			switch {
+			case name == "":
 				name = arg
-			} else if path == "" {
+			case path == "":
 				path = arg
-			} else {
+			default:
 				fmt.Fprintf(os.Stderr, "Too many positional arguments\n")
 				os.Exit(1)
 			}
 			i++
-		} else {
+		default:
 			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", arg)
 			os.Exit(1)
 		}
@@ -613,8 +618,6 @@ func handleAddSink() {
 
 	fmt.Printf("Added sink '%s'\n", name)
 }
-
-
 
 func handleRemove() {
 	if len(os.Args) < 3 {
@@ -1091,11 +1094,12 @@ func handleInfoAll() {
 			if url, ok := config["url"].(string); ok {
 				fmt.Printf("    url: %s\n", url)
 			}
-			if regType == "git" {
+			switch regType {
+			case "git":
 				if branches, ok := config["branches"].([]interface{}); ok && len(branches) > 0 {
 					fmt.Printf("    branches: %v\n", branches)
 				}
-			} else if regType == "gitlab" {
+			case "gitlab":
 				if projectID, ok := config["projectId"].(string); ok && projectID != "" {
 					fmt.Printf("    projectId: %s\n", projectID)
 				}
@@ -1105,7 +1109,7 @@ func handleInfoAll() {
 				if apiVersion, ok := config["apiVersion"].(string); ok && apiVersion != "" {
 					fmt.Printf("    apiVersion: %s\n", apiVersion)
 				}
-			} else if regType == "cloudsmith" {
+			case "cloudsmith":
 				if owner, ok := config["owner"].(string); ok {
 					fmt.Printf("    owner: %s\n", owner)
 				}
@@ -1231,7 +1235,7 @@ func handleInfoRegistry() {
 		}
 
 		fmt.Printf("Registry: %s\n", name)
-		
+
 		// Display type
 		if regType, ok := config["type"].(string); ok {
 			fmt.Printf("  Type: %s\n", regType)
@@ -1406,35 +1410,36 @@ func handleInstallRuleset() {
 	i := 3
 	for i < len(os.Args) {
 		arg := os.Args[i]
-		if arg == "--priority" {
+		switch {
+		case arg == "--priority":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--priority requires a value\n")
 				os.Exit(1)
 			}
-			fmt.Sscanf(os.Args[i+1], "%d", &priority)
+			_, _ = fmt.Sscanf(os.Args[i+1], "%d", &priority)
 			i += 2
-		} else if arg == "--include" {
+		case arg == "--include":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--include requires a value\n")
 				os.Exit(1)
 			}
 			include = append(include, os.Args[i+1])
 			i += 2
-		} else if arg == "--exclude" {
+		case arg == "--exclude":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--exclude requires a value\n")
 				os.Exit(1)
 			}
 			exclude = append(exclude, os.Args[i+1])
 			i += 2
-		} else if !strings.HasPrefix(arg, "--") {
+		case !strings.HasPrefix(arg, "--"):
 			if packageSpec == "" {
 				packageSpec = arg
 			} else {
 				sinks = append(sinks, arg)
 			}
 			i++
-		} else {
+		default:
 			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", arg)
 			os.Exit(1)
 		}
@@ -1502,28 +1507,29 @@ func handleInstallPromptset() {
 	i := 3
 	for i < len(os.Args) {
 		arg := os.Args[i]
-		if arg == "--include" {
+		switch {
+		case arg == "--include":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--include requires a value\n")
 				os.Exit(1)
 			}
 			include = append(include, os.Args[i+1])
 			i += 2
-		} else if arg == "--exclude" {
+		case arg == "--exclude":
 			if i+1 >= len(os.Args) {
 				fmt.Fprintf(os.Stderr, "--exclude requires a value\n")
 				os.Exit(1)
 			}
 			exclude = append(exclude, os.Args[i+1])
 			i += 2
-		} else if !strings.HasPrefix(arg, "--") {
+		case !strings.HasPrefix(arg, "--"):
 			if packageSpec == "" {
 				packageSpec = arg
 			} else {
 				sinks = append(sinks, arg)
 			}
 			i++
-		} else {
+		default:
 			fmt.Fprintf(os.Stderr, "Unknown flag: %s\n", arg)
 			os.Exit(1)
 		}

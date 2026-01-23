@@ -18,16 +18,16 @@ func TestGitRegistry_ListPackageVersions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
 		Commit("Initial commit").
 		Tag("v1.0.0").
-		Tag("v2.0.0").
-		Build()
+		Tag("v2.0.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -58,15 +58,15 @@ func TestGitRegistry_GetPackage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
 		Commit("Initial commit").
-		Tag("v1.0.0").
-		Build()
+		Tag("v1.0.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -86,7 +86,7 @@ func TestGitRegistry_GetPackage(t *testing.T) {
 		t.Fatalf("failed to list versions: %v", err)
 	}
 
-	pkg, err := registry.GetPackage(ctx, "test-package", versions[0], nil, nil)
+	pkg, err := registry.GetPackage(ctx, "test-package", &versions[0], nil, nil)
 	if err != nil {
 		t.Fatalf("failed to get package: %v", err)
 	}
@@ -111,17 +111,17 @@ func TestGitRegistry_SemanticVersionTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
 		Commit("Initial commit").
 		Tag("v2.1.0").
 		Tag("v1.0.0").
-		Tag("v1.2.0").
-		Build()
+		Tag("v1.2.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -159,16 +159,16 @@ func TestGitRegistry_VersionWithoutVPrefix(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
 		Commit("Initial commit").
 		Tag("1.0.0").
-		Tag("2.1.0").
-		Build()
+		Tag("2.1.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -206,16 +206,16 @@ func TestGitRegistry_PartialVersions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
 		Commit("Initial commit").
 		Tag("1.0").
-		Tag("2").
-		Build()
+		Tag("2")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -247,18 +247,18 @@ func TestGitRegistry_MixedVersionFormats(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
 		Commit("Initial commit").
 		Tag("v1.0.0").
 		Tag("2.1.0").
 		Tag("3.0").
-		Tag("v4").
-		Build()
+		Tag("v4")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -290,16 +290,16 @@ func TestGitRegistry_NonSemanticTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
 		Commit("Initial commit").
 		Tag("test-tag").
-		Tag("release-candidate").
-		Build()
+		Tag("release-candidate")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -331,18 +331,18 @@ func TestGitRegistry_BranchSupport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
 		Commit("Initial commit").
 		Branch("develop").
 		AddFile("dev.yml", "dev content").
 		Commit("Dev commit").
-		Checkout("main").
-		Build()
+		Checkout("main")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -394,14 +394,14 @@ func TestGitRegistry_BranchNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
-		Commit("Initial commit").
-		Build()
+		Commit("Initial commit")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -454,17 +454,17 @@ func TestGitRegistry_VersionPriority(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
 		Commit("Initial commit").
 		Tag("v1.0.0").
-		Tag("stable").  // Non-semantic, should be ignored
-		Tag("v2.0.0").
-		Build()
+		Tag("stable"). // Non-semantic, should be ignored
+		Tag("v2.0.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -590,15 +590,15 @@ func TestGitRegistry_CacheKeyNormalization(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
 		Commit("Initial commit").
-		Tag("v1.0.0").
-		Build()
+		Tag("v1.0.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -619,12 +619,12 @@ func TestGitRegistry_CacheKeyNormalization(t *testing.T) {
 	}
 
 	// Get package with patterns in different orders
-	pkg1, err := registry.GetPackage(ctx, "test-package", versions[0], []string{"*.yml", "*.yaml"}, []string{"test/**", "build/**"})
+	pkg1, err := registry.GetPackage(ctx, "test-package", &versions[0], []string{"*.yml", "*.yaml"}, []string{"test/**", "build/**"})
 	if err != nil {
 		t.Fatalf("failed to get package 1: %v", err)
 	}
 
-	pkg2, err := registry.GetPackage(ctx, "test-package", versions[0], []string{"*.yaml", "*.yml"}, []string{"build/**", "test/**"})
+	pkg2, err := registry.GetPackage(ctx, "test-package", &versions[0], []string{"*.yaml", "*.yml"}, []string{"build/**", "test/**"})
 	if err != nil {
 		t.Fatalf("failed to get package 2: %v", err)
 	}
@@ -642,17 +642,17 @@ func TestGitRegistry_IncludePatterns(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("rule.yml", "yml content").
 		AddFile("doc.md", "md content").
 		AddFile("config.json", "json content").
 		Commit("Initial commit").
-		Tag("v1.0.0").
-		Build()
+		Tag("v1.0.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -673,7 +673,7 @@ func TestGitRegistry_IncludePatterns(t *testing.T) {
 	}
 
 	// Test include pattern
-	pkg, err := registry.GetPackage(ctx, "test-package", versions[0], []string{"*.yml"}, nil)
+	pkg, err := registry.GetPackage(ctx, "test-package", &versions[0], []string{"*.yml"}, nil)
 	if err != nil {
 		t.Fatalf("failed to get package: %v", err)
 	}
@@ -693,16 +693,16 @@ func TestGitRegistry_ExcludePatterns(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("rule.yml", "yml content").
 		AddFile("build/output.js", "build content").
 		Commit("Initial commit").
-		Tag("v1.0.0").
-		Build()
+		Tag("v1.0.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -723,7 +723,7 @@ func TestGitRegistry_ExcludePatterns(t *testing.T) {
 	}
 
 	// Test exclude pattern
-	pkg, err := registry.GetPackage(ctx, "test-package", versions[0], nil, []string{"build/*"})
+	pkg, err := registry.GetPackage(ctx, "test-package", &versions[0], nil, []string{"build/*"})
 	if err != nil {
 		t.Fatalf("failed to get package: %v", err)
 	}
@@ -743,17 +743,17 @@ func TestGitRegistry_CombinedPatterns(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("rule.yml", "yml content").
 		AddFile("test.yml", "test yml content").
 		AddFile("doc.md", "md content").
 		Commit("Initial commit").
-		Tag("v1.0.0").
-		Build()
+		Tag("v1.0.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -774,7 +774,7 @@ func TestGitRegistry_CombinedPatterns(t *testing.T) {
 	}
 
 	// Test include *.yml but exclude test*
-	pkg, err := registry.GetPackage(ctx, "test-package", versions[0], []string{"*.yml"}, []string{"test*"})
+	pkg, err := registry.GetPackage(ctx, "test-package", &versions[0], []string{"*.yml"}, []string{"test*"})
 	if err != nil {
 		t.Fatalf("failed to get package: %v", err)
 	}
@@ -794,17 +794,17 @@ func TestGitRegistry_NoPatterns(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("rule.yml", "yml content").
 		AddFile("doc.md", "md content").
 		AddFile("config.json", "json content").
 		Commit("Initial commit").
-		Tag("v1.0.0").
-		Build()
+		Tag("v1.0.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -825,7 +825,7 @@ func TestGitRegistry_NoPatterns(t *testing.T) {
 	}
 
 	// Test no patterns - should return all files
-	pkg, err := registry.GetPackage(ctx, "test-package", versions[0], nil, nil)
+	pkg, err := registry.GetPackage(ctx, "test-package", &versions[0], nil, nil)
 	if err != nil {
 		t.Fatalf("failed to get package: %v", err)
 	}
@@ -842,18 +842,18 @@ func TestGitRegistry_MultipleFileTypes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("rule.yml", "yml content").
 		AddFile("readme.md", "md content").
 		AddFile("config.json", "json content").
 		AddFile("script.js", "js content").
 		Commit("Initial commit").
-		Tag("v1.0.0").
-		Build()
+		Tag("v1.0.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -873,7 +873,7 @@ func TestGitRegistry_MultipleFileTypes(t *testing.T) {
 		t.Fatalf("failed to list versions: %v", err)
 	}
 
-	pkg, err := registry.GetPackage(ctx, "test-package", versions[0], nil, nil)
+	pkg, err := registry.GetPackage(ctx, "test-package", &versions[0], nil, nil)
 	if err != nil {
 		t.Fatalf("failed to get package: %v", err)
 	}
@@ -902,17 +902,17 @@ func TestGitRegistry_NestedDirectories(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("build/cursor/rule.mdc", "cursor content").
 		AddFile("rules/security/auth.yml", "security content").
 		AddFile("root.yml", "root content").
 		Commit("Initial commit").
-		Tag("v1.0.0").
-		Build()
+		Tag("v1.0.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -932,7 +932,7 @@ func TestGitRegistry_NestedDirectories(t *testing.T) {
 		t.Fatalf("failed to list versions: %v", err)
 	}
 
-	pkg, err := registry.GetPackage(ctx, "test-package", versions[0], nil, nil)
+	pkg, err := registry.GetPackage(ctx, "test-package", &versions[0], nil, nil)
 	if err != nil {
 		t.Fatalf("failed to get package: %v", err)
 	}
@@ -967,12 +967,12 @@ func TestGitRegistry_EmptyRepository(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
-		Init().
-		Build()
+	builder := testRepo.Builder().
+		Init()
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -1004,14 +1004,14 @@ func TestGitRegistry_NoTags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
-		Commit("Initial commit").
-		Build()
+		Commit("Initial commit")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -1043,15 +1043,15 @@ func TestGitRegistry_NonExistentVersion(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	testRepo := storage.NewTestRepo(t, tempDir)
-	testRepo.Builder().
+	builder := testRepo.Builder().
 		Init().
 		AddFile("test.yml", "test content").
 		Commit("Initial commit").
-		Tag("v1.0.0").
-		Build()
+		Tag("v1.0.0")
+	_ = builder.Build()
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -1069,7 +1069,7 @@ func TestGitRegistry_NonExistentVersion(t *testing.T) {
 
 	// Try to get non-existent version
 	nonExistentVersion, _ := core.ParseVersion("v99.0.0")
-	_, err = registry.GetPackage(ctx, "test-package", nonExistentVersion, nil, nil)
+	_, err = registry.GetPackage(ctx, "test-package", &nonExistentVersion, nil, nil)
 	if err == nil {
 		t.Error("expected error for non-existent version, got nil")
 	}

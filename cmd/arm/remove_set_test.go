@@ -18,12 +18,12 @@ func TestRemoveRegistry(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		setupManifest  string
-		args           []string
-		wantErr        bool
-		wantOutput     string
-		checkManifest  func(t *testing.T, manifestPath string)
+		name          string
+		setupManifest string
+		args          []string
+		wantErr       bool
+		wantOutput    string
+		checkManifest func(t *testing.T, manifestPath string)
 	}{
 		{
 			name: "remove existing registry",
@@ -70,7 +70,7 @@ func TestRemoveRegistry(t *testing.T) {
 			manifestPath := filepath.Join(testDir, "arm.json")
 
 			if tt.setupManifest != "" {
-				if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+				if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 					t.Fatalf("Failed to write manifest: %v", err)
 				}
 			}
@@ -113,12 +113,12 @@ func TestSetRegistry(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		setupManifest  string
-		args           []string
-		wantErr        bool
-		wantOutput     string
-		checkManifest  func(t *testing.T, manifestPath string)
+		name          string
+		setupManifest string
+		args          []string
+		wantErr       bool
+		wantOutput    string
+		checkManifest func(t *testing.T, manifestPath string)
 	}{
 		{
 			name: "set registry url",
@@ -204,7 +204,7 @@ func TestSetRegistry(t *testing.T) {
 			manifestPath := filepath.Join(testDir, "arm.json")
 
 			if tt.setupManifest != "" {
-				if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+				if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 					t.Fatalf("Failed to write manifest: %v", err)
 				}
 			}

@@ -12,6 +12,7 @@ import (
 	"github.com/jomadu/ai-resource-manager/internal/arm/core"
 )
 
+//nolint:unparam // Test helper function
 func mustVersion(s string) core.Version {
 	v, err := core.NewVersion(s)
 	if err != nil {
@@ -113,7 +114,7 @@ func TestGetFilePath(t *testing.T) {
 			if tt.layout == LayoutFlat {
 				// Check it starts with arm_ and has dual hash pattern
 				basename := filepath.Base(got)
-				if !filepath.HasPrefix(basename, "arm_") {
+				if !strings.HasPrefix(basename, "arm_") {
 					t.Errorf("flat layout should start with arm_, got %v", basename)
 				}
 				// Check dual hash pattern: arm_xxxx_xxxx_...
@@ -196,7 +197,7 @@ func TestIsInstalled(t *testing.T) {
 	}
 
 	// Should return false for non-installed package
-	if m.IsInstalled(metadata) {
+	if m.IsInstalled(&metadata) {
 		t.Errorf("IsInstalled should return false for non-installed package")
 	}
 }
@@ -260,7 +261,7 @@ func TestListRulesets(t *testing.T) {
 		Priority: 200,
 		Files:    []string{"rule1.mdc", "rule2.mdc"},
 	}
-	m.saveIndex(index)
+	_ = m.saveIndex(index)
 
 	// List should return the ruleset
 	rulesets, err = m.ListRulesets()
@@ -296,7 +297,7 @@ func TestListPromptsets(t *testing.T) {
 	index.Promptsets["test-reg/test-prompts@1.0.0"] = PromptsetIndexEntry{
 		Files: []string{"prompt1.md", "prompt2.md"},
 	}
-	m.saveIndex(index)
+	_ = m.saveIndex(index)
 
 	// List should return the promptset
 	promptsets, err = m.ListPromptsets()
@@ -317,8 +318,8 @@ func TestUninstall(t *testing.T) {
 
 	// Create some test files
 	testFile1 := filepath.Join(tmpDir, "arm", "test-reg", "test-pkg", "1.0.0", "rule1.mdc")
-	os.MkdirAll(filepath.Dir(testFile1), 0755)
-	os.WriteFile(testFile1, []byte("test"), 0644)
+	_ = os.MkdirAll(filepath.Dir(testFile1), 0o755)
+	_ = os.WriteFile(testFile1, []byte("test"), 0o644)
 
 	// Add to index
 	index, _ := m.loadIndex()
@@ -326,7 +327,7 @@ func TestUninstall(t *testing.T) {
 		Priority: 100,
 		Files:    []string{"arm/test-reg/test-pkg/1.0.0/rule1.mdc"},
 	}
-	m.saveIndex(index)
+	_ = m.saveIndex(index)
 
 	// Uninstall
 	metadata := core.PackageMetadata{
@@ -334,7 +335,7 @@ func TestUninstall(t *testing.T) {
 		Name:         "test-pkg",
 		Version:      mustVersion("1.0.0"),
 	}
-	err := m.Uninstall(metadata)
+	err := m.Uninstall(&metadata)
 	if err != nil {
 		t.Errorf("Uninstall failed: %v", err)
 	}
@@ -345,7 +346,7 @@ func TestUninstall(t *testing.T) {
 	}
 
 	// Should not be installed anymore
-	if m.IsInstalled(metadata) {
+	if m.IsInstalled(&metadata) {
 		t.Errorf("package should not be installed after uninstall")
 	}
 }
@@ -356,13 +357,13 @@ func TestClean(t *testing.T) {
 
 	// Create orphaned file (not in index)
 	orphanFile := filepath.Join(tmpDir, "arm", "orphan.mdc")
-	os.MkdirAll(filepath.Dir(orphanFile), 0755)
-	os.WriteFile(orphanFile, []byte("orphan"), 0644)
+	_ = os.MkdirAll(filepath.Dir(orphanFile), 0o755)
+	_ = os.WriteFile(orphanFile, []byte("orphan"), 0o644)
 
 	// Create tracked file
 	trackedFile := filepath.Join(tmpDir, "arm", "test-reg", "test-pkg", "1.0.0", "rule1.mdc")
-	os.MkdirAll(filepath.Dir(trackedFile), 0755)
-	os.WriteFile(trackedFile, []byte("tracked"), 0644)
+	_ = os.MkdirAll(filepath.Dir(trackedFile), 0o755)
+	_ = os.WriteFile(trackedFile, []byte("tracked"), 0o644)
 
 	// Add tracked file to index
 	index, _ := m.loadIndex()
@@ -370,7 +371,7 @@ func TestClean(t *testing.T) {
 		Priority: 100,
 		Files:    []string{"arm/test-reg/test-pkg/1.0.0/rule1.mdc"},
 	}
-	m.saveIndex(index)
+	_ = m.saveIndex(index)
 
 	// Clean should remove orphaned file but keep tracked file
 	err := m.Clean()
@@ -459,7 +460,7 @@ func TestGenerateRulesetIndexRuleFile(t *testing.T) {
 		Priority: 100,
 		Files:    []string{"arm/reg2/pkg2/2.0.0/rule3.mdc"},
 	}
-	m.saveIndex(index)
+	_ = m.saveIndex(index)
 
 	// Generate index file
 	err = m.generateRulesetIndexRuleFile()
@@ -530,8 +531,8 @@ func TestGenerateRulesetIndexRuleFileRemovesWhenEmpty(t *testing.T) {
 		Priority: 100,
 		Files:    []string{"rule1.mdc"},
 	}
-	m.saveIndex(index)
-	m.generateRulesetIndexRuleFile()
+	_ = m.saveIndex(index)
+	_ = m.generateRulesetIndexRuleFile()
 
 	// Verify file exists
 	if _, err := os.Stat(m.rulesetIndexRulePath); os.IsNotExist(err) {
@@ -540,8 +541,8 @@ func TestGenerateRulesetIndexRuleFileRemovesWhenEmpty(t *testing.T) {
 
 	// Remove all rulesets
 	index.Rulesets = make(map[string]RulesetIndexEntry)
-	m.saveIndex(index)
-	m.generateRulesetIndexRuleFile()
+	_ = m.saveIndex(index)
+	_ = m.generateRulesetIndexRuleFile()
 
 	// File should be removed
 	if _, err := os.Stat(m.rulesetIndexRulePath); !os.IsNotExist(err) {
@@ -574,7 +575,7 @@ func TestInstallRuleset(t *testing.T) {
 	}
 
 	// Check package is installed
-	if !m.IsInstalled(pkg.Metadata) {
+	if !m.IsInstalled(&pkg.Metadata) {
 		t.Errorf("package should be installed")
 	}
 
@@ -622,7 +623,7 @@ func TestInstallRulesetReplacesOldVersion(t *testing.T) {
 			},
 		},
 	}
-	m.InstallRuleset(pkg1, 100)
+	_ = m.InstallRuleset(pkg1, 100)
 
 	// Install v1.0.0 again with different file
 	pkg2 := &core.Package{
@@ -682,7 +683,7 @@ func TestInstallRulesetEmptyPackage(t *testing.T) {
 	}
 
 	// Should still be in index
-	if !m.IsInstalled(pkg.Metadata) {
+	if !m.IsInstalled(&pkg.Metadata) {
 		t.Errorf("empty package should be installed")
 	}
 
@@ -718,7 +719,7 @@ func TestInstallPromptset(t *testing.T) {
 	}
 
 	// Check package is installed
-	if !m.IsInstalled(pkg.Metadata) {
+	if !m.IsInstalled(&pkg.Metadata) {
 		t.Errorf("package should be installed")
 	}
 
@@ -758,7 +759,7 @@ func TestInstallPromptsetReplacesOldVersion(t *testing.T) {
 			},
 		},
 	}
-	m.InstallPromptset(pkg1)
+	_ = m.InstallPromptset(pkg1)
 
 	// Install v1.0.0 again with different file
 	pkg2 := &core.Package{
@@ -811,7 +812,7 @@ func TestInstallPromptsetEmptyPackage(t *testing.T) {
 	}
 
 	// Should still be in index
-	if !m.IsInstalled(pkg.Metadata) {
+	if !m.IsInstalled(&pkg.Metadata) {
 		t.Errorf("empty package should be installed")
 	}
 
@@ -821,7 +822,6 @@ func TestInstallPromptsetEmptyPackage(t *testing.T) {
 		t.Errorf("expected 0 files, got %d", len(index.Promptsets[key].Files))
 	}
 }
-
 
 func TestInstallRulesetWithARMResource(t *testing.T) {
 	tmpDir := t.TempDir()
@@ -902,7 +902,6 @@ spec:
 		t.Errorf("expected 2 compiled rule files in index, got %d", len(entry.Files))
 	}
 }
-
 
 func TestInstallPromptsetWithARMResource(t *testing.T) {
 	tmpDir := t.TempDir()

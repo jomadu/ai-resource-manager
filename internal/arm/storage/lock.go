@@ -22,15 +22,15 @@ func NewFileLock(basePath string) *FileLock {
 
 // Lock acquires exclusive lock with timeout (default 10s)
 func (fl *FileLock) Lock(ctx context.Context, timeout ...time.Duration) error {
-	if err := os.MkdirAll(filepath.Dir(fl.lockFile), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(fl.lockFile), 0o755); err != nil {
 		return err
 	}
-	
+
 	t := 10 * time.Second
 	if len(timeout) > 0 {
 		t = timeout[0]
 	}
-	
+
 	deadline := time.Now().Add(t)
 	for time.Now().Before(deadline) {
 		// Check if context cancelled
@@ -39,8 +39,8 @@ func (fl *FileLock) Lock(ctx context.Context, timeout ...time.Duration) error {
 			return ctx.Err()
 		default:
 		}
-		
-		file, err := os.OpenFile(fl.lockFile, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+
+		file, err := os.OpenFile(fl.lockFile, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
 		if err == nil {
 			fl.file = file
 			return nil
@@ -53,7 +53,7 @@ func (fl *FileLock) Lock(ctx context.Context, timeout ...time.Duration) error {
 // Unlock releases lock
 func (fl *FileLock) Unlock() error {
 	if fl.file != nil {
-		fl.file.Close()
+		_ = fl.file.Close()
 		fl.file = nil
 	}
 	err := os.Remove(fl.lockFile)

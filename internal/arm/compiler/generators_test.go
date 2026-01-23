@@ -22,24 +22,24 @@ func TestGenerateRuleMetadata_Basic(t *testing.T) {
 			},
 		},
 	}
-	
+
 	rule := &resource.Rule{
 		Name:        "Use Meaningful Names",
 		Enforcement: "must",
 	}
-	
+
 	metadata := GenerateRuleMetadata("sample-registry", ruleset, "meaningful-names", rule)
-	
+
 	// Check basic structure
 	if !strings.Contains(metadata, "---") {
 		t.Error("Expected metadata to contain YAML frontmatter markers")
 	}
-	
+
 	// Check namespace
 	if !strings.Contains(metadata, "namespace: sample-registry") {
 		t.Error("Expected namespace in metadata")
 	}
-	
+
 	// Check ruleset info
 	if !strings.Contains(metadata, "id: clean-code") {
 		t.Error("Expected ruleset ID in metadata")
@@ -47,7 +47,7 @@ func TestGenerateRuleMetadata_Basic(t *testing.T) {
 	if !strings.Contains(metadata, "name: Clean Code Rules") {
 		t.Error("Expected ruleset name in metadata")
 	}
-	
+
 	// Check rule info
 	if !strings.Contains(metadata, "id: meaningful-names") {
 		t.Error("Expected rule ID in metadata")
@@ -76,15 +76,15 @@ func TestGenerateRuleMetadata_WithPriority(t *testing.T) {
 			},
 		},
 	}
-	
+
 	rule := &resource.Rule{
 		Name:        "Test Rule",
 		Enforcement: "should",
 		Priority:    100,
 	}
-	
+
 	metadata := GenerateRuleMetadata("test-namespace", ruleset, "rule1", rule)
-	
+
 	if !strings.Contains(metadata, "priority: 100") {
 		t.Error("Expected priority in metadata")
 	}
@@ -106,15 +106,15 @@ func TestGenerateRuleMetadata_WithoutPriority(t *testing.T) {
 			},
 		},
 	}
-	
+
 	rule := &resource.Rule{
 		Name:        "Test Rule",
 		Enforcement: "should",
 		Priority:    0,
 	}
-	
+
 	metadata := GenerateRuleMetadata("test-namespace", ruleset, "rule1", rule)
-	
+
 	if strings.Contains(metadata, "priority:") {
 		t.Error("Expected no priority in metadata when priority is 0")
 	}
@@ -140,7 +140,7 @@ func TestGenerateRuleMetadata_WithScope(t *testing.T) {
 			},
 		},
 	}
-	
+
 	rule := &resource.Rule{
 		Name:        "Test Rule",
 		Enforcement: "must",
@@ -150,9 +150,9 @@ func TestGenerateRuleMetadata_WithScope(t *testing.T) {
 			},
 		},
 	}
-	
+
 	metadata := GenerateRuleMetadata("test-namespace", ruleset, "rule1", rule)
-	
+
 	if !strings.Contains(metadata, "scope:") {
 		t.Error("Expected scope in metadata")
 	}
@@ -187,14 +187,14 @@ func TestGenerateRuleMetadata_MultipleRules(t *testing.T) {
 			},
 		},
 	}
-	
+
 	rule := &resource.Rule{
 		Name:        "Rule 1",
 		Enforcement: "must",
 	}
-	
+
 	metadata := GenerateRuleMetadata("test-namespace", ruleset, "rule1", rule)
-	
+
 	// Check that all rules are listed
 	if !strings.Contains(metadata, "- rule1") {
 		t.Error("Expected rule1 in rules list")
@@ -205,12 +205,12 @@ func TestGenerateRuleMetadata_MultipleRules(t *testing.T) {
 	if !strings.Contains(metadata, "- rule3") {
 		t.Error("Expected rule3 in rules list")
 	}
-	
+
 	// Check that rules are sorted (rule1, rule2, rule3)
 	rule1Idx := strings.Index(metadata, "- rule1")
 	rule2Idx := strings.Index(metadata, "- rule2")
 	rule3Idx := strings.Index(metadata, "- rule3")
-	
+
 	if rule1Idx > rule2Idx || rule2Idx > rule3Idx {
 		t.Error("Expected rules to be sorted alphabetically")
 	}
@@ -225,7 +225,7 @@ func TestGenerateRuleMetadata_EnforcementUppercase(t *testing.T) {
 		{"should", "SHOULD"},
 		{"may", "MAY"},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.input, func(t *testing.T) {
 			ruleset := &resource.RulesetResource{
@@ -242,14 +242,14 @@ func TestGenerateRuleMetadata_EnforcementUppercase(t *testing.T) {
 					},
 				},
 			}
-			
+
 			rule := &resource.Rule{
 				Name:        "Test Rule",
 				Enforcement: tc.input,
 			}
-			
+
 			metadata := GenerateRuleMetadata("test-namespace", ruleset, "rule1", rule)
-			
+
 			if !strings.Contains(metadata, "enforcement: "+tc.expected) {
 				t.Errorf("Expected enforcement: %s, but not found in metadata", tc.expected)
 			}

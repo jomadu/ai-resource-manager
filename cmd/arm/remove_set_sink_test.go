@@ -61,7 +61,7 @@ func TestRemoveSink(t *testing.T) {
 			testDir := t.TempDir()
 			manifestPath := filepath.Join(testDir, "arm.json")
 
-			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 				t.Fatalf("Failed to write manifest: %v", err)
 			}
 
@@ -181,7 +181,7 @@ func TestSetSink(t *testing.T) {
 			testDir := t.TempDir()
 			manifestPath := filepath.Join(testDir, "arm.json")
 
-			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 				t.Fatalf("Failed to write manifest: %v", err)
 			}
 

@@ -41,7 +41,7 @@ func TestSetRuleset(t *testing.T) {
 			args: []string{"set", "ruleset", "test-registry/test-ruleset", "version", "2.0.0"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"dependencies":{"test-registry/test-ruleset":{"type":"ruleset","version":"1.0.0","priority":100,"sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Updated ruleset 'test-registry/test-ruleset' version",
@@ -51,7 +51,7 @@ func TestSetRuleset(t *testing.T) {
 			args: []string{"set", "ruleset", "test-registry/test-ruleset", "priority", "200"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"dependencies":{"test-registry/test-ruleset":{"type":"ruleset","version":"1.0.0","priority":100,"sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Updated ruleset 'test-registry/test-ruleset' priority",
@@ -61,7 +61,7 @@ func TestSetRuleset(t *testing.T) {
 			args: []string{"set", "ruleset", "test-registry/test-ruleset", "priority", "invalid"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"dependencies":{"test-registry/test-ruleset":{"type":"ruleset","version":"1.0.0","priority":100,"sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     true,
 			wantContain: "Invalid priority value",
@@ -71,7 +71,7 @@ func TestSetRuleset(t *testing.T) {
 			args: []string{"set", "ruleset", "test-registry/test-ruleset", "sinks", "sink1,sink2"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"sinks":{"sink1":{"tool":"cursor","directory":".cursor"},"sink2":{"tool":"amazonq","directory":".amazonq"}},"dependencies":{"test-registry/test-ruleset":{"type":"ruleset","version":"1.0.0","priority":100,"sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Updated ruleset 'test-registry/test-ruleset' sinks",
@@ -81,7 +81,7 @@ func TestSetRuleset(t *testing.T) {
 			args: []string{"set", "ruleset", "test-registry/test-ruleset", "include", "*.yml,*.yaml"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"dependencies":{"test-registry/test-ruleset":{"type":"ruleset","version":"1.0.0","priority":100,"sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Updated ruleset 'test-registry/test-ruleset' include",
@@ -91,7 +91,7 @@ func TestSetRuleset(t *testing.T) {
 			args: []string{"set", "ruleset", "test-registry/test-ruleset", "exclude", "test/**"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"dependencies":{"test-registry/test-ruleset":{"type":"ruleset","version":"1.0.0","priority":100,"sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Updated ruleset 'test-registry/test-ruleset' exclude",
@@ -101,7 +101,7 @@ func TestSetRuleset(t *testing.T) {
 			args: []string{"set", "ruleset", "test-registry/test-ruleset", "unknown", "value"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"dependencies":{"test-registry/test-ruleset":{"type":"ruleset","version":"1.0.0","priority":100,"sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     true,
 			wantContain: "Unknown key",
@@ -167,7 +167,7 @@ func TestSetPromptset(t *testing.T) {
 			args: []string{"set", "promptset", "test-registry/test-promptset", "version", "2.0.0"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"dependencies":{"test-registry/test-promptset":{"type":"promptset","version":"1.0.0","sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Updated promptset 'test-registry/test-promptset' version",
@@ -177,7 +177,7 @@ func TestSetPromptset(t *testing.T) {
 			args: []string{"set", "promptset", "test-registry/test-promptset", "sinks", "sink1,sink2"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"sinks":{"sink1":{"tool":"cursor","directory":".cursor"},"sink2":{"tool":"amazonq","directory":".amazonq"}},"dependencies":{"test-registry/test-promptset":{"type":"promptset","version":"1.0.0","sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Updated promptset 'test-registry/test-promptset' sinks",
@@ -187,7 +187,7 @@ func TestSetPromptset(t *testing.T) {
 			args: []string{"set", "promptset", "test-registry/test-promptset", "include", "*.yml,*.yaml"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"dependencies":{"test-registry/test-promptset":{"type":"promptset","version":"1.0.0","sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Updated promptset 'test-registry/test-promptset' include",
@@ -197,7 +197,7 @@ func TestSetPromptset(t *testing.T) {
 			args: []string{"set", "promptset", "test-registry/test-promptset", "exclude", "test/**"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"dependencies":{"test-registry/test-promptset":{"type":"promptset","version":"1.0.0","sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     false,
 			wantContain: "Updated promptset 'test-registry/test-promptset' exclude",
@@ -207,7 +207,7 @@ func TestSetPromptset(t *testing.T) {
 			args: []string{"set", "promptset", "test-registry/test-promptset", "unknown", "value"},
 			setupFunc: func(manifestPath string) {
 				content := `{"version":1,"registries":{"test-registry":{"type":"git","url":"https://example.com"}},"dependencies":{"test-registry/test-promptset":{"type":"promptset","version":"1.0.0","sinks":["sink1"]}}}`
-				os.WriteFile(manifestPath, []byte(content), 0644)
+				_ = os.WriteFile(manifestPath, []byte(content), 0o644)
 			},
 			wantErr:     true,
 			wantContain: "Unknown key",

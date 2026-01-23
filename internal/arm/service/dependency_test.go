@@ -17,7 +17,7 @@ func TestInstallPromptset(t *testing.T) {
 	t.Run("install promptset successfully", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		sinkDir := filepath.Join(tmpDir, "sink")
-		os.MkdirAll(sinkDir, 0755)
+		_ = os.MkdirAll(sinkDir, 0o755)
 
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{
@@ -101,7 +101,7 @@ func TestInstallRuleset(t *testing.T) {
 	t.Run("install ruleset successfully", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		sinkDir := filepath.Join(tmpDir, "sink")
-		os.MkdirAll(sinkDir, 0755)
+		_ = os.MkdirAll(sinkDir, 0o755)
 
 		mgr := &mockManifestManager{
 			manifest: &manifest.Manifest{

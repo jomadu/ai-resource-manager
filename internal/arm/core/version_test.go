@@ -59,7 +59,7 @@ func TestCompareTo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.v1.CompareTo(tt.v2)
+			got, err := tt.v1.CompareTo(&tt.v2)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CompareTo() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -118,7 +118,7 @@ func TestIsNewerThan(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.v1.IsNewerThan(tt.v2)
+			got, err := tt.v1.IsNewerThan(&tt.v2)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("IsNewerThan() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -177,7 +177,7 @@ func TestIsOlderThan(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.v1.IsOlderThan(tt.v2)
+			got, err := tt.v1.IsOlderThan(&tt.v2)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("IsOlderThan() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -399,7 +399,6 @@ func mustVersion(s string) Version {
 	}
 	return v
 }
-
 
 func TestResolveVersion_Normal(t *testing.T) {
 	t.Run("exact match", func(t *testing.T) {

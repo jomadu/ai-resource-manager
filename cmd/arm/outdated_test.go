@@ -140,12 +140,12 @@ func TestOutdated(t *testing.T) {
 			lockfilePath := filepath.Join(testDir, "arm-manifest-lock.json")
 
 			// Write manifest
-			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0644); err != nil {
+			if err := os.WriteFile(manifestPath, []byte(tt.setupManifest), 0o644); err != nil {
 				t.Fatalf("Failed to write manifest: %v", err)
 			}
 
 			// Write lockfile
-			if err := os.WriteFile(lockfilePath, []byte(tt.setupLockfile), 0644); err != nil {
+			if err := os.WriteFile(lockfilePath, []byte(tt.setupLockfile), 0o644); err != nil {
 				t.Fatalf("Failed to write lockfile: %v", err)
 			}
 

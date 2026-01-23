@@ -75,10 +75,8 @@ func TestInstallPromptset(t *testing.T) {
 				if tt.errContains != "" && !strings.Contains(string(output), tt.errContains) {
 					t.Errorf("Expected error message to contain %q, got: %s", tt.errContains, output)
 				}
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error: %v. Output: %s", err, output)
-				}
+			} else if err != nil {
+				t.Errorf("Unexpected error: %v. Output: %s", err, output)
 			}
 		})
 	}

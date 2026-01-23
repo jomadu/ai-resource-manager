@@ -18,15 +18,15 @@ func createTarGz(files map[string][]byte) []byte {
 	for path, content := range files {
 		header := &tar.Header{
 			Name: path,
-			Mode: 0644,
+			Mode: 0o644,
 			Size: int64(len(content)),
 		}
-		tarWriter.WriteHeader(header)
-		tarWriter.Write(content)
+		_ = tarWriter.WriteHeader(header)
+		_, _ = tarWriter.Write(content)
 	}
 
-	tarWriter.Close()
-	gzWriter.Close()
+	_ = tarWriter.Close()
+	_ = gzWriter.Close()
 	return buf.Bytes()
 }
 
@@ -37,10 +37,10 @@ func createZip(files map[string][]byte) []byte {
 
 	for path, content := range files {
 		writer, _ := zipWriter.Create(path)
-		writer.Write(content)
+		_, _ = writer.Write(content)
 	}
 
-	zipWriter.Close()
+	_ = zipWriter.Close()
 	return buf.Bytes()
 }
 

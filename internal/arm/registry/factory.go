@@ -34,7 +34,7 @@ func (f *DefaultFactory) CreateRegistry(name string, cfg map[string]interface{})
 			return nil, err
 		}
 		configMgr := config.NewFileManager()
-		return NewGitLabRegistry(name, gitlabConfig, configMgr)
+		return NewGitLabRegistry(name, &gitlabConfig, configMgr)
 	case "cloudsmith":
 		var cloudsmithConfig CloudsmithRegistryConfig
 		if err := convertMapToStruct(cfg, &cloudsmithConfig); err != nil {

@@ -25,7 +25,7 @@ func TestUpgradeAll_Normal(t *testing.T) {
 	}
 	rulesetDepMap, _ := json.Marshal(rulesetDep)
 	var rulesetDepInterface map[string]interface{}
-	json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
+	_ = json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
 
 	promptsetDep := manifest.PromptsetDependencyConfig{
 		BaseDependencyConfig: manifest.BaseDependencyConfig{
@@ -36,7 +36,7 @@ func TestUpgradeAll_Normal(t *testing.T) {
 	}
 	promptsetDepMap, _ := json.Marshal(promptsetDep)
 	var promptsetDepInterface map[string]interface{}
-	json.Unmarshal(promptsetDepMap, &promptsetDepInterface)
+	_ = json.Unmarshal(promptsetDepMap, &promptsetDepInterface)
 
 	manifestMgr := &mockManifestManager{
 		manifest: &manifest.Manifest{
@@ -139,7 +139,7 @@ func TestUpgradeAll_AlreadyLatest(t *testing.T) {
 	}
 	rulesetDepMap, _ := json.Marshal(rulesetDep)
 	var rulesetDepInterface map[string]interface{}
-	json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
+	_ = json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
 
 	manifestMgr := &mockManifestManager{
 		manifest: &manifest.Manifest{
@@ -227,7 +227,7 @@ func TestUpgradeAll_MissingLockfileEntry(t *testing.T) {
 	}
 	rulesetDepMap, _ := json.Marshal(rulesetDep)
 	var rulesetDepInterface map[string]interface{}
-	json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
+	_ = json.Unmarshal(rulesetDepMap, &rulesetDepInterface)
 
 	manifestMgr := &mockManifestManager{
 		manifest: &manifest.Manifest{

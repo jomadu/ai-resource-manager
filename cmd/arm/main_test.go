@@ -16,11 +16,11 @@ func TestPrintVersion(t *testing.T) {
 
 	printVersion()
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	if !strings.Contains(output, "arm") {
@@ -44,11 +44,11 @@ func TestPrintHelp(t *testing.T) {
 
 	printHelp()
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	if !strings.Contains(output, "AI Resource Manager") {
@@ -87,11 +87,11 @@ func TestPrintCommandHelp(t *testing.T) {
 
 			printCommandHelp(tt.command)
 
-			w.Close()
+			_ = w.Close()
 			os.Stdout = old
 
 			var buf bytes.Buffer
-			buf.ReadFrom(r)
+			_, _ = buf.ReadFrom(r)
 			output := buf.String()
 
 			for _, exp := range tt.expected {
@@ -105,7 +105,7 @@ func TestPrintCommandHelp(t *testing.T) {
 
 func TestBuildInfoIntegration(t *testing.T) {
 	info := core.GetBuildInfo()
-	
+
 	if info.Version.Version == "" {
 		t.Error("Expected version to be set")
 	}
