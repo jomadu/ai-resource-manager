@@ -1,4 +1,3 @@
-Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestAddGitRegistry
 === RUN   TestAddGitRegistry/valid_git_registry
 === RUN   TestAddGitRegistry/with_branches
@@ -6,9 +5,9 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestAddGitRegistry/missing_name
 === RUN   TestAddGitRegistry/duplicate_without_force
 === RUN   TestAddGitRegistry/duplicate_with_force
---- PASS: TestAddGitRegistry (16.34s)
-    --- PASS: TestAddGitRegistry/valid_git_registry (0.00s)
-    --- PASS: TestAddGitRegistry/with_branches (0.00s)
+--- PASS: TestAddGitRegistry (1.32s)
+    --- PASS: TestAddGitRegistry/valid_git_registry (0.24s)
+    --- PASS: TestAddGitRegistry/with_branches (0.01s)
     --- PASS: TestAddGitRegistry/missing_url (0.00s)
     --- PASS: TestAddGitRegistry/missing_name (0.00s)
     --- PASS: TestAddGitRegistry/duplicate_without_force (0.01s)
@@ -23,13 +22,13 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestAddGitLabRegistry/missing_name
 === RUN   TestAddGitLabRegistry/duplicate_without_force
 === RUN   TestAddGitLabRegistry/duplicate_with_force
---- PASS: TestAddGitLabRegistry (0.50s)
-    --- PASS: TestAddGitLabRegistry/valid_gitlab_registry_with_url_only (0.00s)
-    --- PASS: TestAddGitLabRegistry/with_project-id (0.00s)
-    --- PASS: TestAddGitLabRegistry/with_group-id (0.00s)
-    --- PASS: TestAddGitLabRegistry/with_api-version (0.00s)
-    --- PASS: TestAddGitLabRegistry/with_all_options (0.00s)
-    --- PASS: TestAddGitLabRegistry/missing_url (0.00s)
+--- PASS: TestAddGitLabRegistry (0.76s)
+    --- PASS: TestAddGitLabRegistry/valid_gitlab_registry_with_url_only (0.22s)
+    --- PASS: TestAddGitLabRegistry/with_project-id (0.01s)
+    --- PASS: TestAddGitLabRegistry/with_group-id (0.01s)
+    --- PASS: TestAddGitLabRegistry/with_api-version (0.01s)
+    --- PASS: TestAddGitLabRegistry/with_all_options (0.01s)
+    --- PASS: TestAddGitLabRegistry/missing_url (0.01s)
     --- PASS: TestAddGitLabRegistry/missing_name (0.00s)
     --- PASS: TestAddGitLabRegistry/duplicate_without_force (0.01s)
     --- PASS: TestAddGitLabRegistry/duplicate_with_force (0.01s)
@@ -41,11 +40,11 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestAddCloudsmithRegistry/missing_name
 === RUN   TestAddCloudsmithRegistry/duplicate_without_force
 === RUN   TestAddCloudsmithRegistry/duplicate_with_force
---- PASS: TestAddCloudsmithRegistry (0.49s)
-    --- PASS: TestAddCloudsmithRegistry/valid_cloudsmith_registry (0.00s)
-    --- PASS: TestAddCloudsmithRegistry/missing_url (0.00s)
-    --- PASS: TestAddCloudsmithRegistry/missing_owner (0.00s)
-    --- PASS: TestAddCloudsmithRegistry/missing_repo (0.00s)
+--- PASS: TestAddCloudsmithRegistry (0.84s)
+    --- PASS: TestAddCloudsmithRegistry/valid_cloudsmith_registry (0.33s)
+    --- PASS: TestAddCloudsmithRegistry/missing_url (0.01s)
+    --- PASS: TestAddCloudsmithRegistry/missing_owner (0.01s)
+    --- PASS: TestAddCloudsmithRegistry/missing_repo (0.01s)
     --- PASS: TestAddCloudsmithRegistry/missing_name (0.00s)
     --- PASS: TestAddCloudsmithRegistry/duplicate_without_force (0.01s)
     --- PASS: TestAddCloudsmithRegistry/duplicate_with_force (0.01s)
@@ -59,27 +58,27 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestAddSink/add_copilot_sink
 === RUN   TestAddSink/add_markdown_sink
 === RUN   TestAddSink/add_sink_with_force_flag
---- PASS: TestAddSink (0.46s)
-    --- PASS: TestAddSink/missing_tool_flag (0.00s)
-    --- PASS: TestAddSink/missing_name (0.00s)
-    --- PASS: TestAddSink/missing_path (0.00s)
-    --- PASS: TestAddSink/invalid_tool (0.00s)
-    --- PASS: TestAddSink/add_cursor_sink (0.00s)
-    --- PASS: TestAddSink/add_amazonq_sink (0.00s)
-    --- PASS: TestAddSink/add_copilot_sink (0.00s)
-    --- PASS: TestAddSink/add_markdown_sink (0.00s)
-    --- PASS: TestAddSink/add_sink_with_force_flag (0.00s)
+--- PASS: TestAddSink (0.80s)
+    --- PASS: TestAddSink/missing_tool_flag (0.26s)
+    --- PASS: TestAddSink/missing_name (0.01s)
+    --- PASS: TestAddSink/missing_path (0.01s)
+    --- PASS: TestAddSink/invalid_tool (0.01s)
+    --- PASS: TestAddSink/add_cursor_sink (0.01s)
+    --- PASS: TestAddSink/add_amazonq_sink (0.01s)
+    --- PASS: TestAddSink/add_copilot_sink (0.01s)
+    --- PASS: TestAddSink/add_markdown_sink (0.01s)
+    --- PASS: TestAddSink/add_sink_with_force_flag (0.01s)
 === RUN   TestCleanSinks
 === RUN   TestCleanSinks/clean_sinks_without_manifest
 === RUN   TestCleanSinks/clean_sinks_with_empty_manifest
 === RUN   TestCleanSinks/clean_sinks_with_configured_sinks
 === RUN   TestCleanSinks/nuke_sinks
 === RUN   TestCleanSinks/clean_sinks_with_unknown_flag
---- PASS: TestCleanSinks (0.46s)
-    --- PASS: TestCleanSinks/clean_sinks_without_manifest (0.00s)
-    --- PASS: TestCleanSinks/clean_sinks_with_empty_manifest (0.00s)
-    --- PASS: TestCleanSinks/clean_sinks_with_configured_sinks (0.00s)
-    --- PASS: TestCleanSinks/nuke_sinks (0.00s)
+--- PASS: TestCleanSinks (0.67s)
+    --- PASS: TestCleanSinks/clean_sinks_without_manifest (0.20s)
+    --- PASS: TestCleanSinks/clean_sinks_with_empty_manifest (0.01s)
+    --- PASS: TestCleanSinks/clean_sinks_with_configured_sinks (0.01s)
+    --- PASS: TestCleanSinks/nuke_sinks (0.01s)
     --- PASS: TestCleanSinks/clean_sinks_with_unknown_flag (0.00s)
 === RUN   TestCleanCache
 === RUN   TestCleanCache/no_subcommand
@@ -91,12 +90,12 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestCleanCache/cache_with_max-age_missing_value
 === RUN   TestCleanCache/cache_with_invalid_duration
 === RUN   TestCleanCache/cache_with_unknown_flag
---- PASS: TestCleanCache (0.49s)
-    --- PASS: TestCleanCache/no_subcommand (0.00s)
+--- PASS: TestCleanCache (0.70s)
+    --- PASS: TestCleanCache/no_subcommand (0.20s)
     --- PASS: TestCleanCache/unknown_subcommand (0.00s)
-    --- PASS: TestCleanCache/cache_with_default_max-age (0.00s)
-    --- PASS: TestCleanCache/cache_with_custom_max-age (0.00s)
-    --- PASS: TestCleanCache/cache_with_nuke (0.03s)
+    --- PASS: TestCleanCache/cache_with_default_max-age (0.01s)
+    --- PASS: TestCleanCache/cache_with_custom_max-age (0.01s)
+    --- PASS: TestCleanCache/cache_with_nuke (0.05s)
     --- PASS: TestCleanCache/cache_with_both_max-age_and_nuke (0.00s)
     --- PASS: TestCleanCache/cache_with_max-age_missing_value (0.00s)
     --- PASS: TestCleanCache/cache_with_invalid_duration (0.00s)
@@ -122,8 +121,8 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestCompile/namespace_flag_without_value
 === RUN   TestCompile/include_flag_without_value
 === RUN   TestCompile/exclude_flag_without_value
---- PASS: TestCompile (0.51s)
-    --- PASS: TestCompile/no_arguments (0.00s)
+--- PASS: TestCompile (0.71s)
+    --- PASS: TestCompile/no_arguments (0.20s)
     --- PASS: TestCompile/missing_output_path_without_validate-only (0.00s)
     --- PASS: TestCompile/validate-only_without_output_path (0.00s)
     --- PASS: TestCompile/with_output_path (0.00s)
@@ -144,15 +143,15 @@ Run go test -v -race -coverprofile=coverage.out ./...
     --- PASS: TestCompile/include_flag_without_value (0.00s)
     --- PASS: TestCompile/exclude_flag_without_value (0.00s)
 === RUN   TestCompileHelp
---- PASS: TestCompileHelp (0.46s)
+--- PASS: TestCompileHelp (0.61s)
 === RUN   TestInstallAll
---- PASS: TestInstallAll (0.45s)
+--- PASS: TestInstallAll (0.62s)
 === RUN   TestInstallAllNoManifest
---- PASS: TestInstallAllNoManifest (0.45s)
+--- PASS: TestInstallAllNoManifest (0.61s)
 === RUN   TestUninstall
---- PASS: TestUninstall (0.45s)
+--- PASS: TestUninstall (0.62s)
 === RUN   TestUninstallNoManifest
---- PASS: TestUninstallNoManifest (0.44s)
+--- PASS: TestUninstallNoManifest (0.62s)
 === RUN   TestInstallPromptset
 === RUN   TestInstallPromptset/missing_package_spec
 === RUN   TestInstallPromptset/missing_sinks
@@ -160,13 +159,13 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestInstallPromptset/empty_registry_name
 === RUN   TestInstallPromptset/empty_package_name
 === RUN   TestInstallPromptset/empty_version_after_@
---- PASS: TestInstallPromptset (0.45s)
-    --- PASS: TestInstallPromptset/missing_package_spec (0.00s)
-    --- PASS: TestInstallPromptset/missing_sinks (0.00s)
-    --- PASS: TestInstallPromptset/invalid_package_spec_format (0.00s)
-    --- PASS: TestInstallPromptset/empty_registry_name (0.00s)
-    --- PASS: TestInstallPromptset/empty_package_name (0.00s)
-    --- PASS: TestInstallPromptset/empty_version_after_@ (0.00s)
+--- PASS: TestInstallPromptset (0.66s)
+    --- PASS: TestInstallPromptset/missing_package_spec (0.22s)
+    --- PASS: TestInstallPromptset/missing_sinks (0.01s)
+    --- PASS: TestInstallPromptset/invalid_package_spec_format (0.01s)
+    --- PASS: TestInstallPromptset/empty_registry_name (0.01s)
+    --- PASS: TestInstallPromptset/empty_package_name (0.01s)
+    --- PASS: TestInstallPromptset/empty_version_after_@ (0.01s)
 === RUN   TestInstallRuleset
 === RUN   TestInstallRuleset/missing_package_spec
 === RUN   TestInstallRuleset/missing_sinks
@@ -174,55 +173,55 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestInstallRuleset/empty_registry_name
 === RUN   TestInstallRuleset/empty_package_name
 === RUN   TestInstallRuleset/empty_version_after_@
---- PASS: TestInstallRuleset (0.49s)
-    --- PASS: TestInstallRuleset/missing_package_spec (0.00s)
-    --- PASS: TestInstallRuleset/missing_sinks (0.00s)
-    --- PASS: TestInstallRuleset/invalid_package_spec_format (0.00s)
-    --- PASS: TestInstallRuleset/empty_registry_name (0.00s)
-    --- PASS: TestInstallRuleset/empty_package_name (0.00s)
-    --- PASS: TestInstallRuleset/empty_version_after_@ (0.00s)
+--- PASS: TestInstallRuleset (0.66s)
+    --- PASS: TestInstallRuleset/missing_package_spec (0.22s)
+    --- PASS: TestInstallRuleset/missing_sinks (0.01s)
+    --- PASS: TestInstallRuleset/invalid_package_spec_format (0.01s)
+    --- PASS: TestInstallRuleset/empty_registry_name (0.01s)
+    --- PASS: TestInstallRuleset/empty_package_name (0.01s)
+    --- PASS: TestInstallRuleset/empty_version_after_@ (0.01s)
 === RUN   TestListAll
 === RUN   TestListAll/empty_manifest
 === RUN   TestListAll/with_registries_and_sinks
 === RUN   TestListAll/with_dependencies
---- PASS: TestListAll (0.48s)
-    --- PASS: TestListAll/empty_manifest (0.00s)
-    --- PASS: TestListAll/with_registries_and_sinks (0.00s)
-    --- PASS: TestListAll/with_dependencies (0.00s)
+--- PASS: TestListAll (0.63s)
+    --- PASS: TestListAll/empty_manifest (0.22s)
+    --- PASS: TestListAll/with_registries_and_sinks (0.01s)
+    --- PASS: TestListAll/with_dependencies (0.01s)
 === RUN   TestInfoAll
 === RUN   TestInfoAll/empty_manifest
 === RUN   TestInfoAll/with_all_entities
---- PASS: TestInfoAll (0.46s)
-    --- PASS: TestInfoAll/empty_manifest (0.00s)
-    --- PASS: TestInfoAll/with_all_entities (0.00s)
+--- PASS: TestInfoAll (0.74s)
+    --- PASS: TestInfoAll/empty_manifest (0.22s)
+    --- PASS: TestInfoAll/with_all_entities (0.01s)
 === RUN   TestListSink
 === RUN   TestListSink/list_sinks_-_multiple_sinks
 === RUN   TestListSink/list_sinks_-_single_sink
 === RUN   TestListSink/list_sinks_-_no_sinks
---- PASS: TestListSink (0.48s)
-    --- PASS: TestListSink/list_sinks_-_multiple_sinks (0.00s)
-    --- PASS: TestListSink/list_sinks_-_single_sink (0.00s)
-    --- PASS: TestListSink/list_sinks_-_no_sinks (0.00s)
+--- PASS: TestListSink (0.65s)
+    --- PASS: TestListSink/list_sinks_-_multiple_sinks (0.22s)
+    --- PASS: TestListSink/list_sinks_-_single_sink (0.01s)
+    --- PASS: TestListSink/list_sinks_-_no_sinks (0.01s)
 === RUN   TestInfoSink
 === RUN   TestInfoSink/info_sink_-_specific_sink
 === RUN   TestInfoSink/info_sink_-_multiple_sinks
 === RUN   TestInfoSink/info_sink_-_all_sinks_(no_args)
 === RUN   TestInfoSink/info_sink_-_no_sinks
 === RUN   TestInfoSink/info_sink_-_nonexistent_sink
---- PASS: TestInfoSink (0.49s)
-    --- PASS: TestInfoSink/info_sink_-_specific_sink (0.00s)
-    --- PASS: TestInfoSink/info_sink_-_multiple_sinks (0.00s)
-    --- PASS: TestInfoSink/info_sink_-_all_sinks_(no_args) (0.00s)
-    --- PASS: TestInfoSink/info_sink_-_no_sinks (0.00s)
-    --- PASS: TestInfoSink/info_sink_-_nonexistent_sink (0.00s)
+--- PASS: TestInfoSink (0.64s)
+    --- PASS: TestInfoSink/info_sink_-_specific_sink (0.21s)
+    --- PASS: TestInfoSink/info_sink_-_multiple_sinks (0.01s)
+    --- PASS: TestInfoSink/info_sink_-_all_sinks_(no_args) (0.01s)
+    --- PASS: TestInfoSink/info_sink_-_no_sinks (0.01s)
+    --- PASS: TestInfoSink/info_sink_-_nonexistent_sink (0.01s)
 === RUN   TestListRegistry
 === RUN   TestListRegistry/no_registries
 === RUN   TestListRegistry/single_registry
 === RUN   TestListRegistry/multiple_registries
---- PASS: TestListRegistry (0.46s)
-    --- PASS: TestListRegistry/no_registries (0.00s)
-    --- PASS: TestListRegistry/single_registry (0.00s)
-    --- PASS: TestListRegistry/multiple_registries (0.00s)
+--- PASS: TestListRegistry (0.63s)
+    --- PASS: TestListRegistry/no_registries (0.21s)
+    --- PASS: TestListRegistry/single_registry (0.01s)
+    --- PASS: TestListRegistry/multiple_registries (0.01s)
 === RUN   TestInfoRegistry
 === RUN   TestInfoRegistry/no_registries
 === RUN   TestInfoRegistry/git_registry_info
@@ -230,13 +229,13 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestInfoRegistry/cloudsmith_registry_info
 === RUN   TestInfoRegistry/all_registries_info
 === RUN   TestInfoRegistry/multiple_specific_registries
---- PASS: TestInfoRegistry (0.46s)
-    --- PASS: TestInfoRegistry/no_registries (0.00s)
-    --- PASS: TestInfoRegistry/git_registry_info (0.00s)
-    --- PASS: TestInfoRegistry/gitlab_registry_info (0.00s)
-    --- PASS: TestInfoRegistry/cloudsmith_registry_info (0.00s)
-    --- PASS: TestInfoRegistry/all_registries_info (0.00s)
-    --- PASS: TestInfoRegistry/multiple_specific_registries (0.00s)
+--- PASS: TestInfoRegistry (0.66s)
+    --- PASS: TestInfoRegistry/no_registries (0.22s)
+    --- PASS: TestInfoRegistry/git_registry_info (0.01s)
+    --- PASS: TestInfoRegistry/gitlab_registry_info (0.01s)
+    --- PASS: TestInfoRegistry/cloudsmith_registry_info (0.01s)
+    --- PASS: TestInfoRegistry/all_registries_info (0.01s)
+    --- PASS: TestInfoRegistry/multiple_specific_registries (0.01s)
 === RUN   TestPrintVersion
 --- PASS: TestPrintVersion (0.00s)
 === RUN   TestPrintHelp
@@ -254,21 +253,21 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestOutdated/list_output_format
 === RUN   TestOutdated/invalid_output_format
 === RUN   TestOutdated/missing_output_value
---- PASS: TestOutdated (0.47s)
-    --- PASS: TestOutdated/no_outdated_packages (0.00s)
-    --- PASS: TestOutdated/table_output_format_(default) (0.00s)
-    --- PASS: TestOutdated/json_output_format (0.00s)
-    --- PASS: TestOutdated/list_output_format (0.00s)
-    --- PASS: TestOutdated/invalid_output_format (0.00s)
-    --- PASS: TestOutdated/missing_output_value (0.00s)
+--- PASS: TestOutdated (0.65s)
+    --- PASS: TestOutdated/no_outdated_packages (0.21s)
+    --- PASS: TestOutdated/table_output_format_(default) (0.01s)
+    --- PASS: TestOutdated/json_output_format (0.01s)
+    --- PASS: TestOutdated/list_output_format (0.01s)
+    --- PASS: TestOutdated/invalid_output_format (0.01s)
+    --- PASS: TestOutdated/missing_output_value (0.01s)
 === RUN   TestRemoveSink
 === RUN   TestRemoveSink/remove_existing_sink
 === RUN   TestRemoveSink/remove_non-existent_sink
 === RUN   TestRemoveSink/missing_sink_name
---- PASS: TestRemoveSink (0.46s)
-    --- PASS: TestRemoveSink/remove_existing_sink (0.00s)
-    --- PASS: TestRemoveSink/remove_non-existent_sink (0.00s)
-    --- PASS: TestRemoveSink/missing_sink_name (0.00s)
+--- PASS: TestRemoveSink (0.63s)
+    --- PASS: TestRemoveSink/remove_existing_sink (0.22s)
+    --- PASS: TestRemoveSink/remove_non-existent_sink (0.01s)
+    --- PASS: TestRemoveSink/missing_sink_name (0.01s)
 === RUN   TestSetSink
 === RUN   TestSetSink/set_sink_tool
 === RUN   TestSetSink/set_sink_directory
@@ -276,33 +275,33 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestSetSink/set_unknown_key
 === RUN   TestSetSink/set_non-existent_sink
 === RUN   TestSetSink/missing_arguments
---- PASS: TestSetSink (0.50s)
-    --- PASS: TestSetSink/set_sink_tool (0.00s)
-    --- PASS: TestSetSink/set_sink_directory (0.00s)
-    --- PASS: TestSetSink/set_invalid_tool (0.00s)
-    --- PASS: TestSetSink/set_unknown_key (0.00s)
-    --- PASS: TestSetSink/set_non-existent_sink (0.00s)
-    --- PASS: TestSetSink/missing_arguments (0.00s)
+--- PASS: TestSetSink (0.65s)
+    --- PASS: TestSetSink/set_sink_tool (0.22s)
+    --- PASS: TestSetSink/set_sink_directory (0.01s)
+    --- PASS: TestSetSink/set_invalid_tool (0.01s)
+    --- PASS: TestSetSink/set_unknown_key (0.01s)
+    --- PASS: TestSetSink/set_non-existent_sink (0.01s)
+    --- PASS: TestSetSink/missing_arguments (0.01s)
 === RUN   TestRemoveRegistry
 === RUN   TestRemoveRegistry/remove_existing_registry
 === RUN   TestRemoveRegistry/remove_non-existent_registry
 === RUN   TestRemoveRegistry/missing_registry_name
---- PASS: TestRemoveRegistry (0.45s)
-    --- PASS: TestRemoveRegistry/remove_existing_registry (0.00s)
-    --- PASS: TestRemoveRegistry/remove_non-existent_registry (0.00s)
-    --- PASS: TestRemoveRegistry/missing_registry_name (0.00s)
+--- PASS: TestRemoveRegistry (0.62s)
+    --- PASS: TestRemoveRegistry/remove_existing_registry (0.22s)
+    --- PASS: TestRemoveRegistry/remove_non-existent_registry (0.01s)
+    --- PASS: TestRemoveRegistry/missing_registry_name (0.01s)
 === RUN   TestSetRegistry
 === RUN   TestSetRegistry/set_registry_url
 === RUN   TestSetRegistry/set_registry_name
 === RUN   TestSetRegistry/set_non-existent_registry
 === RUN   TestSetRegistry/set_invalid_key
 === RUN   TestSetRegistry/missing_arguments
---- PASS: TestSetRegistry (0.47s)
-    --- PASS: TestSetRegistry/set_registry_url (0.00s)
-    --- PASS: TestSetRegistry/set_registry_name (0.00s)
-    --- PASS: TestSetRegistry/set_non-existent_registry (0.00s)
-    --- PASS: TestSetRegistry/set_invalid_key (0.00s)
-    --- PASS: TestSetRegistry/missing_arguments (0.00s)
+--- PASS: TestSetRegistry (0.65s)
+    --- PASS: TestSetRegistry/set_registry_url (0.22s)
+    --- PASS: TestSetRegistry/set_registry_name (0.01s)
+    --- PASS: TestSetRegistry/set_non-existent_registry (0.01s)
+    --- PASS: TestSetRegistry/set_invalid_key (0.01s)
+    --- PASS: TestSetRegistry/missing_arguments (0.01s)
 === RUN   TestSetRuleset
 === RUN   TestSetRuleset/missing_arguments
 === RUN   TestSetRuleset/invalid_package_spec
@@ -313,16 +312,16 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestSetRuleset/set_include
 === RUN   TestSetRuleset/set_exclude
 === RUN   TestSetRuleset/unknown_key
---- PASS: TestSetRuleset (0.49s)
-    --- PASS: TestSetRuleset/missing_arguments (0.00s)
-    --- PASS: TestSetRuleset/invalid_package_spec (0.00s)
-    --- PASS: TestSetRuleset/set_version (0.00s)
-    --- PASS: TestSetRuleset/set_priority (0.00s)
-    --- PASS: TestSetRuleset/set_priority_invalid (0.00s)
-    --- PASS: TestSetRuleset/set_sinks (0.00s)
-    --- PASS: TestSetRuleset/set_include (0.00s)
-    --- PASS: TestSetRuleset/set_exclude (0.00s)
-    --- PASS: TestSetRuleset/unknown_key (0.00s)
+--- PASS: TestSetRuleset (0.66s)
+    --- PASS: TestSetRuleset/missing_arguments (0.22s)
+    --- PASS: TestSetRuleset/invalid_package_spec (0.01s)
+    --- PASS: TestSetRuleset/set_version (0.01s)
+    --- PASS: TestSetRuleset/set_priority (0.01s)
+    --- PASS: TestSetRuleset/set_priority_invalid (0.01s)
+    --- PASS: TestSetRuleset/set_sinks (0.01s)
+    --- PASS: TestSetRuleset/set_include (0.01s)
+    --- PASS: TestSetRuleset/set_exclude (0.01s)
+    --- PASS: TestSetRuleset/unknown_key (0.01s)
 === RUN   TestSetPromptset
 === RUN   TestSetPromptset/missing_arguments
 === RUN   TestSetPromptset/invalid_package_spec
@@ -331,28 +330,27 @@ Run go test -v -race -coverprofile=coverage.out ./...
 === RUN   TestSetPromptset/set_include
 === RUN   TestSetPromptset/set_exclude
 === RUN   TestSetPromptset/unknown_key
---- PASS: TestSetPromptset (0.48s)
-    --- PASS: TestSetPromptset/missing_arguments (0.00s)
-    --- PASS: TestSetPromptset/invalid_package_spec (0.00s)
-    --- PASS: TestSetPromptset/set_version (0.00s)
-    --- PASS: TestSetPromptset/set_sinks (0.00s)
-    --- PASS: TestSetPromptset/set_include (0.00s)
-    --- PASS: TestSetPromptset/set_exclude (0.00s)
-    --- PASS: TestSetPromptset/unknown_key (0.00s)
+--- PASS: TestSetPromptset (0.64s)
+    --- PASS: TestSetPromptset/missing_arguments (0.21s)
+    --- PASS: TestSetPromptset/invalid_package_spec (0.01s)
+    --- PASS: TestSetPromptset/set_version (0.01s)
+    --- PASS: TestSetPromptset/set_sinks (0.01s)
+    --- PASS: TestSetPromptset/set_include (0.01s)
+    --- PASS: TestSetPromptset/set_exclude (0.01s)
+    --- PASS: TestSetPromptset/unknown_key (0.01s)
 === RUN   TestUpdateCommand
 === RUN   TestUpdateCommand/update_with_no_manifest
 === RUN   TestUpdateCommand/update_with_empty_manifest
---- PASS: TestUpdateCommand (0.44s)
-    --- PASS: TestUpdateCommand/update_with_no_manifest (0.00s)
-    --- PASS: TestUpdateCommand/update_with_empty_manifest (0.00s)
+--- PASS: TestUpdateCommand (0.62s)
+    --- PASS: TestUpdateCommand/update_with_no_manifest (0.22s)
+    --- PASS: TestUpdateCommand/update_with_empty_manifest (0.01s)
 === RUN   TestUpgrade_Success
     upgrade_test.go:52: Output: All packages upgraded successfully
---- PASS: TestUpgrade_Success (0.43s)
+--- PASS: TestUpgrade_Success (0.54s)
 === RUN   TestUpgrade_MissingLockfile
---- PASS: TestUpgrade_MissingLockfile (0.08s)
+--- PASS: TestUpgrade_MissingLockfile (0.30s)
 PASS
-coverage: 2.9% of statements
-ok  	github.com/jomadu/ai-resource-manager/cmd/arm	30.577s	coverage: 2.9% of statements
+ok  	github.com/jomadu/ai-resource-manager/cmd/arm	21.350s
 === RUN   TestAmazonQRuleGenerator_GenerateRule
 --- PASS: TestAmazonQRuleGenerator_GenerateRule (0.00s)
 === RUN   TestAmazonQRuleGenerator_GenerateRule_NotFound
@@ -500,8 +498,7 @@ ok  	github.com/jomadu/ai-resource-manager/cmd/arm	30.577s	coverage: 2.9% of sta
 === RUN   TestMarkdownPromptFilenameGenerator_GeneratePromptFilename_EmptyInputs
 --- PASS: TestMarkdownPromptFilenameGenerator_GeneratePromptFilename_EmptyInputs (0.00s)
 PASS
-coverage: 95.8% of statements
-ok  	github.com/jomadu/ai-resource-manager/internal/arm/compiler	1.031s	coverage: 95.8% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/compiler	1.892s
 === RUN   TestFileManager_GetAllSections
 === RUN   TestFileManager_GetAllSections/success_-_project_file_only
 === RUN   TestFileManager_GetAllSections/success_-_user_home_file_only
@@ -510,7 +507,7 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/compiler	1.031s	coverage
 === RUN   TestFileManager_GetAllSections/success_-_no_files_exist,_returns_empty_map
 === RUN   TestFileManager_GetAllSections/success_-_environment_variable_expansion
 === RUN   TestFileManager_GetAllSections/success_-_missing_env_var_expands_to_empty
---- PASS: TestFileManager_GetAllSections (0.01s)
+--- PASS: TestFileManager_GetAllSections (0.00s)
     --- PASS: TestFileManager_GetAllSections/success_-_project_file_only (0.00s)
     --- PASS: TestFileManager_GetAllSections/success_-_user_home_file_only (0.00s)
     --- PASS: TestFileManager_GetAllSections/success_-_project_overrides_user_home_(same_section) (0.00s)
@@ -526,7 +523,7 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/compiler	1.031s	coverage
 === RUN   TestFileManager_GetSection/success_-_environment_variable_expansion
 === RUN   TestFileManager_GetSection/error_-_section_not_found_in_either_file
 === RUN   TestFileManager_GetSection/error_-_no_files_exist
---- PASS: TestFileManager_GetSection (0.01s)
+--- PASS: TestFileManager_GetSection (0.00s)
     --- PASS: TestFileManager_GetSection/success_-_section_in_project_file (0.00s)
     --- PASS: TestFileManager_GetSection/success_-_section_in_user_home_file (0.00s)
     --- PASS: TestFileManager_GetSection/success_-_project_overrides_user_home_(same_section) (0.00s)
@@ -553,8 +550,7 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/compiler	1.031s	coverage
 === RUN   TestFileManager_NewFileManagerWithPaths
 --- PASS: TestFileManager_NewFileManagerWithPaths (0.00s)
 PASS
-coverage: 91.4% of statements
-ok  	github.com/jomadu/ai-resource-manager/internal/arm/config	1.034s	coverage: 91.4% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/config	2.352s
 === RUN   TestIsArchive
 === RUN   TestIsArchive/tar.gz_file
 === RUN   TestIsArchive/zip_file
@@ -593,23 +589,23 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/config	1.034s	coverage: 
 === RUN   TestExtractTarGz/file_with_special_characters
 === RUN   TestExtractTarGz/large_file
 === RUN   TestExtractTarGz/many_files
---- PASS: TestExtractTarGz (0.33s)
+--- PASS: TestExtractTarGz (0.10s)
     --- PASS: TestExtractTarGz/single_file (0.00s)
     --- PASS: TestExtractTarGz/multiple_files (0.00s)
-    --- PASS: TestExtractTarGz/nested_directories (0.01s)
+    --- PASS: TestExtractTarGz/nested_directories (0.00s)
     --- PASS: TestExtractTarGz/empty_archive (0.00s)
     --- PASS: TestExtractTarGz/empty_file (0.00s)
     --- PASS: TestExtractTarGz/file_with_spaces_in_name (0.00s)
     --- PASS: TestExtractTarGz/file_with_special_characters (0.00s)
-    --- PASS: TestExtractTarGz/large_file (0.25s)
-    --- PASS: TestExtractTarGz/many_files (0.05s)
+    --- PASS: TestExtractTarGz/large_file (0.07s)
+    --- PASS: TestExtractTarGz/many_files (0.01s)
 === RUN   TestExtractTarGzSecurity
 === RUN   TestExtractTarGzSecurity/directory_traversal_with_..
 === RUN   TestExtractTarGzSecurity/absolute_path
 === RUN   TestExtractTarGzSecurity/dot_file
---- PASS: TestExtractTarGzSecurity (0.02s)
-    --- PASS: TestExtractTarGzSecurity/directory_traversal_with_.. (0.01s)
-    --- PASS: TestExtractTarGzSecurity/absolute_path (0.01s)
+--- PASS: TestExtractTarGzSecurity (0.00s)
+    --- PASS: TestExtractTarGzSecurity/directory_traversal_with_.. (0.00s)
+    --- PASS: TestExtractTarGzSecurity/absolute_path (0.00s)
     --- PASS: TestExtractTarGzSecurity/dot_file (0.00s)
 === RUN   TestExtractTarGzErrors
 === RUN   TestExtractTarGzErrors/invalid_gzip
@@ -625,18 +621,18 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/config	1.034s	coverage: 
 === RUN   TestExtractZip/empty_archive
 === RUN   TestExtractZip/empty_file
 === RUN   TestExtractZip/large_file
---- PASS: TestExtractZip (0.29s)
+--- PASS: TestExtractZip (0.08s)
     --- PASS: TestExtractZip/single_file (0.00s)
     --- PASS: TestExtractZip/multiple_files (0.00s)
     --- PASS: TestExtractZip/empty_archive (0.00s)
     --- PASS: TestExtractZip/empty_file (0.00s)
-    --- PASS: TestExtractZip/large_file (0.27s)
+    --- PASS: TestExtractZip/large_file (0.08s)
 === RUN   TestExtractZipSecurity
 === RUN   TestExtractZipSecurity/directory_traversal
 === RUN   TestExtractZipSecurity/absolute_path
---- PASS: TestExtractZipSecurity (0.02s)
-    --- PASS: TestExtractZipSecurity/directory_traversal (0.01s)
-    --- PASS: TestExtractZipSecurity/absolute_path (0.01s)
+--- PASS: TestExtractZipSecurity (0.00s)
+    --- PASS: TestExtractZipSecurity/directory_traversal (0.00s)
+    --- PASS: TestExtractZipSecurity/absolute_path (0.00s)
 === RUN   TestExtractZipErrors
 === RUN   TestExtractZipErrors/invalid_zip
 === RUN   TestExtractZipErrors/empty_content
@@ -653,14 +649,14 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/config	1.034s	coverage: 
 === RUN   TestExtractAndMerge/empty_input
 === RUN   TestExtractAndMerge/nil_input
 === RUN   TestExtractAndMerge/multiple_archives_with_same_file
---- PASS: TestExtractAndMerge (0.03s)
+--- PASS: TestExtractAndMerge (0.01s)
     --- PASS: TestExtractAndMerge/only_loose_files (0.00s)
-    --- PASS: TestExtractAndMerge/only_archives (0.01s)
+    --- PASS: TestExtractAndMerge/only_archives (0.00s)
     --- PASS: TestExtractAndMerge/mixed_loose_and_archives (0.00s)
     --- PASS: TestExtractAndMerge/archive_overrides_loose_file (0.00s)
     --- PASS: TestExtractAndMerge/empty_input (0.00s)
     --- PASS: TestExtractAndMerge/nil_input (0.00s)
-    --- PASS: TestExtractAndMerge/multiple_archives_with_same_file (0.01s)
+    --- PASS: TestExtractAndMerge/multiple_archives_with_same_file (0.00s)
 === RUN   TestExtractAndMergeOverrideBehavior
 --- PASS: TestExtractAndMergeOverrideBehavior (0.00s)
 === RUN   TestExtractAndMergeErrors
@@ -1022,8 +1018,7 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/config	1.034s	coverage: 
     --- PASS: TestResolveVersion_Extreme/only_non-semantic_versions (0.00s)
     --- PASS: TestResolveVersion_Extreme/constraint_older_than_all_available (0.00s)
 PASS
-coverage: 81.8% of statements
-ok  	github.com/jomadu/ai-resource-manager/internal/arm/core	1.729s	coverage: 81.8% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/core	1.804s
 === RUN   TestIsRulesetFile
 === RUN   TestIsRulesetFile/valid_ruleset_yml
 === RUN   TestIsRulesetFile/valid_ruleset_yaml
@@ -1069,8 +1064,7 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/core	1.729s	coverage: 81
     --- PASS: TestIsResourceFile/non-yaml_file (0.00s)
     --- PASS: TestIsResourceFile/invalid_yaml (0.00s)
 PASS
-coverage: 100.0% of statements
-ok  	github.com/jomadu/ai-resource-manager/internal/arm/filetype	1.023s	coverage: 100.0% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/filetype	1.413s
 === RUN   TestFileManager_GetAllRegistriesConfig
 --- PASS: TestFileManager_GetAllRegistriesConfig (0.00s)
 === RUN   TestFileManager_RemoveRegistryConfig
@@ -1110,8 +1104,7 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/filetype	1.023s	coverage
 === RUN   TestFileManager_UpsertCloudsmithRegistryConfig
 --- PASS: TestFileManager_UpsertCloudsmithRegistryConfig (0.00s)
 PASS
-coverage: 60.9% of statements
-ok  	github.com/jomadu/ai-resource-manager/internal/arm/manifest	1.029s	coverage: 60.9% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/manifest	2.222s
 === RUN   TestFileManager_UpsertDependencyLock
 === RUN   TestFileManager_UpsertDependencyLock/create_new_lockfile
 === RUN   TestFileManager_UpsertDependencyLock/update_existing_dependency
@@ -1135,8 +1128,7 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/manifest	1.029s	coverage
 === RUN   TestFileManager_UpdateRegistryName
 --- PASS: TestFileManager_UpdateRegistryName (0.00s)
 PASS
-coverage: 84.5% of statements
-ok  	github.com/jomadu/ai-resource-manager/internal/arm/packagelockfile	1.043s	coverage: 84.5% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/packagelockfile	1.750s
 === RUN   TestParseRuleset
 === RUN   TestParseRuleset/valid_ruleset
 === RUN   TestParseRuleset/invalid_yaml
@@ -1162,8 +1154,7 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/packagelockfile	1.043s	c
     --- PASS: TestParsePromptset/missing_required_fields (0.00s)
     --- PASS: TestParsePromptset/empty_prompts (0.00s)
 PASS
-coverage: 100.0% of statements
-ok  	github.com/jomadu/ai-resource-manager/internal/arm/parser	1.031s	coverage: 100.0% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/parser	2.065s
 === RUN   TestCloudsmithRegistry_loadToken
 === RUN   TestCloudsmithRegistry_loadToken/loads_token_from_config
 === RUN   TestCloudsmithRegistry_loadToken/returns_error_when_token_not_found
@@ -1177,13 +1168,13 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/parser	1.031s	coverage: 
 === RUN   TestCloudsmithClient_makeRequest
 === RUN   TestCloudsmithClient_makeRequest/sets_authorization_header_with_token
 === RUN   TestCloudsmithClient_makeRequest/no_authorization_header_when_no_token
---- PASS: TestCloudsmithClient_makeRequest (0.01s)
-    --- PASS: TestCloudsmithClient_makeRequest/sets_authorization_header_with_token (0.01s)
+--- PASS: TestCloudsmithClient_makeRequest (0.00s)
+    --- PASS: TestCloudsmithClient_makeRequest/sets_authorization_header_with_token (0.00s)
     --- PASS: TestCloudsmithClient_makeRequest/no_authorization_header_when_no_token (0.00s)
 === RUN   TestCloudsmithRegistry_ListPackages
 --- PASS: TestCloudsmithRegistry_ListPackages (0.00s)
 === RUN   TestCloudsmithRegistry_ListPackages_Pagination
---- PASS: TestCloudsmithRegistry_ListPackages_Pagination (0.01s)
+--- PASS: TestCloudsmithRegistry_ListPackages_Pagination (0.00s)
 === RUN   TestCloudsmithRegistry_ListPackageVersions
 --- PASS: TestCloudsmithRegistry_ListPackageVersions (0.00s)
 === RUN   TestCloudsmithRegistry_ListPackageVersions_Pagination
@@ -1204,14 +1195,14 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/parser	1.031s	coverage: 
 === RUN   TestCloudsmithRegistry_ResolveVersion/resolves_tilde_constraint
 === RUN   TestCloudsmithRegistry_ResolveVersion/resolves_latest
 === RUN   TestCloudsmithRegistry_ResolveVersion/returns_error_for_no_match
---- PASS: TestCloudsmithRegistry_ResolveVersion (0.02s)
+--- PASS: TestCloudsmithRegistry_ResolveVersion (0.00s)
     --- PASS: TestCloudsmithRegistry_ResolveVersion/resolves_exact_version (0.00s)
     --- PASS: TestCloudsmithRegistry_ResolveVersion/resolves_caret_constraint (0.00s)
     --- PASS: TestCloudsmithRegistry_ResolveVersion/resolves_tilde_constraint (0.00s)
     --- PASS: TestCloudsmithRegistry_ResolveVersion/resolves_latest (0.00s)
     --- PASS: TestCloudsmithRegistry_ResolveVersion/returns_error_for_no_match (0.00s)
 === RUN   TestCloudsmithRegistry_GetPackage
---- PASS: TestCloudsmithRegistry_GetPackage (0.01s)
+--- PASS: TestCloudsmithRegistry_GetPackage (0.00s)
 === RUN   TestCloudsmithRegistry_GetPackage_WithIncludeExclude
 --- PASS: TestCloudsmithRegistry_GetPackage_WithIncludeExclude (0.00s)
 === RUN   TestCloudsmithRegistry_GetPackage_Cache
@@ -1225,36 +1216,25 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/parser	1.031s	coverage: 
 === RUN   TestDefaultFactory_UnsupportedType
 --- PASS: TestDefaultFactory_UnsupportedType (0.00s)
 === RUN   TestGitRegistry_ListPackageVersions
---- PASS: TestGitRegistry_ListPackageVersions (0.19s)
+--- PASS: TestGitRegistry_ListPackageVersions (0.22s)
 === RUN   TestGitRegistry_GetPackage
 --- PASS: TestGitRegistry_GetPackage (0.23s)
 === RUN   TestGitRegistry_SemanticVersionTags
---- PASS: TestGitRegistry_SemanticVersionTags (0.15s)
+--- PASS: TestGitRegistry_SemanticVersionTags (0.22s)
 === RUN   TestGitRegistry_VersionWithoutVPrefix
---- PASS: TestGitRegistry_VersionWithoutVPrefix (0.14s)
+--- PASS: TestGitRegistry_VersionWithoutVPrefix (0.16s)
 === RUN   TestGitRegistry_PartialVersions
---- PASS: TestGitRegistry_PartialVersions (0.11s)
+--- PASS: TestGitRegistry_PartialVersions (0.15s)
 === RUN   TestGitRegistry_MixedVersionFormats
---- PASS: TestGitRegistry_MixedVersionFormats (0.12s)
+--- PASS: TestGitRegistry_MixedVersionFormats (0.19s)
 === RUN   TestGitRegistry_NonSemanticTags
---- PASS: TestGitRegistry_NonSemanticTags (0.13s)
+--- PASS: TestGitRegistry_NonSemanticTags (0.18s)
 === RUN   TestGitRegistry_BranchSupport
-    repo_test_helper.go:125: 
-        	Error Trace:	/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test_helper.go:125
-        	            				/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test_helper.go:80
-        	            				/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/registry/git_test.go:344
-        	Error:      	Received unexpected error:
-        	            	exit status 1
-        	Test:       	TestGitRegistry_BranchSupport
---- FAIL: TestGitRegistry_BranchSupport (0.09s)
+--- PASS: TestGitRegistry_BranchSupport (0.23s)
 === RUN   TestGitRegistry_BranchNotFound
-    git_test.go:427: expected at least 1 version, got 0
---- FAIL: TestGitRegistry_BranchNotFound (0.14s)
+--- PASS: TestGitRegistry_BranchNotFound (0.16s)
 === RUN   TestGitRegistry_VersionPriority
-    git_test.go:491: expected at least 3 versions (2 semantic tags + 1 branch), got 2
-    git_test.go:493:   version[0]: v1.0.0 (Major:1 Minor:0 Patch:0)
-    git_test.go:493:   version[1]: v2.0.0 (Major:2 Minor:0 Patch:0)
---- FAIL: TestGitRegistry_VersionPriority (0.77s)
+--- PASS: TestGitRegistry_VersionPriority (0.24s)
 === RUN   TestNormalizePatterns
 === RUN   TestNormalizePatterns/empty_slice
 === RUN   TestNormalizePatterns/nil_slice
@@ -1274,48 +1254,47 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/parser	1.031s	coverage: 
     --- PASS: TestNormalizePatterns/mixed_separators_and_whitespace (0.00s)
     --- PASS: TestNormalizePatterns/duplicates_preserved (0.00s)
 === RUN   TestGitRegistry_CacheKeyNormalization
---- PASS: TestGitRegistry_CacheKeyNormalization (0.67s)
+--- PASS: TestGitRegistry_CacheKeyNormalization (0.22s)
 === RUN   TestGitRegistry_IncludePatterns
---- PASS: TestGitRegistry_IncludePatterns (0.21s)
+--- PASS: TestGitRegistry_IncludePatterns (0.24s)
 === RUN   TestGitRegistry_ExcludePatterns
---- PASS: TestGitRegistry_ExcludePatterns (0.18s)
+--- PASS: TestGitRegistry_ExcludePatterns (0.21s)
 === RUN   TestGitRegistry_CombinedPatterns
---- PASS: TestGitRegistry_CombinedPatterns (0.18s)
+--- PASS: TestGitRegistry_CombinedPatterns (0.27s)
 === RUN   TestGitRegistry_NoPatterns
---- PASS: TestGitRegistry_NoPatterns (0.18s)
+--- PASS: TestGitRegistry_NoPatterns (0.23s)
 === RUN   TestGitRegistry_MultipleFileTypes
---- PASS: TestGitRegistry_MultipleFileTypes (0.16s)
+--- PASS: TestGitRegistry_MultipleFileTypes (0.29s)
 === RUN   TestGitRegistry_NestedDirectories
---- PASS: TestGitRegistry_NestedDirectories (0.22s)
+--- PASS: TestGitRegistry_NestedDirectories (0.26s)
 === RUN   TestGitRegistry_ArchiveSupport
     git_test.go:960: TODO: implement
 --- SKIP: TestGitRegistry_ArchiveSupport (0.00s)
 === RUN   TestGitRegistry_EmptyRepository
 --- PASS: TestGitRegistry_EmptyRepository (0.08s)
 === RUN   TestGitRegistry_NoTags
---- PASS: TestGitRegistry_NoTags (0.17s)
+--- PASS: TestGitRegistry_NoTags (0.11s)
 === RUN   TestGitRegistry_NonExistentVersion
---- PASS: TestGitRegistry_NonExistentVersion (0.15s)
+--- PASS: TestGitRegistry_NonExistentVersion (0.14s)
 === RUN   TestGitLabRegistry_ListPackages
 --- PASS: TestGitLabRegistry_ListPackages (0.00s)
 === RUN   TestGitLabRegistry_ListPackageVersions
 --- PASS: TestGitLabRegistry_ListPackageVersions (0.00s)
 === RUN   TestGitLabRegistry_GetPackage
---- PASS: TestGitLabRegistry_GetPackage (0.01s)
+--- PASS: TestGitLabRegistry_GetPackage (0.00s)
 === RUN   TestGitLabRegistry_GroupPackages
 --- PASS: TestGitLabRegistry_GroupPackages (0.00s)
 === RUN   TestGitLabRegistry_IncludeExcludePatterns
---- PASS: TestGitLabRegistry_IncludeExcludePatterns (0.01s)
-FAIL
-coverage: 75.6% of statements
-FAIL	github.com/jomadu/ai-resource-manager/internal/arm/registry	4.471s
+--- PASS: TestGitLabRegistry_IncludeExcludePatterns (0.00s)
+PASS
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/registry	5.279s
 ?   	github.com/jomadu/ai-resource-manager/internal/arm/resource	[no test files]
 === RUN   TestCleanCacheByAge
---- PASS: TestCleanCacheByAge (0.02s)
+--- PASS: TestCleanCacheByAge (0.01s)
 === RUN   TestNukeCache
 --- PASS: TestNukeCache (0.00s)
 === RUN   TestCleanSinks
---- PASS: TestCleanSinks (0.01s)
+--- PASS: TestCleanSinks (0.00s)
 === RUN   TestNukeSinks
 --- PASS: TestNukeSinks (0.00s)
 === RUN   TestCleanCacheByTimeSinceLastAccess
@@ -1324,7 +1303,7 @@ FAIL	github.com/jomadu/ai-resource-manager/internal/arm/registry	4.471s
 === RUN   TestInstallPromptset/install_promptset_successfully
 === RUN   TestInstallPromptset/fail_when_registry_does_not_exist
 === RUN   TestInstallPromptset/fail_when_sink_does_not_exist
---- PASS: TestInstallPromptset (0.01s)
+--- PASS: TestInstallPromptset (0.00s)
     --- PASS: TestInstallPromptset/install_promptset_successfully (0.00s)
     --- PASS: TestInstallPromptset/fail_when_registry_does_not_exist (0.00s)
     --- PASS: TestInstallPromptset/fail_when_sink_does_not_exist (0.00s)
@@ -1337,7 +1316,7 @@ FAIL	github.com/jomadu/ai-resource-manager/internal/arm/registry	4.471s
     --- PASS: TestInstallRuleset/fail_when_registry_does_not_exist (0.00s)
     --- PASS: TestInstallRuleset/fail_when_sink_does_not_exist (0.00s)
 === RUN   TestInstallAll
---- PASS: TestInstallAll (0.01s)
+--- PASS: TestInstallAll (0.02s)
 === RUN   TestSetPromptsetVersion
 === RUN   TestSetPromptsetVersion/update_version_for_existing_promptset
 === RUN   TestSetPromptsetVersion/fail_when_promptset_does_not_exist
@@ -1383,7 +1362,7 @@ FAIL	github.com/jomadu/ai-resource-manager/internal/arm/registry	4.471s
 === RUN   TestAddGitRegistry/add_when_registry_exists_with_force
 === RUN   TestAddGitRegistry/load_fails
 === RUN   TestAddGitRegistry/save_fails
---- PASS: TestAddGitRegistry (0.01s)
+--- PASS: TestAddGitRegistry (0.00s)
     --- PASS: TestAddGitRegistry/add_new_git_registry (0.00s)
     --- PASS: TestAddGitRegistry/add_git_registry_with_no_branches (0.00s)
     --- PASS: TestAddGitRegistry/add_when_registry_exists_without_force (0.00s)
@@ -1500,8 +1479,8 @@ FAIL	github.com/jomadu/ai-resource-manager/internal/arm/registry	4.471s
     --- PASS: TestSetRulesetPriority/fail_when_ruleset_does_not_exist (0.00s)
 === RUN   TestSetRulesetInclude
 === RUN   TestSetRulesetInclude/update_include_patterns_for_existing_ruleset
---- PASS: TestSetRulesetInclude (0.01s)
-    --- PASS: TestSetRulesetInclude/update_include_patterns_for_existing_ruleset (0.01s)
+--- PASS: TestSetRulesetInclude (0.00s)
+    --- PASS: TestSetRulesetInclude/update_include_patterns_for_existing_ruleset (0.00s)
 === RUN   TestSetRulesetExclude
 === RUN   TestSetRulesetExclude/update_exclude_patterns_for_existing_ruleset
 --- PASS: TestSetRulesetExclude (0.00s)
@@ -1591,7 +1570,7 @@ FAIL	github.com/jomadu/ai-resource-manager/internal/arm/registry	4.471s
 === RUN   TestUninstallAll_MalformedDependency
 --- PASS: TestUninstallAll_MalformedDependency (0.00s)
 === RUN   TestUninstallAll_ManyDependencies
---- PASS: TestUninstallAll_ManyDependencies (0.15s)
+--- PASS: TestUninstallAll_ManyDependencies (0.18s)
 === RUN   TestUpdateAll_Normal
 --- PASS: TestUpdateAll_Normal (0.01s)
 === RUN   TestUpdateAll_AlreadyUpToDate
@@ -1601,20 +1580,19 @@ FAIL	github.com/jomadu/ai-resource-manager/internal/arm/registry	4.471s
 === RUN   TestUpdateAll_MissingLockfileEntry
 --- PASS: TestUpdateAll_MissingLockfileEntry (0.01s)
 === RUN   TestUpdateAll_MixedTypes
---- PASS: TestUpdateAll_MixedTypes (0.00s)
+--- PASS: TestUpdateAll_MixedTypes (0.01s)
 === RUN   TestUpdateAll_ManyDependencies
---- PASS: TestUpdateAll_ManyDependencies (0.74s)
+--- PASS: TestUpdateAll_ManyDependencies (0.36s)
 === RUN   TestUpgradeAll_Normal
---- PASS: TestUpgradeAll_Normal (0.05s)
+--- PASS: TestUpgradeAll_Normal (0.01s)
 === RUN   TestUpgradeAll_AlreadyLatest
 --- PASS: TestUpgradeAll_AlreadyLatest (0.00s)
 === RUN   TestUpgradeAll_EmptyDependencies
 --- PASS: TestUpgradeAll_EmptyDependencies (0.00s)
 === RUN   TestUpgradeAll_MissingLockfileEntry
---- PASS: TestUpgradeAll_MissingLockfileEntry (0.04s)
+--- PASS: TestUpgradeAll_MissingLockfileEntry (0.01s)
 PASS
-coverage: 54.0% of statements
-ok  	github.com/jomadu/ai-resource-manager/internal/arm/service	2.213s	coverage: 54.0% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/service	1.851s
 === RUN   TestNewManager
 === RUN   TestNewManager/cursor_creates_hierarchical
 === RUN   TestNewManager/amazonq_creates_hierarchical
@@ -1672,9 +1650,9 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/service	2.213s	coverage:
 === RUN   TestInstallPromptsetEmptyPackage
 --- PASS: TestInstallPromptsetEmptyPackage (0.00s)
 === RUN   TestInstallRulesetWithARMResource
---- PASS: TestInstallRulesetWithARMResource (0.01s)
+--- PASS: TestInstallRulesetWithARMResource (0.00s)
 === RUN   TestInstallPromptsetWithARMResource
---- PASS: TestInstallPromptsetWithARMResource (0.01s)
+--- PASS: TestInstallPromptsetWithARMResource (0.00s)
 === RUN   TestPkgKey
 --- PASS: TestPkgKey (0.00s)
 === RUN   TestParsePkgKey
@@ -1682,8 +1660,7 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/service	2.213s	coverage:
 === RUN   TestPkgKeyRoundTrip
 --- PASS: TestPkgKeyRoundTrip (0.00s)
 PASS
-coverage: 84.6% of statements
-ok  	github.com/jomadu/ai-resource-manager/internal/arm/sink	1.110s	coverage: 84.6% of statements
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/sink	1.410s
 === RUN   TestGenerateKey
 === RUN   TestGenerateKey/simple_string
 === RUN   TestGenerateKey/simple_map
@@ -1721,11 +1698,11 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/sink	1.110s	coverage: 84
 === RUN   TestPackageCache_SetPackageVersion
 --- PASS: TestPackageCache_SetPackageVersion (0.00s)
 === RUN   TestPackageCache_GetPackageVersion
---- PASS: TestPackageCache_GetPackageVersion (0.01s)
+--- PASS: TestPackageCache_GetPackageVersion (0.00s)
 === RUN   TestPackageCache_GetPackageVersion_NotFound
 --- PASS: TestPackageCache_GetPackageVersion_NotFound (0.00s)
 === RUN   TestPackageCache_ListPackageVersions
---- PASS: TestPackageCache_ListPackageVersions (0.01s)
+--- PASS: TestPackageCache_ListPackageVersions (0.00s)
 === RUN   TestPackageCache_ListPackages
 --- PASS: TestPackageCache_ListPackages (0.00s)
 === RUN   TestPackageCache_RemovePackageVersion
@@ -1735,7 +1712,7 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/sink	1.110s	coverage: 84
 === RUN   TestPackageCache_RemoveOldVersionsByTimestamp
 --- PASS: TestPackageCache_RemoveOldVersionsByTimestamp (0.06s)
 === RUN   TestPackageCache_RemoveUnusedVersionsByAccess
---- PASS: TestPackageCache_RemoveUnusedVersionsByAccess (0.05s)
+--- PASS: TestPackageCache_RemoveUnusedVersionsByAccess (0.06s)
 === RUN   TestPackageCache_RemoveAllVersionsRemovesPackage
 --- PASS: TestPackageCache_RemoveAllVersionsRemovesPackage (0.05s)
 === RUN   TestNewRegistry
@@ -1743,60 +1720,38 @@ ok  	github.com/jomadu/ai-resource-manager/internal/arm/sink	1.110s	coverage: 84
 === RUN   TestNewRegistry/complex_registry_key
 === RUN   TestNewRegistry/nil_registry_key
 === RUN   TestNewRegistry/unmarshalable_registry_key
---- PASS: TestNewRegistry (0.01s)
+--- PASS: TestNewRegistry (0.00s)
     --- PASS: TestNewRegistry/simple_registry_key (0.00s)
     --- PASS: TestNewRegistry/complex_registry_key (0.00s)
-    --- PASS: TestNewRegistry/nil_registry_key (0.01s)
+    --- PASS: TestNewRegistry/nil_registry_key (0.00s)
     --- PASS: TestNewRegistry/unmarshalable_registry_key (0.00s)
 === RUN   TestNewRegistryWithPath
 --- PASS: TestNewRegistryWithPath (0.00s)
 === RUN   TestRegistry_GetPaths
 --- PASS: TestRegistry_GetPaths (0.00s)
 === RUN   TestRegistry_ConsistentKeys
---- PASS: TestRegistry_ConsistentKeys (0.01s)
+--- PASS: TestRegistry_ConsistentKeys (0.00s)
 === RUN   TestRegistry_DifferentKeys
 --- PASS: TestRegistry_DifferentKeys (0.00s)
 === RUN   TestNewRepo
 --- PASS: TestNewRepo (0.00s)
 === RUN   TestGetTags_RepoNotCloned
---- PASS: TestGetTags_RepoNotCloned (0.12s)
+--- PASS: TestGetTags_RepoNotCloned (0.19s)
 === RUN   TestGetTags_NoTags
---- PASS: TestGetTags_NoTags (0.09s)
+--- PASS: TestGetTags_NoTags (0.11s)
 === RUN   TestGetBranches_RepoNotCloned
-    repo_test_helper.go:125: 
-        	Error Trace:	/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test_helper.go:125
-        	            				/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test_helper.go:80
-        	            				/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test.go:79
-        	Error:      	Received unexpected error:
-        	            	exit status 1
-        	Test:       	TestGetBranches_RepoNotCloned
---- FAIL: TestGetBranches_RepoNotCloned (0.07s)
+--- PASS: TestGetBranches_RepoNotCloned (0.21s)
 === RUN   TestGetBranchHeadCommitHash_ValidBranch
-    repo_test.go:111: 
-        	Error Trace:	/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test.go:111
-        	Error:      	Received unexpected error:
-        	            	exit status 128
-        	Test:       	TestGetBranchHeadCommitHash_ValidBranch
-    repo_test.go:112: 
-        	Error Trace:	/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test.go:112
-        	Error:      	Should NOT be empty, but was 
-        	Test:       	TestGetBranchHeadCommitHash_ValidBranch
-    repo_test.go:113: 
-        	Error Trace:	/home/runner/work/ai-resource-manager/ai-resource-manager/internal/arm/storage/repo_test.go:113
-        	Error:      	"" should have 40 item(s), but has 0
-        	Test:       	TestGetBranchHeadCommitHash_ValidBranch
---- FAIL: TestGetBranchHeadCommitHash_ValidBranch (0.07s)
+--- PASS: TestGetBranchHeadCommitHash_ValidBranch (0.13s)
 === RUN   TestGetBranchHeadCommitHash_InvalidBranch
---- PASS: TestGetBranchHeadCommitHash_InvalidBranch (0.07s)
+--- PASS: TestGetBranchHeadCommitHash_InvalidBranch (0.17s)
 === RUN   TestGetTagCommitHash_ValidTag
---- PASS: TestGetTagCommitHash_ValidTag (0.12s)
+--- PASS: TestGetTagCommitHash_ValidTag (0.15s)
 === RUN   TestGetTagCommitHash_InvalidTag
---- PASS: TestGetTagCommitHash_InvalidTag (0.07s)
+--- PASS: TestGetTagCommitHash_InvalidTag (0.11s)
 === RUN   TestGetFilesFromCommit_ValidCommit
---- PASS: TestGetFilesFromCommit_ValidCommit (0.19s)
+--- PASS: TestGetFilesFromCommit_ValidCommit (0.21s)
 === RUN   TestGetFilesFromCommit_InvalidCommit
---- PASS: TestGetFilesFromCommit_InvalidCommit (0.07s)
-FAIL
-coverage: 80.2% of statements
-FAIL	github.com/jomadu/ai-resource-manager/internal/arm/storage	1.475s
-FAIL
+--- PASS: TestGetFilesFromCommit_InvalidCommit (0.13s)
+PASS
+ok  	github.com/jomadu/ai-resource-manager/internal/arm/storage	3.458s
