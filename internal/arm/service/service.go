@@ -1650,20 +1650,18 @@ func (s *ArmService) discoverFiles(paths []string, recursive bool, include, excl
 					seen[f.Path] = true
 				}
 			}
-		} else {
+		} else if !seen[path] {
 			// Single file
-			if !seen[path] {
-				content, err := os.ReadFile(path)
-				if err != nil {
-					return nil, fmt.Errorf("failed to read %s: %w", path, err)
-				}
-				files = append(files, &core.File{
-					Path:    path,
-					Content: content,
-					Size:    info.Size(),
-				})
-				seen[path] = true
+			content, err := os.ReadFile(path)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read %s: %w", path, err)
 			}
+			files = append(files, &core.File{
+				Path:    path,
+				Content: content,
+				Size:    info.Size(),
+			})
+			seen[path] = true
 		}
 	}
 
@@ -1755,7 +1753,7 @@ func (s *ArmService) parseTool(toolStr string) (compiler.Tool, error) {
 	}
 }
 
-func (s *ArmService) compileFile(ctx context.Context, file *core.File, req *CompileRequest) error {
+func (s *ArmService) compileFile(_ context.Context, file *core.File, req *CompileRequest) error {
 	// Detect file type
 	isRuleset := filetype.IsRulesetFile(file)
 	isPromptset := filetype.IsPromptsetFile(file)
