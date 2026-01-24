@@ -30,6 +30,7 @@
     - [arm upgrade](#arm-upgrade)
     - [arm list](#arm-list)
     - [arm info](#arm-info)
+    - [arm info dependency](#arm-info-dependency)
     - [arm outdated](#arm-outdated)
     - [arm set ruleset](#arm-set-ruleset)
     - [arm set promptset](#arm-set-promptset)
@@ -520,6 +521,82 @@ dependencies:
             - amazonq-prompts
         include:
             - "review/**/*.yml"
+```
+
+### arm info dependency
+
+`arm info dependency [REGISTRY_NAME/DEPENDENCY_NAME]...`
+
+Display detailed information about one or more installed dependencies (rulesets and promptsets). This command shows comprehensive details about the specified dependencies, including type, version constraint, installed version, target sinks, include/exclude patterns, and priority (for rulesets). If no names are provided, it shows information for all installed dependencies.
+
+**Examples:**
+
+```bash
+# Show info for all dependencies
+$ arm info dependency
+sample-registry/clean-code-ruleset:
+    type: ruleset
+    version: 1.0.0
+    constraint: ^1.0.0
+    priority: 100
+    sinks:
+        - cursor-rules
+        - amazonq-rules
+        - copilot-instructions
+    include:
+        - "**/*.yml"
+    exclude:
+        - "**/experimental/**"
+sample-registry/code-review-promptset:
+    type: promptset
+    version: 1.0.0
+    constraint: ^1.0.0
+    sinks:
+        - cursor-commands
+        - amazonq-prompts
+    include:
+        - "review/**/*.yml"
+
+# Show info for specific dependencies
+$ arm info dependency sample-registry/clean-code-ruleset
+sample-registry/clean-code-ruleset:
+    type: ruleset
+    version: 1.0.0
+    constraint: ^1.0.0
+    priority: 100
+    sinks:
+        - cursor-rules
+        - amazonq-rules
+        - copilot-instructions
+    include:
+        - "**/*.yml"
+    exclude:
+        - "**/experimental/**"
+
+# Show info for multiple dependencies
+$ arm info dependency sample-registry/clean-code-ruleset sample-registry/code-review-promptset
+sample-registry/clean-code-ruleset:
+    type: ruleset
+    version: 1.0.0
+    constraint: ^1.0.0
+    priority: 100
+    sinks:
+        - cursor-rules
+        - amazonq-rules
+        - copilot-instructions
+    include:
+        - "**/*.yml"
+    exclude:
+        - "**/experimental/**"
+sample-registry/code-review-promptset:
+    type: promptset
+    version: 1.0.0
+    constraint: ^1.0.0
+    sinks:
+        - cursor-commands
+        - amazonq-prompts
+    include:
+        - "review/**/*.yml"
 ```
 
 ### arm outdated
