@@ -157,9 +157,18 @@ func printCommandHelp(command string) {
 		fmt.Println()
 		fmt.Println("Usage:")
 		fmt.Println("  arm info registry [NAME...]")
+		fmt.Println("  arm info sink [NAME...]")
+		fmt.Println("  arm info dependency [REGISTRY/PACKAGE...]")
 		fmt.Println()
-		fmt.Println("Displays detailed information about registries.")
-		fmt.Println("If no names are provided, shows all registries.")
+		fmt.Println("Displays detailed information about registries, sinks, or dependencies.")
+		fmt.Println("If no names are provided, shows all items of that type.")
+		fmt.Println()
+		fmt.Println("Examples:")
+		fmt.Println("  arm info registry")
+		fmt.Println("  arm info registry my-registry")
+		fmt.Println("  arm info sink cursor-rules")
+		fmt.Println("  arm info dependency")
+		fmt.Println("  arm info dependency sample-registry/clean-code-ruleset")
 	case "install":
 		fmt.Println("Install rulesets or promptsets")
 		fmt.Println()
@@ -1057,6 +1066,8 @@ func handleInfo() {
 		handleInfoRegistry()
 	case "sink":
 		handleInfoSink()
+	case "dependency":
+		handleInfoDependency()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown info target: %s\n", os.Args[2])
 		os.Exit(1)
@@ -1357,6 +1368,108 @@ func handleInfoSink() {
 		fmt.Printf("Sink: %s\n", name)
 		fmt.Printf("  Tool: %s\n", config.Tool)
 		fmt.Printf("  Directory: %s\n", config.Directory)
+	}
+}
+
+func handleInfoDependency() {
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	lockfilePath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(lockfilePath)
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+
+	// Get dependency keys from args or all dependencies
+	var dependencyKeys []string
+	if len(os.Args) > 3 {
+		dependencyKeys = os.Args[3:]
+	} else {
+		// Get all dependencies
+		allDeps, err := svc.GetAllDependenciesConfig(ctx)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		for key := range allDeps {
+			dependencyKeys = append(dependencyKeys, key)
+		}
+	}
+
+	if len(dependencyKeys) == 0 {
+		fmt.Println("No dependencies configured")
+		return
+	}
+
+	// Display info for each dependency
+	for i, key := range dependencyKeys {
+		if i > 0 {
+			fmt.Println()
+		}
+
+		registry, packageName := manifest.ParseDependencyKey(key)
+		if registry == "" || packageName == "" {
+			fmt.Fprintf(os.Stderr, "Invalid dependency format '%s' (expected: registry/package)\n", key)
+			continue
+		}
+
+		info, err := svc.GetDependencyInfo(ctx, registry, packageName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting dependency '%s': %v\n", key, err)
+			continue
+		}
+
+		fmt.Printf("%s:\n", key)
+
+		// Display type
+		if depType, ok := info.Config["type"].(string); ok {
+			fmt.Printf("    type: %s\n", depType)
+		}
+
+		// Display installed version from lockfile
+		if info.Version != "" {
+			fmt.Printf("    version: %s\n", info.Version)
+		}
+
+		// Display version constraint from manifest
+		if constraint, ok := info.Config["version"].(string); ok {
+			fmt.Printf("    constraint: %s\n", constraint)
+		}
+
+		// Display priority (for rulesets only)
+		if priority, ok := info.Config["priority"].(float64); ok {
+			fmt.Printf("    priority: %.0f\n", priority)
+		}
+
+		// Display sinks
+		if sinks, ok := info.Config["sinks"].([]interface{}); ok && len(sinks) > 0 {
+			fmt.Printf("    sinks:\n")
+			for _, sink := range sinks {
+				fmt.Printf("        - %v\n", sink)
+			}
+		}
+
+		// Display include patterns
+		if include, ok := info.Config["include"].([]interface{}); ok && len(include) > 0 {
+			fmt.Printf("    include:\n")
+			for _, pattern := range include {
+				fmt.Printf("        - %q\n", pattern)
+			}
+		}
+
+		// Display exclude patterns
+		if exclude, ok := info.Config["exclude"].([]interface{}); ok && len(exclude) > 0 {
+			fmt.Printf("    exclude:\n")
+			for _, pattern := range exclude {
+				fmt.Printf("        - %q\n", pattern)
+			}
+		}
 	}
 }
 
