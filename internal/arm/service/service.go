@@ -11,8 +11,10 @@ import (
 
 	"github.com/jomadu/ai-resource-manager/internal/arm/compiler"
 	"github.com/jomadu/ai-resource-manager/internal/arm/core"
+	"github.com/jomadu/ai-resource-manager/internal/arm/filetype"
 	"github.com/jomadu/ai-resource-manager/internal/arm/manifest"
 	"github.com/jomadu/ai-resource-manager/internal/arm/packagelockfile"
+	"github.com/jomadu/ai-resource-manager/internal/arm/parser"
 	"github.com/jomadu/ai-resource-manager/internal/arm/registry"
 	"github.com/jomadu/ai-resource-manager/internal/arm/sink"
 	"github.com/jomadu/ai-resource-manager/internal/arm/storage"
@@ -1593,6 +1595,282 @@ type CompileRequest struct {
 
 // CompileFiles compiles files
 func (s *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) error {
-	// TODO: implement
+	// Discover files from input paths
+	files, err := s.discoverFiles(req.Paths, req.Recursive, req.Include, req.Exclude)
+	if err != nil {
+		return fmt.Errorf("failed to discover files: %w", err)
+	}
+
+	if len(files) == 0 {
+		return fmt.Errorf("no files found matching criteria")
+	}
+
+	// Process each file
+	var errors []error
+	for _, file := range files {
+		if err := s.compileFile(ctx, file, req); err != nil {
+			errors = append(errors, err)
+			if req.FailFast {
+				return err
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("compilation failed with %d error(s): %v", len(errors), errors[0])
+	}
+
+	return nil
+}
+
+func (s *ArmService) discoverFiles(paths []string, recursive bool, include, exclude []string) ([]*core.File, error) {
+	// Default include patterns if none specified
+	if len(include) == 0 {
+		include = []string{"*.yml", "*.yaml"}
+	}
+
+	var files []*core.File
+	seen := make(map[string]bool)
+
+	for _, path := range paths {
+		info, err := os.Stat(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to stat %s: %w", path, err)
+		}
+
+		if info.IsDir() {
+			// Discover files in directory
+			dirFiles, err := s.discoverInDirectory(path, recursive, include, exclude)
+			if err != nil {
+				return nil, err
+			}
+			for _, f := range dirFiles {
+				if !seen[f.Path] {
+					files = append(files, f)
+					seen[f.Path] = true
+				}
+			}
+		} else {
+			// Single file
+			if !seen[path] {
+				content, err := os.ReadFile(path)
+				if err != nil {
+					return nil, fmt.Errorf("failed to read %s: %w", path, err)
+				}
+				files = append(files, &core.File{
+					Path:    path,
+					Content: content,
+					Size:    info.Size(),
+				})
+				seen[path] = true
+			}
+		}
+	}
+
+	return files, nil
+}
+
+func (s *ArmService) discoverInDirectory(dir string, recursive bool, include, exclude []string) ([]*core.File, error) {
+	var files []*core.File
+
+	walkFn := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil // Continue on errors
+		}
+
+		if info.IsDir() {
+			if !recursive && path != dir {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		// Get relative path for pattern matching
+		relPath, err := filepath.Rel(dir, path)
+		if err != nil {
+			return nil
+		}
+
+		// Check if file matches patterns
+		if !s.matchesPatterns(relPath, include, exclude) {
+			return nil
+		}
+
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return nil // Continue on errors
+		}
+
+		files = append(files, &core.File{
+			Path:    path,
+			Content: content,
+			Size:    info.Size(),
+		})
+
+		return nil
+	}
+
+	if err := filepath.Walk(dir, walkFn); err != nil {
+		return nil, fmt.Errorf("failed to walk directory %s: %w", dir, err)
+	}
+
+	return files, nil
+}
+
+func (s *ArmService) matchesPatterns(filePath string, include, exclude []string) bool {
+	// Check exclude patterns first
+	for _, pattern := range exclude {
+		if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
+			return false
+		}
+	}
+
+	// If no include patterns, accept all
+	if len(include) == 0 {
+		return true
+	}
+
+	// Check include patterns
+	for _, pattern := range include {
+		if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *ArmService) parseTool(toolStr string) (compiler.Tool, error) {
+	switch toolStr {
+	case "cursor":
+		return compiler.Cursor, nil
+	case "copilot":
+		return compiler.Copilot, nil
+	case "amazonq":
+		return compiler.AmazonQ, nil
+	case "markdown":
+		return compiler.Markdown, nil
+	default:
+		return "", fmt.Errorf("invalid tool: %s (must be cursor, copilot, amazonq, or markdown)", toolStr)
+	}
+}
+
+func (s *ArmService) compileFile(ctx context.Context, file *core.File, req *CompileRequest) error {
+	// Detect file type
+	isRuleset := filetype.IsRulesetFile(file)
+	isPromptset := filetype.IsPromptsetFile(file)
+
+	if !isRuleset && !isPromptset {
+		return fmt.Errorf("file %s is not a valid ruleset or promptset", file.Path)
+	}
+
+	// Parse and validate
+	if isRuleset {
+		ruleset, err := parser.ParseRuleset(file)
+		if err != nil {
+			return fmt.Errorf("failed to parse ruleset %s: %w", file.Path, err)
+		}
+
+		// If validate-only, we're done
+		if req.ValidateOnly {
+			if req.Verbose {
+				fmt.Printf("✓ Validated ruleset: %s\n", file.Path)
+			}
+			return nil
+		}
+
+		// Determine namespace
+		namespace := req.Namespace
+		if namespace == "" {
+			namespace = ruleset.Metadata.ID
+		}
+
+		// Compile
+		tool, err := s.parseTool(req.Tool)
+		if err != nil {
+			return err
+		}
+
+		compiledFiles, err := compiler.CompileRuleset(tool, namespace, ruleset)
+		if err != nil {
+			return fmt.Errorf("failed to compile ruleset %s: %w", file.Path, err)
+		}
+
+		// Write output files
+		if err := s.writeCompiledFiles(compiledFiles, req.OutputDir, req.Force); err != nil {
+			return fmt.Errorf("failed to write compiled files for %s: %w", file.Path, err)
+		}
+
+		if req.Verbose {
+			fmt.Printf("✓ Compiled ruleset: %s -> %d file(s)\n", file.Path, len(compiledFiles))
+		}
+
+	} else if isPromptset {
+		promptset, err := parser.ParsePromptset(file)
+		if err != nil {
+			return fmt.Errorf("failed to parse promptset %s: %w", file.Path, err)
+		}
+
+		// If validate-only, we're done
+		if req.ValidateOnly {
+			if req.Verbose {
+				fmt.Printf("✓ Validated promptset: %s\n", file.Path)
+			}
+			return nil
+		}
+
+		// Determine namespace
+		namespace := req.Namespace
+		if namespace == "" {
+			namespace = promptset.Metadata.ID
+		}
+
+		// Compile
+		tool, err := s.parseTool(req.Tool)
+		if err != nil {
+			return err
+		}
+
+		compiledFiles, err := compiler.CompilePromptset(tool, namespace, promptset)
+		if err != nil {
+			return fmt.Errorf("failed to compile promptset %s: %w", file.Path, err)
+		}
+
+		// Write output files
+		if err := s.writeCompiledFiles(compiledFiles, req.OutputDir, req.Force); err != nil {
+			return fmt.Errorf("failed to write compiled files for %s: %w", file.Path, err)
+		}
+
+		if req.Verbose {
+			fmt.Printf("✓ Compiled promptset: %s -> %d file(s)\n", file.Path, len(compiledFiles))
+		}
+	}
+
+	return nil
+}
+
+func (s *ArmService) writeCompiledFiles(files []*core.File, outputDir string, force bool) error {
+	for _, file := range files {
+		outputPath := filepath.Join(outputDir, file.Path)
+
+		// Check if file exists
+		if !force {
+			if _, err := os.Stat(outputPath); err == nil {
+				return fmt.Errorf("file %s already exists (use --force to overwrite)", outputPath)
+			}
+		}
+
+		// Create directory if needed
+		dir := filepath.Dir(outputPath)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
+
+		// Write file
+		if err := os.WriteFile(outputPath, file.Content, 0o644); err != nil {
+			return fmt.Errorf("failed to write file %s: %w", outputPath, err)
+		}
+	}
+
 	return nil
 }

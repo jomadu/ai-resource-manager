@@ -6,7 +6,7 @@ This document tracks implementation status and prioritizes remaining work for th
 
 ## Executive Summary
 
-**Overall Status**: ~95% Complete - Core functionality fully implemented and tested
+**Overall Status**: ~98% Complete - Core functionality fully implemented and tested
 
 **Key Findings**:
 - All core commands implemented and tested (registry, sink, dependency management)
@@ -15,77 +15,44 @@ This document tracks implementation status and prioritizes remaining work for th
 - All parsers implemented (Ruleset, Promptset) - verified
 - File type detection implemented - verified
 - Archive extraction implemented in core with comprehensive tests
+- `arm compile` command fully implemented with all features
 - 304 tests across 58 test files - excellent coverage
-- Primary gap: `arm compile` command service layer implementation (CLI exists, service stub only)
+- Primary remaining gaps: documentation (migration guide) and test improvements
 
 ---
 
 ## Priority 1: Critical Missing Functionality
 
-### 1.1 Implement `arm compile` Command Service Layer ⚠️ VERIFIED MISSING
-**Status**: ❌ Not Implemented  
-**Location**: `internal/arm/service/service.go:1595-1598`  
+### 1.1 Implement `arm compile` Command Service Layer ✅ COMPLETED
+**Status**: ✅ Implemented  
+**Location**: `internal/arm/service/service.go:1595-1880`  
 **CLI Location**: `cmd/arm/main.go:2141-2250` (✅ fully implemented)  
 **Spec Reference**: `specs/commands.md` - "arm compile" section
 
-**Current State**:
-```go
-func (s *ArmService) CompileFiles(ctx context.Context, req *CompileRequest) error {
-    // TODO: implement
-    return nil
-}
-```
+**Implementation Complete**:
+- ✅ File discovery with include/exclude pattern matching
+- ✅ Recursive directory traversal support
+- ✅ File type detection (ruleset vs promptset)
+- ✅ YAML parsing and validation
+- ✅ Compilation to all tool formats (Cursor, AmazonQ, Copilot, Markdown)
+- ✅ Output file writing with directory creation
+- ✅ Force flag support for overwriting existing files
+- ✅ Validate-only mode (no output files)
+- ✅ Fail-fast error handling
+- ✅ Custom namespace support
+- ✅ All CLI tests passing
+- ✅ End-to-end integration tested
 
-**Verified Available Components**:
-- ✅ CLI handler fully implemented with all flags
-- ✅ Compiler functions: `compiler.CompileRuleset()`, `compiler.CompilePromptset()`
-- ✅ All tool compilers: Cursor, AmazonQ, Copilot, Markdown (verified in factory.go)
-- ✅ Parser functions: `parser.ParseRuleset()`, `parser.ParsePromptset()`
-- ✅ File type detection: `filetype.IsRulesetFile()`, `filetype.IsPromptsetFile()`
-- ✅ CompileRequest struct with all required fields
-
-**Requirements** (from spec):
-- Accept input paths (files and/or directories)
-- Support `--tool` flag (markdown, cursor, amazonq, copilot)
-- Support `--namespace` flag (defaults to resource metadata ID)
-- Support `--force` flag (overwrite existing files)
-- Support `--recursive` flag (process directories recursively)
-- Support `--validate-only` flag (validate without output)
-- Support `--include` patterns (default: `**/*.yml`, `**/*.yaml`)
-- Support `--exclude` patterns
-- Support `--fail-fast` flag (stop on first error)
-- Handle both files and directories as input
-- Shell glob expansion handled by shell before ARM processes
-- Optional OUTPUT_PATH (required unless `--validate-only`)
-
-**Implementation Approach**:
-1. Validate and normalize input paths
-2. Discover files (handle directories with include/exclude patterns)
-3. For each file:
-   - Read file content into `core.File`
-   - Detect type using `filetype.IsRulesetFile()` / `filetype.IsPromptsetFile()`
-   - Parse YAML using `parser.ParseRuleset()` / `parser.ParsePromptset()`
-   - Validate schema (parser does this automatically)
-   - If validate-only: continue to next file
-   - Determine namespace (use flag or resource metadata ID)
-   - Compile using `compiler.CompileRuleset()` / `compiler.CompilePromptset()`
-   - Write compiled files to output directory
-4. Handle errors per fail-fast setting
-5. Return appropriate errors with context
-
-**Acceptance Criteria**:
-- [ ] Parse and validate input paths
-- [ ] Discover files using include/exclude patterns (use existing pattern matching utilities)
-- [ ] Support recursive directory traversal
-- [ ] Detect file types (ruleset vs promptset)
-- [ ] Parse YAML resources
-- [ ] Validate resources (when `--validate-only`)
-- [ ] Compile resources to target tool format
-- [ ] Write output files to OUTPUT_PATH
-- [ ] Respect `--force` flag for overwrites
-- [ ] Stop on first error when `--fail-fast`
-- [ ] Return appropriate errors with context
-- [ ] Update test expectations in `cmd/arm/compile_test.go`
+**Verified Working**:
+- Single file compilation
+- Multiple file compilation
+- Directory compilation (recursive and non-recursive)
+- All tool formats (cursor, amazonq, copilot, markdown)
+- Validate-only mode
+- Force overwrite
+- Custom namespace
+- Include/exclude patterns
+- Error handling and fail-fast
 
 ---
 
@@ -221,10 +188,10 @@ assert.Equal(t, []string{"v1.0.0", "v1.1.0"}, tags)
 - ✅ `arm set ruleset` - Configure ruleset
 - ✅ `arm set promptset` - Configure promptset
 
-### Utilities (Mostly Implemented & Tested)
+### Utilities (All Implemented & Tested)
 - ✅ `arm clean cache` - Clean cache (with `--nuke` and `--max-age`)
 - ✅ `arm clean sinks` - Clean sinks (with `--nuke`)
-- ⚠️ `arm compile` - CLI implemented, service layer TODO
+- ✅ `arm compile` - Compile rulesets/promptsets to tool formats (fully implemented)
 
 ### Registry Types (All Implemented & Tested)
 - ✅ Git Registry - Full implementation with branch/tag support
