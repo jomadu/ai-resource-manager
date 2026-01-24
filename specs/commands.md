@@ -7,6 +7,8 @@
   - [Core](#core)
     - [arm version](#arm-version)
     - [arm help](#arm-help)
+    - [arm list](#arm-list)
+    - [arm info](#arm-info)
   - [Registry Management](#registry-management)
     - [arm add registry git](#arm-add-registry-git)
     - [arm add registry gitlab](#arm-add-registry-gitlab)
@@ -28,8 +30,7 @@
     - [arm uninstall](#arm-uninstall)
     - [arm update](#arm-update)
     - [arm upgrade](#arm-upgrade)
-    - [arm list](#arm-list)
-    - [arm info](#arm-info)
+    - [arm list dependency](#arm-list-dependency)
     - [arm info dependency](#arm-info-dependency)
     - [arm outdated](#arm-outdated)
     - [arm set ruleset](#arm-set-ruleset)
@@ -80,6 +81,88 @@ $ arm install --help
 # Show help for subcommands
 $ arm help add registry git
 $ arm add registry git --help
+```
+
+### arm list
+
+`arm list`
+
+List all configured entities in the ARM environment. This command provides a comprehensive overview showing all registries, sinks, and installed packages (rulesets and promptsets), grouped by category.
+
+**Example:**
+
+```bash
+$ arm list
+registries:
+    - my-org
+    - cloudsmith-registry
+sinks:
+    - cursor-rules
+    - q-rules
+    - cursor-commands
+    - q-prompts
+dependencies:
+    - my-org/clean-code-ruleset@1.1.0
+    - my-org/security-ruleset@2.1.0
+    - my-org/code-review-promptset@1.1.0
+    - my-org/testing-promptset@2.0.1
+```
+
+### arm info
+
+`arm info`
+
+Display detailed information about all configured entities in the ARM environment. This command shows comprehensive details about all registries, sinks, and installed packages (rulesets and promptsets), including their metadata, configuration, dependencies, and status information. It provides a complete hierarchical view of the entire ARM environment.
+
+**Example:**
+
+```bash
+$ arm info
+registries:
+    sample-registry:
+        type: cloudsmith
+        url: https://api.cloudsmith.io
+        owner: sample-org
+        repository: arm-registry
+sinks:
+    cursor-rules:
+        directory: .cursor/rules
+        tool: cursor
+    amazonq-rules:
+        directory: .amazonq/rules
+        tool: amazonq
+    cursor-commands:
+        directory: .cursor/commands
+        tool: cursor
+    amazonq-prompts:
+        directory: .amazonq/prompts
+        tool: amazonq
+    copilot-instructions:
+        directory: .github/instructions
+        tool: copilot
+dependencies:
+    sample-registry/clean-code-ruleset:
+        type: ruleset
+        version: 1.0.0
+        constraint: ^1.0.0
+        priority: 100
+        sinks:
+            - cursor-rules
+            - amazonq-rules
+            - copilot-instructions
+        include:
+            - "**/*.yml"
+        exclude:
+            - "**/experimental/**"
+    sample-registry/code-review-promptset:
+        type: promptset
+        version: 1.0.0
+        constraint: ^1.0.0
+        sinks:
+            - cursor-commands
+            - amazonq-prompts
+        include:
+            - "review/**/*.yml"
 ```
 
 ## Registry Management
@@ -441,80 +524,23 @@ Upgrade all installed packages to their latest available versions, ignoring vers
 $ arm upgrade
 ```
 
-### arm list
+### arm list dependency
 
-`arm list`
+`arm list dependency`
 
-List all configured entities in the ARM environment. This command provides a comprehensive overview showing all registries, sinks, and installed packages (rulesets and promptsets), grouped by category.
+List all installed dependencies (rulesets and promptsets). This command displays a simple list of all currently installed packages with their versions.
 
 **Example:**
 
 ```bash
-$ arm list
-registries:
-    - my-org
-    - cloudsmith-registry
-sinks:
-    - cursor-rules
-    - q-rules
-    - cursor-commands
-    - q-prompts
-dependencies:
-    - my-org/clean-code-ruleset@1.1.0
-    - my-org/security-ruleset@2.1.0
-    - my-org/code-review-promptset@1.1.0
-    - my-org/testing-promptset@2.0.1
+$ arm list dependency
+- my-org/clean-code-ruleset@1.1.0
+- my-org/security-ruleset@2.1.0
+- my-org/code-review-promptset@1.1.0
+- my-org/testing-promptset@2.0.1
 ```
 
-### arm info
-
-`arm info`
-
-Display detailed information about all configured entities in the ARM environment. This command shows comprehensive details about all registries, sinks, and installed packages (rulesets and promptsets), including their metadata, configuration, dependencies, and status information. It provides a complete hierarchical view of the entire ARM environment.
-
-**Example:**
-
-```bash
-$ arm info
-registries:
-    sample-registry:
-        type: cloudsmith
-        url: https://api.cloudsmith.io
-        owner: sample-org
-        repository: arm-registry
-sinks:
-    cursor-rules:
-        directory: .cursor/rules
-        tool: cursor
-    amazonq-rules:
-        directory: .amazonq/rules
-        tool: amazonq
-    cursor-commands:
-        directory: .cursor/commands
-        tool: cursor
-    amazonq-prompts:
-        directory: .amazonq/prompts
-        tool: amazonq
-    copilot-instructions:
-        directory: .github/instructions
-        tool: copilot
-dependencies:
-    sample-registry/clean-code-ruleset:
-        type: ruleset
-        version: 1.0.0
-        constraint: ^1.0.0
-        priority: 100
-        sinks:
-            - cursor-rules
-            - amazonq-rules
-            - copilot-instructions
-        include:
-            - "**/*.yml"
-        exclude:
-            - "**/experimental/**"
-    sample-registry/code-review-promptset:
-        type: promptset
-        version: 1.0.0
+### arm info dependency
         constraint: ^1.0.0
         sinks:
             - cursor-commands
