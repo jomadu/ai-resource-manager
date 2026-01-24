@@ -22,6 +22,7 @@ type DependencyInfo struct {
 	Installation sink.PackageInstallation
 	LockInfo     packagelockfile.DependencyLockConfig
 	Config       map[string]interface{}
+	Version      string // Installed version from lockfile
 }
 
 type OutdatedDependency struct {
@@ -277,6 +278,11 @@ func (s *ArmService) SetSinkTool(ctx context.Context, name string, tool compiler
 // ---------------------
 // Dependency Management
 // ---------------------
+
+// GetAllDependenciesConfig gets all dependency configurations
+func (s *ArmService) GetAllDependenciesConfig(ctx context.Context) (map[string]map[string]interface{}, error) {
+	return s.manifestMgr.GetAllDependenciesConfig(ctx)
+}
 
 // InstallAll installs all dependencies
 func (s *ArmService) InstallAll(ctx context.Context) error {
@@ -1200,10 +1206,16 @@ func (s *ArmService) GetDependencyInfo(ctx context.Context, registry, dependency
 
 	key := registry + "/" + dependencyName
 	var lockInfo packagelockfile.DependencyLockConfig
+	var version string
 	if lockFile != nil && lockFile.Dependencies != nil {
 		for lockKey, lockCfg := range lockFile.Dependencies {
 			if strings.HasPrefix(lockKey, key+"@") {
 				lockInfo = lockCfg
+				// Extract version from key (format: registry/package@version)
+				parts := strings.Split(lockKey, "@")
+				if len(parts) == 2 {
+					version = parts[1]
+				}
 				break
 			}
 		}
@@ -1218,6 +1230,7 @@ func (s *ArmService) GetDependencyInfo(ctx context.Context, registry, dependency
 		},
 		LockInfo: lockInfo,
 		Config:   config,
+		Version:  version,
 	}, nil
 }
 
