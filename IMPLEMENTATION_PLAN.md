@@ -87,16 +87,24 @@ This document tracks implementation status and prioritizes remaining work for th
 
 ## Priority 3: Test Coverage Improvements
 
-### 3.1 Implement Archive Support Test ⚠️ VERIFIED SKIPPED
-**Status**: ⚠️ Skipped  
-**Location**: `internal/arm/registry/git_test.go:958-961`  
-**Current State**: Test exists but skipped with `t.Skip("TODO: implement")`
+### 3.1 Implement Archive Support Test ✅ COMPLETED
+**Status**: ✅ Implemented  
+**Location**: `internal/arm/registry/git_test.go:958-1090`  
+**Previous State**: Test existed but was skipped with `t.Skip("TODO: implement")`
 
-**Important Context**: 
-- ✅ Archive extraction IS fully implemented in `internal/arm/core/archive.go`
-- ✅ Comprehensive tests exist in `internal/arm/core/archive_test.go` (10 tests)
-- ✅ Git registry uses it via `core.NewExtractor()`
-- ❌ Missing: End-to-end test in Git registry context
+**Implementation Complete**:
+- ✅ End-to-end test for archive extraction in Git registry context
+- ✅ Tests both .zip and .tar.gz archive formats
+- ✅ Verifies archives are extracted and merged with loose files
+- ✅ Confirms archive files themselves are not included in output
+- ✅ Validates content of extracted files
+- ✅ Test passes successfully
+
+**Test Coverage**:
+- Creates Git repository with loose files and archives
+- Verifies 5 files total (1 loose + 2 from zip + 2 from tar.gz)
+- Confirms archive precedence and merging behavior
+- Validates file paths and content correctness
 
 **Test Purpose**: Verify end-to-end archive handling in Git registry, not the extraction itself
 
