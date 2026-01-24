@@ -116,30 +116,22 @@ This document tracks implementation status and prioritizes remaining work for th
 - [ ] Test archive precedence over loose files (archives win conflicts)
 - [ ] Ensure test passes
 
-### 3.2 Review GetTags Test Assertion ⚠️ VERIFIED TODO
-**Status**: ⚠️ Needs Review  
+### 3.2 Review GetTags Test Assertion ✅ COMPLETED
+**Status**: ✅ Reviewed and Verified  
 **Location**: `internal/arm/storage/repo_test.go:40`  
-**Current State**: Comment says "TODO: implement and change assertion"
+**Previous State**: Comment said "TODO: implement and change assertion"
 
-**Test Code**:
-```go
-// Test GetTags clones and returns tags
-ctx := context.Background()
-tags, err := repo.GetTags(ctx, sourceDir)
+**Review Complete**:
+- ✅ GetTags implementation reviewed and verified correct
+- ✅ Test expectations match actual behavior
+- ✅ Assertion is correct (returns tags in order: v1.0.0, v1.1.0)
+- ✅ TODO comment removed
+- ✅ All GetTags tests passing
 
-// TODO: implement and change assertion
-assert.NoError(t, err)
-assert.Equal(t, []string{"v1.0.0", "v1.1.0"}, tags)
-```
-
-**Note**: The test appears to be passing, but the comment suggests the assertion may not be correct or complete.
-
-**Acceptance Criteria**:
-- [ ] Review GetTags implementation behavior
-- [ ] Verify test expectations match actual behavior
-- [ ] Update assertion if needed
-- [ ] Remove TODO comment
-- [ ] Verify test accurately reflects GetTags behavior
+**Implementation Details**:
+- GetTags clones repo if needed, then runs `git tag -l`
+- Returns empty array for repos with no tags
+- Test correctly verifies both tags are returned in expected order
 
 ---
 

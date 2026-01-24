@@ -37,7 +37,6 @@ func TestGetTags_RepoNotCloned(t *testing.T) {
 	ctx := context.Background()
 	tags, err := repo.GetTags(ctx, sourceDir)
 
-	// TODO: implement and change assertion
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"v1.0.0", "v1.1.0"}, tags)
 }
