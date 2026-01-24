@@ -330,12 +330,7 @@ func TestUninstall(t *testing.T) {
 	_ = m.saveIndex(index)
 
 	// Uninstall
-	metadata := core.PackageMetadata{
-		RegistryName: "test-reg",
-		Name:         "test-pkg",
-		Version:      mustVersion("1.0.0"),
-	}
-	err := m.Uninstall(&metadata)
+	err := m.Uninstall("test-reg", "test-pkg")
 	if err != nil {
 		t.Errorf("Uninstall failed: %v", err)
 	}
@@ -346,6 +341,11 @@ func TestUninstall(t *testing.T) {
 	}
 
 	// Should not be installed anymore
+	metadata := core.PackageMetadata{
+		RegistryName: "test-reg",
+		Name:         "test-pkg",
+		Version:      mustVersion("1.0.0"),
+	}
 	if m.IsInstalled(&metadata) {
 		t.Errorf("package should not be installed after uninstall")
 	}

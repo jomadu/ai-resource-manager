@@ -116,11 +116,9 @@ func NewManager(directory string, tool compiler.Tool) *Manager {
 
 // InstallRuleset installs a ruleset package with priority
 func (m *Manager) InstallRuleset(pkg *core.Package, priority int) error {
-	// Uninstall old version if exists
-	if m.IsInstalled(&pkg.Metadata) {
-		if err := m.Uninstall(&pkg.Metadata); err != nil {
-			return err
-		}
+	// Uninstall all existing versions of this package
+	if err := m.Uninstall(pkg.Metadata.RegistryName, pkg.Metadata.Name); err != nil {
+		return err
 	}
 
 	var installedFiles []string
@@ -194,11 +192,9 @@ func (m *Manager) InstallRuleset(pkg *core.Package, priority int) error {
 
 // InstallPromptset installs a promptset package
 func (m *Manager) InstallPromptset(pkg *core.Package) error {
-	// Uninstall old version if exists
-	if m.IsInstalled(&pkg.Metadata) {
-		if err := m.Uninstall(&pkg.Metadata); err != nil {
-			return err
-		}
+	// Uninstall all existing versions of this package
+	if err := m.Uninstall(pkg.Metadata.RegistryName, pkg.Metadata.Name); err != nil {
+		return err
 	}
 
 	var installedFiles []string
@@ -265,31 +261,35 @@ func (m *Manager) InstallPromptset(pkg *core.Package) error {
 	return m.saveIndex(index)
 }
 
-// Uninstall removes a package from the sink
-func (m *Manager) Uninstall(metadata *core.PackageMetadata) error {
+// Uninstall removes all versions of a package from the sink
+func (m *Manager) Uninstall(registryName, packageName string) error {
 	index, err := m.loadIndex()
 	if err != nil {
 		return err
 	}
 
-	key := pkgKey(metadata.RegistryName, metadata.Name, metadata.Version.Version)
+	prefix := registryName + "/" + packageName + "@"
 
 	// Remove files for rulesets
-	if entry, exists := index.Rulesets[key]; exists {
-		for _, filePath := range entry.Files {
-			fullPath := filepath.Join(m.directory, filePath)
-			_ = os.Remove(fullPath) // Ignore errors
+	for key, entry := range index.Rulesets {
+		if strings.HasPrefix(key, prefix) {
+			for _, filePath := range entry.Files {
+				fullPath := filepath.Join(m.directory, filePath)
+				_ = os.Remove(fullPath) // Ignore errors
+			}
+			delete(index.Rulesets, key)
 		}
-		delete(index.Rulesets, key)
 	}
 
 	// Remove files for promptsets
-	if entry, exists := index.Promptsets[key]; exists {
-		for _, filePath := range entry.Files {
-			fullPath := filepath.Join(m.directory, filePath)
-			_ = os.Remove(fullPath) // Ignore errors
+	for key, entry := range index.Promptsets {
+		if strings.HasPrefix(key, prefix) {
+			for _, filePath := range entry.Files {
+				fullPath := filepath.Join(m.directory, filePath)
+				_ = os.Remove(fullPath) // Ignore errors
+			}
+			delete(index.Promptsets, key)
 		}
-		delete(index.Promptsets, key)
 	}
 
 	return m.saveIndex(index)
