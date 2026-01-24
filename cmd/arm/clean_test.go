@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -10,10 +11,20 @@ func TestCleanCache(t *testing.T) {
 	// Build the binary once
 	tmpDir := t.TempDir()
 	binaryPath := filepath.Join(tmpDir, "arm")
+	t.Logf("DEBUG: tmpDir=%s, binaryPath=%s", tmpDir, binaryPath)
+	
 	cmd := exec.Command("go", "build", "-o", binaryPath, ".")
-	if err := cmd.Run(); err != nil {
-		t.Fatalf("Failed to build binary: %v", err)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("Failed to build binary: %v, output: %s", err, string(output))
 	}
+	
+	// Verify binary exists and is executable
+	info, err := os.Stat(binaryPath)
+	if err != nil {
+		t.Fatalf("Binary not found after build: %v", err)
+	}
+	t.Logf("DEBUG: binary size=%d, mode=%v", info.Size(), info.Mode())
 
 	tests := []struct {
 		name        string
@@ -78,6 +89,7 @@ func TestCleanCache(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := exec.Command(binaryPath, tt.args...)
 			output, err := cmd.CombinedOutput()
+			t.Logf("DEBUG: subtest=%s, exitCode=%v, output=%s", tt.name, err, string(output))
 
 			if tt.expectError {
 				if err == nil {
