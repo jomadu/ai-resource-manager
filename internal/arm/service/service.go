@@ -664,7 +664,7 @@ func (s *ArmService) UpdatePackages(ctx context.Context, packages []string) erro
 		}
 
 		if oldVersion != "" {
-			if err := s.uninstallFromSinks(sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+			if err := s.uninstallFromSinks(sinks, allSinks, registryName, packageName); err != nil {
 				lastErr = err
 				continue
 			}
@@ -743,7 +743,7 @@ func (s *ArmService) UpdateAll(ctx context.Context) error {
 		}
 
 		if oldVersion != "" {
-			if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+			if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName); err != nil {
 				return err
 			}
 			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
@@ -780,7 +780,7 @@ func (s *ArmService) UpdateAll(ctx context.Context) error {
 		}
 
 		if oldVersion != "" {
-			if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+			if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName); err != nil {
 				return err
 			}
 			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
@@ -848,7 +848,7 @@ func (s *ArmService) resolveAndFetchUpdate(ctx context.Context, registryName, pa
 	return resolvedVersion.Version, pkg, nil
 }
 
-func (s *ArmService) uninstallFromSinks(sinkNames []string, allSinks map[string]manifest.SinkConfig, registryName, packageName, version string) error {
+func (s *ArmService) uninstallFromSinks(sinkNames []string, allSinks map[string]manifest.SinkConfig, registryName, packageName string) error {
 	for _, sinkName := range sinkNames {
 		sinkConfig, exists := allSinks[sinkName]
 		if !exists {
@@ -899,7 +899,7 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 		}
 
 		if oldVersion != "" {
-			if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+			if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName); err != nil {
 				return err
 			}
 			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
@@ -942,7 +942,7 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 		}
 
 		if oldVersion != "" {
-			if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+			if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName); err != nil {
 				return err
 			}
 			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
@@ -1055,7 +1055,7 @@ func (s *ArmService) UpgradePackages(ctx context.Context, packages []string) err
 		}
 
 		if oldVersion != "" {
-			if err := s.uninstallFromSinks(sinks, allSinks, registryName, packageName, oldVersion); err != nil {
+			if err := s.uninstallFromSinks(sinks, allSinks, registryName, packageName); err != nil {
 				lastErr = err
 				continue
 			}
