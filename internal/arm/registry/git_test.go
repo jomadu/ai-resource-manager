@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/jomadu/ai-resource-manager/internal/arm/core"
@@ -19,6 +20,7 @@ func TestGitRegistry_ListPackageVersions(t *testing.T) {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
 	defer func() { _ = os.RemoveAll(tempDir) }()
+	t.Logf("DEBUG: tempDir=%s", tempDir)
 
 	testRepo := storage.NewTestRepo(t, tempDir)
 	builder := testRepo.Builder().
@@ -28,6 +30,12 @@ func TestGitRegistry_ListPackageVersions(t *testing.T) {
 		Tag("v1.0.0").
 		Tag("v2.0.0")
 	_ = builder.Build()
+
+	// Verify tags were created
+	cmd := exec.Command("git", "tag", "-l")
+	cmd.Dir = tempDir
+	output, _ := cmd.CombinedOutput()
+	t.Logf("DEBUG: git tags in repo: %s", string(output))
 
 	config := GitRegistryConfig{
 		RegistryConfig: RegistryConfig{
@@ -47,6 +55,7 @@ func TestGitRegistry_ListPackageVersions(t *testing.T) {
 		t.Fatalf("failed to list versions: %v", err)
 	}
 
+	t.Logf("DEBUG: versions returned: %v", versions)
 	if len(versions) != 2 {
 		t.Errorf("expected 2 versions, got %d", len(versions))
 	}
