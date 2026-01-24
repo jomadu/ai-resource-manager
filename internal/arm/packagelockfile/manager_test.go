@@ -154,20 +154,21 @@ func TestFileManager_RemoveDependencyLock(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name        string
-		setupFile   func(t *testing.T) string
-		key         string
-		wantErr     bool
-		errContains string
+		name      string
+		setupFile func(t *testing.T) string
+		wantErr   bool
 	}{
 		{
-			name: "remove dependency",
+			name: "remove all versions of dependency",
 			setupFile: func(t *testing.T) string {
 				lockfile := &LockFile{
 					Version: 1,
 					Dependencies: map[string]DependencyLockConfig{
 						"myregistry/clean-code@1.2.0": {
 							Integrity: "sha256-abc123",
+						},
+						"myregistry/clean-code@2.0.0": {
+							Integrity: "sha256-xyz789",
 						},
 						"myregistry/other@2.0.0": {
 							Integrity: "sha256-def456",
@@ -176,21 +177,22 @@ func TestFileManager_RemoveDependencyLock(t *testing.T) {
 				}
 				return createTestLockfile(t, lockfile)
 			},
-			key:     "myregistry/clean-code@1.2.0",
 			wantErr: false,
 		},
 		{
-			name: "dependency not found",
+			name: "no matching dependencies",
 			setupFile: func(t *testing.T) string {
 				lockfile := &LockFile{
-					Version:      1,
-					Dependencies: map[string]DependencyLockConfig{},
+					Version: 1,
+					Dependencies: map[string]DependencyLockConfig{
+						"myregistry/other@2.0.0": {
+							Integrity: "sha256-def456",
+						},
+					},
 				}
 				return createTestLockfile(t, lockfile)
 			},
-			key:         "myregistry/nonexistent@1.0.0",
-			wantErr:     true,
-			errContains: "dependency not found",
+			wantErr: false,
 		},
 	}
 
@@ -199,19 +201,10 @@ func TestFileManager_RemoveDependencyLock(t *testing.T) {
 			lockPath := tt.setupFile(t)
 			fm := NewFileManagerWithPath(lockPath)
 
-			err := fm.RemoveDependencyLock(ctx, "myregistry", "clean-code", "1.2.0")
+			err := fm.RemoveDependencyLock(ctx, "myregistry", "clean-code")
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RemoveDependencyLock() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("RemoveDependencyLock() expected error but got nil")
-				} else if tt.errContains != "" && !contains(err.Error(), tt.errContains) {
-					t.Errorf("RemoveDependencyLock() error = %v, should contain %v", err, tt.errContains)
-				}
 			}
 		})
 	}

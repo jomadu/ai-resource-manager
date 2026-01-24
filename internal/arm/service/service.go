@@ -450,16 +450,12 @@ func (s *ArmService) UninstallAll(ctx context.Context) error {
 			}
 
 			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-			if err := sinkMgr.Uninstall(&core.PackageMetadata{
-				RegistryName: registryName,
-				Name:         packageName,
-				Version:      core.Version{Version: rulesetConfig.Version},
-			}); err != nil {
+			if err := sinkMgr.Uninstall(registryName, packageName); err != nil {
 				return err
 			}
 		}
 
-		if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, rulesetConfig.Version); err != nil {
+		if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
 			return err
 		}
 
@@ -478,16 +474,12 @@ func (s *ArmService) UninstallAll(ctx context.Context) error {
 			}
 
 			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-			if err := sinkMgr.Uninstall(&core.PackageMetadata{
-				RegistryName: registryName,
-				Name:         packageName,
-				Version:      core.Version{Version: promptsetConfig.Version},
-			}); err != nil {
+			if err := sinkMgr.Uninstall(registryName, packageName); err != nil {
 				return err
 			}
 		}
 
-		if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, promptsetConfig.Version); err != nil {
+		if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
 			return err
 		}
 
@@ -532,7 +524,6 @@ func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) e
 		}
 
 		var sinks []string
-		var version string
 
 		switch depType {
 		case "ruleset":
@@ -542,7 +533,6 @@ func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) e
 				continue
 			}
 			sinks = rulesetConfig.Sinks
-			version = rulesetConfig.Version
 		case "promptset":
 			promptsetConfig, err := s.manifestMgr.GetPromptsetDependencyConfig(ctx, registryName, packageName)
 			if err != nil {
@@ -550,7 +540,6 @@ func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) e
 				continue
 			}
 			sinks = promptsetConfig.Sinks
-			version = promptsetConfig.Version
 		default:
 			fmt.Fprintf(os.Stderr, "Warning: unknown package type '%s' for '%s'\n", depType, pkg)
 			lastErr = fmt.Errorf("unknown package type: %s", depType)
@@ -564,17 +553,13 @@ func (s *ArmService) UninstallPackages(ctx context.Context, packages []string) e
 			}
 
 			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-			if err := sinkMgr.Uninstall(&core.PackageMetadata{
-				RegistryName: registryName,
-				Name:         packageName,
-				Version:      core.Version{Version: version},
-			}); err != nil {
+			if err := sinkMgr.Uninstall(registryName, packageName); err != nil {
 				lastErr = err
 				continue
 			}
 		}
 
-		if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, version); err != nil {
+		if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
 			lastErr = err
 			continue
 		}
@@ -683,7 +668,7 @@ func (s *ArmService) UpdatePackages(ctx context.Context, packages []string) erro
 				lastErr = err
 				continue
 			}
-			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
 				lastErr = err
 				continue
 			}
@@ -761,7 +746,7 @@ func (s *ArmService) UpdateAll(ctx context.Context) error {
 			if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
 				return err
 			}
-			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
 				return err
 			}
 		}
@@ -798,7 +783,7 @@ func (s *ArmService) UpdateAll(ctx context.Context) error {
 			if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
 				return err
 			}
-			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
 				return err
 			}
 		}
@@ -871,11 +856,7 @@ func (s *ArmService) uninstallFromSinks(sinkNames []string, allSinks map[string]
 		}
 
 		sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
-		if err := sinkMgr.Uninstall(&core.PackageMetadata{
-			RegistryName: registryName,
-			Name:         packageName,
-			Version:      core.Version{Version: version},
-		}); err != nil {
+		if err := sinkMgr.Uninstall(registryName, packageName); err != nil {
 			return err
 		}
 	}
@@ -921,7 +902,7 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 			if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
 				return err
 			}
-			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
 				return err
 			}
 		}
@@ -964,7 +945,7 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 			if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName, oldVersion); err != nil {
 				return err
 			}
-			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
 				return err
 			}
 		}
@@ -1078,7 +1059,7 @@ func (s *ArmService) UpgradePackages(ctx context.Context, packages []string) err
 				lastErr = err
 				continue
 			}
-			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName, oldVersion); err != nil {
+			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
 				lastErr = err
 				continue
 			}

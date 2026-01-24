@@ -49,6 +49,11 @@ func (f *FileManager) GetLockFile(ctx context.Context) (*LockFile, error) {
 }
 
 func (f *FileManager) UpsertDependencyLock(ctx context.Context, registry, packageName, version string, config *DependencyLockConfig) error {
+	// Remove all old versions first
+	if err := f.RemoveDependencyLock(ctx, registry, packageName); err != nil {
+		return err
+	}
+
 	key := lockKey(registry, packageName, version)
 	var lockfile *LockFile
 	var err error
@@ -74,20 +79,21 @@ func (f *FileManager) UpsertDependencyLock(ctx context.Context, registry, packag
 	return f.writeLockFile(lockfile)
 }
 
-func (f *FileManager) RemoveDependencyLock(ctx context.Context, registry, packageName, version string) error {
-	key := lockKey(registry, packageName, version)
+func (f *FileManager) RemoveDependencyLock(ctx context.Context, registry, packageName string) error {
 	lockfile, err := f.readLockFile()
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
 
-	_, exists := lockfile.Dependencies[key]
-	if !exists {
-		return errors.New("dependency not found")
+	prefix := registry + "/" + packageName + "@"
+	for key := range lockfile.Dependencies {
+		if strings.HasPrefix(key, prefix) {
+			delete(lockfile.Dependencies, key)
+		}
 	}
-
-	// Remove the dependency
-	delete(lockfile.Dependencies, key)
 
 	// Delete lockfile if empty
 	if f.isLockfileEmpty(lockfile) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/jomadu/ai-resource-manager/internal/arm/compiler"
@@ -143,9 +144,13 @@ func (m *mockLockfileManager) UpsertDependencyLock(ctx context.Context, registry
 	return nil
 }
 
-func (m *mockLockfileManager) RemoveDependencyLock(ctx context.Context, registry, packageName, version string) error {
-	key := registry + "/" + packageName + "@" + version
-	delete(m.locks, key)
+func (m *mockLockfileManager) RemoveDependencyLock(ctx context.Context, registry, packageName string) error {
+	prefix := registry + "/" + packageName + "@"
+	for key := range m.locks {
+		if strings.HasPrefix(key, prefix) {
+			delete(m.locks, key)
+		}
+	}
 	return nil
 }
 
