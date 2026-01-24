@@ -1,6 +1,10 @@
 package registry
 
 import (
+	"archive/tar"
+	"archive/zip"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"os"
 	"testing"
@@ -956,8 +960,151 @@ func TestGitRegistry_NestedDirectories(t *testing.T) {
 }
 
 func TestGitRegistry_ArchiveSupport(t *testing.T) {
-	// Test .zip and .tar.gz files (if implemented)
-	t.Skip("TODO: implement")
+	// Test .zip and .tar.gz files are extracted and merged with loose files
+	tempDir, err := os.MkdirTemp("", "git-registry-test")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer func() { _ = os.RemoveAll(tempDir) }()
+
+	// Create test archives
+	zipContent := createZipArchive(map[string][]byte{
+		"from-zip/rule1.yml": []byte("zip rule 1"),
+		"from-zip/rule2.yml": []byte("zip rule 2"),
+	})
+
+	tarGzContent := createTarGzArchive(map[string][]byte{
+		"from-tar/rule3.yml": []byte("tar rule 3"),
+		"from-tar/rule4.yml": []byte("tar rule 4"),
+	})
+
+	testRepo := storage.NewTestRepo(t, tempDir)
+	builder := testRepo.Builder().
+		Init().
+		AddFile("test-package/loose-file.yml", "loose file content").
+		AddFile("test-package/archive.zip", string(zipContent)).
+		AddFile("test-package/archive.tar.gz", string(tarGzContent)).
+		Commit("Add files and archives").
+		Tag("v1.0.0")
+	_ = builder.Build()
+
+	config := GitRegistryConfig{
+		RegistryConfig: RegistryConfig{
+			URL:  "file://" + tempDir,
+			Type: "git",
+		},
+	}
+
+	registry, err := NewGitRegistry("test-registry", config)
+	if err != nil {
+		t.Fatalf("failed to create registry: %v", err)
+	}
+
+	ctx := context.Background()
+	versions, err := registry.ListPackageVersions(ctx, "test-package")
+	if err != nil {
+		t.Fatalf("failed to list versions: %v", err)
+	}
+
+	pkg, err := registry.GetPackage(ctx, "test-package", &versions[0], nil, nil)
+	if err != nil {
+		t.Fatalf("failed to get package: %v", err)
+	}
+
+	// Should have: 1 loose file + 2 from zip + 2 from tar.gz = 5 files
+	// (archive files themselves are not included after extraction)
+	if len(pkg.Files) != 5 {
+		t.Errorf("expected 5 files (1 loose + 2 from zip + 2 from tar.gz), got %d", len(pkg.Files))
+	}
+
+	// Verify all expected files are present
+	paths := make(map[string]bool)
+	for _, file := range pkg.Files {
+		paths[file.Path] = true
+	}
+
+	expected := []string{
+		"test-package/loose-file.yml",
+		"from-zip/rule1.yml",
+		"from-zip/rule2.yml",
+		"from-tar/rule3.yml",
+		"from-tar/rule4.yml",
+	}
+
+	for _, exp := range expected {
+		if !paths[exp] {
+			t.Errorf("expected path %s not found in extracted files", exp)
+		}
+	}
+
+	// Verify archive files themselves are not in the list
+	if paths["test-package/archive.zip"] {
+		t.Errorf("archive.zip should not be in extracted files")
+	}
+	if paths["test-package/archive.tar.gz"] {
+		t.Errorf("archive.tar.gz should not be in extracted files")
+	}
+
+	// Verify content of extracted files
+	for _, file := range pkg.Files {
+		switch file.Path {
+		case "test-package/loose-file.yml":
+			if string(file.Content) != "loose file content" {
+				t.Errorf("loose-file.yml content mismatch: got %s", string(file.Content))
+			}
+		case "from-zip/rule1.yml":
+			if string(file.Content) != "zip rule 1" {
+				t.Errorf("from-zip/rule1.yml content mismatch: got %s", string(file.Content))
+			}
+		case "from-zip/rule2.yml":
+			if string(file.Content) != "zip rule 2" {
+				t.Errorf("from-zip/rule2.yml content mismatch: got %s", string(file.Content))
+			}
+		case "from-tar/rule3.yml":
+			if string(file.Content) != "tar rule 3" {
+				t.Errorf("from-tar/rule3.yml content mismatch: got %s", string(file.Content))
+			}
+		case "from-tar/rule4.yml":
+			if string(file.Content) != "tar rule 4" {
+				t.Errorf("from-tar/rule4.yml content mismatch: got %s", string(file.Content))
+			}
+		}
+	}
+}
+
+// Helper to create zip archive for testing
+func createZipArchive(files map[string][]byte) []byte {
+	var buf bytes.Buffer
+	zipWriter := zip.NewWriter(&buf)
+
+	for path, content := range files {
+		writer, _ := zipWriter.Create(path)
+		_, _ = writer.Write(content)
+	}
+
+	_ = zipWriter.Close()
+	return buf.Bytes()
+}
+
+// Helper to create tar.gz archive for testing
+func createTarGzArchive(files map[string][]byte) []byte {
+	var buf bytes.Buffer
+	gzWriter := gzip.NewWriter(&buf)
+	tarWriter := tar.NewWriter(gzWriter)
+
+	for path, content := range files {
+		header := &tar.Header{
+			Name: path,
+			Mode: 0o644,
+			Size: int64(len(content)),
+		}
+		_ = tarWriter.WriteHeader(header)
+		_, _ = tarWriter.Write(content)
+	}
+
+	_ = tarWriter.Close()
+	_ = gzWriter.Close()
+	return buf.Bytes()
 }
 
 // Edge Cases
