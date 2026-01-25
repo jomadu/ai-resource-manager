@@ -4,7 +4,7 @@
 
 ARM is **fully functional and production-ready** with all core features implemented, tested, and all known bugs resolved.
 
-**Last Updated:** 2026-01-25 (Added E2E Tests: Exclude Patterns, Error Handling, Multi-Sink Scenarios)
+**Last Updated:** 2026-01-25 (Added E2E Tests: Manifest File Validation)
 **Analyzed By:** Kiro AI Agent
 **Analysis Method:** Systematic specification review, code inspection, test execution, and gap analysis
 
@@ -120,11 +120,12 @@ ARM is **fully functional and production-ready** with all core features implemen
 - ✅ `test/e2e/update_test.go` - Update/upgrade workflows (6 test cases)
 - ✅ `test/e2e/compile_test.go` - Compilation and tool formats (11 test cases)
 - ✅ `test/e2e/storage_test.go` - Storage and cache operations (7 test cases)
+- ✅ `test/e2e/errors_test.go` - Error handling (6 test cases)
+- ✅ `test/e2e/multisink_test.go` - Multi-sink scenarios (3 test cases)
+- ✅ `test/e2e/manifest_test.go` - Manifest file validation (6 test cases) - ADDED 2026-01-25
 - ✅ `test/e2e/helpers/` - Test infrastructure (git, fixtures, assertions, arm runner)
 
-**Test Results:** All tests passing (100% pass rate, 54 E2E tests)
-
-**Test Results:** All tests passing (unit tests + 30 E2E tests)
+**Test Results:** All tests passing (100% pass rate, 69 E2E tests)
 
 ---
 
@@ -247,7 +248,7 @@ No known issues. All bugs have been fixed and all tests pass.
 - ❌ Cloudsmith registry tests (authentication, API integration)
 - ❌ Compilation validation tests (invalid YAML, missing fields) - Note: ARM is lenient and doesn't fail on invalid YAML
 - ~~❌ Storage/cache tests (caching, cleanup, age-based removal)~~ ✅ DONE
-- ❌ Manifest file tests (arm.json, arm-lock.json, arm-index.json validation)
+- ✅ Manifest file tests (arm.json, arm-lock.json, arm-index.json validation) - DONE 2026-01-25
 - ❌ Authentication tests (.armrc file handling)
 - ✅ Error handling tests (invalid inputs, missing resources) - DONE 2026-01-25
 - ✅ Multi-sink scenarios (sink switching, reinstall behavior) - DONE 2026-01-25
@@ -273,10 +274,10 @@ No known issues. All bugs have been fixed and all tests pass.
 2. ~~Create `test/e2e/compile_test.go` - Compilation and validation tests~~ ✅ DONE
 3. ~~Create `test/e2e/priority_test.go` - Priority resolution tests~~ ✅ DONE (included in compile_test.go)
 4. ~~Create `test/e2e/storage_test.go` - Cache and storage tests~~ ✅ DONE
-5. Create `test/e2e/manifest_test.go` - Manifest file validation tests
+5. ~~Create `test/e2e/manifest_test.go` - Manifest file validation tests~~ ✅ DONE 2026-01-25
 6. Create `test/e2e/auth_test.go` - Authentication tests (.armrc)
-7. Create `test/e2e/errors_test.go` - Error handling tests
-8. Create `test/e2e/multisink_test.go` - Multi-sink scenarios
+7. ~~Create `test/e2e/errors_test.go` - Error handling tests~~ ✅ DONE 2026-01-25
+8. ~~Create `test/e2e/multisink_test.go` - Multi-sink scenarios~~ ✅ DONE 2026-01-25
 9. ~~Create `test/e2e/update_test.go` - Update/upgrade workflow tests~~ ✅ DONE
 10. Create `test/e2e/archive_test.go` - Archive extraction tests
 11. Add GitLab and Cloudsmith registry tests to `registry_test.go`
