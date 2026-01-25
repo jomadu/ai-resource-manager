@@ -223,7 +223,7 @@ No known issues. All bugs have been fixed and all tests pass.
 - ✅ `test/e2e/update_test.go` - Update/upgrade workflow tests (6 test cases)
 - ✅ `test/e2e/compile_test.go` - Compilation and tool format tests (11 test cases)
 - ✅ `test/e2e/storage_test.go` - Storage and cache operation tests (7 test cases)
-- ✅ All 57 E2E test cases passing (1 skipped)
+- ✅ All 65 E2E test cases passing (1 skipped)
 
 **Test Coverage:**
 - ✅ Git registry: add, list, info, set, remove, branches, duplicate detection
@@ -239,6 +239,7 @@ No known issues. All bugs have been fixed and all tests pass.
 - ✅ Priority resolution: multiple rulesets with different priorities
 - ✅ Storage/cache: package caching, cache reuse, cache key generation, cache cleaning (age-based, --nuke)
 - ✅ Cache structure: three-level metadata (registry/package/version), timestamp tracking
+- ✅ Error handling: non-existent versions, non-existent sinks, non-existent registries, duplicate detection, invalid version constraints
 
 **Missing Test Scenarios (Per Specification):**
 - ❌ GitLab registry tests (authentication, project/group ID)
@@ -247,7 +248,7 @@ No known issues. All bugs have been fixed and all tests pass.
 - ~~❌ Storage/cache tests (caching, cleanup, age-based removal)~~ ✅ DONE
 - ❌ Manifest file tests (arm.json, arm-lock.json, arm-index.json validation)
 - ❌ Authentication tests (.armrc file handling)
-- ❌ Error handling tests (invalid inputs, missing resources)
+- ✅ Error handling tests (invalid inputs, missing resources) - DONE 2026-01-25
 - ❌ Multi-sink scenarios (sink switching, reinstall behavior)
 - ❌ Archive tests (.tar.gz, .zip extraction)
 - ✅ Exclude pattern tests (exclude overrides include) - DONE 2026-01-25
