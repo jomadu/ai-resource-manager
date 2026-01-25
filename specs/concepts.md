@@ -46,8 +46,10 @@ arm install promptset --include "review/**/*.yml" --include "refactor/**/*.yml" 
 ARM supports two versioning models:
 
 **Git Registries** - Flexible versioning using Git's native features:
-- Semantic version tags (`1.0.0`, `v2.1.0`) for production releases
+- Semantic version tags (`1.0.0`, `v2.1.0`) for production releases (always prioritized)
 - Branches (`main`, `develop`) for development and testing (resolves to commit hash)
+- Version resolution: Semver tags always take precedence over branches
+- Branch priority: Determined by order in registry `--branches` configuration
 - Version constraints: `@1` (major), `@1.1` (major.minor), `@1.0.0` (exact)
 
 **GitLab/Cloudsmith Registries** - Semantic versioning only:

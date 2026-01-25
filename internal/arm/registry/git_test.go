@@ -452,6 +452,68 @@ func TestGitRegistry_BranchNotFound(t *testing.T) {
 	}
 }
 
+func TestGitRegistry_BranchConfigOrder(t *testing.T) {
+	// Test that branches are ordered by config, not alphabetically
+	tempDir, err := os.MkdirTemp("", "git-registry-test")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer func() { _ = os.RemoveAll(tempDir) }()
+
+	testRepo := storage.NewTestRepo(t, tempDir)
+	builder := testRepo.Builder().
+		Init().
+		AddFile("test.yml", "test content").
+		Commit("Initial commit").
+		Branch("alpha").
+		AddFile("alpha.yml", "alpha content").
+		Commit("Alpha commit").
+		Checkout("main").
+		Branch("zebra").
+		AddFile("zebra.yml", "zebra content").
+		Commit("Zebra commit").
+		Checkout("main")
+	_ = builder.Build()
+
+	// Configure branches in specific order: zebra, main, alpha
+	// (not alphabetical)
+	config := GitRegistryConfig{
+		RegistryConfig: RegistryConfig{
+			URL:  "file://" + tempDir,
+			Type: "git",
+		},
+		Branches: []string{"zebra", "main", "alpha"},
+	}
+
+	registry, err := NewGitRegistry("test-registry", config)
+	if err != nil {
+		t.Fatalf("failed to create registry: %v", err)
+	}
+
+	ctx := context.Background()
+	versions, err := registry.ListPackageVersions(ctx, "test-package")
+	if err != nil {
+		t.Fatalf("failed to list versions: %v", err)
+	}
+
+	// Should have 3 branches
+	if len(versions) != 3 {
+		t.Errorf("expected 3 versions, got %d", len(versions))
+		return
+	}
+
+	// Verify branches are in config order: zebra, main, alpha
+	if versions[0].Version != "zebra" {
+		t.Errorf("expected first branch to be zebra, got %s", versions[0].Version)
+	}
+	if versions[1].Version != "main" {
+		t.Errorf("expected second branch to be main, got %s", versions[1].Version)
+	}
+	if versions[2].Version != "alpha" {
+		t.Errorf("expected third branch to be alpha, got %s", versions[2].Version)
+	}
+}
+
 func TestGitRegistry_VersionPriority(t *testing.T) {
 	// Test semantic tags > branches
 	tempDir, err := os.MkdirTemp("", "git-registry-test")
@@ -499,14 +561,42 @@ func TestGitRegistry_VersionPriority(t *testing.T) {
 		return
 	}
 
+	// Verify ordering: semver tags first (descending), then branches
+	// Expected order: v2.0.0, v1.0.0, main
+	if versions[0].Version != "v2.0.0" && versions[0].Version != "2.0.0" {
+		t.Errorf("expected first version to be v2.0.0, got %s", versions[0].Version)
+	}
+	if versions[1].Version != "v1.0.0" && versions[1].Version != "1.0.0" {
+		t.Errorf("expected second version to be v1.0.0, got %s", versions[1].Version)
+	}
+	if versions[2].Version != "main" {
+		t.Errorf("expected third version to be main (branch), got %s", versions[2].Version)
+	}
+
+	// Verify all semver versions come before all branches
+	lastSemverIndex := -1
+	firstBranchIndex := len(versions)
+	for i, v := range versions {
+		if v.IsSemver {
+			lastSemverIndex = i
+		} else {
+			if i < firstBranchIndex {
+				firstBranchIndex = i
+			}
+		}
+	}
+	if lastSemverIndex >= firstBranchIndex {
+		t.Errorf("semver versions should come before branches, but found semver at index %d and branch at index %d", lastSemverIndex, firstBranchIndex)
+	}
+
 	// Verify we have the semantic versions
 	foundV1 := false
 	foundV2 := false
 	for _, v := range versions {
-		if v.Version == "v1.0.0" {
+		if v.Version == "v1.0.0" || v.Version == "1.0.0" {
 			foundV1 = true
 		}
-		if v.Version == "v2.0.0" {
+		if v.Version == "v2.0.0" || v.Version == "2.0.0" {
 			foundV2 = true
 		}
 	}
