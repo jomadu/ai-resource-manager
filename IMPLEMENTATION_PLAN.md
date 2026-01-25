@@ -171,12 +171,13 @@ Create builder-oriented specifications following Ralph methodology. See [SPEC_CO
   - **Edge cases**: Corrupted cache, disk full, concurrent access, stale metadata
   - **Verification**: Comprehensive spec created with algorithms for key generation, store, retrieve, clean by age, clean by last access, and nuke. All tests pass.
 
-- [ ] Create `specs/pattern-filtering.md`
+- [x] Create `specs/pattern-filtering.md`
   - **JTBD**: Filter package files using glob patterns
   - **Maps to**: internal/arm/registry/, internal/arm/core/archive.go
   - **User docs**: concepts.md, registries.md
   - **Coverage**: Glob matching, include/exclude logic (OR for includes, exclude overrides), archive extraction (zip, tar.gz), path sanitization
   - **Edge cases**: Invalid patterns, path traversal attacks, nested archives, empty results
+  - **Verification**: Comprehensive spec created with algorithms for normalize patterns, match patterns, extract archives, and sanitize paths. All tests pass.
 
 - [ ] Create `specs/authentication.md`
   - **JTBD**: Authenticate with registries requiring tokens
