@@ -340,7 +340,7 @@ func (c *CloudsmithRegistry) matchesPatterns(path string, include, exclude []str
 	}
 
 	for _, pattern := range exclude {
-		if matchPattern(pattern, path) {
+		if core.MatchPattern(pattern, path) {
 			return false
 		}
 	}
@@ -350,48 +350,12 @@ func (c *CloudsmithRegistry) matchesPatterns(path string, include, exclude []str
 	}
 
 	for _, pattern := range include {
-		if matchPattern(pattern, path) {
+		if core.MatchPattern(pattern, path) {
 			return true
 		}
 	}
 
 	return false
-}
-
-func matchPattern(pattern, path string) bool {
-	pattern = strings.ReplaceAll(pattern, "\\", "/")
-	path = strings.ReplaceAll(path, "\\", "/")
-
-	if strings.HasPrefix(pattern, "**/") {
-		suffix := pattern[3:]
-		return strings.HasSuffix(path, suffix) || strings.Contains(path, "/"+suffix)
-	}
-
-	if strings.HasSuffix(pattern, "/**") {
-		prefix := pattern[:len(pattern)-3]
-		return strings.HasPrefix(path, prefix+"/") || path == prefix
-	}
-
-	if !strings.Contains(pattern, "*") {
-		return pattern == path
-	}
-
-	parts := strings.Split(pattern, "*")
-	pos := 0
-	for i, part := range parts {
-		if part == "" {
-			continue
-		}
-		idx := strings.Index(path[pos:], part)
-		if idx == -1 || (i == 0 && idx != 0) {
-			return false
-		}
-		pos += idx + len(part)
-	}
-	if len(parts) > 0 && parts[len(parts)-1] != "" && !strings.HasSuffix(path, parts[len(parts)-1]) {
-		return false
-	}
-	return true
 }
 
 func parseNextURLFromLinkHeader(linkHeader string) string {

@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -378,7 +377,7 @@ func matchesPatterns(filePath string, include, exclude []string) bool {
 	}
 
 	for _, pattern := range exclude {
-		if matched, _ := filepath.Match(pattern, filePath); matched {
+		if core.MatchPattern(pattern, filePath) {
 			return false
 		}
 	}
@@ -388,7 +387,7 @@ func matchesPatterns(filePath string, include, exclude []string) bool {
 	}
 
 	for _, pattern := range include {
-		if matched, _ := filepath.Match(pattern, filePath); matched {
+		if core.MatchPattern(pattern, filePath) {
 			return true
 		}
 	}

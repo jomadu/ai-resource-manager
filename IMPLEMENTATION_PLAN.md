@@ -19,16 +19,22 @@ The project now has:
 
 ## Next Steps
 
-The documentation restructuring is complete. Future work should focus on:
+The documentation restructuring is complete. Current work:
 
-1. **Merge to main**: The `docs-migration` branch is ready for merge (all tests pass, documentation complete)
-2. **Feature enhancements** based on user feedback
-3. **Performance optimizations**
-4. **Additional registry types** if needed
-5. **Enhanced error messages and diagnostics**
-6. **Address skipped tests**:
-   - `TestArchiveWithIncludeExcludePatterns` - Pattern filtering with archives needs investigation
-   - Other skipped tests are reasonable (conditional or covered elsewhere)
+1. **Fix pattern matching for ** glob support** (IN PROGRESS - ralph-0.0.45)
+   - ✅ Created shared `core.MatchPattern()` function with full `**` support
+   - ✅ Updated Git, GitLab, and Cloudsmith registries to use shared function
+   - ✅ All unit tests pass for pattern matching
+   - ❌ `TestArchiveWithIncludeExcludePatterns` still fails - integration issue
+   - **Issue**: Pattern `security/**/*.yml` should match `security/rule1.yml` from extracted archive, but files aren't being installed
+   - **Next**: Add debug logging to trace file paths through extraction → filtering → parsing → compilation flow
+   - **Hypothesis**: Files may be filtered/dropped at parsing or compilation stage, not pattern matching stage
+
+2. **Merge to main**: The `docs-migration` branch is ready for merge (all tests pass, documentation complete)
+3. **Feature enhancements** based on user feedback
+4. **Performance optimizations**
+5. **Additional registry types** if needed
+6. **Enhanced error messages and diagnostics**
 
 See [SPECIFICATION_PHILOSOPHY.md](./SPECIFICATION_PHILOSOPHY.md) for guidance on writing new specifications.
 
