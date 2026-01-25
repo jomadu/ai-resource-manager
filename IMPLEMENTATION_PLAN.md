@@ -147,12 +147,13 @@ Create builder-oriented specifications following Ralph methodology. See [SPEC_CO
   - **Edge cases**: Invalid URLs, duplicate names, missing auth, network failures
   - **Verification**: Comprehensive spec with algorithms for add, list, remove, and factory pattern. All tests pass.
 
-- [ ] Create `specs/sink-compilation.md`
+- [x] Create `specs/sink-compilation.md`
   - **JTBD**: Compile resources to tool-specific formats
   - **Maps to**: internal/arm/compiler/, internal/arm/sink/manager.go
   - **User docs**: sinks.md, commands.md
   - **Coverage**: Compilation algorithms per tool (Cursor, AmazonQ, Copilot, Markdown), layout modes (hierarchical vs flat), filename generation, truncation rules
   - **Edge cases**: Long filenames, special characters, empty resources, invalid YAML
+  - **Verification**: Comprehensive spec with algorithms for compilation, filename generation, layout modes, and priority index. All tests pass.
 
 - [ ] Create `specs/priority-resolution.md`
   - **JTBD**: Resolve conflicts between overlapping rules
