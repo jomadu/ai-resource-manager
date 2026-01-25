@@ -137,12 +137,13 @@ Create builder-oriented specifications following Ralph methodology. See [SPEC_CO
   - **Edge cases**: Missing sinks, version conflicts, partial failures, concurrent installs
   - **Verification**: Comprehensive spec with algorithms for install, update, upgrade, uninstall, and install-all
 
-- [ ] Create `specs/registry-management.md`
+- [x] Create `specs/registry-management.md`
   - **JTBD**: Configure and manage registries
   - **Maps to**: internal/arm/registry/, internal/arm/manifest/
   - **User docs**: registries.md, git-registry.md, gitlab-registry.md, cloudsmith-registry.md
   - **Coverage**: Registry types (Git, GitLab, Cloudsmith), configuration storage, authentication integration, key generation
   - **Edge cases**: Invalid URLs, duplicate names, missing auth, network failures
+  - **Verification**: Comprehensive spec with algorithms for add, list, remove, and factory pattern. All tests pass.
 
 - [ ] Create `specs/sink-compilation.md`
   - **JTBD**: Compile resources to tool-specific formats
