@@ -155,12 +155,13 @@ Create builder-oriented specifications following Ralph methodology. See [SPEC_CO
   - **Edge cases**: Long filenames, special characters, empty resources, invalid YAML
   - **Verification**: Comprehensive spec with algorithms for compilation, filename generation, layout modes, and priority index. All tests pass.
 
-- [ ] Create `specs/priority-resolution.md`
+- [x] Create `specs/priority-resolution.md`
   - **JTBD**: Resolve conflicts between overlapping rules
   - **Maps to**: internal/arm/sink/manager.go, internal/arm/compiler/generators.go
   - **User docs**: sinks.md, concepts.md
   - **Coverage**: Priority merging algorithm, conflict resolution rules, index generation, metadata embedding
   - **Edge cases**: Same priority, no rules, circular dependencies, missing metadata
+  - **Verification**: Comprehensive spec created with algorithms for install, update, generate index, and embed metadata. All tests pass.
 
 - [ ] Create `specs/cache-management.md`
   - **JTBD**: Cache packages locally to avoid redundant downloads
