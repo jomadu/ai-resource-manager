@@ -48,7 +48,7 @@ func NewRegistryWithPath(baseDir string, registryKey interface{}) (*Registry, er
 
 	// Create metadata.json from registryKey fields
 	var metadata RegistryMetadata
-	
+
 	// Convert registryKey to map using JSON marshaling (handles both maps and structs)
 	var keyMap map[string]interface{}
 	if m, ok := registryKey.(map[string]interface{}); ok {
@@ -60,7 +60,7 @@ func NewRegistryWithPath(baseDir string, registryKey interface{}) (*Registry, er
 			_ = json.Unmarshal(data, &keyMap)
 		}
 	}
-	
+
 	if keyMap != nil {
 		if url, ok := keyMap["url"].(string); ok {
 			metadata.URL = url

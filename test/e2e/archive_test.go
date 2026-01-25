@@ -19,16 +19,16 @@ func TestArchiveTarGz(t *testing.T) {
 	projectDir := filepath.Join(testDir, "project")
 
 	// Create directories
-	if err := os.MkdirAll(repoDir, 0755); err != nil {
+	if err := os.MkdirAll(repoDir, 0o755); err != nil {
 		t.Fatalf("failed to create repo dir: %v", err)
 	}
-	if err := os.MkdirAll(projectDir, 0755); err != nil {
+	if err := os.MkdirAll(projectDir, 0o755); err != nil {
 		t.Fatalf("failed to create project dir: %v", err)
 	}
 
 	// Create Git repository with .tar.gz archive
 	repo := helpers.NewGitRepo(t, repoDir)
-	
+
 	// Create .tar.gz archive with rules
 	tarGzContent := createTarGzArchive(t, map[string]string{
 		"rule1.yml": `apiVersion: v1
@@ -52,7 +52,7 @@ spec:
     rule2:
       body: "This is rule 2 from tar.gz archive"`,
 	})
-	
+
 	repo.WriteFile("test-ruleset/rules.tar.gz", string(tarGzContent))
 	repo.Commit("Add tar.gz archive")
 	repo.Tag("v1.0.0")
@@ -64,11 +64,11 @@ spec:
 	arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "test-sink")
 
 	// Verify extracted files exist (filename format is {rulesetID}_{ruleID}.mdc)
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor/rules/arm/test-registry/test-ruleset/v1.0.0/rule1_rule1.mdc"))
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor/rules/arm/test-registry/test-ruleset/v1.0.0/rule2_rule2.mdc"))
-	
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rule1_rule1.mdc"))
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rule2_rule2.mdc"))
+
 	// Verify archive file itself is not present
-	archivePath := filepath.Join(projectDir, ".cursor/rules/arm/test-registry/test-ruleset/v1.0.0/rules.tar.gz")
+	archivePath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rules.tar.gz")
 	if _, err := os.Stat(archivePath); err == nil {
 		t.Errorf("archive file should not be present in sink: %s", archivePath)
 	}
@@ -81,16 +81,16 @@ func TestArchiveZip(t *testing.T) {
 	projectDir := filepath.Join(testDir, "project")
 
 	// Create directories
-	if err := os.MkdirAll(repoDir, 0755); err != nil {
+	if err := os.MkdirAll(repoDir, 0o755); err != nil {
 		t.Fatalf("failed to create repo dir: %v", err)
 	}
-	if err := os.MkdirAll(projectDir, 0755); err != nil {
+	if err := os.MkdirAll(projectDir, 0o755); err != nil {
 		t.Fatalf("failed to create project dir: %v", err)
 	}
 
 	// Create Git repository with .zip archive
 	repo := helpers.NewGitRepo(t, repoDir)
-	
+
 	// Create .zip archive with rules
 	zipContent := createZipArchive(t, map[string]string{
 		"rule1.yml": `apiVersion: v1
@@ -114,7 +114,7 @@ spec:
     rule2:
       body: "This is rule 2 from zip archive"`,
 	})
-	
+
 	repo.WriteFile("test-ruleset/rules.zip", string(zipContent))
 	repo.Commit("Add zip archive")
 	repo.Tag("v1.0.0")
@@ -126,11 +126,11 @@ spec:
 	arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "test-sink")
 
 	// Verify extracted files exist (filename format is {rulesetID}_{ruleID}.md for amazonq)
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".amazonq/rules/arm/test-registry/test-ruleset/v1.0.0/rule1_rule1.md"))
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".amazonq/rules/arm/test-registry/test-ruleset/v1.0.0/rule2_rule2.md"))
-	
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".amazonq", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rule1_rule1.md"))
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".amazonq", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rule2_rule2.md"))
+
 	// Verify archive file itself is not present
-	archivePath := filepath.Join(projectDir, ".amazonq/rules/arm/test-registry/test-ruleset/v1.0.0/rules.zip")
+	archivePath := filepath.Join(projectDir, ".amazonq", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rules.zip")
 	if _, err := os.Stat(archivePath); err == nil {
 		t.Errorf("archive file should not be present in sink: %s", archivePath)
 	}
@@ -143,16 +143,16 @@ func TestArchiveMixedWithLooseFiles(t *testing.T) {
 	projectDir := filepath.Join(testDir, "project")
 
 	// Create directories
-	if err := os.MkdirAll(repoDir, 0755); err != nil {
+	if err := os.MkdirAll(repoDir, 0o755); err != nil {
 		t.Fatalf("failed to create repo dir: %v", err)
 	}
-	if err := os.MkdirAll(projectDir, 0755); err != nil {
+	if err := os.MkdirAll(projectDir, 0o755); err != nil {
 		t.Fatalf("failed to create project dir: %v", err)
 	}
 
 	// Create Git repository with both archives and loose files
 	repo := helpers.NewGitRepo(t, repoDir)
-	
+
 	// Create .tar.gz archive
 	tarGzContent := createTarGzArchive(t, map[string]string{
 		"archived-rule1.yml": `apiVersion: v1
@@ -166,7 +166,7 @@ spec:
     archivedRule1:
       body: "This is from tar.gz archive"`,
 	})
-	
+
 	// Create .zip archive
 	zipContent := createZipArchive(t, map[string]string{
 		"archived-rule2.yml": `apiVersion: v1
@@ -180,7 +180,7 @@ spec:
     archivedRule2:
       body: "This is from zip archive"`,
 	})
-	
+
 	repo.WriteFile("test-ruleset/rules.tar.gz", string(tarGzContent))
 	repo.WriteFile("test-ruleset/rules.zip", string(zipContent))
 	repo.WriteFile("test-ruleset/loose-rule.yml", `apiVersion: v1
@@ -204,9 +204,9 @@ spec:
 
 	// Verify all files exist (Copilot uses flat layout with hash-prefixed names)
 	// Just verify that we have 3 rule files (2 from archives + 1 loose)
-	sinkDir := filepath.Join(projectDir, ".github/instructions")
+	sinkDir := filepath.Join(projectDir, ".github", "instructions")
 	ruleFileCount := 0
-	filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+	_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -215,7 +215,7 @@ spec:
 		}
 		return nil
 	})
-	
+
 	if ruleFileCount != 3 {
 		t.Errorf("expected 3 rule files, got %d", ruleFileCount)
 	}
@@ -228,16 +228,16 @@ func TestArchivePrecedenceOverLooseFiles(t *testing.T) {
 	projectDir := filepath.Join(testDir, "project")
 
 	// Create directories
-	if err := os.MkdirAll(repoDir, 0755); err != nil {
+	if err := os.MkdirAll(repoDir, 0o755); err != nil {
 		t.Fatalf("failed to create repo dir: %v", err)
 	}
-	if err := os.MkdirAll(projectDir, 0755); err != nil {
+	if err := os.MkdirAll(projectDir, 0o755); err != nil {
 		t.Fatalf("failed to create project dir: %v", err)
 	}
 
 	// Create Git repository with conflicting files
 	repo := helpers.NewGitRepo(t, repoDir)
-	
+
 	// Create archive with rule1.yml
 	tarGzContent := createTarGzArchive(t, map[string]string{
 		"rule1.yml": `apiVersion: v1
@@ -251,7 +251,7 @@ spec:
     rule1:
       body: "This is from the archive"`,
 	})
-	
+
 	// Create loose file with same name (will be overridden by archive)
 	repo.WriteFile("test-ruleset/rule1.yml", `apiVersion: v1
 kind: Ruleset
@@ -274,14 +274,14 @@ spec:
 	arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "test-sink")
 
 	// Verify archive version wins (filename format is {rulesetID}_{ruleID}.md for markdown)
-	rulePath := filepath.Join(projectDir, ".arm/rules/arm/test-registry/test-ruleset/v1.0.0/rule1_rule1.md")
+	rulePath := filepath.Join(projectDir, ".arm", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rule1_rule1.md")
 	helpers.AssertFileExists(t, rulePath)
-	
+
 	content, err := os.ReadFile(rulePath)
 	if err != nil {
 		t.Fatalf("failed to read rule file: %v", err)
 	}
-	
+
 	if !bytes.Contains(content, []byte("This is from the archive")) {
 		t.Errorf("expected archive content, got: %s", string(content))
 	}
@@ -293,22 +293,22 @@ spec:
 // TestArchiveWithIncludeExcludePatterns tests pattern filtering on extracted archive content
 func TestArchiveWithIncludeExcludePatterns(t *testing.T) {
 	t.Skip("Pattern filtering with archives needs more investigation - patterns may need to match extracted paths")
-	
+
 	testDir := t.TempDir()
 	repoDir := filepath.Join(testDir, "repo")
 	projectDir := filepath.Join(testDir, "project")
 
 	// Create directories
-	if err := os.MkdirAll(repoDir, 0755); err != nil {
+	if err := os.MkdirAll(repoDir, 0o755); err != nil {
 		t.Fatalf("failed to create repo dir: %v", err)
 	}
-	if err := os.MkdirAll(projectDir, 0755); err != nil {
+	if err := os.MkdirAll(projectDir, 0o755); err != nil {
 		t.Fatalf("failed to create project dir: %v", err)
 	}
 
 	// Create Git repository with archive containing multiple files
 	repo := helpers.NewGitRepo(t, repoDir)
-	
+
 	tarGzContent := createTarGzArchive(t, map[string]string{
 		"security/rule1.yml": `apiVersion: v1
 kind: Ruleset
@@ -351,7 +351,7 @@ spec:
     experimentalRule4:
       body: "Experimental content 4"`,
 	})
-	
+
 	repo.WriteFile("test-ruleset/rules.tar.gz", string(tarGzContent))
 	repo.Commit("Add archive with multiple files")
 	repo.Tag("v1.0.0")
@@ -360,16 +360,16 @@ spec:
 	arm := helpers.NewARMRunner(t, projectDir)
 	arm.MustRun("add", "registry", "git", "--url", "file://"+repoDir, "test-registry")
 	arm.MustRun("add", "sink", "--tool", "cursor", "test-sink", ".cursor/rules")
-	
+
 	// Install with include pattern for security files, exclude experimental
-	arm.MustRun("install", "ruleset", 
+	arm.MustRun("install", "ruleset",
 		"--include", "security/**/*.yml",
 		"--exclude", "**/experimental/**",
 		"test-registry/test-ruleset@1.0.0", "test-sink")
-	
+
 	// Debug: list all files created
-	sinkDir := filepath.Join(projectDir, ".cursor/rules")
-	filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+	sinkDir := filepath.Join(projectDir, ".cursor", "rules")
+	_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -381,16 +381,16 @@ spec:
 	})
 
 	// Verify only security files are present (filename format is {rulesetID}_{ruleID}.mdc)
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor/rules/arm/test-registry/test-ruleset/v1.0.0/securityRule1_securityRule1.mdc"))
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor/rules/arm/test-registry/test-ruleset/v1.0.0/securityRule2_securityRule2.mdc"))
-	
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "securityRule1_securityRule1.mdc"))
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "securityRule2_securityRule2.mdc"))
+
 	// Verify general and experimental files are not present
-	generalPath := filepath.Join(projectDir, ".cursor/rules/arm/test-registry/test-ruleset/v1.0.0/generalRule3_generalRule3.mdc")
+	generalPath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "generalRule3_generalRule3.mdc")
 	if _, err := os.Stat(generalPath); err == nil {
 		t.Errorf("general file should not be present: %s", generalPath)
 	}
-	
-	expPath := filepath.Join(projectDir, ".cursor/rules/arm/test-registry/test-ruleset/v1.0.0/experimentalRule4_experimentalRule4.mdc")
+
+	expPath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "experimentalRule4_experimentalRule4.mdc")
 	if _, err := os.Stat(expPath); err == nil {
 		t.Errorf("experimental file should not be present: %s", expPath)
 	}
@@ -400,15 +400,15 @@ spec:
 
 func createTarGzArchive(t *testing.T, files map[string]string) []byte {
 	t.Helper()
-	
+
 	var buf bytes.Buffer
 	gzWriter := gzip.NewWriter(&buf)
 	tarWriter := tar.NewWriter(gzWriter)
-	
+
 	for path, content := range files {
 		header := &tar.Header{
 			Name: path,
-			Mode: 0644,
+			Mode: 0o644,
 			Size: int64(len(content)),
 		}
 		if err := tarWriter.WriteHeader(header); err != nil {
@@ -418,23 +418,23 @@ func createTarGzArchive(t *testing.T, files map[string]string) []byte {
 			t.Fatalf("failed to write tar content: %v", err)
 		}
 	}
-	
+
 	if err := tarWriter.Close(); err != nil {
 		t.Fatalf("failed to close tar writer: %v", err)
 	}
 	if err := gzWriter.Close(); err != nil {
 		t.Fatalf("failed to close gzip writer: %v", err)
 	}
-	
+
 	return buf.Bytes()
 }
 
 func createZipArchive(t *testing.T, files map[string]string) []byte {
 	t.Helper()
-	
+
 	var buf bytes.Buffer
 	zipWriter := zip.NewWriter(&buf)
-	
+
 	for path, content := range files {
 		writer, err := zipWriter.Create(path)
 		if err != nil {
@@ -444,10 +444,10 @@ func createZipArchive(t *testing.T, files map[string]string) []byte {
 			t.Fatalf("failed to write zip content: %v", err)
 		}
 	}
-	
+
 	if err := zipWriter.Close(); err != nil {
 		t.Fatalf("failed to close zip writer: %v", err)
 	}
-	
+
 	return buf.Bytes()
 }

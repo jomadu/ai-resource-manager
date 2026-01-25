@@ -579,10 +579,8 @@ func TestGitRegistry_VersionPriority(t *testing.T) {
 	for i, v := range versions {
 		if v.IsSemver {
 			lastSemverIndex = i
-		} else {
-			if i < firstBranchIndex {
-				firstBranchIndex = i
-			}
+		} else if i < firstBranchIndex {
+			firstBranchIndex = i
 		}
 	}
 	if lastSemverIndex >= firstBranchIndex {

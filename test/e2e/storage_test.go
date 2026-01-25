@@ -75,7 +75,7 @@ func TestPackageCachedAfterFirstInstall(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read package directory: %v", err)
 	}
-	
+
 	var versionDir string
 	for _, entry := range versionEntries {
 		if entry.IsDir() {
@@ -190,9 +190,9 @@ func TestCacheReusedOnSecondInstall(t *testing.T) {
 	}
 
 	// Verify both projects have compiled files
-	sinkDir1 := filepath.Join(workDir1, ".cursor/rules")
-	sinkDir2 := filepath.Join(workDir2, ".cursor/rules")
-	
+	sinkDir1 := filepath.Join(workDir1, ".cursor", "rules")
+	sinkDir2 := filepath.Join(workDir2, ".cursor", "rules")
+
 	if helpers.CountFilesRecursive(t, sinkDir1) == 0 {
 		t.Error("first project should have compiled files")
 	}
@@ -241,24 +241,24 @@ func TestCacheKeyGenerationWithPatterns(t *testing.T) {
 		}
 		registryDir := filepath.Join(registriesDir, entry.Name())
 		metadataPath := filepath.Join(registryDir, "metadata.json")
-		
+
 		data, err := os.ReadFile(metadataPath)
 		if err != nil {
 			continue
 		}
-		
+
 		var regMeta map[string]interface{}
 		if err := json.Unmarshal(data, &regMeta); err != nil {
 			continue
 		}
-		
+
 		// Check if this is our test registry
 		if url, ok := regMeta["url"].(string); ok && url == repoURL {
 			testRegistryDir = registryDir
 			break
 		}
 	}
-	
+
 	if testRegistryDir == "" {
 		t.Fatal("could not find test registry in storage")
 	}
@@ -294,12 +294,12 @@ func TestCacheKeyGenerationWithPatterns(t *testing.T) {
 		if !ok || includeField == nil {
 			continue
 		}
-		
+
 		includeArray, ok := includeField.([]interface{})
 		if !ok || len(includeArray) == 0 {
 			continue
 		}
-		
+
 		// Check if it contains "security.yml"
 		for _, pattern := range includeArray {
 			if patternStr, ok := pattern.(string); ok && patternStr == "security.yml" {
@@ -307,7 +307,7 @@ func TestCacheKeyGenerationWithPatterns(t *testing.T) {
 				break
 			}
 		}
-		
+
 		if foundPackageWithPattern {
 			break
 		}
@@ -397,7 +397,7 @@ func TestCleanCacheWithMaxAge(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read registries directory after clean: %v", err)
 	}
-	
+
 	// Check if any version directories still exist
 	hasVersions := false
 	for _, entry := range entries {
@@ -409,12 +409,12 @@ func TestCleanCacheWithMaxAge(t *testing.T) {
 		if _, err := os.Stat(packagesDir); os.IsNotExist(err) {
 			continue
 		}
-		
+
 		packageEntries, err := os.ReadDir(packagesDir)
 		if err != nil {
 			continue
 		}
-		
+
 		for _, pkgEntry := range packageEntries {
 			if !pkgEntry.IsDir() {
 				continue
@@ -424,7 +424,7 @@ func TestCleanCacheWithMaxAge(t *testing.T) {
 			if err != nil {
 				continue
 			}
-			
+
 			for _, verEntry := range versionEntries {
 				if verEntry.IsDir() && strings.HasPrefix(verEntry.Name(), "v") {
 					hasVersions = true
@@ -439,7 +439,7 @@ func TestCleanCacheWithMaxAge(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if hasVersions {
 		t.Error("version directories should be removed with max-age 0s")
 	}
@@ -551,7 +551,7 @@ func TestCacheStructure(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read package directory: %v", err)
 	}
-	
+
 	var versionDir string
 	for _, entry := range versionEntries {
 		if entry.IsDir() {
