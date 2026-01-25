@@ -293,8 +293,6 @@ spec:
 
 // TestArchiveWithIncludeExcludePatterns tests pattern filtering on extracted archive content
 func TestArchiveWithIncludeExcludePatterns(t *testing.T) {
-	t.Skip("Pattern matching with ** works in unit tests, but integration with archives needs debugging. Files are not being installed even though pattern should match.")
-
 	// First verify pattern matching works as expected
 	t.Run("VerifyPatternMatching", func(t *testing.T) {
 		testCases := []struct {
@@ -393,32 +391,19 @@ spec:
 	if err != nil {
 		t.Fatalf("install failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
 	}
-	t.Logf("Install output: %s", stdout)
-
-	// Debug: list all files created
-	sinkDir := filepath.Join(projectDir, ".cursor", "rules")
-	_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			relPath, _ := filepath.Rel(sinkDir, path)
-			t.Logf("Created file: %s", relPath)
-		}
-		return nil
-	})
 
 	// Verify only security files are present (filename format is {rulesetID}_{ruleID}.mdc)
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "securityRule1_securityRule1.mdc"))
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "securityRule2_securityRule2.mdc"))
+	// Files preserve directory structure from archive
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "security", "securityRule1_securityRule1.mdc"))
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "security", "securityRule2_securityRule2.mdc"))
 
 	// Verify general and experimental files are not present
-	generalPath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "generalRule3_generalRule3.mdc")
+	generalPath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "general", "generalRule3_generalRule3.mdc")
 	if _, err := os.Stat(generalPath); err == nil {
 		t.Errorf("general file should not be present: %s", generalPath)
 	}
 
-	expPath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "experimentalRule4_experimentalRule4.mdc")
+	expPath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "experimental", "experimentalRule4_experimentalRule4.mdc")
 	if _, err := os.Stat(expPath); err == nil {
 		t.Errorf("experimental file should not be present: %s", expPath)
 	}
