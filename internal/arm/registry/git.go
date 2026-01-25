@@ -195,7 +195,7 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 }
 
 // matchesPatterns checks if file path matches include/exclude patterns.
-// Uses filepath.Match for glob pattern support. Invalid patterns are skipped.
+// Uses core.MatchPattern for glob pattern support with ** for recursive matching.
 func (g *GitRegistry) matchesPatterns(filePath string, include, exclude []string) bool {
 	// If no patterns, include all files
 	if len(include) == 0 && len(exclude) == 0 {
@@ -204,12 +204,7 @@ func (g *GitRegistry) matchesPatterns(filePath string, include, exclude []string
 
 	// Check exclude patterns first
 	for _, pattern := range exclude {
-		matched, err := filepath.Match(pattern, filePath)
-		if err != nil {
-			// Invalid pattern - skip it (could log warning)
-			continue
-		}
-		if matched {
+		if core.MatchPattern(pattern, filePath) {
 			return false
 		}
 	}
@@ -221,12 +216,7 @@ func (g *GitRegistry) matchesPatterns(filePath string, include, exclude []string
 
 	// Check include patterns
 	for _, pattern := range include {
-		matched, err := filepath.Match(pattern, filePath)
-		if err != nil {
-			// Invalid pattern - skip it (could log warning)
-			continue
-		}
-		if matched {
+		if core.MatchPattern(pattern, filePath) {
 			return true
 		}
 	}

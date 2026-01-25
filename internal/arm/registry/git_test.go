@@ -729,9 +729,10 @@ func TestGitRegistry_CacheKeyNormalization(t *testing.T) {
 
 // File Filtering
 func TestGitRegistry_IncludePatterns(t *testing.T) {
-	// Test --include "*.yml"
-	tempDir, err := os.MkdirTemp("", "git-registry-test")
-	if err != nil {
+	t.Run("patterns with loose files", func(t *testing.T) {
+		// Test --include "*.yml"
+		tempDir, err := os.MkdirTemp("", "git-registry-test")
+		if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
 	defer func() { _ = os.RemoveAll(tempDir) }()
@@ -777,6 +778,7 @@ func TestGitRegistry_IncludePatterns(t *testing.T) {
 	if pkg.Files[0].Path != "rule.yml" {
 		t.Errorf("expected file 'rule.yml', got %s", pkg.Files[0].Path)
 	}
+	})
 }
 
 func TestGitRegistry_ExcludePatterns(t *testing.T) {

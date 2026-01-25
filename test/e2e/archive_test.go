@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/jomadu/ai-resource-manager/internal/arm/core"
 	"github.com/jomadu/ai-resource-manager/test/e2e/helpers"
 )
 
@@ -292,7 +293,30 @@ spec:
 
 // TestArchiveWithIncludeExcludePatterns tests pattern filtering on extracted archive content
 func TestArchiveWithIncludeExcludePatterns(t *testing.T) {
-	t.Skip("Pattern filtering with archives needs more investigation - patterns may need to match extracted paths")
+	t.Skip("Pattern matching with ** works in unit tests, but integration with archives needs debugging. Files are not being installed even though pattern should match.")
+
+	// First verify pattern matching works as expected
+	t.Run("VerifyPatternMatching", func(t *testing.T) {
+		testCases := []struct {
+			pattern string
+			path    string
+			want    bool
+		}{
+			{"security/**/*.yml", "security/rule1.yml", true},
+			{"security/**/*.yml", "security/subdir/rule1.yml", true},
+			{"security/**/*.yml", "general/rule3.yml", false},
+			{"**/experimental/**", "experimental/rule4.yml", true},
+			{"**/experimental/**", "security/experimental/rule.yml", true},
+			{"**/experimental/**", "security/rule1.yml", false},
+		}
+		
+		for _, tc := range testCases {
+			got := core.MatchPattern(tc.pattern, tc.path)
+			if got != tc.want {
+				t.Errorf("MatchPattern(%q, %q) = %v, want %v", tc.pattern, tc.path, got, tc.want)
+			}
+		}
+	})
 
 	testDir := t.TempDir()
 	repoDir := filepath.Join(testDir, "repo")
@@ -362,10 +386,14 @@ spec:
 	arm.MustRun("add", "sink", "--tool", "cursor", "test-sink", ".cursor/rules")
 
 	// Install with include pattern for security files, exclude experimental
-	arm.MustRun("install", "ruleset",
+	stdout, stderr, err := arm.Run("install", "ruleset",
 		"--include", "security/**/*.yml",
 		"--exclude", "**/experimental/**",
 		"test-registry/test-ruleset@1.0.0", "test-sink")
+	if err != nil {
+		t.Fatalf("install failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
+	}
+	t.Logf("Install output: %s", stdout)
 
 	// Debug: list all files created
 	sinkDir := filepath.Join(projectDir, ".cursor", "rules")
