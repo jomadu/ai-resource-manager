@@ -129,12 +129,13 @@ Create builder-oriented specifications following Ralph methodology. See [SPEC_CO
   - **Edge cases**: No versions, malformed tags, network failures, branch not found
   - **Verification**: Spec created with complete algorithm, data structures, and acceptance criteria
 
-- [ ] Create `specs/package-installation.md`
+- [x] Create `specs/package-installation.md`
   - **JTBD**: Install, update, upgrade, uninstall packages
   - **Maps to**: internal/arm/service/service.go, manifest/, packagelockfile/
   - **User docs**: commands.md, concepts.md
   - **Coverage**: Install workflow, reinstall behavior (remove from old sinks), lock file updates, manifest updates
   - **Edge cases**: Missing sinks, version conflicts, partial failures, concurrent installs
+  - **Verification**: Comprehensive spec with algorithms for install, update, upgrade, uninstall, and install-all
 
 - [ ] Create `specs/registry-management.md`
   - **JTBD**: Configure and manage registries
