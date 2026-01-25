@@ -465,7 +465,7 @@ arm help add
 
 ## Getting Help
 
-- **Documentation:** See `specs/` directory for detailed specifications
+- **Documentation:** See `docs/` directory for detailed documentation
 - **Commands:** Run `arm help` or `arm help <command>`
 - **Issues:** Report bugs at https://github.com/jomadu/ai-resource-manager/issues
 

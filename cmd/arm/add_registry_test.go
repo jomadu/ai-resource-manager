@@ -204,10 +204,9 @@ func TestAddCloudsmithRegistry(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:        "missing url",
-			args:        []string{"add", "registry", "cloudsmith", "--owner", "myorg", "--repo", "myrepo", "test-cs"},
-			wantErr:     true,
-			errContains: "--url is required",
+			name:    "missing url uses default",
+			args:    []string{"add", "registry", "cloudsmith", "--owner", "myorg", "--repo", "myrepo", "test-cs"},
+			wantErr: false,
 		},
 		{
 			name:        "missing owner",

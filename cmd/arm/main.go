@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -504,9 +505,9 @@ func handleAddCloudsmithRegistry() {
 		}
 	}
 
+	// Default URL if not specified
 	if url == "" {
-		fmt.Fprintf(os.Stderr, "--url is required\n")
-		os.Exit(1)
+		url = "https://api.cloudsmith.io"
 	}
 	if owner == "" {
 		fmt.Fprintf(os.Stderr, "--owner is required\n")
@@ -1050,7 +1051,12 @@ func handleListRegistry() {
 		return
 	}
 
+	names := make([]string, 0, len(registries))
 	for name := range registries {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
 		fmt.Println(name)
 	}
 }
@@ -1314,7 +1320,12 @@ func handleListSink() {
 		return
 	}
 
+	names := make([]string, 0, len(sinks))
 	for name := range sinks {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
 		fmt.Println(name)
 	}
 }

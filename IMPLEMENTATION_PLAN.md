@@ -1,389 +1,209 @@
-# ARM Implementation Plan
+# Implementation Plan: Documentation Restructuring
 
-## Status: Verified Analysis Complete (2026-01-24)
+## Goal
+Separate user documentation from builder specifications. Align specs with Ralph methodology (JTBD → activities → acceptance criteria → tasks).
 
-This document tracks implementation status and prioritizes remaining work for the AI Resource Manager (ARM) project.
+See [SPECIFICATION_PHILOSOPHY.md](./SPECIFICATION_PHILOSOPHY.md) for detailed guidance on writing effective builder-oriented specifications.
 
-## Executive Summary
+## Current State Analysis
 
-**Overall Status**: 100% Complete - All functionality and documentation complete
+### Confirmed Existing Files (specs/)
+- ✅ `specs/concepts.md` - User documentation
+- ✅ `specs/commands.md` - User documentation (27KB, comprehensive CLI reference)
+- ✅ `specs/registries.md` - User documentation
+- ✅ `specs/git-registry.md` - User documentation
+- ✅ `specs/gitlab-registry.md` - User documentation
+- ✅ `specs/cloudsmith-registry.md` - User documentation
+- ✅ `specs/sinks.md` - User documentation
+- ✅ `specs/storage.md` - User documentation
+- ✅ `specs/resource-schemas.md` - User documentation
+- ✅ `specs/armrc.md` - User documentation
+- ✅ `specs/migration-v2-to-v3.md` - User documentation (11KB migration guide)
+- ✅ `specs/e2e-testing.md` - Builder-oriented (KEEP IN SPECS)
+- ✅ `specs/examples/` - Example files
 
-**Key Findings**:
-- ✅ All core commands implemented and tested (registry, sink, dependency management)
-- ✅ All registry types functional (Git, GitLab, Cloudsmith) with archive support
-- ✅ All compilers fully implemented (Cursor, Amazon Q, Copilot, Markdown)
-- ✅ All parsers implemented (Ruleset, Promptset)
-- ✅ File type detection implemented
-- ✅ Archive extraction implemented in core with comprehensive tests
-- ✅ `arm compile` command fully implemented with all features
-- ✅ All skipped tests implemented and passing
-- ✅ All TODO comments in tests resolved
-- ✅ 304+ tests across 58+ test files - excellent coverage
-- ✅ Migration guide documentation complete (v2 to v3)
+### Confirmed Existing Files (docs/)
+- ✅ `docs/examples/` - Already exists (partial migration started)
 
----
+### References to Update
+- ✅ `README.md` - 10 references to `specs/` files
+- ✅ `AGENTS.md` - 1 reference to `specs/`
+- ✅ `specs/migration-v2-to-v3.md` - 1 self-reference
+- ✅ `.amazonq/prompts/` - Multiple references (workflow documentation)
+- ✅ `SPECIFICATION_PHILOSOPHY.md` - 4 references (meta-documentation)
 
-## Priority 1: Critical Missing Functionality
+## Critical: Loop.sh Compatibility
 
-### 1.1 Implement `arm compile` Command Service Layer ✅ COMPLETED
-**Status**: ✅ Implemented  
-**Location**: `internal/arm/service/service.go:1595-1880`  
-**CLI Location**: `cmd/arm/main.go:2141-2250` (✅ fully implemented)  
-**Spec Reference**: `specs/commands.md` - "arm compile" section
+**PROMPT_build.md references `specs/*` on line 1**. The migration must be atomic to avoid breaking the build loop.
 
-**Implementation Complete**:
-- ✅ File discovery with include/exclude pattern matching
-- ✅ Recursive directory traversal support
-- ✅ File type detection (ruleset vs promptset)
-- ✅ YAML parsing and validation
-- ✅ Compilation to all tool formats (Cursor, AmazonQ, Copilot, Markdown)
-- ✅ Output file writing with directory creation
-- ✅ Force flag support for overwriting existing files
-- ✅ Validate-only mode (no output files)
-- ✅ Fail-fast error handling
-- ✅ Custom namespace support
-- ✅ All CLI tests passing
-- ✅ End-to-end integration tested
+### Migration Strategy
+1. **Create all docs/** - Ensure target directory exists
+2. **Copy (don't move) specs → docs** - Keep both during transition
+3. **Update PROMPT_build.md and PROMPT_plan.md** - Change `specs/*` references
+4. **Verify loop.sh works** - Test with `./loop.sh plan 1`
+5. **Delete old specs/** - Only after verification
 
-**Verified Working**:
-- Single file compilation
-- Multiple file compilation
-- Directory compilation (recursive and non-recursive)
-- All tool formats (cursor, amazonq, copilot, markdown)
-- Validate-only mode
-- Force overwrite
-- Custom namespace
-- Include/exclude patterns
-- Error handling and fail-fast
+### Updated PROMPT References Needed
+- `PROMPT_build.md` line 1: `specs/*` → `docs/* and specs/*`
+- `PROMPT_plan.md` line 1: `specs/*` → `docs/* and specs/*`
+- After builder specs created: `docs/* and specs/*` (both needed)
 
----
+## Prioritized Tasks
 
-## Priority 2: Documentation Gaps
+### Phase 0: Pre-Migration Setup (Priority: CRITICAL) ✅ COMPLETE
+Ensure loop.sh won't break during migration
 
-### 2.1 Create Migration Guide (v2 to v3) ✅ COMPLETED
-**Status**: ✅ Implemented  
-**Location**: `specs/migration-v2-to-v3.md`  
-**Referenced In**: `README.md:59`
+- [x] Update `PROMPT_build.md` line 1
+  - Change: `Study 'specs/*' with up to 500 parallel subagents`
+  - To: `Study 'docs/*' and 'specs/*' with up to 500 parallel subagents to learn the application specifications`
+  
+- [x] Update `PROMPT_plan.md` line 1
+  - Change: `Study 'specs/*' with up to 250 parallel subagents`
+  - To: `Study 'docs/*' and 'specs/*' with up to 250 parallel subagents to learn the application specifications`
 
-**Implementation Complete**:
-- ✅ Created comprehensive migration guide
-- ✅ Documented all breaking changes (command structure, terminology, file formats)
-- ✅ Provided step-by-step migration process
-- ✅ Included before/after examples for all major changes
-- ✅ Explained "nuke and pave" recommendation with technical justification
-- ✅ Added common migration scenarios
-- ✅ Included troubleshooting section
-- ✅ README link now points to actual file
+- [x] Update `PROMPT_plan.md` line 6
+  - Change: `compare it against 'specs/*'`
+  - To: `compare it against 'docs/*' and 'specs/*'`
 
-**Key Sections**:
-- Command structure overhaul (config → add/remove/set)
-- Terminology changes (Rules Manager → Resource Manager)
-- Installation command changes (explicit resource types and sinks)
-- Resource format changes (URF → ARM format)
-- Registry types expansion (Git, GitLab, Cloudsmith)
-- Internal file format changes
-- Step-by-step migration process
-- Common scenarios with examples
-- Troubleshooting guide
+- [x] Update `PROMPT_build.md` line 14
+  - Change: `If you find inconsistencies in the specs/*`
+  - To: `If you find inconsistencies in the docs/* or specs/*`
 
-**Acceptance Criteria**:
-- [x] Create `specs/migration-v2-to-v3.md`
-- [x] Document all breaking changes between v2 and v3
-- [x] Provide step-by-step migration guide
-- [x] Include before/after examples
-- [x] Explain why "nuke and pave" is recommended
-- [x] Verify README link points to actual file
+**Verification:**
+- [x] All tests pass (go test ./...)
+- [x] PROMPT files updated successfully
 
----
+### Phase 1: File Migration (Priority: HIGH) ✅ COMPLETE
+Move user documentation from `specs/` to `docs/`, preserving `specs/e2e-testing.md`
 
-## Priority 3: Test Coverage Improvements
+- [x] Move `specs/concepts.md` → `docs/concepts.md`
+- [x] Move `specs/commands.md` → `docs/commands.md`
+- [x] Move `specs/registries.md` → `docs/registries.md`
+- [x] Move `specs/git-registry.md` → `docs/git-registry.md`
+- [x] Move `specs/gitlab-registry.md` → `docs/gitlab-registry.md`
+- [x] Move `specs/cloudsmith-registry.md` → `docs/cloudsmith-registry.md`
+- [x] Move `specs/sinks.md` → `docs/sinks.md`
+- [x] Move `specs/storage.md` → `docs/storage.md`
+- [x] Move `specs/resource-schemas.md` → `docs/resource-schemas.md`
+- [x] Move `specs/armrc.md` → `docs/armrc.md`
+- [x] Move `specs/migration-v2-to-v3.md` → `docs/migration-v2-to-v3.md`
+- [x] Merge `specs/examples/` → `docs/examples/` (docs/examples/ already exists)
 
-### 3.1 Implement Archive Support Test ✅ COMPLETED
-**Status**: ✅ Implemented  
-**Location**: `internal/arm/registry/git_test.go:958-1090`  
-**Previous State**: Test existed but was skipped with `t.Skip("TODO: implement")`
+**Verification:**
+- [x] Confirm `specs/` contains only `e2e-testing.md` after migration
+- [x] Confirm all 12 files exist in `docs/`
+- [x] All tests pass
 
-**Implementation Complete**:
-- ✅ End-to-end test for archive extraction in Git registry context
-- ✅ Tests both .zip and .tar.gz archive formats
-- ✅ Verifies archives are extracted and merged with loose files
-- ✅ Confirms archive files themselves are not included in output
-- ✅ Validates content of extracted files
-- ✅ Test passes successfully
+### Phase 2: Reference Updates (Priority: HIGH) ✅ COMPLETE
+Update all references from `specs/` to `docs/` for migrated files
 
-**Test Coverage**:
-- Creates Git repository with loose files and archives
-- Verifies 5 files total (1 loose + 2 from zip + 2 from tar.gz)
-- Confirms archive precedence and merging behavior
-- Validates file paths and content correctness
+- [x] Update `README.md` (10 references)
+  - Line 24: `specs/git-registry.md` → `docs/git-registry.md`
+  - Line 59: `specs/migration-v2-to-v3.md` → `docs/migration-v2-to-v3.md`
+  - Lines 151-155: Update documentation section links
+  - Lines 159-161: Update registry types section links
+- [x] Update `AGENTS.md` (1 reference)
+  - Line 71: Update specs reference to clarify docs vs specs
+- [x] Update `docs/migration-v2-to-v3.md` (1 self-reference)
+  - Line 468: Update to reference `docs/` directory
+- [x] Review `.amazonq/prompts/` references (informational, workflow docs - intentional)
+- [x] Review `SPECIFICATION_PHILOSOPHY.md` references (meta-documentation - intentional)
 
-**Test Purpose**: Verify end-to-end archive handling in Git registry, not the extraction itself
+**Verification:**
+- [x] All tests pass
+- [x] Only intentional references remain (PROMPT files, IMPLEMENTATION_PLAN, meta-docs)
 
-**Acceptance Criteria**:
-- [ ] Remove `t.Skip()` from test
-- [ ] Test `.zip` file extraction in Git registry context
-- [ ] Test `.tar.gz` file extraction in Git registry context
-- [ ] Verify extracted files are properly merged with loose files
-- [ ] Test archive precedence over loose files (archives win conflicts)
-- [ ] Ensure test passes
+### Phase 3: Builder Spec Creation (Priority: MEDIUM)
+Create builder-oriented specifications following Ralph methodology. See [SPEC_COVERAGE_ANALYSIS.md](./SPEC_COVERAGE_ANALYSIS.md) for complete traceability matrix.
 
-### 3.2 Review GetTags Test Assertion ✅ COMPLETED
-**Status**: ✅ Reviewed and Verified  
-**Location**: `internal/arm/storage/repo_test.go:40`  
-**Previous State**: Comment said "TODO: implement and change assertion"
+- [ ] Create `specs/TEMPLATE.md` (foundation for all other specs)
+  - Include: JTBD, Activities, Acceptance Criteria, Data Structures, Algorithm, Edge Cases, Dependencies, Examples
+  - Reference: SPECIFICATION_PHILOSOPHY.md template section
 
-**Review Complete**:
-- ✅ GetTags implementation reviewed and verified correct
-- ✅ Test expectations match actual behavior
-- ✅ Assertion is correct (returns tags in order: v1.0.0, v1.1.0)
-- ✅ TODO comment removed
-- ✅ All GetTags tests passing
+- [ ] Create `specs/version-resolution.md`
+  - **JTBD**: Resolve package versions from registries
+  - **Maps to**: internal/arm/core/version.go, constraint.go, helpers.go
+  - **User docs**: concepts.md, git-registry.md
+  - **Coverage**: Semver parsing, constraint matching, tag/branch priority, version comparison
+  - **Edge cases**: No versions, malformed tags, network failures, branch not found
 
-**Implementation Details**:
-- GetTags clones repo if needed, then runs `git tag -l`
-- Returns empty array for repos with no tags
-- Test correctly verifies both tags are returned in expected order
+- [ ] Create `specs/package-installation.md`
+  - **JTBD**: Install, update, upgrade, uninstall packages
+  - **Maps to**: internal/arm/service/service.go, manifest/, packagelockfile/
+  - **User docs**: commands.md, concepts.md
+  - **Coverage**: Install workflow, reinstall behavior (remove from old sinks), lock file updates, manifest updates
+  - **Edge cases**: Missing sinks, version conflicts, partial failures, concurrent installs
 
----
+- [ ] Create `specs/registry-management.md`
+  - **JTBD**: Configure and manage registries
+  - **Maps to**: internal/arm/registry/, internal/arm/manifest/
+  - **User docs**: registries.md, git-registry.md, gitlab-registry.md, cloudsmith-registry.md
+  - **Coverage**: Registry types (Git, GitLab, Cloudsmith), configuration storage, authentication integration, key generation
+  - **Edge cases**: Invalid URLs, duplicate names, missing auth, network failures
 
-## Priority 4: Code Quality & Maintenance
+- [ ] Create `specs/sink-compilation.md`
+  - **JTBD**: Compile resources to tool-specific formats
+  - **Maps to**: internal/arm/compiler/, internal/arm/sink/manager.go
+  - **User docs**: sinks.md, commands.md
+  - **Coverage**: Compilation algorithms per tool (Cursor, AmazonQ, Copilot, Markdown), layout modes (hierarchical vs flat), filename generation, truncation rules
+  - **Edge cases**: Long filenames, special characters, empty resources, invalid YAML
 
-### 4.1 Review Hash Pattern Comments ✅ VERIFIED NOT ISSUES
-**Status**: ✅ Informational (Not TODOs)  
-**Locations**:
-- `internal/arm/sink/manager.go:547-548` - "arm_xxxx_xxxx_" pattern comment
-- `internal/arm/sink/manager_test.go:120` - Dual hash pattern comment
+- [ ] Create `specs/priority-resolution.md`
+  - **JTBD**: Resolve conflicts between overlapping rules
+  - **Maps to**: internal/arm/sink/manager.go, internal/arm/compiler/generators.go
+  - **User docs**: sinks.md, concepts.md
+  - **Coverage**: Priority merging algorithm, conflict resolution rules, index generation, metadata embedding
+  - **Edge cases**: Same priority, no rules, circular dependencies, missing metadata
 
-**Analysis**: These are helpful explanatory comments about the hash pattern format, not TODO items. They document the filename pattern used in flat layout mode.
+- [ ] Create `specs/cache-management.md`
+  - **JTBD**: Cache packages locally to avoid redundant downloads
+  - **Maps to**: internal/arm/storage/
+  - **User docs**: storage.md, commands.md
+  - **Coverage**: Storage structure (~/.arm/storage), cache key generation, metadata schemas (registry, package, version), cleanup strategies (max-age, nuke)
+  - **Edge cases**: Corrupted cache, disk full, concurrent access, stale metadata
 
-**Recommendation**: Keep as-is. These comments aid code comprehension.
+- [ ] Create `specs/pattern-filtering.md`
+  - **JTBD**: Filter package files using glob patterns
+  - **Maps to**: internal/arm/registry/, internal/arm/core/archive.go
+  - **User docs**: concepts.md, registries.md
+  - **Coverage**: Glob matching, include/exclude logic (OR for includes, exclude overrides), archive extraction (zip, tar.gz), path sanitization
+  - **Edge cases**: Invalid patterns, path traversal attacks, nested archives, empty results
 
-**No Action Required**: These are documentation comments, not implementation gaps.
+- [ ] Create `specs/authentication.md`
+  - **JTBD**: Authenticate with registries requiring tokens
+  - **Maps to**: internal/arm/config/manager.go, internal/arm/registry/gitlab.go, cloudsmith.go
+  - **User docs**: armrc.md
+  - **Coverage**: .armrc parsing (INI format), token resolution (local vs global), environment variable substitution, security (file permissions)
+  - **Edge cases**: Missing .armrc, invalid format, expired tokens, permission errors
 
----
+**Verification:**
+- Each spec follows TEMPLATE.md structure
+- Each spec has testable acceptance criteria
+- Each spec maps to implementation (see SPEC_COVERAGE_ANALYSIS.md)
+- Each spec focuses on single concern
+- Traceability: Command → User Doc → Builder Spec → Implementation
 
-## Completed Features ✅
+### Phase 4: Validation (Priority: LOW)
+Ensure migration is complete and consistent
 
-### Core Commands (All Implemented & Tested)
-- ✅ `arm version` - Display version information
-- ✅ `arm help` - Display help
-- ✅ `arm list` - List all entities
-- ✅ `arm info` - Show detailed information
+- [ ] Verify no broken links in documentation
+- [ ] Verify all user docs in `docs/`
+- [ ] Verify all builder specs in `specs/`
+- [ ] Verify `specs/e2e-testing.md` remains in place
+- [ ] Run tests to ensure no functionality broken
 
-### Registry Management (All Implemented & Tested)
-- ✅ `arm add registry git` - Add Git registry
-- ✅ `arm add registry gitlab` - Add GitLab registry
-- ✅ `arm add registry cloudsmith` - Add Cloudsmith registry
-- ✅ `arm remove registry` - Remove registry
-- ✅ `arm set registry` - Configure registry
-- ✅ `arm list registry` - List registries
-- ✅ `arm info registry` - Show registry details
+## Success Criteria
 
-### Sink Management (All Implemented & Tested)
-- ✅ `arm add sink` - Add sink
-- ✅ `arm remove sink` - Remove sink
-- ✅ `arm set sink` - Configure sink
-- ✅ `arm list sink` - List sinks
-- ✅ `arm info sink` - Show sink details
-
-### Dependency Management (All Implemented & Tested)
-- ✅ `arm install` - Install all dependencies
-- ✅ `arm install ruleset` - Install specific ruleset
-- ✅ `arm install promptset` - Install specific promptset
-- ✅ `arm uninstall` - Uninstall packages
-- ✅ `arm update` - Update within constraints
-- ✅ `arm upgrade` - Upgrade to latest
-- ✅ `arm list dependency` - List dependencies
-- ✅ `arm info dependency` - Show dependency details
-- ✅ `arm outdated` - Check for outdated packages
-- ✅ `arm set ruleset` - Configure ruleset
-- ✅ `arm set promptset` - Configure promptset
-
-### Utilities (All Implemented & Tested)
-- ✅ `arm clean cache` - Clean cache (with `--nuke` and `--max-age`)
-- ✅ `arm clean sinks` - Clean sinks (with `--nuke`)
-- ✅ `arm compile` - Compile rulesets/promptsets to tool formats (fully implemented)
-
-### Registry Types (All Implemented & Tested)
-- ✅ Git Registry - Full implementation with branch/tag support
-- ✅ GitLab Registry - Full implementation with project/group support
-- ✅ Cloudsmith Registry - Full implementation
-- ✅ Archive Support - `.zip` and `.tar.gz` extraction for all registries
-
-### Compilers (All Implemented & Tested)
-- ✅ Cursor Compiler - Rulesets (`.mdc`) and Promptsets (`.md`)
-- ✅ Amazon Q Compiler - Rulesets and Promptsets (`.md`)
-- ✅ Copilot Compiler - Instructions format (`.instructions.md`)
-- ✅ Markdown Compiler - Generic markdown output
-
-### Core Infrastructure (All Implemented & Tested)
-- ✅ Version Resolution - Semantic versioning with constraints
-- ✅ Package Storage - Local cache with metadata
-- ✅ Manifest Management - `arm.json` handling
-- ✅ Lock File Management - `arm-lock.json` handling
-- ✅ Index Management - `arm-index.json` tracking
-- ✅ Parser - YAML resource validation
-- ✅ File Type Detection - Ruleset vs Promptset detection
-- ✅ Sink Layouts - Hierarchical and flat layouts
-- ✅ Priority Resolution - Conflict resolution for rulesets
-- ✅ Pattern Matching - Include/exclude glob patterns
-- ✅ Authentication - `.armrc` support for GitLab/Cloudsmith
-
----
-
-## Implementation Approach
-
-### For Priority 1 (arm compile):
-
-1. **Study existing patterns**:
-   - Review `InstallRuleset` and `InstallPromptset` for file handling patterns
-   - Review compiler tests for expected behavior
-   - Review parser usage in existing code
-
-2. **Implementation steps**:
-   ```
-   a. Validate and normalize input paths
-   b. Discover files (handle directories with include/exclude)
-   c. For each file:
-      - Detect type (ruleset/promptset)
-      - Parse YAML
-      - Validate schema
-      - If validate-only: continue
-      - Compile to target format
-      - Write to output directory
-   d. Handle errors per fail-fast setting
-   ```
-
-3. **Testing**:
-   - Update `cmd/arm/compile_test.go` expectations
-   - Add service layer tests
-   - Test all tool formats
-   - Test validation-only mode
-   - Test error handling
-
-### For Priority 2 (migration guide):
-
-1. Review git history for v2 to v3 changes
-2. Document breaking changes
-3. Create migration examples
-4. Update README reference
-
-### For Priority 3 (test improvements):
-
-1. Implement skipped archive test
-2. Review and fix GetTags assertion
-3. Ensure all tests pass
-
----
+- [ ] All user documentation moved to `docs/`
+- [ ] All references updated to point to `docs/`
+- [ ] `specs/` contains only builder-oriented specifications
+- [ ] Each builder spec follows Ralph methodology template
+- [ ] No broken links in documentation
+- [ ] All tests pass
 
 ## Notes
 
-- **Test Status**: 304 tests across 58 test files - excellent coverage
-- **Code Quality**: Well-structured, idiomatic Go with clean separation of concerns
-- **Architecture**: Clean separation (cmd, service, internal packages)
-- **Documentation**: Comprehensive specs with good inline comments
-- **Patterns**: Consistent use of managers, factories, and interfaces
-- **Verification**: All components verified present and functional
-
-**Verified Components**:
-- ✅ All 4 compilers implemented (Cursor, AmazonQ, Copilot, Markdown)
-- ✅ All parsers implemented (Ruleset, Promptset)
-- ✅ File type detection implemented
-- ✅ All 3 registry types implemented (Git, GitLab, Cloudsmith)
-- ✅ Archive extraction fully implemented with comprehensive tests
-- ✅ All CLI commands implemented
-- ✅ All service methods implemented (including CompileFiles)
-- ✅ All skipped tests implemented
-- ✅ All TODO comments in tests resolved
-
----
-
-## Completed Work Summary (2026-01-24)
-
-### Previous Session Accomplishments:
-1. ✅ **Implemented `arm compile` service layer** (Priority 1.1)
-   - Full file discovery with include/exclude patterns
-   - Recursive directory traversal
-   - File type detection and validation
-   - Compilation to all tool formats
-   - Output file writing with force flag
-   - Validate-only mode
-   - Fail-fast error handling
-   - Custom namespace support
-   - All tests passing
-
-2. ✅ **Implemented archive support test** (Priority 3.1)
-   - End-to-end test for .zip and .tar.gz extraction
-   - Verifies archive merging with loose files
-   - Validates content correctness
-   - Test passing
-
-3. ✅ **Resolved GetTags test TODO** (Priority 3.2)
-   - Reviewed implementation
-   - Verified test correctness
-   - Removed outdated TODO comment
-   - All tests passing
-
-### Current Session Accomplishments:
-4. ✅ **Created Migration Guide** (Priority 2.1)
-   - Comprehensive v2 to v3 migration documentation
-   - Documented all breaking changes
-   - Step-by-step migration process
-   - Before/after examples for all major changes
-   - Common migration scenarios
-   - Troubleshooting guide
-   - Technical justification for "nuke and pave" approach
-
-### Remaining Work:
-- ✅ **All work complete** - Project is 100% functional and documented
-
----
-
-## Success Criteria Status
-
-Project completion status:
-- ✅ All Priority 1 items implemented and tested
-- ✅ All Priority 2 documentation complete (migration guide)
-- ✅ All Priority 3 tests passing without skips
-- ✅ All tests pass: `go test ./...`
-- ✅ No TODO comments in production code
-- ✅ All spec features implemented
-- ✅ README accurately reflects capabilities
-
-**Functional Completion**: 100%  
-**Documentation Completion**: 100%  
-**Overall Completion**: 100%
-
----
-
-## Last Updated
-
-2026-01-24 - All implementation and documentation complete. Project is 100% finished.
-
-### Session 2026-01-24 07:00:
-- ✅ Created AGENTS.md operational guide
-- ✅ Verified all tests passing (304+ tests)
-- ✅ Verified no build errors or vet issues
-- ✅ Created and pushed ralph-0.0.6 tag
-- ✅ Project fully operational and documented
-
-### Session 2026-01-24 07:38:
-- ✅ Verified all 304+ tests passing across 58+ test files
-- ✅ Verified no build errors or vet issues
-- ✅ Verified high test coverage (80%+ most packages, 100% for filetype and parser)
-- ✅ Verified no TODO comments or skipped tests
-- ✅ Verified application fully functional (version, help, all commands working)
-- ✅ Verified all specs complete including migration guide
-- ✅ Created and pushed ralph-0.0.7 tag
-- ✅ Project remains 100% complete and operational
-
-### Latest Session (2026-01-24 07:43):
-- ✅ Comprehensive verification: 872 test runs across 58 test files all passing
-- ✅ Verified no build errors, vet issues, or formatting problems
-- ✅ Verified no TODO/FIXME/BUG comments indicating incomplete work
-- ✅ Verified no skipped tests or panics in production code
-- ✅ Verified all command flags from specs are implemented
-- ✅ Verified error handling and edge cases work correctly
-- ✅ Confirmed project structure complete with all specs present
-- ✅ Created and pushed ralph-0.0.8 tag
-- ✅ Project verified 100% complete and operational
+- `docs/examples/` already exists, merge with `specs/examples/`
+- `specs/e2e-testing.md` is already builder-oriented, keep in specs
+- Builder specs should enable test-driven development
+- Specs are disposable - iterate based on implementation learnings
