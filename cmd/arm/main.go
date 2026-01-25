@@ -505,9 +505,9 @@ func handleAddCloudsmithRegistry() {
 		}
 	}
 
+	// Default URL if not specified
 	if url == "" {
-		fmt.Fprintf(os.Stderr, "--url is required\n")
-		os.Exit(1)
+		url = "https://api.cloudsmith.io"
 	}
 	if owner == "" {
 		fmt.Fprintf(os.Stderr, "--owner is required\n")
