@@ -448,20 +448,15 @@ No known issues. All bugs have been fixed and all tests pass.
    - **Effort:** 1 week to audit and improve all error messages
 
 6. **Additional Registry Types** - **PRIORITY: LOW**
-   - npm registry support (for JavaScript ecosystem)
    - S3-based registries (for private cloud storage)
    - HTTP/HTTPS file servers (for simple hosting)
-   - Azure Artifacts support
    - **Benefit:** Broader ecosystem support
    - **Effort:** 1-2 weeks per registry type
    - **Consideration:** Requires new specifications first
 
 7. **Advanced Features** - **PRIORITY: LOW**
-   - Dependency resolution between packages (package A requires package B)
    - Package signing and verification (GPG signatures)
-   - Offline mode with full cache (work without network)
    - Package publishing tools (CLI commands to publish to registries)
-   - Workspace support (monorepo with multiple arm.json files)
    - **Benefit:** Enterprise-grade features
    - **Effort:** 2-4 weeks per feature
    - **Consideration:** Requires specifications and design docs first
@@ -644,9 +639,7 @@ ARM is **production-ready**. All critical bugs have been fixed, all tests pass, 
 ### Future Considerations
 
 **Potential New Features (Require Specifications First):**
-- Package dependencies (package A requires package B)
 - Package signing and verification
-- Workspace support (monorepo)
 - Plugin system for custom compilers
 - Custom registry types via plugins
 - Package templates for quick starts
@@ -656,12 +649,7 @@ ARM is **production-ready**. All critical bugs have been fixed, all tests pass, 
 - Rollback support (revert to previous version)
 
 **Potential New Registry Types:**
-- npm registry (JavaScript ecosystem)
-- PyPI registry (Python ecosystem)
-- Maven registry (Java ecosystem)
-- NuGet registry (C# ecosystem)
 - S3-based registries (private cloud)
-- Azure Artifacts
 - JFrog Artifactory
 - Nexus Repository
 
