@@ -28,7 +28,7 @@ func MatchPattern(pattern, path string) bool {
 func matchDoublestar(pattern, path string) bool {
 	// Split pattern by /**/ to get segments
 	parts := strings.Split(pattern, "/**/")
-	
+
 	if len(parts) == 1 {
 		// Pattern is **/ prefix or /** suffix
 		if strings.HasPrefix(pattern, "**/") {
@@ -47,25 +47,25 @@ func matchDoublestar(pattern, path string) bool {
 			}
 			return false
 		}
-		
+
 		if strings.HasSuffix(pattern, "/**") {
 			prefix := pattern[:len(pattern)-3]
 			return strings.HasPrefix(path, prefix+"/") || path == prefix
 		}
-		
+
 		return false
 	}
-	
+
 	// Pattern has /** in the middle (e.g., "security/**/*.yml")
 	// Match prefix, then try to match suffix from any point in remaining path
 	prefix := parts[0]
 	suffix := parts[len(parts)-1]
-	
+
 	// Path must start with prefix (if prefix is not empty)
 	if prefix != "" && !strings.HasPrefix(path, prefix+"/") && path != prefix {
 		return false
 	}
-	
+
 	// Get the remaining path after prefix
 	remaining := path
 	if prefix != "" {
@@ -75,12 +75,12 @@ func matchDoublestar(pattern, path string) bool {
 		}
 		remaining = path[len(prefix)+1:]
 	}
-	
+
 	// Try to match suffix from any point in remaining path
 	if suffix == "" {
 		return true
 	}
-	
+
 	// Try matching suffix against remaining path and all its sub-paths
 	pathParts := strings.Split(remaining, "/")
 	for i := range pathParts {
@@ -89,7 +89,7 @@ func matchDoublestar(pattern, path string) bool {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -98,32 +98,32 @@ func matchSimpleWildcard(pattern, path string) bool {
 	if !strings.Contains(pattern, "*") {
 		return pattern == path
 	}
-	
+
 	parts := strings.Split(pattern, "*")
 	pos := 0
-	
+
 	for i, part := range parts {
 		if part == "" {
 			continue
 		}
-		
+
 		idx := strings.Index(path[pos:], part)
 		if idx == -1 {
 			return false
 		}
-		
+
 		// First part must match at the beginning
 		if i == 0 && idx != 0 {
 			return false
 		}
-		
+
 		pos += idx + len(part)
 	}
-	
+
 	// Last part must match at the end (if not empty)
 	if len(parts) > 0 && parts[len(parts)-1] != "" && !strings.HasSuffix(path, parts[len(parts)-1]) {
 		return false
 	}
-	
+
 	return true
 }

@@ -733,51 +733,51 @@ func TestGitRegistry_IncludePatterns(t *testing.T) {
 		// Test --include "*.yml"
 		tempDir, err := os.MkdirTemp("", "git-registry-test")
 		if err != nil {
-		t.Fatalf("failed to create temp dir: %v", err)
-	}
-	defer func() { _ = os.RemoveAll(tempDir) }()
+			t.Fatalf("failed to create temp dir: %v", err)
+		}
+		defer func() { _ = os.RemoveAll(tempDir) }()
 
-	testRepo := storage.NewTestRepo(t, tempDir)
-	builder := testRepo.Builder().
-		Init().
-		AddFile("rule.yml", "yml content").
-		AddFile("doc.md", "md content").
-		AddFile("config.json", "json content").
-		Commit("Initial commit").
-		Tag("v1.0.0")
-	_ = builder.Build()
+		testRepo := storage.NewTestRepo(t, tempDir)
+		builder := testRepo.Builder().
+			Init().
+			AddFile("rule.yml", "yml content").
+			AddFile("doc.md", "md content").
+			AddFile("config.json", "json content").
+			Commit("Initial commit").
+			Tag("v1.0.0")
+		_ = builder.Build()
 
-	config := GitRegistryConfig{
-		RegistryConfig: RegistryConfig{
-			URL:  "file://" + tempDir,
-			Type: "git",
-		},
-	}
+		config := GitRegistryConfig{
+			RegistryConfig: RegistryConfig{
+				URL:  "file://" + tempDir,
+				Type: "git",
+			},
+		}
 
-	registry, err := NewGitRegistry("test-registry", config)
-	if err != nil {
-		t.Fatalf("failed to create registry: %v", err)
-	}
+		registry, err := NewGitRegistry("test-registry", config)
+		if err != nil {
+			t.Fatalf("failed to create registry: %v", err)
+		}
 
-	ctx := context.Background()
-	versions, err := registry.ListPackageVersions(ctx, "test-package")
-	if err != nil {
-		t.Fatalf("failed to list versions: %v", err)
-	}
+		ctx := context.Background()
+		versions, err := registry.ListPackageVersions(ctx, "test-package")
+		if err != nil {
+			t.Fatalf("failed to list versions: %v", err)
+		}
 
-	// Test include pattern
-	pkg, err := registry.GetPackage(ctx, "test-package", &versions[0], []string{"*.yml"}, nil)
-	if err != nil {
-		t.Fatalf("failed to get package: %v", err)
-	}
+		// Test include pattern
+		pkg, err := registry.GetPackage(ctx, "test-package", &versions[0], []string{"*.yml"}, nil)
+		if err != nil {
+			t.Fatalf("failed to get package: %v", err)
+		}
 
-	if len(pkg.Files) != 1 {
-		t.Errorf("expected 1 file, got %d", len(pkg.Files))
-	}
+		if len(pkg.Files) != 1 {
+			t.Errorf("expected 1 file, got %d", len(pkg.Files))
+		}
 
-	if pkg.Files[0].Path != "rule.yml" {
-		t.Errorf("expected file 'rule.yml', got %s", pkg.Files[0].Path)
-	}
+		if pkg.Files[0].Path != "rule.yml" {
+			t.Errorf("expected file 'rule.yml', got %s", pkg.Files[0].Path)
+		}
 	})
 }
 
