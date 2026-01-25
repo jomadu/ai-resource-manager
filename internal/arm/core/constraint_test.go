@@ -11,13 +11,13 @@ func TestNewConstraint(t *testing.T) {
 	}{
 		{"latest", "latest", Latest, false},
 		{"exact version", "1.2.3", Exact, false},
-		{"minor version", "1.2.0", Minor, false},
-		{"major version", "1.0.0", Major, false},
+		{"exact version with zeros", "1.2.0", Exact, false},
+		{"exact version all zeros", "1.0.0", Exact, false},
 		{"branch name rejected", "main", Latest, true},
 		{"branch name with slash rejected", "feature/test", Latest, true},
 		{"v prefix exact", "v1.2.3", Exact, false},
-		{"v prefix minor", "v1.2.0", Minor, false},
-		{"v prefix major", "v1.0.0", Major, false},
+		{"v prefix exact with zeros", "v1.2.0", Exact, false},
+		{"v prefix exact all zeros", "v1.0.0", Exact, false},
 		// Abbreviated versions
 		{"abbreviated major", "1", Major, false},
 		{"abbreviated minor", "1.2", Minor, false},
@@ -54,13 +54,13 @@ func TestParseConstraint(t *testing.T) {
 	}{
 		{"latest", "latest", Latest, false},
 		{"exact version", "1.2.3", Exact, false},
-		{"minor version", "1.2.0", Minor, false},
-		{"major version", "1.0.0", Major, false},
+		{"exact version with zeros", "1.2.0", Exact, false},
+		{"exact version all zeros", "1.0.0", Exact, false},
 		{"branch name", "main", Latest, false},
 		{"branch name with slash", "feature/test", Latest, false},
 		{"v prefix exact", "v1.2.3", Exact, false},
-		{"v prefix minor", "v1.2.0", Minor, false},
-		{"v prefix major", "v1.0.0", Major, false},
+		{"v prefix exact with zeros", "v1.2.0", Exact, false},
+		{"v prefix exact all zeros", "v1.0.0", Exact, false},
 	}
 
 	for _, tt := range tests {
@@ -292,8 +292,8 @@ func TestConstraint_ToString(t *testing.T) {
 	}{
 		{"latest", "latest", "latest"},
 		{"exact version", "1.2.3", "1.2.3"},
-		{"minor version", "1.2.0", "~1.2.0"},
-		{"major version", "1.0.0", "^1.0.0"},
+		{"exact version with zeros", "1.2.0", "1.2.0"},
+		{"exact version all zeros", "1.0.0", "1.0.0"},
 		{"caret explicit", "^2.3.4", "^2.3.4"},
 		{"tilde explicit", "~3.4.5", "~3.4.5"},
 		// Test v prefix preservation

@@ -438,7 +438,7 @@ func TestResolveVersion_Normal(t *testing.T) {
 			mustVersion("1.5.0"),
 			mustVersion("2.0.0"),
 		}
-		got, err := ResolveVersion("1.0.0", available)
+		got, err := ResolveVersion("1", available)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -454,7 +454,7 @@ func TestResolveVersion_Normal(t *testing.T) {
 			mustVersion("1.2.5"),
 			mustVersion("1.3.0"),
 		}
-		got, err := ResolveVersion("1.2.0", available)
+		got, err := ResolveVersion("1.2", available)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -544,7 +544,7 @@ func TestResolveVersion_Edge(t *testing.T) {
 			mustVersion("1.2.0"),
 			mustVersion("develop"),
 		}
-		got, err := ResolveVersion("1.0.0", available)
+		got, err := ResolveVersion("1", available)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -613,7 +613,7 @@ func TestResolveVersion_Extreme(t *testing.T) {
 			mustVersion("1.2.0"),
 			mustVersion("1.3.0"),
 		}
-		got, err := ResolveVersion("1.0.0", available)
+		got, err := ResolveVersion("1", available)
 		if err != nil {
 			t.Fatal(err)
 		}
