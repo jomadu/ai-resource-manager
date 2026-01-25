@@ -73,44 +73,45 @@ Ensure loop.sh won't break during migration
 - [x] All tests pass (go test ./...)
 - [x] PROMPT files updated successfully
 
-### Phase 1: File Migration (Priority: HIGH)
+### Phase 1: File Migration (Priority: HIGH) ✅ COMPLETE
 Move user documentation from `specs/` to `docs/`, preserving `specs/e2e-testing.md`
 
-- [ ] Move `specs/concepts.md` → `docs/concepts.md`
-- [ ] Move `specs/commands.md` → `docs/commands.md`
-- [ ] Move `specs/registries.md` → `docs/registries.md`
-- [ ] Move `specs/git-registry.md` → `docs/git-registry.md`
-- [ ] Move `specs/gitlab-registry.md` → `docs/gitlab-registry.md`
-- [ ] Move `specs/cloudsmith-registry.md` → `docs/cloudsmith-registry.md`
-- [ ] Move `specs/sinks.md` → `docs/sinks.md`
-- [ ] Move `specs/storage.md` → `docs/storage.md`
-- [ ] Move `specs/resource-schemas.md` → `docs/resource-schemas.md`
-- [ ] Move `specs/armrc.md` → `docs/armrc.md`
-- [ ] Move `specs/migration-v2-to-v3.md` → `docs/migration-v2-to-v3.md`
-- [ ] Merge `specs/examples/` → `docs/examples/` (docs/examples/ already exists)
+- [x] Move `specs/concepts.md` → `docs/concepts.md`
+- [x] Move `specs/commands.md` → `docs/commands.md`
+- [x] Move `specs/registries.md` → `docs/registries.md`
+- [x] Move `specs/git-registry.md` → `docs/git-registry.md`
+- [x] Move `specs/gitlab-registry.md` → `docs/gitlab-registry.md`
+- [x] Move `specs/cloudsmith-registry.md` → `docs/cloudsmith-registry.md`
+- [x] Move `specs/sinks.md` → `docs/sinks.md`
+- [x] Move `specs/storage.md` → `docs/storage.md`
+- [x] Move `specs/resource-schemas.md` → `docs/resource-schemas.md`
+- [x] Move `specs/armrc.md` → `docs/armrc.md`
+- [x] Move `specs/migration-v2-to-v3.md` → `docs/migration-v2-to-v3.md`
+- [x] Merge `specs/examples/` → `docs/examples/` (docs/examples/ already exists)
 
 **Verification:**
-- Confirm `specs/` contains only `e2e-testing.md` after migration
-- Confirm all 12 files exist in `docs/`
+- [x] Confirm `specs/` contains only `e2e-testing.md` after migration
+- [x] Confirm all 12 files exist in `docs/`
+- [x] All tests pass
 
-### Phase 2: Reference Updates (Priority: HIGH)
+### Phase 2: Reference Updates (Priority: HIGH) ✅ COMPLETE
 Update all references from `specs/` to `docs/` for migrated files
 
-- [ ] Update `README.md` (10 references)
+- [x] Update `README.md` (10 references)
   - Line 24: `specs/git-registry.md` → `docs/git-registry.md`
   - Line 59: `specs/migration-v2-to-v3.md` → `docs/migration-v2-to-v3.md`
   - Lines 151-155: Update documentation section links
   - Lines 159-161: Update registry types section links
-- [ ] Update `AGENTS.md` (1 reference)
+- [x] Update `AGENTS.md` (1 reference)
   - Line 71: Update specs reference to clarify docs vs specs
-- [ ] Update `specs/migration-v2-to-v3.md` → `docs/migration-v2-to-v3.md` (1 self-reference)
+- [x] Update `docs/migration-v2-to-v3.md` (1 self-reference)
   - Line 468: Update to reference `docs/` directory
-- [ ] Review `.amazonq/prompts/` references (informational, may not need updates)
-- [ ] Review `SPECIFICATION_PHILOSOPHY.md` references (meta-documentation, intentional)
+- [x] Review `.amazonq/prompts/` references (informational, workflow docs - intentional)
+- [x] Review `SPECIFICATION_PHILOSOPHY.md` references (meta-documentation - intentional)
 
 **Verification:**
-- Run `grep -r "specs/" *.md` to find remaining references
-- Confirm only intentional references remain (e2e-testing.md, meta-docs)
+- [x] All tests pass
+- [x] Only intentional references remain (PROMPT files, IMPLEMENTATION_PLAN, meta-docs)
 
 ### Phase 3: Builder Spec Creation (Priority: MEDIUM)
 Create builder-oriented specifications following Ralph methodology. See [SPEC_COVERAGE_ANALYSIS.md](./SPEC_COVERAGE_ANALYSIS.md) for complete traceability matrix.
