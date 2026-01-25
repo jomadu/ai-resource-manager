@@ -16,16 +16,16 @@ func TestGitRegistry_GetPackage_WithArchiveAndPatterns(t *testing.T) {
 	tarWriter := tar.NewWriter(gzWriter)
 
 	files := map[string]string{
-		"security/rule1.yml":      "security content 1",
-		"security/rule2.yml":      "security content 2",
-		"general/rule3.yml":       "general content 3",
-		"experimental/rule4.yml":  "experimental content 4",
+		"security/rule1.yml":     "security content 1",
+		"security/rule2.yml":     "security content 2",
+		"general/rule3.yml":      "general content 3",
+		"experimental/rule4.yml": "experimental content 4",
 	}
 
 	for path, content := range files {
 		header := &tar.Header{
 			Name: path,
-			Mode: 0644,
+			Mode: 0o644,
 			Size: int64(len(content)),
 		}
 		if err := tarWriter.WriteHeader(header); err != nil {

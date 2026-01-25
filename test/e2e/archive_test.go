@@ -307,7 +307,7 @@ func TestArchiveWithIncludeExcludePatterns(t *testing.T) {
 			{"**/experimental/**", "security/experimental/rule.yml", true},
 			{"**/experimental/**", "security/rule1.yml", false},
 		}
-		
+
 		for _, tc := range testCases {
 			got := core.MatchPattern(tc.pattern, tc.path)
 			if got != tc.want {
