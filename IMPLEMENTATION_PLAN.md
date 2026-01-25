@@ -4,7 +4,7 @@
 
 ARM is **fully functional and production-ready** with all core features implemented, tested, and all known bugs resolved.
 
-**Last Updated:** 2026-01-25 (Git Registry Version Sorting Bug Fixed + Update/Upgrade E2E Tests Added)
+**Last Updated:** 2026-01-25 (Added Compilation E2E Tests)
 **Analyzed By:** Kiro AI Agent
 **Analysis Method:** Systematic specification review, code inspection, test execution, and gap analysis
 
@@ -118,9 +118,10 @@ ARM is **fully functional and production-ready** with all core features implemen
 - ✅ `test/e2e/install_test.go` - Installation workflows (7 test cases)
 - ✅ `test/e2e/version_test.go` - Version resolution (5 test cases, 1 skipped)
 - ✅ `test/e2e/update_test.go` - Update/upgrade workflows (6 test cases)
+- ✅ `test/e2e/compile_test.go` - Compilation and tool formats (11 test cases)
 - ✅ `test/e2e/helpers/` - Test infrastructure (git, fixtures, assertions, arm runner)
 
-**Test Results:** All tests passing (100% pass rate, 36 E2E tests)
+**Test Results:** All tests passing (100% pass rate, 47 E2E tests)
 
 **Test Results:** All tests passing (unit tests + 30 E2E tests)
 
@@ -209,13 +210,15 @@ No known issues. All bugs have been fixed and all tests pass.
 - ✅ File pattern filtering: include patterns
 - ✅ Version resolution: @latest, @1 (major), @1.1 (minor), @1.0.0 (constraint), branches
 - ✅ Update/upgrade workflows: update within constraints, upgrade ignoring constraints, manifest updates
+- ✅ Compilation: all 4 tool formats (Cursor, AmazonQ, Copilot, Markdown), rulesets and promptsets
+- ✅ Index generation: arm_index.* and arm-index.json creation
+- ✅ Hierarchical layout: directory structure validation
+- ✅ Priority resolution: multiple rulesets with different priorities
 
 **Missing Test Scenarios (Per Specification):**
 - ❌ GitLab registry tests (authentication, project/group ID)
 - ❌ Cloudsmith registry tests (authentication, API integration)
-- ❌ Update/upgrade workflow tests (update vs upgrade, constraint handling)
-- ❌ Compilation tests (all tools, validation, options)
-- ❌ Priority resolution tests (multiple rulesets with priorities)
+- ❌ Compilation validation tests (invalid YAML, missing fields) - Note: ARM is lenient and doesn't fail on invalid YAML
 - ❌ Storage/cache tests (caching, cleanup, age-based removal)
 - ❌ Manifest file tests (arm.json, arm-lock.json, arm-index.json validation)
 - ❌ Authentication tests (.armrc file handling)
@@ -239,15 +242,18 @@ No known issues. All bugs have been fixed and all tests pass.
 **Effort:** 2-3 days to implement remaining test scenarios per specification
 
 **Implementation Steps for Remaining Scenarios:**
-1. Create `test/e2e/version_test.go` - Version resolution and constraint tests
-2. Create `test/e2e/compile_test.go` - Compilation and validation tests
-3. Create `test/e2e/priority_test.go` - Priority resolution tests
+1. ~~Create `test/e2e/version_test.go` - Version resolution and constraint tests~~ ✅ DONE
+2. ~~Create `test/e2e/compile_test.go` - Compilation and validation tests~~ ✅ DONE
+3. ~~Create `test/e2e/priority_test.go` - Priority resolution tests~~ ✅ DONE (included in compile_test.go)
 4. Create `test/e2e/storage_test.go` - Cache and storage tests
 5. Create `test/e2e/manifest_test.go` - Manifest file validation tests
 6. Create `test/e2e/auth_test.go` - Authentication tests (.armrc)
 7. Create `test/e2e/errors_test.go` - Error handling tests
 8. Create `test/e2e/multisink_test.go` - Multi-sink scenarios
-9. Create `test/e2e/update_test.go` - Update/upgrade workflow tests
+9. ~~Create `test/e2e/update_test.go` - Update/upgrade workflow tests~~ ✅ DONE
+10. Create `test/e2e/archive_test.go` - Archive extraction tests
+11. Add GitLab and Cloudsmith registry tests to `registry_test.go`
+12. Add more pattern filtering tests to `install_test.go`
 10. Create `test/e2e/archive_test.go` - Archive extraction tests
 11. Add GitLab and Cloudsmith registry tests to `registry_test.go`
 12. Add more pattern filtering tests to `install_test.go`
