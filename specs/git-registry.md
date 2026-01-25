@@ -89,10 +89,16 @@ arm install ruleset git-registry/my-rules@feature/new-rules cursor-rules
 
 ### Version Resolution Priority
 
-When you specify `@latest` or no version, ARM resolves in this order:
+When you specify `@latest` or no version, ARM resolves versions in this priority order:
 
-1. **Semantic version tags** (highest version, e.g., `2.1.0` > `1.9.0`)
-2. **Branch HEAD commits** (shown as short commit hash)
+1. **Semantic version tags** - Always prioritized over branches, sorted descending (highest first)
+2. **Branches** - Only considered if no semver tags exist, ordered by registry configuration
+
+**Key behaviors:**
+- Semver tags always take precedence over branches (stable releases > development)
+- Among semver tags: highest version wins (v2.0.0 > v1.9.0)
+- Among branches: first branch in registry config wins
+- Branch order is controlled by the `--branches` flag order when adding the registry
 
 ### Examples
 
@@ -100,20 +106,30 @@ When you specify `@latest` or no version, ARM resolves in this order:
 ```bash
 # Tags: v1.0.0, v1.1.0, v2.0.0
 arm install ruleset git-registry/my-rules cursor-rules
-# Resolves to: 2.0.0
+# Resolves to: 2.0.0 (highest semver)
 ```
 
 **Repository with only branches**:
 ```bash
+# Registry config: --branches main,develop
 # Branches: main, develop
 arm install ruleset git-registry/my-rules cursor-rules
-# Resolves to: a1b2c3d (main branch HEAD)
+# Resolves to: a1b2c3d (main branch HEAD, first in config)
 ```
 
 **Repository with tags and branches**:
 ```bash
 # Tags: v1.0.0, v2.0.0
-# Branches: main
+# Registry config: --branches main
+# Branches: main (at commit with newer changes than v2.0.0)
 arm install ruleset git-registry/my-rules cursor-rules
-# Resolves to: 2.0.0 (semantic tag wins)
+# Resolves to: 2.0.0 (semver always wins over branches)
+```
+
+**Branch priority by config order**:
+```bash
+# Registry config: --branches develop,main
+# Both branches exist
+arm install ruleset git-registry/my-rules cursor-rules
+# Resolves to: develop branch HEAD (first in config)
 ```

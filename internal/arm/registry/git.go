@@ -82,6 +82,7 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 	}
 
 	// Get branches if configured
+	var branchVersions []core.Version
 	if len(g.config.Branches) > 0 {
 		// Get actual branches from repo
 		actualBranches, err := g.repo.GetBranches(ctx, g.config.URL)
@@ -90,6 +91,7 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 		}
 
 		// Only add configured branches that actually exist (supports glob patterns)
+		// Preserve config order for branch priority
 		for _, configBranch := range g.config.Branches {
 			for _, actualBranch := range actualBranches {
 				matched, err := filepath.Match(configBranch, actualBranch)
@@ -99,19 +101,19 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 				}
 				if matched {
 					version, _ := core.ParseVersion(actualBranch)
-					versions = append(versions, version)
+					branchVersions = append(branchVersions, version)
 				}
 			}
 		}
 	}
 
-	// Sort versions descending (highest first)
+	// Sort semver versions descending (highest first)
 	sort.Slice(versions, func(i, j int) bool {
-		if !versions[i].IsSemver || !versions[j].IsSemver {
-			return versions[i].Version > versions[j].Version
-		}
 		return versions[i].Compare(&versions[j]) > 0
 	})
+
+	// Append branches in config order (already in order from loop above)
+	versions = append(versions, branchVersions...)
 
 	return versions, nil
 }
