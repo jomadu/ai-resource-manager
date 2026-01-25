@@ -146,6 +146,37 @@ func CountFilesRecursive(t *testing.T, dir string) int {
 	return count
 }
 
+// CountFilesWithExtension counts files with a specific extension in a directory recursively
+func CountFilesWithExtension(t *testing.T, dir string, ext string) int {
+	t.Helper()
+	count := 0
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && filepath.Ext(path) == ext {
+			count++
+		}
+		return nil
+	})
+	if err != nil {
+		if os.IsNotExist(err) {
+			return 0
+		}
+		t.Fatalf("failed to walk directory %s: %v", dir, err)
+	}
+	return count
+}
+
+// DirExists checks if a directory exists
+func DirExists(dir string) bool {
+	info, err := os.Stat(dir)
+	if err != nil {
+		return false
+	}
+	return info.IsDir()
+}
+
 // contains checks if a string contains a substring
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || 
