@@ -44,10 +44,11 @@ The project now has:
 
 ## Next Steps
 
-1. **Fix flaky test** (MEDIUM PRIORITY)
-   - `TestCleanCache/cache_with_nuke` fails when run with all tests (race condition)
-   - Passes in isolation
-   - Pre-existing issue, not caused by recent changes
+1. **Flaky test investigation** (LOW PRIORITY - Cannot reproduce)
+   - `TestCleanCache/cache_with_nuke` was reported as flaky
+   - Investigation (ralph-0.0.47): Cannot reproduce - passes consistently in isolation and with all tests
+   - May have been resolved by previous race condition fix (commit 376e074)
+   - Recommend monitoring in CI/CD pipeline
 
 2. **Merge to main**: The `docs-migration` branch is ready for merge
 3. **Feature enhancements** based on user feedback
