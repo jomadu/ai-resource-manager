@@ -121,12 +121,13 @@ Create builder-oriented specifications following Ralph methodology. See [SPEC_CO
   - Reference: SPECIFICATION_PHILOSOPHY.md template section
   - **Verification**: Template created successfully, all tests pass
 
-- [ ] Create `specs/version-resolution.md`
+- [x] Create `specs/version-resolution.md`
   - **JTBD**: Resolve package versions from registries
   - **Maps to**: internal/arm/core/version.go, constraint.go, helpers.go
   - **User docs**: concepts.md, git-registry.md
   - **Coverage**: Semver parsing, constraint matching, tag/branch priority, version comparison
   - **Edge cases**: No versions, malformed tags, network failures, branch not found
+  - **Verification**: Spec created with complete algorithm, data structures, and acceptance criteria
 
 - [ ] Create `specs/package-installation.md`
   - **JTBD**: Install, update, upgrade, uninstall packages
