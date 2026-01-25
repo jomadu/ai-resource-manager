@@ -3,6 +3,8 @@
 ## Goal
 Separate user documentation from builder specifications. Align specs with Ralph methodology (JTBD → activities → acceptance criteria → tasks).
 
+See [SPECIFICATION_PHILOSOPHY.md](./SPECIFICATION_PHILOSOPHY.md) for detailed guidance on writing effective builder-oriented specifications.
+
 ## Tasks
 
 - [ ] Move current `specs/*.md` to `docs/` (except `e2e-testing.md`)
