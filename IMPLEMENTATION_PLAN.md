@@ -163,12 +163,13 @@ Create builder-oriented specifications following Ralph methodology. See [SPEC_CO
   - **Edge cases**: Same priority, no rules, circular dependencies, missing metadata
   - **Verification**: Comprehensive spec created with algorithms for install, update, generate index, and embed metadata. All tests pass.
 
-- [ ] Create `specs/cache-management.md`
+- [x] Create `specs/cache-management.md`
   - **JTBD**: Cache packages locally to avoid redundant downloads
   - **Maps to**: internal/arm/storage/
   - **User docs**: storage.md, commands.md
   - **Coverage**: Storage structure (~/.arm/storage), cache key generation, metadata schemas (registry, package, version), cleanup strategies (max-age, nuke)
   - **Edge cases**: Corrupted cache, disk full, concurrent access, stale metadata
+  - **Verification**: Comprehensive spec created with algorithms for key generation, store, retrieve, clean by age, clean by last access, and nuke. All tests pass.
 
 - [ ] Create `specs/pattern-filtering.md`
   - **JTBD**: Filter package files using glob patterns
