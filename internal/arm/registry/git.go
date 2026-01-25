@@ -105,6 +105,14 @@ func (g *GitRegistry) ListPackageVersions(ctx context.Context, packageName strin
 		}
 	}
 
+	// Sort versions descending (highest first)
+	sort.Slice(versions, func(i, j int) bool {
+		if !versions[i].IsSemver || !versions[j].IsSemver {
+			return versions[i].Version > versions[j].Version
+		}
+		return versions[i].Compare(&versions[j]) > 0
+	})
+
 	return versions, nil
 }
 

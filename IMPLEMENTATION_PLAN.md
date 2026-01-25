@@ -4,7 +4,7 @@
 
 ARM is **fully functional and production-ready** with all core features implemented, tested, and all known bugs resolved.
 
-**Last Updated:** 2026-01-24 (Version Constraint Bug Fixed)
+**Last Updated:** 2026-01-25 (Git Registry Version Sorting Bug Fixed + Update/Upgrade E2E Tests Added)
 **Analyzed By:** Kiro AI Agent
 **Analysis Method:** Systematic specification review, code inspection, test execution, and gap analysis
 
@@ -117,7 +117,10 @@ ARM is **fully functional and production-ready** with all core features implemen
 - ✅ `test/e2e/sink_test.go` - Sink management (10 test cases)
 - ✅ `test/e2e/install_test.go` - Installation workflows (7 test cases)
 - ✅ `test/e2e/version_test.go` - Version resolution (5 test cases, 1 skipped)
+- ✅ `test/e2e/update_test.go` - Update/upgrade workflows (6 test cases)
 - ✅ `test/e2e/helpers/` - Test infrastructure (git, fixtures, assertions, arm runner)
+
+**Test Results:** All tests passing (100% pass rate, 36 E2E tests)
 
 **Test Results:** All tests passing (unit tests + 30 E2E tests)
 
@@ -159,6 +162,24 @@ No known issues. All bugs have been fixed and all tests pass.
    - **Test Impact:** All unit tests and E2E tests now pass (100% pass rate)
    - **Result:** Specification compliance restored, all version constraints work correctly
 
+3. **Git Registry Version Sorting Bug** - RESOLVED 2026-01-25
+   - **Severity:** HIGH - Was breaking upgrade command functionality
+   - **Issue:** `arm upgrade` was not upgrading to latest version because Git registry returned versions in arbitrary order
+   - **Root Cause:** `GitRegistry.ListPackageVersions()` in `internal/arm/registry/git.go` did not sort versions, unlike Cloudsmith registry which sorts descending (highest first)
+   - **Buggy Behavior (Fixed):**
+     - Git tags returned in arbitrary order (depends on Git's internal ordering)
+     - `fetchLatest()` took first version from list, which might not be the highest
+     - Upgrade command thought current version was already latest
+   - **Correct Behavior (Now Working):**
+     - Versions sorted descending (highest first) using semantic version comparison
+     - `fetchLatest()` correctly gets highest version
+     - Upgrade command properly upgrades to latest version
+   - **Fix Applied:** Added version sorting to `GitRegistry.ListPackageVersions()` matching Cloudsmith registry behavior
+   - **Files Changed:**
+     - `internal/arm/registry/git.go` - Added sort.Slice() to sort versions descending
+   - **Test Impact:** All unit tests and E2E tests pass, upgrade tests now work correctly
+   - **Result:** Upgrade command works as specified, Git registry behavior matches other registry types
+
 ---
 
 ## 🚧 Missing Features (Per Specification)
@@ -187,6 +208,7 @@ No known issues. All bugs have been fixed and all tests pass.
 - ✅ Promptset installation: basic installation workflow
 - ✅ File pattern filtering: include patterns
 - ✅ Version resolution: @latest, @1 (major), @1.1 (minor), @1.0.0 (constraint), branches
+- ✅ Update/upgrade workflows: update within constraints, upgrade ignoring constraints, manifest updates
 
 **Missing Test Scenarios (Per Specification):**
 - ❌ GitLab registry tests (authentication, project/group ID)
