@@ -153,10 +153,11 @@ func NewConstraint(versionStr string) (Constraint, error) {
 	case "~":
 		return Constraint{Type: Minor, Version: &version}, nil
 	default:
-		if patch > 0 {
+		// Determine type based on input format, not values
+		if matches[4] != "" { // Has patch component in input
 			return Constraint{Type: Exact, Version: &version}, nil
 		}
-		if minor > 0 {
+		if matches[3] != "" { // Has minor component in input
 			return Constraint{Type: Minor, Version: &version}, nil
 		}
 		return Constraint{Type: Major, Version: &version}, nil
@@ -225,10 +226,11 @@ func ParseConstraint(versionStr string) (Constraint, error) {
 	case "~":
 		return Constraint{Type: Minor, Version: &version}, nil
 	default:
-		if patch > 0 {
+		// Determine type based on input format, not values
+		if matches[4] != "" { // Has patch component in input
 			return Constraint{Type: Exact, Version: &version}, nil
 		}
-		if minor > 0 {
+		if matches[3] != "" { // Has minor component in input
 			return Constraint{Type: Minor, Version: &version}, nil
 		}
 		return Constraint{Type: Major, Version: &version}, nil
