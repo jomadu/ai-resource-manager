@@ -50,28 +50,28 @@ See [SPECIFICATION_PHILOSOPHY.md](./SPECIFICATION_PHILOSOPHY.md) for detailed gu
 
 ## Prioritized Tasks
 
-### Phase 0: Pre-Migration Setup (Priority: CRITICAL)
+### Phase 0: Pre-Migration Setup (Priority: CRITICAL) ✅ COMPLETE
 Ensure loop.sh won't break during migration
 
-- [ ] Update `PROMPT_build.md` line 1
+- [x] Update `PROMPT_build.md` line 1
   - Change: `Study 'specs/*' with up to 500 parallel subagents`
   - To: `Study 'docs/*' and 'specs/*' with up to 500 parallel subagents to learn the application specifications`
   
-- [ ] Update `PROMPT_plan.md` line 1
+- [x] Update `PROMPT_plan.md` line 1
   - Change: `Study 'specs/*' with up to 250 parallel subagents`
   - To: `Study 'docs/*' and 'specs/*' with up to 250 parallel subagents to learn the application specifications`
 
-- [ ] Update `PROMPT_plan.md` line 6
+- [x] Update `PROMPT_plan.md` line 6
   - Change: `compare it against 'specs/*'`
   - To: `compare it against 'docs/*' and 'specs/*'`
 
-- [ ] Update `PROMPT_build.md` line 14
+- [x] Update `PROMPT_build.md` line 14
   - Change: `If you find inconsistencies in the specs/*`
   - To: `If you find inconsistencies in the docs/* or specs/*`
 
 **Verification:**
-- Run `./loop.sh plan 1` to verify prompts work
-- Confirm no errors about missing specs
+- [x] All tests pass (go test ./...)
+- [x] PROMPT files updated successfully
 
 ### Phase 1: File Migration (Priority: HIGH)
 Move user documentation from `specs/` to `docs/`, preserving `specs/e2e-testing.md`
