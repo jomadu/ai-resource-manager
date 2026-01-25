@@ -116,6 +116,8 @@ Update all references from `specs/` to `docs/` for migrated files
 ### Phase 3: Builder Spec Creation (Priority: MEDIUM)
 Create builder-oriented specifications following Ralph methodology. See [SPEC_COVERAGE_ANALYSIS.md](./SPEC_COVERAGE_ANALYSIS.md) for complete traceability matrix.
 
+**IMPORTANT**: Each spec below should be completed as its own independent task. Do NOT attempt to complete multiple specs in a single session to avoid context bloat. Pick one spec, complete it fully, verify tests pass, commit, and move to the next spec in a fresh session.
+
 - [x] Create `specs/TEMPLATE.md` (foundation for all other specs)
   - Include: JTBD, Activities, Acceptance Criteria, Data Structures, Algorithm, Edge Cases, Dependencies, Examples
   - Reference: SPECIFICATION_PHILOSOPHY.md template section
