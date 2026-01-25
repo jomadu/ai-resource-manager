@@ -48,7 +48,20 @@ func NewRegistryWithPath(baseDir string, registryKey interface{}) (*Registry, er
 
 	// Create metadata.json from registryKey fields
 	var metadata RegistryMetadata
-	if keyMap, ok := registryKey.(map[string]interface{}); ok {
+	
+	// Convert registryKey to map using JSON marshaling (handles both maps and structs)
+	var keyMap map[string]interface{}
+	if m, ok := registryKey.(map[string]interface{}); ok {
+		keyMap = m
+	} else {
+		// Convert struct to map via JSON
+		data, err := json.Marshal(registryKey)
+		if err == nil {
+			_ = json.Unmarshal(data, &keyMap)
+		}
+	}
+	
+	if keyMap != nil {
 		if url, ok := keyMap["url"].(string); ok {
 			metadata.URL = url
 		}
@@ -57,8 +70,14 @@ func NewRegistryWithPath(baseDir string, registryKey interface{}) (*Registry, er
 		}
 		if groupID, ok := keyMap["group_id"].(string); ok {
 			metadata.GroupID = groupID
+		} else if groupID, ok := keyMap["groupId"].(string); ok {
+			// Handle camelCase variant
+			metadata.GroupID = groupID
 		}
 		if projectID, ok := keyMap["project_id"].(string); ok {
+			metadata.ProjectID = projectID
+		} else if projectID, ok := keyMap["projectId"].(string); ok {
+			// Handle camelCase variant
 			metadata.ProjectID = projectID
 		}
 		if owner, ok := keyMap["owner"].(string); ok {

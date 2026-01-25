@@ -4,7 +4,7 @@
 
 ARM is **fully functional and production-ready** with all core features implemented, tested, and all known bugs resolved.
 
-**Last Updated:** 2026-01-25 (Added Compilation E2E Tests)
+**Last Updated:** 2026-01-25 (Added Storage E2E Tests + Registry Metadata Bug Fix)
 **Analyzed By:** Kiro AI Agent
 **Analysis Method:** Systematic specification review, code inspection, test execution, and gap analysis
 
@@ -18,7 +18,7 @@ ARM is **fully functional and production-ready** with all core features implemen
 - ✅ All 4 compilers (Cursor, AmazonQ, Copilot, Markdown) complete
 - ✅ All core features (versioning, caching, patterns, priority) complete
 - ✅ All tests passing (100% pass rate)
-- ✅ E2E test infrastructure implemented (registry, sink, install workflows)
+- ✅ E2E test infrastructure implemented (registry, sink, install, storage workflows)
 - ✅ All known bugs resolved
 
 **Blocking Issues:** None ✅
@@ -119,9 +119,10 @@ ARM is **fully functional and production-ready** with all core features implemen
 - ✅ `test/e2e/version_test.go` - Version resolution (5 test cases, 1 skipped)
 - ✅ `test/e2e/update_test.go` - Update/upgrade workflows (6 test cases)
 - ✅ `test/e2e/compile_test.go` - Compilation and tool formats (11 test cases)
+- ✅ `test/e2e/storage_test.go` - Storage and cache operations (7 test cases)
 - ✅ `test/e2e/helpers/` - Test infrastructure (git, fixtures, assertions, arm runner)
 
-**Test Results:** All tests passing (100% pass rate, 47 E2E tests)
+**Test Results:** All tests passing (100% pass rate, 54 E2E tests)
 
 **Test Results:** All tests passing (unit tests + 30 E2E tests)
 
@@ -181,6 +182,24 @@ No known issues. All bugs have been fixed and all tests pass.
    - **Test Impact:** All unit tests and E2E tests pass, upgrade tests now work correctly
    - **Result:** Upgrade command works as specified, Git registry behavior matches other registry types
 
+4. **Registry Metadata Not Saved Bug** - RESOLVED 2026-01-25
+   - **Severity:** MEDIUM - Was preventing E2E tests from finding registries by URL
+   - **Issue:** `storage.NewRegistry()` couldn't extract fields from struct registryKeys, only from maps
+   - **Root Cause:** Type assertion `registryKey.(map[string]interface{})` failed when registryKey was a struct (GitRegistryConfig, GitLabRegistryConfig, etc.)
+   - **Buggy Behavior (Fixed):**
+     - Registry metadata.json files had empty `url` and `type` fields
+     - E2E tests couldn't find registries by URL in storage
+     - Registry metadata was not properly persisted
+   - **Correct Behavior (Now Working):**
+     - Struct registryKeys are converted to maps using JSON marshaling
+     - Both snake_case (`project_id`) and camelCase (`projectId`) field names supported
+     - Registry metadata properly saved with all fields
+   - **Fix Applied:** Added JSON marshaling fallback in `storage.NewRegistry()` to handle struct registryKeys
+   - **Files Changed:**
+     - `internal/arm/storage/registry.go` - Added JSON marshaling to convert structs to maps, added camelCase field name support
+   - **Test Impact:** All E2E tests now pass, storage tests can find registries by URL
+   - **Result:** Registry metadata properly persisted, E2E tests work correctly
+
 ---
 
 ## 🚧 Missing Features (Per Specification)
@@ -200,7 +219,11 @@ No known issues. All bugs have been fixed and all tests pass.
 - ✅ `test/e2e/registry_test.go` - Git registry management tests (8 test cases)
 - ✅ `test/e2e/sink_test.go` - Sink management tests (10 test cases)
 - ✅ `test/e2e/install_test.go` - Installation workflow tests (7 test cases)
-- ✅ All 25 E2E test cases passing
+- ✅ `test/e2e/version_test.go` - Version resolution and constraint tests (5 test cases, 1 skipped)
+- ✅ `test/e2e/update_test.go` - Update/upgrade workflow tests (6 test cases)
+- ✅ `test/e2e/compile_test.go` - Compilation and tool format tests (11 test cases)
+- ✅ `test/e2e/storage_test.go` - Storage and cache operation tests (7 test cases)
+- ✅ All 54 E2E test cases passing (1 skipped)
 
 **Test Coverage:**
 - ✅ Git registry: add, list, info, set, remove, branches, duplicate detection
@@ -214,12 +237,14 @@ No known issues. All bugs have been fixed and all tests pass.
 - ✅ Index generation: arm_index.* and arm-index.json creation
 - ✅ Hierarchical layout: directory structure validation
 - ✅ Priority resolution: multiple rulesets with different priorities
+- ✅ Storage/cache: package caching, cache reuse, cache key generation, cache cleaning (age-based, --nuke)
+- ✅ Cache structure: three-level metadata (registry/package/version), timestamp tracking
 
 **Missing Test Scenarios (Per Specification):**
 - ❌ GitLab registry tests (authentication, project/group ID)
 - ❌ Cloudsmith registry tests (authentication, API integration)
 - ❌ Compilation validation tests (invalid YAML, missing fields) - Note: ARM is lenient and doesn't fail on invalid YAML
-- ❌ Storage/cache tests (caching, cleanup, age-based removal)
+- ~~❌ Storage/cache tests (caching, cleanup, age-based removal)~~ ✅ DONE
 - ❌ Manifest file tests (arm.json, arm-lock.json, arm-index.json validation)
 - ❌ Authentication tests (.armrc file handling)
 - ❌ Error handling tests (invalid inputs, missing resources)
@@ -245,15 +270,12 @@ No known issues. All bugs have been fixed and all tests pass.
 1. ~~Create `test/e2e/version_test.go` - Version resolution and constraint tests~~ ✅ DONE
 2. ~~Create `test/e2e/compile_test.go` - Compilation and validation tests~~ ✅ DONE
 3. ~~Create `test/e2e/priority_test.go` - Priority resolution tests~~ ✅ DONE (included in compile_test.go)
-4. Create `test/e2e/storage_test.go` - Cache and storage tests
+4. ~~Create `test/e2e/storage_test.go` - Cache and storage tests~~ ✅ DONE
 5. Create `test/e2e/manifest_test.go` - Manifest file validation tests
 6. Create `test/e2e/auth_test.go` - Authentication tests (.armrc)
 7. Create `test/e2e/errors_test.go` - Error handling tests
 8. Create `test/e2e/multisink_test.go` - Multi-sink scenarios
 9. ~~Create `test/e2e/update_test.go` - Update/upgrade workflow tests~~ ✅ DONE
-10. Create `test/e2e/archive_test.go` - Archive extraction tests
-11. Add GitLab and Cloudsmith registry tests to `registry_test.go`
-12. Add more pattern filtering tests to `install_test.go`
 10. Create `test/e2e/archive_test.go` - Archive extraction tests
 11. Add GitLab and Cloudsmith registry tests to `registry_test.go`
 12. Add more pattern filtering tests to `install_test.go`
@@ -510,10 +532,10 @@ No known issues. All bugs have been fixed and all tests pass.
 - Registries: 100% (3/3) ✅ (Git, GitLab, Cloudsmith)
 - Compilers: 100% (4/4) ✅ (Cursor, AmazonQ, Copilot, Markdown)
 - Unit Test Coverage: 100% ✅ (all tests passing)
-- E2E Tests: 30% ✅ (core infrastructure complete, 30 tests passing)
+- E2E Tests: 40% ✅ (core infrastructure complete, 54 tests passing)
 
 **Quality Metrics:**
-- Total Test Files: 65+ test files (60+ unit tests, 4 E2E test files, 4 helper files)
+- Total Test Files: 70+ test files (60+ unit tests, 7 E2E test files, 4 helper files)
 - Test Coverage: Comprehensive unit tests + core E2E workflows
 - Code Organization: Clean separation of concerns (CLI → Service → Storage/Registry/Compiler)
 - Error Handling: Consistent patterns throughout
@@ -524,10 +546,10 @@ No known issues. All bugs have been fixed and all tests pass.
 
 **Non-Blocking Issues:** None ✅ 
 **Missing Features:** 
-- Additional E2E test scenarios (70% remaining, nice-to-have, 2-3 days effort)
+- Additional E2E test scenarios (60% remaining, nice-to-have, 2-3 days effort)
 
 **Recommendation:** 
-ARM is **production-ready**. All critical bugs have been fixed, all tests pass, and the application is fully compliant with specifications. The version constraint resolution bug has been resolved, ensuring `@1.0.0` installs exactly 1.0.0, `@1.1` installs highest 1.1.x, and `@1` installs highest 1.x.x as specified.
+ARM is **production-ready**. All critical bugs have been fixed, all tests pass, and the application is fully compliant with specifications. The version constraint resolution bug and registry metadata bug have been resolved, ensuring proper version resolution and registry metadata persistence.
 
 **Release Readiness Checklist:**
 - ✅ All commands implemented and tested
