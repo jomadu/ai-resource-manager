@@ -30,14 +30,14 @@ func TestMultiSinkCrossToolInstallation(t *testing.T) {
 	arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "cursor-rules", "q-rules")
 
 	// Verify both sink directories populated
-	cursorDir := filepath.Join(workDir, ".cursor/rules")
+	cursorDir := filepath.Join(workDir, ".cursor", "rules")
 	helpers.AssertDirExists(t, cursorDir)
 	cursorFiles := helpers.CountFilesRecursive(t, cursorDir)
 	if cursorFiles == 0 {
 		t.Error("expected files in cursor sink")
 	}
 
-	qDir := filepath.Join(workDir, ".amazonq/rules")
+	qDir := filepath.Join(workDir, ".amazonq", "rules")
 	helpers.AssertDirExists(t, qDir)
 	qFiles := helpers.CountFilesRecursive(t, qDir)
 	if qFiles == 0 {
@@ -166,13 +166,13 @@ func TestMultiSinkUpdate(t *testing.T) {
 	arm.MustRun("upgrade")
 
 	// Verify both sinks still populated
-	cursorDir := filepath.Join(workDir, ".cursor/rules")
+	cursorDir := filepath.Join(workDir, ".cursor", "rules")
 	helpers.AssertDirExists(t, cursorDir)
 	if helpers.CountFilesRecursive(t, cursorDir) == 0 {
 		t.Error("expected files in cursor sink after update")
 	}
 
-	copilotDir := filepath.Join(workDir, ".github/copilot")
+	copilotDir := filepath.Join(workDir, ".github", "copilot")
 	helpers.AssertDirExists(t, copilotDir)
 	if helpers.CountFilesRecursive(t, copilotDir) == 0 {
 		t.Error("expected files in copilot sink after update")

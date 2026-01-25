@@ -283,7 +283,7 @@ func TestIndexFileCreation(t *testing.T) {
 		arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "cursor-rules")
 
 		// Verify arm-index.json exists in sink directory
-		indexFile := filepath.Join(workDir, ".cursor/rules/arm/arm-index.json")
+		indexFile := filepath.Join(workDir, ".cursor", "rules", "arm", "arm-index.json")
 		helpers.AssertFileExists(t, indexFile)
 
 		// Verify valid JSON
@@ -301,7 +301,7 @@ func TestIndexFileCreation(t *testing.T) {
 	})
 
 	t.Run("TracksInstalledFiles", func(t *testing.T) {
-		indexFile := filepath.Join(workDir, ".cursor/rules/arm/arm-index.json")
+		indexFile := filepath.Join(workDir, ".cursor", "rules", "arm", "arm-index.json")
 		index := helpers.ReadJSON(t, indexFile)
 
 		rulesets, ok := index["rulesets"].(map[string]interface{})
@@ -338,7 +338,7 @@ func TestIndexFileCreation(t *testing.T) {
 		arm.MustRun("uninstall")
 
 		// Verify index file updated
-		indexFile := filepath.Join(workDir, ".cursor/rules/arm/arm-index.json")
+		indexFile := filepath.Join(workDir, ".cursor", "rules", "arm", "arm-index.json")
 		index := helpers.ReadJSON(t, indexFile)
 
 		// After uninstall, rulesets should be empty or omitted
@@ -396,12 +396,12 @@ func TestManifestJSONValidity(t *testing.T) {
 
 	t.Run("ArmIndexJSONValid", func(t *testing.T) {
 		indexFile := filepath.Join(workDir, "arm-index.json")
-		
+
 		// Check if file exists first
 		if _, err := os.Stat(indexFile); os.IsNotExist(err) {
 			t.Skip("arm-index.json not created (may not be required for this configuration)")
 		}
-		
+
 		data, err := os.ReadFile(indexFile)
 		if err != nil {
 			t.Fatalf("failed to read arm-index.json: %v", err)

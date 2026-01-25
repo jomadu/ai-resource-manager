@@ -29,12 +29,12 @@ func TestCompilationToolFormats(t *testing.T) {
 		arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "cursor-rules")
 
 		// Verify .mdc file with frontmatter in hierarchical structure
-		sinkDir := filepath.Join(workDir, ".cursor/rules/arm/test-registry/test-ruleset")
+		sinkDir := filepath.Join(workDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset")
 		helpers.AssertDirExists(t, sinkDir)
 
 		// Find .mdc files recursively
 		foundMDC := false
-		filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
 			if err == nil && !info.IsDir() && strings.HasSuffix(info.Name(), ".mdc") {
 				foundMDC = true
 				content, err := os.ReadFile(path)
@@ -58,12 +58,12 @@ func TestCompilationToolFormats(t *testing.T) {
 		arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "q-rules")
 
 		// Verify .md file (pure markdown) in hierarchical structure
-		sinkDir := filepath.Join(workDir, ".amazonq/rules/arm/test-registry/test-ruleset")
+		sinkDir := filepath.Join(workDir, ".amazonq", "rules", "arm", "test-registry", "test-ruleset")
 		helpers.AssertDirExists(t, sinkDir)
 
 		// Find .md files recursively
 		foundMD := false
-		filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
 			if err == nil && !info.IsDir() && strings.HasSuffix(info.Name(), ".md") && !strings.Contains(info.Name(), "arm_index") {
 				foundMD = true
 			}
@@ -79,7 +79,7 @@ func TestCompilationToolFormats(t *testing.T) {
 		arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "copilot-rules")
 
 		// Copilot uses flat layout - files are in root with hash prefixes
-		sinkDir := filepath.Join(workDir, ".github/instructions")
+		sinkDir := filepath.Join(workDir, ".github", "instructions")
 		helpers.AssertDirExists(t, sinkDir)
 
 		// Find .instructions.md files in root directory
@@ -105,12 +105,12 @@ func TestCompilationToolFormats(t *testing.T) {
 		arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "md-rules")
 
 		// Verify .md file in hierarchical structure
-		sinkDir := filepath.Join(workDir, ".rules/arm/test-registry/test-ruleset")
+		sinkDir := filepath.Join(workDir, ".rules", "arm", "test-registry", "test-ruleset")
 		helpers.AssertDirExists(t, sinkDir)
 
 		// Find .md files recursively
 		foundMD := false
-		filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
 			if err == nil && !info.IsDir() && strings.HasSuffix(info.Name(), ".md") && !strings.Contains(info.Name(), "arm_index") {
 				foundMD = true
 			}
@@ -142,12 +142,12 @@ func TestCompilationPromptsets(t *testing.T) {
 		arm.MustRun("install", "promptset", "test-registry/test-promptset@1.0.0", "cursor-prompts")
 
 		// Verify .md file (no frontmatter for prompts) in hierarchical structure
-		sinkDir := filepath.Join(workDir, ".cursor/prompts/arm/test-registry/test-promptset")
+		sinkDir := filepath.Join(workDir, ".cursor", "prompts", "arm", "test-registry", "test-promptset")
 		helpers.AssertDirExists(t, sinkDir)
 
 		// Find .md files recursively
 		foundMD := false
-		filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
 			if err == nil && !info.IsDir() && strings.HasSuffix(info.Name(), ".md") {
 				foundMD = true
 			}
@@ -163,12 +163,12 @@ func TestCompilationPromptsets(t *testing.T) {
 		arm.MustRun("install", "promptset", "test-registry/test-promptset@1.0.0", "q-prompts")
 
 		// Verify .md file in hierarchical structure
-		sinkDir := filepath.Join(workDir, ".amazonq/prompts/arm/test-registry/test-promptset")
+		sinkDir := filepath.Join(workDir, ".amazonq", "prompts", "arm", "test-registry", "test-promptset")
 		helpers.AssertDirExists(t, sinkDir)
 
 		// Find .md files recursively
 		foundMD := false
-		filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
 			if err == nil && !info.IsDir() && strings.HasSuffix(info.Name(), ".md") {
 				foundMD = true
 			}
@@ -199,9 +199,9 @@ func TestCompilationValidation(t *testing.T) {
 
 		// Should succeed
 		arm.MustRun("install", "ruleset", "test-registry/valid-ruleset@1.0.0", "cursor-rules")
-		
+
 		// Verify files were created
-		sinkDir := filepath.Join(workDir, ".cursor/rules/arm/test-registry/valid-ruleset")
+		sinkDir := filepath.Join(workDir, ".cursor", "rules", "arm", "test-registry", "valid-ruleset")
 		helpers.AssertDirExists(t, sinkDir)
 	})
 }
@@ -227,7 +227,7 @@ func TestCompilationIndexGeneration(t *testing.T) {
 
 	t.Run("IndexFileGenerated", func(t *testing.T) {
 		// Verify arm_index.mdc exists in the arm/ subdirectory
-		indexFile := filepath.Join(workDir, ".cursor/rules/arm/arm_index.mdc")
+		indexFile := filepath.Join(workDir, ".cursor", "rules", "arm", "arm_index.mdc")
 		helpers.AssertFileExists(t, indexFile)
 
 		// Verify index contains metadata
@@ -245,7 +245,7 @@ func TestCompilationIndexGeneration(t *testing.T) {
 
 	t.Run("IndexJSONGenerated", func(t *testing.T) {
 		// Verify arm-index.json exists in the arm/ subdirectory
-		indexJSON := filepath.Join(workDir, ".cursor/rules/arm/arm-index.json")
+		indexJSON := filepath.Join(workDir, ".cursor", "rules", "arm", "arm-index.json")
 		helpers.AssertFileExists(t, indexJSON)
 
 		// Verify it's valid JSON
@@ -279,7 +279,7 @@ func TestCompilationHierarchicalLayout(t *testing.T) {
 		// Verify hierarchical directory structure exists
 		// arm/<registry>/<package>/<version>/
 		// Note: version includes 'v' prefix
-		expectedPath := filepath.Join(workDir, ".cursor/rules/arm/test-registry/test-ruleset/v1.0.0")
+		expectedPath := filepath.Join(workDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0")
 		helpers.AssertDirExists(t, expectedPath)
 
 		// Verify files are in the hierarchical path
@@ -328,7 +328,7 @@ spec:
 
 	t.Run("IndexOrderedByPriority", func(t *testing.T) {
 		// Verify arm_index.mdc exists in arm/ subdirectory
-		indexFile := filepath.Join(workDir, ".cursor/rules/arm/arm_index.mdc")
+		indexFile := filepath.Join(workDir, ".cursor", "rules", "arm", "arm_index.mdc")
 		content, err := os.ReadFile(indexFile)
 		if err != nil {
 			t.Fatalf("failed to read index file: %v", err)

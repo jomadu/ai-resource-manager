@@ -71,18 +71,18 @@ func AssertJSONField(t *testing.T, path, field string, expected interface{}) {
 	if err != nil {
 		t.Fatalf("failed to read JSON file %s: %v", path, err)
 	}
-	
+
 	var obj map[string]interface{}
 	if err := json.Unmarshal(data, &obj); err != nil {
 		t.Fatalf("failed to parse JSON file %s: %v", path, err)
 	}
-	
+
 	actual, ok := obj[field]
 	if !ok {
 		t.Errorf("JSON file %s does not contain field %s", path, field)
 		return
 	}
-	
+
 	if actual != expected {
 		t.Errorf("JSON field %s in %s: expected %v, got %v", field, path, expected, actual)
 	}
@@ -95,12 +95,12 @@ func ReadJSON(t *testing.T, path string) map[string]interface{} {
 	if err != nil {
 		t.Fatalf("failed to read JSON file %s: %v", path, err)
 	}
-	
+
 	var obj map[string]interface{}
 	if err := json.Unmarshal(data, &obj); err != nil {
 		t.Fatalf("failed to parse JSON file %s: %v", path, err)
 	}
-	
+
 	return obj
 }
 
@@ -114,7 +114,7 @@ func CountFiles(t *testing.T, dir string) int {
 		}
 		t.Fatalf("failed to read directory %s: %v", dir, err)
 	}
-	
+
 	count := 0
 	for _, entry := range entries {
 		if !entry.IsDir() {
@@ -147,7 +147,7 @@ func CountFilesRecursive(t *testing.T, dir string) int {
 }
 
 // CountFilesWithExtension counts files with a specific extension in a directory recursively
-func CountFilesWithExtension(t *testing.T, dir string, ext string) int {
+func CountFilesWithExtension(t *testing.T, dir, ext string) int {
 	t.Helper()
 	count := 0
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -179,8 +179,8 @@ func DirExists(dir string) bool {
 
 // contains checks if a string contains a substring
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || 
-		(len(s) > 0 && len(substr) > 0 && findSubstring(s, substr)))
+	return len(s) >= len(substr) && (s == substr || substr == "" ||
+		(s != "" && substr != "" && findSubstring(s, substr)))
 }
 
 func findSubstring(s, substr string) bool {
