@@ -21,7 +21,7 @@ ARM solves these problems with a modern dependency manager approach.
 
 ### Key Features of ARM
 
-- **Consistent, versioned installs** using semantic versioning (except for [git based registry](specs/git-registry.md) without semver tags, which gets a little funky)
+- **Consistent, versioned installs** using semantic versioning (except for [git based registry](docs/git-registry.md) without semver tags, which gets a little funky)
 - **Reliable, reproducible environments** through manifest and lock files (similar to npm's `package.json` and `package-lock.json`)
 - **Backwards compatibility** with existing repositories like [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules) - use them immediately without conversion
 - **Flexible formats** - authors can write cross-platform ARM resources or tool-specific files
@@ -56,7 +56,7 @@ arm version
 arm help
 ```
 
-> **Upgrading from v2?** See the [migration guide](specs/migration-v2-to-v3.md) for breaking changes and upgrade steps. TL;DR: Sorry, nuke and pave. We made some poor design choices in v1 and v2. Honestly, we've probably made them in v3 too, but hey, better is the enemy of good.
+> **Upgrading from v2?** See the [migration guide](docs/migration-v2-to-v3.md) for breaking changes and upgrade steps. TL;DR: Sorry, nuke and pave. We made some poor design choices in v1 and v2. Honestly, we've probably made them in v3 too, but hey, better is the enemy of good.
 
 ## Uninstall
 
@@ -148,14 +148,14 @@ arm install promptset --include "review/**/*.yml" --include "refactor/**/*.yml" 
 
 ## Documentation
 
-- **[Concepts](specs/concepts.md)** - Core concepts, file types, and resource definitions
-- **[Resource Schemas](specs/resource-schemas.md)** - ARM resource YAML schemas
-- **[Registries](specs/registries.md)** - Registry management and types
-- **[Sinks](specs/sinks.md)** - Sink configuration and compilation
-- **[Commands](specs/commands.md)** - Complete command reference and usage examples
+- **[Concepts](docs/concepts.md)** - Core concepts, file types, and resource definitions
+- **[Resource Schemas](docs/resource-schemas.md)** - ARM resource YAML schemas
+- **[Registries](docs/registries.md)** - Registry management and types
+- **[Sinks](docs/sinks.md)** - Sink configuration and compilation
+- **[Commands](docs/commands.md)** - Complete command reference and usage examples
 
 ### Registry Types
 
-- **[Git Registry](specs/git-registry.md)** - GitHub, GitLab, and Git remotes
-- **[GitLab Registry](specs/gitlab-registry.md)** - GitLab Package Registry
-- **[Cloudsmith Registry](specs/cloudsmith-registry.md)** - Cloudsmith package repository
+- **[Git Registry](docs/git-registry.md)** - GitHub, GitLab, and Git remotes
+- **[GitLab Registry](docs/gitlab-registry.md)** - GitLab Package Registry
+- **[Cloudsmith Registry](docs/cloudsmith-registry.md)** - Cloudsmith package repository

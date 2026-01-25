@@ -68,7 +68,8 @@ git push origin ralph-0.0.X
 - `internal/arm/sink/` - Sink management and compilation
 - `internal/arm/manifest/` - Manifest file handling
 - `internal/arm/storage/` - Package storage and caching
-- `specs/` - Specification documents
+- `docs/` - User documentation
+- `specs/` - Builder specifications (e2e testing)
 
 ## Current Status
 
