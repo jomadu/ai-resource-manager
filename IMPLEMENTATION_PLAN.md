@@ -20,10 +20,15 @@ The project now has:
 ## Next Steps
 
 The documentation restructuring is complete. Future work should focus on:
-1. Feature enhancements based on user feedback
-2. Performance optimizations
-3. Additional registry types if needed
-4. Enhanced error messages and diagnostics
+
+1. **Merge to main**: The `docs-migration` branch is ready for merge (all tests pass, documentation complete)
+2. **Feature enhancements** based on user feedback
+3. **Performance optimizations**
+4. **Additional registry types** if needed
+5. **Enhanced error messages and diagnostics**
+6. **Address skipped tests**:
+   - `TestArchiveWithIncludeExcludePatterns` - Pattern filtering with archives needs investigation
+   - Other skipped tests are reasonable (conditional or covered elsewhere)
 
 See [SPECIFICATION_PHILOSOPHY.md](./SPECIFICATION_PHILOSOPHY.md) for guidance on writing new specifications.
 
