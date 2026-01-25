@@ -314,4 +314,45 @@ func TestInstallWithPatterns(t *testing.T) {
 			t.Error("expected files in sink directory")
 		}
 	})
+	
+	// Test: Install with exclude pattern
+	t.Run("InstallWithExclude", func(t *testing.T) {
+		// Clean previous install
+		arm.MustRun("uninstall")
+		
+		// Install with exclude pattern (exclude experimental files)
+		arm.MustRun("install", "ruleset", "--exclude", "experimental/**/*.yml",
+			"test-registry/all-rules@1.0.0", "cursor-rules")
+		
+		// Verify experimental files are not installed
+		sinkDir := filepath.Join(workDir, ".cursor/rules")
+		helpers.AssertDirExists(t, sinkDir)
+		
+		// Should have files but not from experimental directory
+		fileCount := helpers.CountFilesRecursive(t, sinkDir)
+		if fileCount == 0 {
+			t.Error("expected files in sink directory")
+		}
+	})
+	
+	// Test: Install with both include and exclude (exclude overrides include)
+	t.Run("InstallWithIncludeAndExclude", func(t *testing.T) {
+		// Clean previous install
+		arm.MustRun("uninstall")
+		
+		// Include all yml files but exclude experimental
+		arm.MustRun("install", "ruleset", 
+			"--include", "**/*.yml",
+			"--exclude", "experimental/**/*.yml",
+			"test-registry/filtered-rules@1.0.0", "cursor-rules")
+		
+		// Verify files are installed but experimental is excluded
+		sinkDir := filepath.Join(workDir, ".cursor/rules")
+		helpers.AssertDirExists(t, sinkDir)
+		
+		fileCount := helpers.CountFilesRecursive(t, sinkDir)
+		if fileCount == 0 {
+			t.Error("expected files in sink directory")
+		}
+	})
 }

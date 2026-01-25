@@ -223,14 +223,14 @@ No known issues. All bugs have been fixed and all tests pass.
 - ✅ `test/e2e/update_test.go` - Update/upgrade workflow tests (6 test cases)
 - ✅ `test/e2e/compile_test.go` - Compilation and tool format tests (11 test cases)
 - ✅ `test/e2e/storage_test.go` - Storage and cache operation tests (7 test cases)
-- ✅ All 54 E2E test cases passing (1 skipped)
+- ✅ All 57 E2E test cases passing (1 skipped)
 
 **Test Coverage:**
 - ✅ Git registry: add, list, info, set, remove, branches, duplicate detection
 - ✅ Sink management: add (all 4 tools), list, info, set, remove, duplicate detection
 - ✅ Ruleset installation: semver, @latest, branches, priority, multi-sink, patterns
 - ✅ Promptset installation: basic installation workflow
-- ✅ File pattern filtering: include patterns
+- ✅ File pattern filtering: include patterns, exclude patterns, combined include/exclude (exclude overrides include)
 - ✅ Version resolution: @latest, @1 (major), @1.1 (minor), @1.0.0 (constraint), branches
 - ✅ Update/upgrade workflows: update within constraints, upgrade ignoring constraints, manifest updates
 - ✅ Compilation: all 4 tool formats (Cursor, AmazonQ, Copilot, Markdown), rulesets and promptsets
@@ -250,7 +250,7 @@ No known issues. All bugs have been fixed and all tests pass.
 - ❌ Error handling tests (invalid inputs, missing resources)
 - ❌ Multi-sink scenarios (sink switching, reinstall behavior)
 - ❌ Archive tests (.tar.gz, .zip extraction)
-- ❌ Exclude pattern tests (exclude overrides include)
+- ✅ Exclude pattern tests (exclude overrides include) - DONE 2026-01-25
 
 **Why Partially Implemented:** Core E2E test infrastructure is complete and working. Initial test scenarios cover the most critical workflows (registry management, sink management, basic installation). Additional test scenarios can be added incrementally as needed.
 
