@@ -12,6 +12,17 @@ go test ./... -v
 # Run specific package tests
 go test ./internal/arm/service
 go test ./cmd/arm
+
+# Run linting
+make lint
+```
+
+## Pre-Commit Checklist
+
+**ALWAYS run before committing:**
+```bash
+make lint    # Fix all linting errors
+go test ./...  # Ensure all tests pass
 ```
 
 ## Development
