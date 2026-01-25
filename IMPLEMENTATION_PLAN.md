@@ -179,12 +179,13 @@ Create builder-oriented specifications following Ralph methodology. See [SPEC_CO
   - **Edge cases**: Invalid patterns, path traversal attacks, nested archives, empty results
   - **Verification**: Comprehensive spec created with algorithms for normalize patterns, match patterns, extract archives, and sanitize paths. All tests pass.
 
-- [ ] Create `specs/authentication.md`
+- [x] Create `specs/authentication.md`
   - **JTBD**: Authenticate with registries requiring tokens
   - **Maps to**: internal/arm/config/manager.go, internal/arm/registry/gitlab.go, cloudsmith.go
   - **User docs**: armrc.md
   - **Coverage**: .armrc parsing (INI format), token resolution (local vs global), environment variable substitution, security (file permissions)
   - **Edge cases**: Missing .armrc, invalid format, expired tokens, permission errors
+  - **Verification**: Comprehensive spec created with algorithms for parse .armrc, hierarchical lookup, environment variable expansion, and auth key generation. All tests pass.
 
 **Verification:**
 - Each spec follows TEMPLATE.md structure
