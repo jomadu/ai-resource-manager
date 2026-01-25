@@ -4,7 +4,7 @@
 
 ARM is **fully functional and production-ready** with all core features implemented, tested, and all known bugs resolved.
 
-**Last Updated:** 2026-01-25 (Added E2E Tests: Manifest File Validation)
+**Last Updated:** 2026-01-25 (Added E2E Tests: Authentication (.armrc), Fixed Cloudsmith --url bug)
 **Analyzed By:** Kiro AI Agent
 **Analysis Method:** Systematic specification review, code inspection, test execution, and gap analysis
 
@@ -201,6 +201,23 @@ No known issues. All bugs have been fixed and all tests pass.
    - **Test Impact:** All E2E tests now pass, storage tests can find registries by URL
    - **Result:** Registry metadata properly persisted, E2E tests work correctly
 
+5. **Cloudsmith Registry URL Not Optional Bug** - RESOLVED 2026-01-25
+   - **Severity:** LOW - Was breaking specification compliance
+   - **Issue:** `arm add registry cloudsmith` required --url parameter, but specification says it should be optional with default value
+   - **Root Cause:** `handleAddCloudsmithRegistry()` in `cmd/arm/main.go` checked if url was empty and exited with error
+   - **Buggy Behavior (Fixed):**
+     - `arm add registry cloudsmith --owner myorg --repo ai-rules test-cs` failed with "--url is required" error
+     - Users had to explicitly specify --url even when using default Cloudsmith API
+   - **Correct Behavior (Now Working):**
+     - --url parameter is optional and defaults to `https://api.cloudsmith.io`
+     - `arm add registry cloudsmith --owner myorg --repo ai-rules test-cs` works without --url
+     - Users can still override with custom URL for self-hosted Cloudsmith instances
+   - **Fix Applied:** Changed validation to set default URL instead of requiring it
+   - **Files Changed:**
+     - `cmd/arm/main.go` - Changed `if url == ""` from error to default assignment
+   - **Test Impact:** All E2E tests pass, authentication tests can add Cloudsmith registries without --url
+   - **Result:** Specification compliance restored, Cloudsmith registry command works as documented
+
 ---
 
 ## 🚧 Missing Features (Per Specification)
@@ -224,7 +241,8 @@ No known issues. All bugs have been fixed and all tests pass.
 - ✅ `test/e2e/update_test.go` - Update/upgrade workflow tests (6 test cases)
 - ✅ `test/e2e/compile_test.go` - Compilation and tool format tests (11 test cases)
 - ✅ `test/e2e/storage_test.go` - Storage and cache operation tests (7 test cases)
-- ✅ All 68 E2E test cases passing (1 skipped)
+- ✅ `test/e2e/auth_test.go` - Authentication tests (.armrc file handling) (9 test cases) - ADDED 2026-01-25
+- ✅ All 77 E2E test cases passing (1 skipped)
 
 **Test Coverage:**
 - ✅ Git registry: add, list, info, set, remove, branches, duplicate detection
@@ -242,6 +260,7 @@ No known issues. All bugs have been fixed and all tests pass.
 - ✅ Cache structure: three-level metadata (registry/package/version), timestamp tracking
 - ✅ Error handling: non-existent versions, non-existent sinks, non-existent registries, duplicate detection, invalid version constraints
 - ✅ Multi-sink scenarios: cross-tool installation, sink switching, multi-sink updates
+- ✅ Authentication: .armrc file handling, local/global precedence, environment variable expansion, GitLab/Cloudsmith auth
 
 **Missing Test Scenarios (Per Specification):**
 - ❌ GitLab registry tests (authentication, project/group ID)
@@ -249,7 +268,7 @@ No known issues. All bugs have been fixed and all tests pass.
 - ❌ Compilation validation tests (invalid YAML, missing fields) - Note: ARM is lenient and doesn't fail on invalid YAML
 - ~~❌ Storage/cache tests (caching, cleanup, age-based removal)~~ ✅ DONE
 - ✅ Manifest file tests (arm.json, arm-lock.json, arm-index.json validation) - DONE 2026-01-25
-- ❌ Authentication tests (.armrc file handling)
+- ~~❌ Authentication tests (.armrc file handling)~~ ✅ DONE 2026-01-25
 - ✅ Error handling tests (invalid inputs, missing resources) - DONE 2026-01-25
 - ✅ Multi-sink scenarios (sink switching, reinstall behavior) - DONE 2026-01-25
 - ❌ Archive tests (.tar.gz, .zip extraction)
@@ -275,7 +294,7 @@ No known issues. All bugs have been fixed and all tests pass.
 3. ~~Create `test/e2e/priority_test.go` - Priority resolution tests~~ ✅ DONE (included in compile_test.go)
 4. ~~Create `test/e2e/storage_test.go` - Cache and storage tests~~ ✅ DONE
 5. ~~Create `test/e2e/manifest_test.go` - Manifest file validation tests~~ ✅ DONE 2026-01-25
-6. Create `test/e2e/auth_test.go` - Authentication tests (.armrc)
+6. ~~Create `test/e2e/auth_test.go` - Authentication tests (.armrc)~~ ✅ DONE 2026-01-25
 7. ~~Create `test/e2e/errors_test.go` - Error handling tests~~ ✅ DONE 2026-01-25
 8. ~~Create `test/e2e/multisink_test.go` - Multi-sink scenarios~~ ✅ DONE 2026-01-25
 9. ~~Create `test/e2e/update_test.go` - Update/upgrade workflow tests~~ ✅ DONE
@@ -535,10 +554,10 @@ No known issues. All bugs have been fixed and all tests pass.
 - Registries: 100% (3/3) ✅ (Git, GitLab, Cloudsmith)
 - Compilers: 100% (4/4) ✅ (Cursor, AmazonQ, Copilot, Markdown)
 - Unit Test Coverage: 100% ✅ (all tests passing)
-- E2E Tests: 40% ✅ (core infrastructure complete, 54 tests passing)
+- E2E Tests: 45% ✅ (core infrastructure complete, 77 tests passing, 1 skipped)
 
 **Quality Metrics:**
-- Total Test Files: 70+ test files (60+ unit tests, 7 E2E test files, 4 helper files)
+- Total Test Files: 70+ test files (60+ unit tests, 8 E2E test files, 4 helper files)
 - Test Coverage: Comprehensive unit tests + core E2E workflows
 - Code Organization: Clean separation of concerns (CLI → Service → Storage/Registry/Compiler)
 - Error Handling: Consistent patterns throughout
@@ -549,10 +568,10 @@ No known issues. All bugs have been fixed and all tests pass.
 
 **Non-Blocking Issues:** None ✅ 
 **Missing Features:** 
-- Additional E2E test scenarios (60% remaining, nice-to-have, 2-3 days effort)
+- Additional E2E test scenarios (55% remaining, nice-to-have, 1-2 days effort)
 
 **Recommendation:** 
-ARM is **production-ready**. All critical bugs have been fixed, all tests pass, and the application is fully compliant with specifications. The version constraint resolution bug and registry metadata bug have been resolved, ensuring proper version resolution and registry metadata persistence.
+ARM is **production-ready**. All critical bugs have been fixed, all tests pass, and the application is fully compliant with specifications. The version constraint resolution bug, registry metadata bug, and Cloudsmith URL bug have been resolved, ensuring proper version resolution, registry metadata persistence, and specification compliance.
 
 **Release Readiness Checklist:**
 - ✅ All commands implemented and tested
