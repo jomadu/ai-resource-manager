@@ -4,7 +4,7 @@
 
 ARM is **fully functional and production-ready** with all core features implemented, tested, and all known bugs resolved.
 
-**Last Updated:** 2026-01-25 (Added E2E Tests: Authentication (.armrc), Fixed Cloudsmith --url bug)
+**Last Updated:** 2026-01-25 (Cleaned up outdated recommendations - all critical bugs resolved)
 **Analyzed By:** Kiro AI Agent
 **Analysis Method:** Systematic specification review, code inspection, test execution, and gap analysis
 
@@ -433,72 +433,21 @@ No known issues. All bugs have been fixed and all tests pass.
 
 ## 🎯 Recommendations
 
-### Immediate Actions (Before v3.0 Release)
+### Short-Term Enhancements (v3.1+)
 
-1. **Fix Version Constraint Resolution Bug** - **PRIORITY: CRITICAL** (30 minutes)
-   - **Problem:** `@1.0.0` incorrectly installs highest 1.x.x instead of exactly 1.0.0
-   - **Root Cause:** `ParseConstraint()` determines constraint type based on numeric values (patch > 0) instead of input format
-   - **Solution:** Detect constraint type based on how many version components are in the input string:
-     - Input `1` → Major constraint
-     - Input `1.1` → Minor constraint  
-     - Input `1.0.0` → Exact constraint
-   - **Implementation:**
-     ```go
-     // In ParseConstraint(), after parsing matches:
-     // Determine constraint type based on input format, not values
-     inputFormat := rest // The version string without prefix
-     if matches[4] != "" { // Has patch component in input
-         return Constraint{Type: Exact, Version: &version}, nil
-     }
-     if matches[3] != "" { // Has minor component in input
-         return Constraint{Type: Minor, Version: &version}, nil
-     }
-     return Constraint{Type: Major, Version: &version}, nil
-     ```
-   - **Files to Change:**
-     - `internal/arm/core/constraint.go` lines 228-234
-     - `test/e2e/version_test.go` - Update `TestVersionResolutionExactVersion` expectations
-   - **Testing:** Run `go test ./internal/arm/core/...` and `go test ./test/e2e/...`
-   - **Risk:** Low - well-defined fix with clear test coverage
-   - **Blocks Release:** YES
-
-### Short-Term Enhancements (v3.1)
-
-2. **Consistent List Ordering** - **COMPLETED 2026-01-24**
-   - Applied alphabetical sorting to both `list registry` and `list sink` commands
-   - ✅ Consistent user experience across all list commands
-   - ✅ No risk - cosmetic improvement
-
-3. **Expand E2E Test Coverage** (2-3 days) - **PRIORITY: LOW**
-   - Core E2E infrastructure is complete and working (25 tests passing)
+1. **Expand E2E Test Coverage** (2-3 days) - **PRIORITY: LOW**
+   - Core E2E infrastructure is complete and working (77 tests passing, 1 skipped)
    - Add remaining test scenarios per `specs/e2e-testing.md`:
-     - Version resolution and constraint tests
-     - Compilation and validation tests
-     - Priority resolution tests
-     - Storage/cache tests
-     - Manifest file validation tests
-     - Authentication tests (.armrc)
-     - Error handling tests
-     - Multi-sink scenarios
-     - Update/upgrade workflow tests
-     - Archive extraction tests
-     - GitLab and Cloudsmith registry tests
+     - GitLab and Cloudsmith registry tests (authentication, API integration)
+     - Archive extraction tests (.tar.gz, .zip)
+     - Additional edge case scenarios
    - **Value:** Comprehensive coverage of all workflows
    - **Risk:** Low - tests don't affect production code
-   - **Effort:** 2-3 days for remaining scenarios
-
-4. **Add E2E Test Suite** (3-5 days) - **PRIORITY: MEDIUM**
-   - Implement comprehensive end-to-end tests per `specs/e2e-testing.md`
-   - Increases confidence in full workflows
-   - Catches integration issues early
-   - Provides regression protection
-   - **Value:** High confidence for production deployments
-   - **Risk:** Low - tests don't affect production code
-   - **Effort:** 3-5 days for comprehensive coverage
+   - **Effort:** 1-2 days for remaining scenarios
 
 ### Long-Term Improvements (v3.2+)
 
-4. **Performance Optimization** - **PRIORITY: LOW**
+2. **Performance Optimization** - **PRIORITY: LOW**
    - Profile cache operations for large registries
    - Optimize Git operations:
      - Shallow clones (--depth=1) for faster initial clones
@@ -509,7 +458,7 @@ No known issues. All bugs have been fixed and all tests pass.
    - **Effort:** 1-2 weeks for comprehensive optimization
    - **Measurement:** Benchmark before/after with large registries
 
-5. **Enhanced Error Messages** - **PRIORITY: LOW**
+3. **Enhanced Error Messages** - **PRIORITY: LOW**
    - More actionable error messages with suggestions
    - Better validation error reporting with field-level details
    - Troubleshooting hints for common issues
@@ -519,21 +468,21 @@ No known issues. All bugs have been fixed and all tests pass.
    - **Benefit:** Better user experience, reduced support burden
    - **Effort:** 1 week to audit and improve all error messages
 
-6. **Additional Registry Types** - **PRIORITY: LOW**
+4. **Additional Registry Types** - **PRIORITY: LOW**
    - S3-based registries (for private cloud storage)
    - HTTP/HTTPS file servers (for simple hosting)
    - **Benefit:** Broader ecosystem support
    - **Effort:** 1-2 weeks per registry type
    - **Consideration:** Requires new specifications first
 
-7. **Advanced Features** - **PRIORITY: LOW**
+5. **Advanced Features** - **PRIORITY: LOW**
    - Package signing and verification (GPG signatures)
    - Package publishing tools (CLI commands to publish to registries)
    - **Benefit:** Enterprise-grade features
    - **Effort:** 2-4 weeks per feature
    - **Consideration:** Requires specifications and design docs first
 
-8. **Developer Experience** - **PRIORITY: LOW**
+6. **Developer Experience** - **PRIORITY: LOW**
    - Shell completion (bash, zsh, fish)
    - Interactive mode for guided setup
    - Configuration wizard for first-time users
