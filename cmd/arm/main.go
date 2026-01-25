@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -1050,7 +1051,12 @@ func handleListRegistry() {
 		return
 	}
 
+	names := make([]string, 0, len(registries))
 	for name := range registries {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
 		fmt.Println(name)
 	}
 }
@@ -1314,7 +1320,12 @@ func handleListSink() {
 		return
 	}
 
+	names := make([]string, 0, len(sinks))
 	for name := range sinks {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
 		fmt.Println(name)
 	}
 }
