@@ -116,7 +116,7 @@ rules:
 `
 		repo.WriteFile("test-ruleset.yml", modifiedRuleset)
 		repo.Commit("Modify ruleset (simulate tampering)")
-		
+
 		// Force update the tag to point to the new commit
 		cmd := exec.Command("git", "tag", "-f", "v1.0.0")
 		cmd.Dir = repoDir
