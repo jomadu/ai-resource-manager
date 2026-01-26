@@ -679,3 +679,131 @@ func TestResolveVersion_Extreme(t *testing.T) {
 		}
 	})
 }
+
+func TestPrereleaseComparison(t *testing.T) {
+	tests := []struct {
+		name string
+		v1   string
+		v2   string
+		want int // -1 if v1 < v2, 0 if equal, 1 if v1 > v2
+	}{
+		// Basic prerelease vs release
+		{name: "prerelease < release", v1: "1.0.0-alpha", v2: "1.0.0", want: -1},
+		{name: "release > prerelease", v1: "1.0.0", v2: "1.0.0-alpha", want: 1},
+
+		// Numeric identifier comparison
+		{name: "numeric identifiers", v1: "1.0.0-1", v2: "1.0.0-2", want: -1},
+		{name: "numeric identifiers equal", v1: "1.0.0-5", v2: "1.0.0-5", want: 0},
+		{name: "numeric identifiers reverse", v1: "1.0.0-10", v2: "1.0.0-2", want: 1},
+
+		// Alphanumeric identifier comparison
+		{name: "alpha < beta", v1: "1.0.0-alpha", v2: "1.0.0-beta", want: -1},
+		{name: "beta > alpha", v1: "1.0.0-beta", v2: "1.0.0-alpha", want: 1},
+		{name: "alpha equal", v1: "1.0.0-alpha", v2: "1.0.0-alpha", want: 0},
+
+		// Numeric < alphanumeric
+		{name: "numeric < alphanumeric", v1: "1.0.0-1", v2: "1.0.0-alpha", want: -1},
+		{name: "alphanumeric > numeric", v1: "1.0.0-alpha", v2: "1.0.0-1", want: 1},
+
+		// Multi-part prerelease
+		{name: "alpha.1 < alpha.2", v1: "1.0.0-alpha.1", v2: "1.0.0-alpha.2", want: -1},
+		{name: "alpha.1 < alpha.beta", v1: "1.0.0-alpha.1", v2: "1.0.0-alpha.beta", want: -1},
+		{name: "alpha < alpha.1", v1: "1.0.0-alpha", v2: "1.0.0-alpha.1", want: -1},
+		{name: "alpha.1 > alpha", v1: "1.0.0-alpha.1", v2: "1.0.0-alpha", want: 1},
+
+		// Complex semver examples from spec
+		{name: "spec example 1", v1: "1.0.0-alpha", v2: "1.0.0-alpha.1", want: -1},
+		{name: "spec example 2", v1: "1.0.0-alpha.1", v2: "1.0.0-alpha.beta", want: -1},
+		{name: "spec example 3", v1: "1.0.0-alpha.beta", v2: "1.0.0-beta", want: -1},
+		{name: "spec example 4", v1: "1.0.0-beta", v2: "1.0.0-beta.2", want: -1},
+		{name: "spec example 5", v1: "1.0.0-beta.2", v2: "1.0.0-beta.11", want: -1},
+		{name: "spec example 6", v1: "1.0.0-beta.11", v2: "1.0.0-rc.1", want: -1},
+		{name: "spec example 7", v1: "1.0.0-rc.1", v2: "1.0.0", want: -1},
+
+		// Edge cases
+		{name: "empty prerelease equal", v1: "1.0.0", v2: "1.0.0", want: 0},
+		{name: "leading zeros not numeric", v1: "1.0.0-01", v2: "1.0.0-1", want: 1}, // "01" is alphanumeric
+		{name: "complex identifiers", v1: "1.0.0-x.7.z.92", v2: "1.0.0-x.7.z.93", want: -1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v1, err := NewVersion(tt.v1)
+			if err != nil {
+				t.Fatalf("failed to parse v1 %s: %v", tt.v1, err)
+			}
+			v2, err := NewVersion(tt.v2)
+			if err != nil {
+				t.Fatalf("failed to parse v2 %s: %v", tt.v2, err)
+			}
+
+			got := v1.Compare(&v2)
+			if got != tt.want {
+				t.Errorf("Compare(%s, %s) = %d, want %d", tt.v1, tt.v2, got, tt.want)
+			}
+
+			// Verify symmetry: if v1 < v2, then v2 > v1
+			reverse := v2.Compare(&v1)
+			if reverse != -got {
+				t.Errorf("Symmetry broken: Compare(%s, %s) = %d, but Compare(%s, %s) = %d (expected %d)",
+					tt.v1, tt.v2, got, tt.v2, tt.v1, reverse, -got)
+			}
+		})
+	}
+}
+
+func TestSplitPrerelease(t *testing.T) {
+	tests := []struct {
+		input string
+		want  []string
+	}{
+		{input: "", want: nil},
+		{input: "alpha", want: []string{"alpha"}},
+		{input: "alpha.1", want: []string{"alpha", "1"}},
+		{input: "alpha.beta.1", want: []string{"alpha", "beta", "1"}},
+		{input: "1.2.3", want: []string{"1", "2", "3"}},
+		{input: "x.7.z.92", want: []string{"x", "7", "z", "92"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got := splitPrerelease(tt.input)
+			if len(got) != len(tt.want) {
+				t.Errorf("splitPrerelease(%q) length = %d, want %d", tt.input, len(got), len(tt.want))
+				return
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("splitPrerelease(%q)[%d] = %q, want %q", tt.input, i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}
+
+func TestParseNumericIdentifier(t *testing.T) {
+	tests := []struct {
+		input     string
+		wantVal   int
+		wantIsNum bool
+	}{
+		{input: "0", wantVal: 0, wantIsNum: true},
+		{input: "1", wantVal: 1, wantIsNum: true},
+		{input: "123", wantVal: 123, wantIsNum: true},
+		{input: "01", wantVal: 0, wantIsNum: false},  // leading zero
+		{input: "001", wantVal: 0, wantIsNum: false}, // leading zeros
+		{input: "alpha", wantVal: 0, wantIsNum: false},
+		{input: "1alpha", wantVal: 0, wantIsNum: false},
+		{input: "", wantVal: 0, wantIsNum: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			gotVal, gotIsNum := parseNumericIdentifier(tt.input)
+			if gotVal != tt.wantVal || gotIsNum != tt.wantIsNum {
+				t.Errorf("parseNumericIdentifier(%q) = (%d, %v), want (%d, %v)",
+					tt.input, gotVal, gotIsNum, tt.wantVal, tt.wantIsNum)
+			}
+		})
+	}
+}
