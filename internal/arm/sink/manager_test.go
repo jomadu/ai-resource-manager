@@ -329,6 +329,16 @@ func TestUninstall(t *testing.T) {
 	}
 	_ = m.saveIndex(index)
 
+	// Verify installed before uninstall
+	metadata := core.PackageMetadata{
+		RegistryName: "test-reg",
+		Name:         "test-pkg",
+		Version:      mustVersion("1.0.0"),
+	}
+	if !m.IsInstalled(&metadata) {
+		t.Errorf("package should be installed before uninstall")
+	}
+
 	// Uninstall
 	err := m.Uninstall("test-reg", "test-pkg")
 	if err != nil {
@@ -341,14 +351,141 @@ func TestUninstall(t *testing.T) {
 	}
 
 	// Should not be installed anymore
-	metadata := core.PackageMetadata{
-		RegistryName: "test-reg",
-		Name:         "test-pkg",
-		Version:      mustVersion("1.0.0"),
-	}
 	if m.IsInstalled(&metadata) {
 		t.Errorf("package should not be installed after uninstall")
 	}
+}
+
+func TestCleanupEmptyDirectories(t *testing.T) {
+	t.Run("removes empty directories", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		m := NewManager(tmpDir, compiler.Cursor)
+
+		// Create nested empty directories
+		emptyDir1 := filepath.Join(tmpDir, "empty1")
+		emptyDir2 := filepath.Join(tmpDir, "empty2", "nested")
+		_ = os.MkdirAll(emptyDir1, 0o755)
+		_ = os.MkdirAll(emptyDir2, 0o755)
+
+		// Run cleanup
+		err := m.CleanupEmptyDirectories()
+		if err != nil {
+			t.Errorf("CleanupEmptyDirectories failed: %v", err)
+		}
+
+		// Empty directories should be removed
+		if _, err := os.Stat(emptyDir1); !os.IsNotExist(err) {
+			t.Errorf("empty directory should be removed: %s", emptyDir1)
+		}
+		if _, err := os.Stat(emptyDir2); !os.IsNotExist(err) {
+			t.Errorf("empty nested directory should be removed: %s", emptyDir2)
+		}
+		if _, err := os.Stat(filepath.Dir(emptyDir2)); !os.IsNotExist(err) {
+			t.Errorf("empty parent directory should be removed: %s", filepath.Dir(emptyDir2))
+		}
+	})
+
+	t.Run("preserves non-empty directories", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		m := NewManager(tmpDir, compiler.Cursor)
+
+		// Create directory with file
+		nonEmptyDir := filepath.Join(tmpDir, "nonempty")
+		_ = os.MkdirAll(nonEmptyDir, 0o755)
+		testFile := filepath.Join(nonEmptyDir, "file.txt")
+		_ = os.WriteFile(testFile, []byte("test"), 0o644)
+
+		// Run cleanup
+		err := m.CleanupEmptyDirectories()
+		if err != nil {
+			t.Errorf("CleanupEmptyDirectories failed: %v", err)
+		}
+
+		// Non-empty directory should be preserved
+		if _, err := os.Stat(nonEmptyDir); os.IsNotExist(err) {
+			t.Errorf("non-empty directory should be preserved: %s", nonEmptyDir)
+		}
+		if _, err := os.Stat(testFile); os.IsNotExist(err) {
+			t.Errorf("file should be preserved: %s", testFile)
+		}
+	})
+
+	t.Run("never removes sink root directory", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		m := NewManager(tmpDir, compiler.Cursor)
+
+		// Run cleanup on empty sink directory
+		err := m.CleanupEmptyDirectories()
+		if err != nil {
+			t.Errorf("CleanupEmptyDirectories failed: %v", err)
+		}
+
+		// Sink root should still exist
+		if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
+			t.Errorf("sink root directory should never be removed: %s", tmpDir)
+		}
+	})
+
+	t.Run("removes deeply nested empty directories", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		m := NewManager(tmpDir, compiler.Cursor)
+
+		// Create deeply nested empty directories
+		deepDir := filepath.Join(tmpDir, "a", "b", "c", "d", "e")
+		_ = os.MkdirAll(deepDir, 0o755)
+
+		// Run cleanup
+		err := m.CleanupEmptyDirectories()
+		if err != nil {
+			t.Errorf("CleanupEmptyDirectories failed: %v", err)
+		}
+
+		// All nested directories should be removed
+		if _, err := os.Stat(deepDir); !os.IsNotExist(err) {
+			t.Errorf("deeply nested directory should be removed: %s", deepDir)
+		}
+		if _, err := os.Stat(filepath.Join(tmpDir, "a")); !os.IsNotExist(err) {
+			t.Errorf("parent directory should be removed: %s", filepath.Join(tmpDir, "a"))
+		}
+	})
+
+	t.Run("handles mixed empty and non-empty directories", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		m := NewManager(tmpDir, compiler.Cursor)
+
+		// Create mixed structure
+		emptyDir := filepath.Join(tmpDir, "empty")
+		nonEmptyDir := filepath.Join(tmpDir, "nonempty")
+		nestedEmpty := filepath.Join(nonEmptyDir, "nested", "empty")
+		_ = os.MkdirAll(emptyDir, 0o755)
+		_ = os.MkdirAll(nonEmptyDir, 0o755)
+		_ = os.MkdirAll(nestedEmpty, 0o755)
+		testFile := filepath.Join(nonEmptyDir, "file.txt")
+		_ = os.WriteFile(testFile, []byte("test"), 0o644)
+
+		// Run cleanup
+		err := m.CleanupEmptyDirectories()
+		if err != nil {
+			t.Errorf("CleanupEmptyDirectories failed: %v", err)
+		}
+
+		// Empty directory should be removed
+		if _, err := os.Stat(emptyDir); !os.IsNotExist(err) {
+			t.Errorf("empty directory should be removed: %s", emptyDir)
+		}
+		// Non-empty directory should be preserved
+		if _, err := os.Stat(nonEmptyDir); os.IsNotExist(err) {
+			t.Errorf("non-empty directory should be preserved: %s", nonEmptyDir)
+		}
+		// Nested empty should be removed
+		if _, err := os.Stat(nestedEmpty); !os.IsNotExist(err) {
+			t.Errorf("nested empty directory should be removed: %s", nestedEmpty)
+		}
+		// But parent of nested empty should be removed too since it becomes empty
+		if _, err := os.Stat(filepath.Dir(nestedEmpty)); !os.IsNotExist(err) {
+			t.Errorf("parent of nested empty should be removed: %s", filepath.Dir(nestedEmpty))
+		}
+	})
 }
 
 func TestClean(t *testing.T) {

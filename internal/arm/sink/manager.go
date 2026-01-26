@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -292,7 +293,82 @@ func (m *Manager) Uninstall(registryName, packageName string) error {
 		}
 	}
 
-	return m.saveIndex(index)
+	// Clean up index files if all packages uninstalled
+	if len(index.Rulesets) == 0 && len(index.Promptsets) == 0 {
+		_ = os.Remove(m.indexPath) // Ignore error if file doesn't exist
+		// Also remove priority index file
+		if _, err := os.Stat(m.rulesetIndexRulePath); err == nil {
+			_ = os.Remove(m.rulesetIndexRulePath)
+		}
+	} else {
+		// Save updated index
+		if err := m.saveIndex(index); err != nil {
+			return err
+		}
+		// Regenerate priority index (removes file if no rulesets)
+		if err := m.generateRulesetIndexRuleFile(); err != nil {
+			return err
+		}
+	}
+
+	// Clean up empty directories (after removing index files)
+	if err := m.CleanupEmptyDirectories(); err != nil {
+		return fmt.Errorf("failed to cleanup empty directories: %w", err)
+	}
+
+	return nil
+}
+
+// CleanupEmptyDirectories removes empty directories recursively from the sink directory
+func (m *Manager) CleanupEmptyDirectories() error {
+	// Keep removing empty directories until no more can be removed
+	for {
+		removed := false
+
+		// Walk directory tree and collect all directories
+		var dirs []string
+		err := filepath.WalkDir(m.directory, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() && path != m.directory {
+				dirs = append(dirs, path)
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		// Sort directories by depth (deepest first) for bottom-up removal
+		for i := 0; i < len(dirs); i++ {
+			for j := i + 1; j < len(dirs); j++ {
+				if strings.Count(dirs[j], string(filepath.Separator)) > strings.Count(dirs[i], string(filepath.Separator)) {
+					dirs[i], dirs[j] = dirs[j], dirs[i]
+				}
+			}
+		}
+
+		// Remove empty directories
+		for _, dir := range dirs {
+			entries, err := os.ReadDir(dir)
+			if err != nil {
+				continue // Skip if can't read
+			}
+			if len(entries) == 0 {
+				if err := os.Remove(dir); err == nil {
+					removed = true
+				}
+			}
+		}
+
+		// If no directories were removed, we're done
+		if !removed {
+			break
+		}
+	}
+
+	return nil
 }
 
 // IsInstalled checks if a package is installed
