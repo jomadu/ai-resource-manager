@@ -164,34 +164,41 @@ lockfileMgr := packagelockfile.NewFileManagerWithPath(lockPath)
 
 **New Environment Variables:**
 
-**ARM_CONFIG_PATH** - Override .armrc location
+**ARM_CONFIG_PATH** - Override .armrc location (bypasses hierarchy)
 ```bash
 ARM_CONFIG_PATH=/tmp/test/.armrc
 # Only reads /tmp/test/.armrc (no hierarchical lookup)
+# Bypasses both ./.armrc and ~/.armrc
 ```
 
-**ARM_HOME** - Override home directory for all ARM user files
+**ARM_HOME** - Override home directory for .arm/ directory only
 ```bash
 ARM_HOME=/tmp/test
 # Results in:
 # - /tmp/test/.arm/storage/registries/... (package cache)
-# - /tmp/test/.armrc (if ARM_CONFIG_PATH not set)
+# Does NOT affect .armrc location
 # Future: /tmp/test/.arm/logs/, /tmp/test/.arm/cache/, etc.
 ```
 
 **Priority Order:**
-1. ARM_CONFIG_PATH (if set, use this exact file)
-2. ARM_HOME (if set, use $ARM_HOME/.armrc and $ARM_HOME/.arm/storage/)
-3. os.UserHomeDir() (default fallback)
+
+For .armrc lookup:
+1. ARM_CONFIG_PATH (if set, use this exact file - bypasses hierarchy)
+2. ./.armrc (project config - highest priority in hierarchy)
+3. ~/.armrc (user config - fallback in hierarchy)
+
+For .arm/storage/ lookup:
+1. ARM_HOME/.arm/storage/ (if ARM_HOME is set)
+2. ~/.arm/storage/ (default)
 
 **Files to Update:**
 - `internal/arm/storage/registry.go` - Check ARM_HOME in NewRegistry()
 - `internal/arm/service/service.go` - Check ARM_HOME in cache methods
-- `internal/arm/config/manager.go` - Check ARM_HOME in NewFileManager(), handle ARM_CONFIG_PATH
+- Registry creation code - Handle ARM_CONFIG_PATH to bypass hierarchical .armrc lookup
 
 **Acceptance Criteria:**
-- [ ] ARM_CONFIG_PATH overrides .armrc location (single file, no hierarchy)
-- [ ] ARM_HOME overrides home directory for .arm/ and .armrc
+- [ ] ARM_CONFIG_PATH overrides .armrc location (single file, bypasses hierarchy)
+- [ ] ARM_HOME overrides home directory for .arm/ directory only (not .armrc)
 - [ ] Environment variables checked before os.UserHomeDir()
 - [ ] Default behavior unchanged when env vars not set
 - [ ] Tests can use env vars for isolation
