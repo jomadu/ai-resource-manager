@@ -17,7 +17,9 @@ Cache downloaded packages locally to avoid redundant network requests, enabling 
 - [ ] Package versions stored in `~/.arm/storage/registries/{registry-key}/packages/{package-key}/{version}/files/`
 - [ ] Metadata stored at three levels: registry, package, version
 - [ ] Version metadata includes createdAt, updatedAt, accessedAt timestamps
+- [ ] Version metadata optionally includes integrity hash for verification
 - [ ] Access time updated on every GetPackageVersion call
+- [ ] Integrity verification (optional) detects corrupted cached packages
 - [ ] Clean by age removes versions where updatedAt < cutoff
 - [ ] Clean by last access removes versions where accessedAt < cutoff
 - [ ] Empty package directories removed after version cleanup
@@ -91,6 +93,7 @@ Cache downloaded packages locally to avoid redundant network requests, enabling 
     "minor": 0,
     "patch": 0
   },
+  "integrity": "sha256-abc123def456...",
   "createdAt": "2025-01-08T23:10:43.984784Z",
   "updatedAt": "2025-01-08T23:10:43.984784Z",
   "accessedAt": "2025-01-08T23:10:43.984784Z"
@@ -99,6 +102,7 @@ Cache downloaded packages locally to avoid redundant network requests, enabling 
 
 **Fields:**
 - `version` - Semantic version (major, minor, patch)
+- `integrity` - SHA256 hash of package contents for verification (optional, recommended)
 - `createdAt` - When version was first cached
 - `updatedAt` - When version was last updated (currently same as createdAt)
 - `accessedAt` - When version was last accessed (updated on every read)
@@ -199,6 +203,7 @@ function SetPackageVersion(packageKey, version, files):
     
     versionMetadata = {
         version: version,
+        integrity: integrity,  // Optional: SHA256 hash for verification
         createdAt: now,
         updatedAt: now,
         accessedAt: now
@@ -213,12 +218,13 @@ function SetPackageVersion(packageKey, version, files):
 3. **Check if version directory exists** (return error if not)
 4. **Update accessedAt timestamp** in version metadata
 5. **Read all files** from files/ directory
-6. **Release lock**
-7. **Return files**
+6. **(Optional) Verify integrity** if stored in metadata
+7. **Release lock**
+8. **Return files**
 
 **Pseudocode:**
 ```
-function GetPackageVersion(packageKey, version):
+function GetPackageVersion(packageKey, version, expectedIntegrity):
     lock = GetPackageLock(packageKey)
     lock.Acquire()
     defer lock.Release()
@@ -243,6 +249,13 @@ function GetPackageVersion(packageKey, version):
             content = ReadFile(path)
             files.append({path: relPath, content: content})
     )
+    
+    // Optional: Verify cached integrity against expected
+    if expectedIntegrity and metadata.integrity:
+        if metadata.integrity != expectedIntegrity:
+            // Cache corrupted - delete and return error to trigger re-fetch
+            DeleteDirectory(versionDir)
+            return error("cached package integrity mismatch")
     
     return files
 ```
@@ -349,6 +362,8 @@ function NukeCache():
 |-----------|-------------------|
 | Corrupted metadata.json | Treat as missing. Skip or delete directory. |
 | Missing version metadata | Skip version during cleanup. Don't delete. |
+| Cached package integrity mismatch | Delete corrupted cache. Re-fetch from registry. |
+| Missing integrity field in cache metadata | Skip integrity verification (backwards compatibility). |
 | Disk full during write | Return error. Partial writes may leave corrupted cache. |
 | Concurrent access (same process) | File lock prevents corruption. Second caller waits. |
 | Concurrent access (different processes) | File lock prevents corruption. Second process waits. |
@@ -369,6 +384,7 @@ function NukeCache():
 - **SHA256 Hashing** - Key generation
 - **File Locking** - Cross-process concurrency control
 - **Time** - Timestamp tracking and comparison
+- **SHA256 Hashing** - Integrity calculation (optional, for verification)
 
 ## Implementation Mapping
 
@@ -379,9 +395,10 @@ function NukeCache():
 - `internal/arm/storage/repo.go` - Git repository management
 - `internal/arm/storage/lock.go` - FileLock implementation
 - `internal/arm/service/service.go` - CleanCacheByAge, CleanCacheByTimeSinceLastAccess, NukeCache
+- `internal/arm/registry/integrity.go` - Integrity calculation (used by cache for verification)
 
 **Related specs:**
-- `package-installation.md` - Uses cache to store/retrieve packages
+- `package-installation.md` - Uses cache to store/retrieve packages, defines integrity verification requirements
 - `registry-management.md` - Registry configuration used for key generation
 - `pattern-filtering.md` - Include/exclude patterns used in package keys
 
@@ -443,13 +460,52 @@ metadata.json (version):
 - Metadata files created
 - Timestamps set to current time
 
-### Example 2: Update Access Time
+### Example 2: Integrity Verification (Optional)
 
 **Input:**
 ```go
-cache.GetPackageVersion(ctx, packageKey, &version)
+// Store package with integrity
+packageKey := map[string]interface{}{
+    "name": "clean-code-ruleset",
+}
+version := core.Version{Major: 1, Minor: 0, Patch: 0}
+files := []*core.File{
+    {Path: "rule1.yml", Content: []byte("content1")},
+}
+integrity := "sha256-abc123..."
+
+cache.SetPackageVersion(ctx, packageKey, &version, files, integrity)
+
+// Later: Retrieve and verify
+expectedIntegrity := "sha256-abc123..."
+files, err := cache.GetPackageVersion(ctx, packageKey, &version, expectedIntegrity)
+```
+
+**Expected Output:**
+
+metadata.json (version):
+```json
+{
+  "version": {"major": 1, "minor": 0, "patch": 0},
+  "integrity": "sha256-abc123...",
+  "createdAt": "2025-01-25T14:00:00Z",
+  "updatedAt": "2025-01-25T14:00:00Z",
+  "accessedAt": "2025-01-25T14:00:00Z"
+}
+```
+
+**Verification:**
+- Integrity stored in version metadata
+- Retrieval succeeds when integrity matches
+- Retrieval fails and deletes cache if integrity mismatches
+
+### Example 3: Update Access Time
+
+**Input:**
+```go
+cache.GetPackageVersion(ctx, packageKey, &version, "")
 // Wait 1 hour
-cache.GetPackageVersion(ctx, packageKey, &version)
+cache.GetPackageVersion(ctx, packageKey, &version, "")
 ```
 
 **Expected Output:**
@@ -472,7 +528,7 @@ metadata.json (version) after second access:
 - accessedAt updated on each GetPackageVersion call
 - createdAt and updatedAt unchanged
 
-### Example 3: Clean by Age
+### Example 4: Clean by Age
 
 **Input:**
 ```bash
@@ -495,7 +551,7 @@ arm clean cache --max-age 7d
 - Empty package directories removed
 - Package A directory kept (has v1.1.0)
 
-### Example 4: Clean by Last Access
+### Example 5: Clean by Last Access
 
 **Input:**
 ```bash
@@ -518,7 +574,7 @@ arm clean cache --max-age 7d
 - Empty package directories removed
 - Package A directory kept (has v1.1.0)
 
-### Example 5: Nuke Cache
+### Example 6: Nuke Cache
 
 **Input:**
 ```bash
@@ -534,15 +590,15 @@ arm clean cache --nuke
 - Storage directory does not exist
 - Next install recreates directory structure
 
-### Example 6: Concurrent Access
+### Example 7: Concurrent Access
 
 **Input:**
 ```go
 // Process 1
-go cache.SetPackageVersion(ctx, packageKey, &version1, files1)
+go cache.SetPackageVersion(ctx, packageKey, &version1, files1, integrity1)
 
 // Process 2 (simultaneously)
-go cache.SetPackageVersion(ctx, packageKey, &version2, files2)
+go cache.SetPackageVersion(ctx, packageKey, &version2, files2, integrity2)
 ```
 
 **Expected Output:**
@@ -557,6 +613,18 @@ go cache.SetPackageVersion(ctx, packageKey, &version2, files2)
 - No race conditions or data corruption
 
 ## Notes
+
+### Why Store Integrity in Cache?
+
+**Benefits:**
+- Detect cache corruption without re-fetching from registry
+- Enable offline integrity verification
+- Faster verification (no need to recalculate from files)
+
+**Trade-offs:**
+- Optional feature (not required for basic caching)
+- Adds small overhead to metadata storage
+- Requires integrity calculation before caching
 
 ### Why Three-Level Metadata?
 
