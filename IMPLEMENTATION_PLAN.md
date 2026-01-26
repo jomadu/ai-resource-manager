@@ -110,7 +110,7 @@ ARM (AI Resource Manager) is **FEATURE COMPLETE** and **PRODUCTION READY**. All 
 
 ### What Needs to Be Done
 
-Two related issues must be fixed to enable proper test isolation:
+Three related issues must be fixed to enable proper test isolation:
 
 #### 1. Lock File Colocation Bug (CRITICAL)
 
@@ -158,37 +158,72 @@ lockfileMgr := packagelockfile.NewFileManagerWithPath(lockPath)
 - [ ] Default behavior unchanged (`arm.json` → `arm-lock.json` in working dir)
 - [ ] All tests pass with custom manifest paths
 
-#### 2. Constructor Injection for Storage Paths
+#### 2. Environment Variables for Path Control (HIGH PRIORITY)
 
-**Issue:** Storage components call `os.UserHomeDir()` directly, preventing test isolation.
+**Issue:** No way to override storage and config paths via environment variables.
+
+**New Environment Variables:**
+
+**ARM_CONFIG_PATH** - Override .armrc location
+```bash
+ARM_CONFIG_PATH=/tmp/test/.armrc
+# Only reads /tmp/test/.armrc (no hierarchical lookup)
+```
+
+**ARM_HOME** - Override home directory for all ARM user files
+```bash
+ARM_HOME=/tmp/test
+# Results in:
+# - /tmp/test/.arm/storage/registries/... (package cache)
+# - /tmp/test/.armrc (if ARM_CONFIG_PATH not set)
+# Future: /tmp/test/.arm/logs/, /tmp/test/.arm/cache/, etc.
+```
+
+**Priority Order:**
+1. ARM_CONFIG_PATH (if set, use this exact file)
+2. ARM_HOME (if set, use $ARM_HOME/.armrc and $ARM_HOME/.arm/storage/)
+3. os.UserHomeDir() (default fallback)
+
+**Files to Update:**
+- `internal/arm/storage/registry.go` - Check ARM_HOME in NewRegistry()
+- `internal/arm/service/service.go` - Check ARM_HOME in cache methods
+- `internal/arm/config/manager.go` - Check ARM_HOME in NewFileManager(), handle ARM_CONFIG_PATH
+
+**Acceptance Criteria:**
+- [ ] ARM_CONFIG_PATH overrides .armrc location (single file, no hierarchy)
+- [ ] ARM_HOME overrides home directory for .arm/ and .armrc
+- [ ] Environment variables checked before os.UserHomeDir()
+- [ ] Default behavior unchanged when env vars not set
+- [ ] Tests can use env vars for isolation
+
+#### 3. Constructor Injection for Storage Paths (MEDIUM PRIORITY)
+
+**Issue:** Storage components call `os.UserHomeDir()` directly, preventing programmatic test isolation.
 
 **Components Requiring Updates:**
 
 1. **`internal/arm/storage/registry.go`** - Add `NewRegistryWithHomeDir()`
    - Current: `NewRegistry()` calls `os.UserHomeDir()` directly
    - Required: Add test constructor that accepts homeDir as string parameter
-   - Pattern: See specs/constructor-injection.md lines 73-90
+   - Pattern: See specs/constructor-injection.md
 
 2. **`internal/arm/service/service.go`** - Add `*WithHomeDir()` variants for cache methods
    - `CleanCacheByAgeWithHomeDir(ctx, maxAge, homeDir)`
    - `CleanCacheByTimeSinceLastAccessWithHomeDir(ctx, maxAge, homeDir)`
    - `NukeCacheWithHomeDir(ctx, homeDir)`
-   - Pattern: See specs/constructor-injection.md lines 117-133
+   - Pattern: See specs/constructor-injection.md
 
-3. **Update all tests** - Pass `t.TempDir()` to test constructors
-   - Replace direct `NewRegistry()` calls with `NewRegistryWithHomeDir(registryKey, t.TempDir())`
-   - Replace cache method calls with `*WithHomeDir()` variants
+3. **Update all tests** - Use env vars or direct path injection
+   - Option 1: `t.Setenv("ARM_HOME", t.TempDir())`
+   - Option 2: `NewRegistryWithHomeDir(registryKey, t.TempDir())`
    - Ensures tests use isolated temporary directories
-
-**Already Correct:**
-- ✅ `internal/arm/config/manager.go` - Already has `NewFileManagerWithPaths()`
 
 **Acceptance Criteria:**
 - [ ] Components accept home directory path as constructor parameter
-- [ ] Default constructors call `os.UserHomeDir()` internally for production use
+- [ ] Default constructors check ARM_HOME before calling os.UserHomeDir()
 - [ ] Test constructors accept directory paths directly (no OS calls)
-- [ ] No direct `os.UserHomeDir()` calls in component methods
-- [ ] Tests pass `t.TempDir()` to test constructors
+- [ ] No direct os.UserHomeDir() calls in component methods
+- [ ] Tests can use env vars or direct path injection
 - [ ] Tests don't pollute user's actual home directory
 - [ ] All tests pass with parallel execution enabled
 
@@ -198,10 +233,12 @@ lockfileMgr := packagelockfile.NewFileManagerWithPath(lockPath)
 - **Developer experience** - Tests don't pollute developer's actual ARM directories
 - **CI/CD safety** - Tests won't interfere with each other in CI environments
 - **Lock file correctness** - Ensures manifest and lock file stay together
+- **Production flexibility** - Users can customize ARM file locations via env vars
 
 ### Implementation Reference
 - Lock file colocation: This document (above)
-- Constructor injection: `specs/constructor-injection.md`
+- Environment variables: `specs/constructor-injection.md` (Environment Variables section)
+- Constructor injection: `specs/constructor-injection.md` (Constructor Injection Pattern section)
 - Test isolation: `specs/e2e-testing.md`
 
 ---
