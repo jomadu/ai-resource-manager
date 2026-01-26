@@ -16,15 +16,20 @@ Install, update, upgrade, and uninstall packages from registries to sinks, maint
 ## Acceptance Criteria
 - [ ] Install resolves version constraint and fetches package from registry
 - [ ] Install validates all specified sinks exist before proceeding
+- [ ] Install calculates integrity hash (SHA256) of fetched package files
+- [ ] Install verifies integrity hash matches locked hash (if package previously installed)
+- [ ] Install fails if integrity verification fails with clear error message
 - [ ] Install updates manifest with package configuration (version, sinks, patterns, priority)
 - [ ] Install updates lock file with resolved version and integrity hash
 - [ ] Install compiles and writes files to all specified sinks
 - [ ] Reinstall to different sinks removes package from old sinks (within same sink, old versions are replaced)
 - [ ] Update resolves new version within existing constraint
 - [ ] Update only proceeds if newer version available
-- [ ] Update updates lock file with new resolved version
+- [ ] Update calculates and verifies integrity hash of new version
+- [ ] Update updates lock file with new resolved version and integrity hash
 - [ ] Update recompiles to all configured sinks
 - [ ] Upgrade changes constraint to "latest" and resolves highest version
+- [ ] Upgrade calculates and verifies integrity hash of new version
 - [ ] Upgrade updates both manifest and lock file
 - [ ] Uninstall removes files from all configured sinks
 - [ ] Uninstall removes entries from manifest and lock file
@@ -91,14 +96,18 @@ Install, update, upgrade, and uninstall packages from registries to sinks, maint
 4. List available versions from registry
 5. Resolve version using constraint (see version-resolution.md)
 6. Fetch package from registry with include/exclude patterns
-7. Get old sinks from manifest (if package already installed)
-8. Remove package from all old sinks
-9. Update manifest with dependency config (version, sinks, patterns, priority)
-10. Update lock file with resolved version and integrity
-11. For each new sink:
+7. Calculate integrity hash (SHA256) of fetched files
+8. Check if package already installed (exists in lock file)
+9. If already installed, verify integrity hash matches locked hash
+10. If integrity mismatch, return error "integrity verification failed"
+11. Get old sinks from manifest (if package already installed)
+12. Remove package from all old sinks
+13. Update manifest with dependency config (version, sinks, patterns, priority)
+14. Update lock file with resolved version and integrity hash
+15. For each new sink:
    - Create sink manager
    - Compile and install package to sink
-12. Return success
+16. Return success
 
 **Pseudocode:**
 ```
@@ -119,6 +128,15 @@ function InstallRuleset(registryName, packageName, version, priority, include, e
     resolvedVersion = ResolveVersion(version, availableVersions)
     package = registry.GetPackage(packageName, resolvedVersion, include, exclude)
     
+    // Calculate and verify integrity
+    calculatedIntegrity = CalculateIntegrity(package.files)
+    
+    // Check if already installed and verify integrity
+    lockInfo = lockfile.GetDependencyLock(registryName, packageName)
+    if lockInfo exists:
+        if lockInfo.integrity != calculatedIntegrity:
+            return error "integrity verification failed: expected " + lockInfo.integrity + ", got " + calculatedIntegrity
+    
     // Remove from old sinks (if package already installed)
     oldDepConfig = manifest.GetRulesetDependency(registryName, packageName)
     if oldDepConfig exists:
@@ -138,9 +156,9 @@ function InstallRuleset(registryName, packageName, version, priority, include, e
     }
     manifest.UpsertRulesetDependency(registryName, packageName, depConfig)
     
-    // Update lock file
+    // Update lock file with verified integrity
     lockConfig = {
-        integrity: package.Integrity
+        integrity: calculatedIntegrity
     }
     lockfile.UpsertDependencyLock(registryName, packageName, resolvedVersion, lockConfig)
     
@@ -161,11 +179,12 @@ function InstallRuleset(registryName, packageName, version, priority, include, e
 5. Resolve version using existing constraint
 6. If resolved version == current version, skip (already up to date)
 7. Fetch package from registry
-8. Update lock file with new resolved version and integrity
-9. For each configured sink:
+8. Calculate integrity hash (SHA256) of fetched files
+9. Update lock file with new resolved version and integrity hash
+10. For each configured sink:
    - Uninstall old version
    - Install new version
-10. Return success
+11. Return success
 
 **Pseudocode:**
 ```
@@ -183,9 +202,12 @@ function UpdatePackage(registryName, packageName):
     if newVersion == currentVersion:
         return "already up to date"
     
-    // Fetch and update
+    // Fetch and calculate integrity
     package = registry.GetPackage(packageName, newVersion, depConfig.include, depConfig.exclude)
-    lockfile.UpsertDependencyLock(registryName, packageName, newVersion, {integrity: package.Integrity})
+    calculatedIntegrity = CalculateIntegrity(package.files)
+    
+    // Update lock file with new integrity
+    lockfile.UpsertDependencyLock(registryName, packageName, newVersion, {integrity: calculatedIntegrity})
     
     // Reinstall to all sinks
     for sinkName in depConfig.sinks:
@@ -204,12 +226,13 @@ function UpdatePackage(registryName, packageName):
 4. List available versions from registry
 5. Resolve version using "latest" constraint (highest semver)
 6. Fetch package from registry
-7. Update manifest with new constraint
-8. Update lock file with new resolved version and integrity
-9. For each configured sink:
+7. Calculate integrity hash (SHA256) of fetched files
+8. Update manifest with new constraint
+9. Update lock file with new resolved version and integrity hash
+10. For each configured sink:
    - Uninstall old version
    - Install new version
-10. Return success
+11. Return success
 
 **Pseudocode:**
 ```
@@ -222,15 +245,16 @@ function UpgradePackage(registryName, packageName):
     availableVersions = registry.ListPackageVersions(packageName)
     latestVersion = ResolveVersion("latest", availableVersions)
     
-    // Fetch and update
+    // Fetch and calculate integrity
     package = registry.GetPackage(packageName, latestVersion, depConfig.include, depConfig.exclude)
+    calculatedIntegrity = CalculateIntegrity(package.files)
     
     // Update manifest constraint to latest
     depConfig.version = "latest"
     manifest.UpsertDependency(registryName, packageName, depConfig)
     
-    // Update lock file
-    lockfile.UpsertDependencyLock(registryName, packageName, latestVersion, {integrity: package.Integrity})
+    // Update lock file with new integrity
+    lockfile.UpsertDependencyLock(registryName, packageName, latestVersion, {integrity: calculatedIntegrity})
     
     // Reinstall to all sinks
     for sinkName in depConfig.sinks:
@@ -278,6 +302,9 @@ function UninstallPackage(registryName, packageName):
    - Get locked version from lock file
    - If no lock, resolve version from constraint
    - Fetch package from registry
+   - Calculate integrity hash (SHA256) of fetched files
+   - If lock exists, verify integrity hash matches locked hash
+   - If integrity mismatch, return error "integrity verification failed"
    - Install to all configured sinks
 3. Return success
 
@@ -297,8 +324,14 @@ function InstallAll():
             availableVersions = registry.ListPackageVersions(packageName)
             version = ResolveVersion(depConfig.version, availableVersions)
         
-        // Fetch and install
+        // Fetch and calculate integrity
         package = registry.GetPackage(packageName, version, depConfig.include, depConfig.exclude)
+        calculatedIntegrity = CalculateIntegrity(package.files)
+        
+        // Verify integrity if locked
+        if lockInfo:
+            if lockInfo.integrity != calculatedIntegrity:
+                return error "integrity verification failed for " + registryName + "/" + packageName + ": expected " + lockInfo.integrity + ", got " + calculatedIntegrity
         
         for sinkName in depConfig.sinks:
             sinkConfig = allSinks[sinkName]
@@ -309,6 +342,44 @@ function InstallAll():
     return success
 ```
 
+### Calculate Integrity Hash
+
+1. **Create SHA256 hasher**
+2. **Extract file paths** from package files
+3. **Sort paths alphabetically** for deterministic ordering
+4. **For each sorted path:**
+   - Hash the file path
+   - Hash the file content
+5. **Return** "sha256-" + hex-encoded hash
+
+**Pseudocode:**
+```
+function CalculateIntegrity(files):
+    hasher = SHA256.New()
+    
+    // Extract and sort paths
+    paths = []
+    fileMap = {}
+    for file in files:
+        paths.append(file.path)
+        fileMap[file.path] = file.content
+    
+    sort(paths)  // Alphabetical sort for deterministic ordering
+    
+    // Hash paths and contents in sorted order
+    for path in paths:
+        hasher.Write(path)
+        hasher.Write(fileMap[path])
+    
+    return "sha256-" + HexEncode(hasher.Sum())
+```
+
+**Properties:**
+- **Deterministic**: Same files always produce same hash (due to sorting)
+- **Content-sensitive**: Any change to file content changes hash
+- **Path-sensitive**: Renaming files changes hash
+- **Collision-resistant**: SHA256 provides strong cryptographic guarantees
+
 ## Edge Cases
 
 | Condition | Expected Behavior |
@@ -316,20 +387,22 @@ function InstallAll():
 | Registry doesn't exist | Error: "registry not found" |
 | Sink doesn't exist | Error: "sink not found: {name}" |
 | No versions satisfy constraint | Error: "no version satisfies constraint" |
-| Package already installed (same version, same sinks) | Reinstall (idempotent) |
-| Package already installed (same version, different sinks) | Remove from old sinks, install to new sinks |
-| Package already installed (different version) | Remove from old sinks, install new version to new sinks |
-| Reinstall to same sink | Old version removed, new version installed |
+| Integrity verification fails | Error: "integrity verification failed: expected {expected}, got {actual}" |
+| Package already installed (same version, same sinks) | Reinstall (idempotent), verify integrity |
+| Package already installed (same version, different sinks) | Remove from old sinks, install to new sinks, verify integrity |
+| Package already installed (different version) | Remove from old sinks, install new version to new sinks, calculate new integrity |
+| Reinstall to same sink | Old version removed, new version installed, verify integrity |
 | Update with no newer version | Skip, report "already up to date" |
-| Upgrade to same version | Idempotent, updates manifest constraint to "latest" |
+| Upgrade to same version | Idempotent, updates manifest constraint to "latest", verify integrity |
 | Uninstall non-existent package | Error: "dependency not found" |
 | Uninstall with missing sink | Skip missing sink, continue with others |
 | Network failure during fetch | Error propagated to user |
-| Corrupted package (integrity mismatch) | Error: "integrity check failed" |
+| Corrupted package (integrity mismatch) | Error: "integrity verification failed: expected {expected}, got {actual}" |
 | Concurrent installs to same sink | Last write wins (no locking currently) |
 | Install with empty sinks array | Error: "at least one sink required" |
 | Manifest file missing | Create new manifest |
-| Lock file missing | Resolve versions from constraints |
+| Lock file missing | Resolve versions from constraints, no integrity verification |
+| Lock file exists but no integrity field | Skip integrity verification (backwards compatibility) |
 
 ## Dependencies
 
@@ -546,7 +619,12 @@ arm install
 
 **Lock File Format**: The lock file uses a composite key format `registry/package@version` to support multiple versions of the same package (though currently only one version per package is supported).
 
-**Integrity Checking**: The integrity hash is stored in the lock file but integrity verification during install is not yet implemented. This is a future enhancement.
+**Integrity Verification**: The integrity hash (SHA256) is calculated from sorted file paths and contents, stored in the lock file, and verified during install operations. This ensures packages haven't been corrupted or tampered with. Verification is skipped if the lock file doesn't contain an integrity field (backwards compatibility).
+
+**Integrity Calculation**: The integrity hash is calculated by:
+1. Sorting all file paths alphabetically
+2. For each file in sorted order: hash(path + content)
+3. Return "sha256-" + hex-encoded hash
 
 **Concurrent Safety**: Currently, ARM does not implement file locking for concurrent operations. Concurrent installs to the same sink may result in race conditions. This is a known limitation.
 
