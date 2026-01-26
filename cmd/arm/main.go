@@ -276,6 +276,15 @@ func printCommandHelp(command string) {
 	}
 }
 
+// deriveLockPath derives the lock file path from the manifest path.
+// Examples:
+//   - arm.json → arm-lock.json
+//   - /tmp/test/arm.json → /tmp/test/arm-lock.json
+//   - /custom/path/manifest.json → /custom/path/manifest-lock.json
+func deriveLockPath(manifestPath string) string {
+	return strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
+}
+
 func handleAdd() {
 	if len(os.Args) < 3 {
 		fmt.Fprintf(os.Stderr, "Usage: arm add <registry|sink> ...\n")
@@ -365,7 +374,7 @@ func handleAddGitRegistry() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -447,7 +456,7 @@ func handleAddGitLabRegistry() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -529,7 +538,7 @@ func handleAddCloudsmithRegistry() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -616,7 +625,7 @@ func handleAddSink() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -661,7 +670,7 @@ func handleRemoveRegistry() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -688,7 +697,7 @@ func handleRemoveSink() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -739,7 +748,7 @@ func handleSetRegistry() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -780,7 +789,7 @@ func handleSetSink() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -843,7 +852,7 @@ func handleSetRuleset() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -907,7 +916,7 @@ func handleSetPromptset() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -963,7 +972,7 @@ func handleListAll() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -1035,7 +1044,7 @@ func handleListRegistry() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -1087,7 +1096,7 @@ func handleInfoAll() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -1212,7 +1221,7 @@ func handleInfoRegistry() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -1304,7 +1313,7 @@ func handleListSink() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
@@ -1337,7 +1346,7 @@ func handleInfoSink() {
 	}
 
 	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-	lockfileMgr := packagelockfile.NewFileManager()
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
 	registryFactory := &registry.DefaultFactory{}
 	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
 
