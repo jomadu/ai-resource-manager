@@ -337,17 +337,11 @@ func TestIndexFileCreation(t *testing.T) {
 		// Uninstall
 		arm.MustRun("uninstall")
 
-		// Verify index file updated
+		// Verify index file is removed when all packages uninstalled
 		indexFile := filepath.Join(workDir, ".cursor", "rules", "arm", "arm-index.json")
-		index := helpers.ReadJSON(t, indexFile)
-
-		// After uninstall, rulesets should be empty or omitted
-		if rulesets, ok := index["rulesets"].(map[string]interface{}); ok {
-			if len(rulesets) > 0 {
-				t.Error("expected no rulesets in index after uninstall")
-			}
+		if _, err := os.Stat(indexFile); !os.IsNotExist(err) {
+			t.Error("expected index file to be removed after uninstalling all packages")
 		}
-		// If rulesets field is omitted entirely, that's also valid
 	})
 }
 
