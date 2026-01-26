@@ -12,12 +12,12 @@ Enable test isolation through environment variables and constructor injection, p
 
 ## Acceptance Criteria
 - [ ] ARM_MANIFEST_PATH controls manifest and lock file location (already exists)
-- [ ] ARM_CONFIG_PATH overrides .armrc location (single file, no hierarchy)
-- [ ] ARM_HOME overrides home directory for .arm/ and .armrc
+- [ ] ARM_CONFIG_PATH overrides .armrc location (single file, bypasses hierarchy)
+- [ ] ARM_HOME overrides home directory for .arm/ directory only (not .armrc)
 - [ ] Lock file always colocated with manifest file (same directory)
 - [ ] Lock path derived from manifest path (arm.json → arm-lock.json)
 - [ ] Components accept home directory path as constructor parameter
-- [ ] Default constructors check env vars before calling os.UserHomeDir()
+- [ ] Default constructors check ARM_HOME before calling os.UserHomeDir()
 - [ ] Test constructors accept directory paths directly (no OS calls)
 - [ ] No direct os.UserHomeDir() calls in component methods
 - [ ] Tests can use env vars or direct path injection
@@ -54,13 +54,13 @@ ARM_CONFIG_PATH=/tmp/test/.armrc
 **Default:** Hierarchical lookup (`./.armrc` overrides `~/.armrc`)
 
 ### ARM_HOME (New)
-Overrides the home directory for all ARM user files. This is the parent directory for `.arm/` subdirectories and `.armrc`.
+Overrides the home directory for the `.arm/` directory (storage, cache, etc.). Does NOT affect `.armrc` location.
 
 ```bash
 ARM_HOME=/tmp/test
 # Results in:
 # - /tmp/test/.arm/storage/registries/... (package cache)
-# - /tmp/test/.armrc (if ARM_CONFIG_PATH not set)
+# Does NOT affect .armrc location
 # Future: /tmp/test/.arm/logs/, /tmp/test/.arm/cache/, etc.
 ```
 
@@ -68,30 +68,32 @@ ARM_HOME=/tmp/test
 
 ### Priority Order
 
-1. **ARM_CONFIG_PATH** - If set, use this exact file (highest priority)
-2. **ARM_HOME** - If set, use `$ARM_HOME/.armrc` and `$ARM_HOME/.arm/storage/`
-3. **os.UserHomeDir()** - Default fallback
+**For .armrc lookup:**
+1. **ARM_CONFIG_PATH** - If set, use this exact file (bypasses hierarchy)
+2. **workingDir/.armrc** - Project config (highest priority in hierarchy)
+3. **userHomeDir/.armrc** - User config (fallback in hierarchy)
+
+**For .arm/storage/ lookup:**
+1. **ARM_HOME/.arm/storage/** - If ARM_HOME is set
+2. **~/.arm/storage/** - Default
 
 ### Implementation Pattern
 
 ```go
-// Get config path
+// Get config path - ARM_CONFIG_PATH bypasses hierarchy
 func getConfigPath() string {
-    // Explicit override
+    // Explicit override - bypasses hierarchical lookup
     if path := os.Getenv("ARM_CONFIG_PATH"); path != "" {
         return path
     }
     
-    // ARM_HOME override
-    armHome := os.Getenv("ARM_HOME")
-    if armHome == "" {
-        armHome, _ = os.UserHomeDir()
-    }
-    
-    return filepath.Join(armHome, ".armrc")
+    // Normal hierarchical lookup (handled by FileManager)
+    // - workingDir/.armrc (project)
+    // - userHomeDir/.armrc (user)
+    return "" // FileManager handles hierarchy
 }
 
-// Get storage path
+// Get storage path - ARM_HOME only affects .arm/ directory
 func getStoragePath() string {
     armHome := os.Getenv("ARM_HOME")
     if armHome == "" {
@@ -109,6 +111,7 @@ func getStoragePath() string {
 func TestWithEnvVars(t *testing.T) {
     testDir := t.TempDir()
     t.Setenv("ARM_MANIFEST_PATH", filepath.Join(testDir, "arm.json"))
+    t.Setenv("ARM_CONFIG_PATH", filepath.Join(testDir, ".armrc"))
     t.Setenv("ARM_HOME", testDir)
     
     // All ARM operations now isolated to testDir
@@ -217,25 +220,9 @@ func NewFileManager() *FileManager {
 }
 ```
 
-**Updated:**
-```go
-func NewFileManager() *FileManager {
-    workingDir, _ := os.Getwd()
-    
-    // Check ARM_HOME environment variable
-    userHomeDir := os.Getenv("ARM_HOME")
-    if userHomeDir == "" {
-        userHomeDir, _ = os.UserHomeDir()
-    }
-    
-    return &FileManager{
-        workingDir:  workingDir,
-        userHomeDir: userHomeDir,
-    }
-}
-```
+**No changes needed** - ARM_HOME does not affect .armrc location
 
-**Note:** ARM_CONFIG_PATH is handled at a higher level (in config file reading logic)
+**Note:** ARM_CONFIG_PATH should be handled at a higher level to bypass the hierarchical lookup entirely
 
 ### 3. service.ArmService (Cache Methods)
 **Current:**
@@ -330,8 +317,9 @@ func TestRegistry(t *testing.T) {
 ### Production Use Cases
 - **CI/CD:** Set ARM_HOME to build-specific cache directory
 - **Docker:** Mount volumes and point ARM_HOME to mounted path
-- **Multi-user systems:** Separate ARM directories per user/project
-- **Network storage:** Point ARM_HOME to shared network drive
+- **Multi-user systems:** Separate ARM cache directories per user/project
+- **Network storage:** Point ARM_HOME to shared network drive for team caches
+- **Custom config:** Use ARM_CONFIG_PATH for non-standard .armrc locations
 
 ### Backward Compatibility
 - Existing production code unchanged (uses default constructors)
@@ -343,8 +331,8 @@ func TestRegistry(t *testing.T) {
 
 **Environment variables:**
 - `ARM_MANIFEST_PATH` - Already exists, controls arm.json location
-- `ARM_CONFIG_PATH` - New, overrides .armrc location (single file)
-- `ARM_HOME` - New, overrides home directory for .arm/ and .armrc
+- `ARM_CONFIG_PATH` - New, overrides .armrc location (bypasses hierarchy)
+- `ARM_HOME` - New, overrides home directory for .arm/ directory only
 
 **Lock file colocation:**
 - `cmd/arm/main.go` - All command handlers (24 locations) must derive lock path from manifest path
@@ -352,9 +340,10 @@ func TestRegistry(t *testing.T) {
 **Components to update:**
 - `internal/arm/storage/registry.go` - Add NewRegistryWithHomeDir(), check ARM_HOME in NewRegistry()
 - `internal/arm/service/service.go` - Add *WithHomeDir() variants for cache methods, check ARM_HOME
-- `internal/arm/config/manager.go` - Check ARM_HOME in NewFileManager(), handle ARM_CONFIG_PATH in file reading
+- Registry creation code - Handle ARM_CONFIG_PATH to bypass hierarchical .armrc lookup
 
-**Already correct:**
+**No changes needed:**
+- `internal/arm/config/manager.go` - ARM_HOME does not affect .armrc location
 - `internal/arm/manifest/manager.go` - Uses relative paths (no home dir needed)
 - `internal/arm/packagelockfile/manager.go` - Uses relative paths (no home dir needed)
 
