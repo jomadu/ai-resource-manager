@@ -22,6 +22,9 @@ Compile ARM resources to tool-specific formats and write them to configured outp
 - [ ] Metadata embedded in compiled rules for traceability
 - [ ] Empty rulesets remove priority index file
 - [ ] Orphaned files cleaned up when packages uninstalled
+- [ ] Empty directories removed when last package uninstalled from sink
+- [ ] arm-index.json removed when all packages uninstalled
+- [ ] arm_index.* files removed when all rulesets/promptsets uninstalled
 
 ## Data Structures
 
@@ -339,6 +342,68 @@ function GenerateRulesetIndexRuleFile():
     WriteFile(rulesetIndexRulePath, content)
 ```
 
+### 7. Uninstall Package
+
+**Input:** Registry name, package name
+**Output:** Files removed, index updated, empty directories cleaned
+
+```
+function Uninstall(registryName, packageName):
+    index = LoadIndex()
+    
+    // Find package key in index
+    packageKey = FindPackageKey(index, registryName, packageName)
+    if packageKey == "":
+        return  // Package not installed, nothing to do
+    
+    // Determine resource type and get files
+    files = []
+    if packageKey in index.rulesets:
+        files = index.rulesets[packageKey].files
+        delete index.rulesets[packageKey]
+    else if packageKey in index.promptsets:
+        files = index.promptsets[packageKey].files
+        delete index.promptsets[packageKey]
+    
+    // Delete all files
+    for filePath in files:
+        fullPath = sinkDir + "/" + filePath
+        DeleteFile(fullPath)
+    
+    // Clean up empty directories
+    CleanupEmptyDirectories(sinkDir)
+    
+    // Clean up index files if all packages uninstalled
+    if len(index.rulesets) == 0 and len(index.promptsets) == 0:
+        DeleteFile(sinkDir + "/arm-index.json")
+    else:
+        SaveIndex(index)
+    
+    // Regenerate priority index (removes if no rulesets)
+    GenerateRulesetIndexRuleFile()
+```
+
+### 8. Cleanup Empty Directories
+
+**Input:** Sink directory
+**Output:** Empty directories removed
+
+```
+function CleanupEmptyDirectories(sinkDir):
+    // Walk directory tree bottom-up
+    dirs = WalkDirectoriesBottomUp(sinkDir)
+    
+    for dir in dirs:
+        // Skip sink root directory
+        if dir == sinkDir:
+            continue
+        
+        // Check if directory is empty
+        entries = ListDirectory(dir)
+        if len(entries) == 0:
+            RemoveDirectory(dir)
+```
+
 ## Edge Cases
 
 | Condition | Expected Behavior |
@@ -356,6 +421,8 @@ function GenerateRulesetIndexRuleFile():
 | No rulesets installed | Remove priority index file to avoid clutter |
 | Reinstall same package | Uninstall old version first, then install new version |
 | Orphaned files after uninstall | Cleaned up by Clean() operation |
+| Last package uninstalled | Remove arm-index.json and all arm_index.* files |
+| Empty directories after uninstall | Recursively remove empty directories bottom-up |
 
 ## Dependencies
 

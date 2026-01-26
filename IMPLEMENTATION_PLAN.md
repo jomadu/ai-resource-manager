@@ -2,10 +2,42 @@
 
 # ARM Implementation Plan
 
-## Status: ✅ ALL TESTS PASSING - 100% PASS RATE
+## Status: ⚠️ HIGH PRIORITY CLEANUP ISSUE IDENTIFIED
 
-**Latest Update:** 2026-01-26 06:52 PST  
-**Status:** All features complete ✅ | All tests passing ✅ | 100% pass rate ✅  
+**Latest Update:** 2026-01-26 12:32 PST  
+**Status:** Critical cleanup bug identified ⚠️ | All tests passing ✅ | 100% pass rate ✅  
+**Issue:** Empty directories and index files remain after uninstalling all packages from sinks  
+**Priority:** HIGH - User-facing issue affecting clean uninstall experience  
+**Action Required:** Implement cleanup logic in sink manager uninstall operation
+
+### Critical Issue Details
+
+**Problem:** When packages are uninstalled (especially the last package), the following are NOT cleaned up:
+1. Empty directories in sink (e.g., `.cursor/rules/arm/registry/package/version/`)
+2. `arm-index.json` file when all packages removed
+3. `arm_index.*` files when all rulesets/promptsets removed
+
+**Impact:** 
+- Cluttered sink directories with empty folders
+- Orphaned index files with no packages
+- Poor user experience on clean uninstall
+
+**Required Changes:**
+1. Add `CleanupEmptyDirectories()` function to sink manager
+2. Call cleanup after file deletion in `Uninstall()`
+3. Remove `arm-index.json` when both rulesets and promptsets are empty
+4. Ensure `GenerateRulesetIndexRuleFile()` removes file when no rulesets
+5. Add e2e test for complete cleanup verification
+
+**Specification Updated:** ✅ `specs/sink-compilation.md` updated with:
+- New acceptance criteria for cleanup behavior
+- Algorithm for `Uninstall()` with cleanup
+- Algorithm for `CleanupEmptyDirectories()`
+- Edge cases for empty directory and index file removal
+
+---
+
+**Previous Status:** 2026-01-26 06:52 PST  
 **Completed:** 
 - Lock file colocation with manifest file ✅
 - ARM_HOME environment variable for .arm/ directory ✅
@@ -13,8 +45,6 @@
 - NewRegistryWithHomeDir() constructor for test isolation ✅
 - *WithHomeDir() variants for all cache methods ✅
 - Compile test isolation fixed ✅
-**Priority:** READY FOR RELEASE - All issues resolved  
-**Action Required:** None - ready for v3.0.0 release
 
 ---
 
@@ -116,6 +146,128 @@ ARM (AI Resource Manager) is **FEATURE COMPLETE** and **PRODUCTION READY**. All 
 **Resolution:** Implemented ARM_HOME environment variable for test isolation  
 **Impact:** Test now passes reliably with isolated temporary directories  
 **Commit:** Part of constructor injection implementation
+
+---
+
+## 🔴 HIGH PRIORITY: Sink Cleanup on Uninstall
+
+**Status:** ⚠️ NOT IMPLEMENTED  
+**Specification:** specs/sink-compilation.md (updated 2026-01-26)  
+**Priority:** HIGH - User-facing issue affecting clean uninstall experience  
+**Estimated Effort:** 2-3 hours  
+
+### Problem Statement
+
+When packages are uninstalled (especially the last package), the following are NOT cleaned up:
+1. Empty directories in sink (e.g., `.cursor/rules/arm/registry/package/version/`)
+2. `arm-index.json` file when all packages removed
+3. `arm_index.*` files when all rulesets/promptsets removed
+
+**User Impact:**
+- Cluttered sink directories with empty folders after uninstall
+- Orphaned index files with no packages
+- Poor user experience - users expect clean uninstall
+
+### Required Implementation
+
+#### 1. Add CleanupEmptyDirectories Function
+
+**Location:** `internal/arm/sink/manager.go`
+
+```go
+// CleanupEmptyDirectories removes empty directories recursively from sink
+func (m *Manager) CleanupEmptyDirectories() error {
+    return filepath.WalkDir(m.directory, func(path string, d fs.DirEntry, err error) error {
+        if err != nil {
+            return err
+        }
+        
+        // Skip files and root directory
+        if !d.IsDir() || path == m.directory {
+            return nil
+        }
+        
+        // Check if directory is empty
+        entries, err := os.ReadDir(path)
+        if err != nil {
+            return err
+        }
+        
+        if len(entries) == 0 {
+            os.Remove(path)
+        }
+        
+        return nil
+    })
+}
+```
+
+#### 2. Update Uninstall Function
+
+**Location:** `internal/arm/sink/manager.go`
+
+Add cleanup logic after file deletion:
+
+```go
+func (m *Manager) Uninstall(registryName, packageName string) error {
+    // ... existing file deletion logic ...
+    
+    // Clean up empty directories
+    if err := m.CleanupEmptyDirectories(); err != nil {
+        return fmt.Errorf("failed to cleanup empty directories: %w", err)
+    }
+    
+    // Clean up index files if all packages uninstalled
+    if len(index.Rulesets) == 0 && len(index.Promptsets) == 0 {
+        indexPath := filepath.Join(m.directory, "arm-index.json")
+        os.Remove(indexPath) // Ignore error if file doesn't exist
+    } else {
+        // Save updated index
+        if err := m.saveIndex(index); err != nil {
+            return err
+        }
+    }
+    
+    // Regenerate priority index (removes file if no rulesets)
+    if err := m.generateRulesetIndexRuleFile(index); err != nil {
+        return err
+    }
+    
+    return nil
+}
+```
+
+#### 3. Add E2E Test
+
+**Location:** `test/e2e/uninstall_test.go`
+
+```go
+func TestUninstallCleanup(t *testing.T) {
+    // Setup: Install package
+    // Verify: Files and directories created
+    // Action: Uninstall package
+    // Verify: 
+    //   - All files removed
+    //   - Empty directories removed
+    //   - arm-index.json removed
+    //   - arm_index.* files removed
+}
+```
+
+### Acceptance Criteria
+
+- [ ] Empty directories removed after uninstall (bottom-up traversal)
+- [ ] `arm-index.json` removed when all packages uninstalled
+- [ ] `arm_index.*` files removed when all rulesets/promptsets uninstalled
+- [ ] E2E test verifies complete cleanup
+- [ ] No errors when directories already removed
+- [ ] Sink root directory never removed
+
+### Files to Modify
+
+1. `internal/arm/sink/manager.go` - Add CleanupEmptyDirectories(), update Uninstall()
+2. `test/e2e/uninstall_test.go` - Add TestUninstallCleanup
+3. `specs/sink-compilation.md` - ✅ Already updated with algorithms and acceptance criteria
 
 ---
 
