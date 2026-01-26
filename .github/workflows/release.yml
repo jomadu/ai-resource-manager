@@ -84,7 +84,7 @@ jobs:
         if [ "$GOOS" = "windows" ]; then
           EXT=".exe"
         fi
-        go build -ldflags="-s -w -X github.com/jomadu/ai-resource-manager/internal/arm/core.buildVersion=${VERSION} -X github.com/jomadu/ai-resource-manager/internal/arm/core.buildCommit=$(git rev-parse --short HEAD) -X github.com/jomadu/ai-resource-manager/internal/arm/core.buildTimestamp=$(date -u '+%Y-%m-%d_%H:%M:%S')" -o arm-${{ matrix.goos }}-${{ matrix.goarch }}$EXT ./cmd/arm
+        go build -ldflags="-s -w -X github.com/jomadu/ai-resource-manager/internal/arm/core.VersionString=${VERSION} -X github.com/jomadu/ai-resource-manager/internal/arm/core.Commit=$(git rev-parse --short HEAD) -X github.com/jomadu/ai-resource-manager/internal/arm/core.BuildTime=$(date -u '+%Y-%m-%d_%H:%M:%S')" -o arm-${{ matrix.goos }}-${{ matrix.goarch }}$EXT ./cmd/arm
 
     - name: Create package
       run: |
