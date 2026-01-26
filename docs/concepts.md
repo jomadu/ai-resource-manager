@@ -15,6 +15,8 @@
 - **Rulesets** - Collections of AI rules with priority-based conflict resolution
 - **Promptsets** - Collections of AI prompts for reusable templates
 
+**Important:** Packages are independent units. They do not have dependencies on each other. When we refer to "dependencies" in ARM, we mean packages installed in your project (similar to npm's package.json), not dependencies between packages.
+
 **Sinks** are output destinations where ARM compiles and places files. Each sink specifies a target directory and compilation format for a specific AI tool (Cursor, Amazon Q, GitHub Copilot).
 
 ## File Patterns

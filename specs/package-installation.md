@@ -3,6 +3,8 @@
 ## Job to be Done
 Install, update, upgrade, and uninstall packages from registries to sinks, maintaining manifest and lock files for reproducible builds.
 
+**Note:** Packages are independent units with no inter-package dependencies. The term "dependencies" in this spec refers to packages installed in a project (similar to npm's package.json), not dependencies between packages.
+
 ## Activities
 1. Install packages (rulesets/promptsets) from registries to sinks
 2. Update packages to newer versions within constraint
