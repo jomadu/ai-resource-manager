@@ -34,6 +34,8 @@ git tag v1.0.0
 - **Direct path injection** - Tests pass t.TempDir() to component constructors to avoid polluting user's ~/.arm/ and ~/.armrc
 - Components accept directory paths as constructor parameters
 - No direct os.UserHomeDir() calls in testable components
+- **Lock file colocation** - Lock file always in same directory as manifest file
+- Lock path derived from manifest path (arm.json → arm-lock.json)
 
 ### CI Compatibility
 

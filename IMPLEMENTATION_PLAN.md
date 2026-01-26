@@ -101,18 +101,68 @@ ARM (AI Resource Manager) is **FEATURE COMPLETE** and **PRODUCTION READY**. All 
 
 ---
 
-## 🚨 PRIORITY: Constructor Injection Implementation Required
+## 🚨 PRIORITY: Test Isolation Implementation Required
 
 **Status:** ⚠️ INCOMPLETE - MUST BE COMPLETED BEFORE PRODUCTION RELEASE  
-**Specification:** specs/constructor-injection.md  
+**Specifications:** specs/constructor-injection.md, specs/e2e-testing.md  
 **Priority:** HIGH - Blocks test reliability and parallel execution  
 **Impact:** Tests currently pollute user's actual ~/.arm/ and ~/.armrc directories
 
 ### What Needs to Be Done
 
-The constructor injection pattern must be implemented to enable test isolation. This prevents tests from writing to the user's actual home directory.
+Two related issues must be fixed to enable proper test isolation:
 
-### Components Requiring Updates
+#### 1. Lock File Colocation Bug (CRITICAL)
+
+**Issue:** When `ARM_MANIFEST_PATH` is set, the lock file is NOT colocated with the manifest file.
+
+**Current Behavior:**
+```bash
+ARM_MANIFEST_PATH=/tmp/test/arm.json
+# Results in:
+# - /tmp/test/arm.json (manifest) ✅
+# - ./arm-lock.json (lock) ❌ NOT colocated!
+```
+
+**Root Cause:** `cmd/arm/main.go` creates lockfile manager with hardcoded `"arm-lock.json"`:
+```go
+manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+if manifestPath == "" {
+    manifestPath = "arm.json"
+}
+manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+lockfileMgr := packagelockfile.NewFileManager()  // ❌ Always uses "./arm-lock.json"
+```
+
+**Solution:** Derive lock path from manifest path:
+```go
+manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+if manifestPath == "" {
+    manifestPath = "arm.json"
+}
+
+// Derive lock path from manifest path
+lockPath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
+// /tmp/test/arm.json → /tmp/test/arm-lock.json
+
+manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+lockfileMgr := packagelockfile.NewFileManagerWithPath(lockPath)
+```
+
+**Files to Update:**
+- `cmd/arm/main.go` - All command handlers that create lockfileMgr (24 locations)
+
+**Acceptance Criteria:**
+- [ ] Lock file always in same directory as manifest file
+- [ ] `ARM_MANIFEST_PATH=/tmp/test/arm.json` creates `/tmp/test/arm-lock.json`
+- [ ] Default behavior unchanged (`arm.json` → `arm-lock.json` in working dir)
+- [ ] All tests pass with custom manifest paths
+
+#### 2. Constructor Injection for Storage Paths
+
+**Issue:** Storage components call `os.UserHomeDir()` directly, preventing test isolation.
+
+**Components Requiring Updates:**
 
 1. **`internal/arm/storage/registry.go`** - Add `NewRegistryWithHomeDir()`
    - Current: `NewRegistry()` calls `os.UserHomeDir()` directly
@@ -130,10 +180,10 @@ The constructor injection pattern must be implemented to enable test isolation. 
    - Replace cache method calls with `*WithHomeDir()` variants
    - Ensures tests use isolated temporary directories
 
-### Already Correct
+**Already Correct:**
 - ✅ `internal/arm/config/manager.go` - Already has `NewFileManagerWithPaths()`
 
-### Acceptance Criteria
+**Acceptance Criteria:**
 - [ ] Components accept home directory path as constructor parameter
 - [ ] Default constructors call `os.UserHomeDir()` internally for production use
 - [ ] Test constructors accept directory paths directly (no OS calls)
@@ -147,11 +197,12 @@ The constructor injection pattern must be implemented to enable test isolation. 
 - **Parallel execution** - Enables safe concurrent test runs
 - **Developer experience** - Tests don't pollute developer's actual ARM directories
 - **CI/CD safety** - Tests won't interfere with each other in CI environments
+- **Lock file correctness** - Ensures manifest and lock file stay together
 
 ### Implementation Reference
-See full specification: `specs/constructor-injection.md`  
-Pattern examples: Lines 40-62 (before/after comparison)  
-Component details: Lines 66-133
+- Lock file colocation: This document (above)
+- Constructor injection: `specs/constructor-injection.md`
+- Test isolation: `specs/e2e-testing.md`
 
 ---
 
