@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -15,6 +16,33 @@ func TestCompile(t *testing.T) {
 	cmd := exec.Command("go", "build", "-o", binaryPath, ".")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build binary: %v\n%s", err, output)
+	}
+
+	// Create test working directory with sample input files
+	workDir := t.TempDir()
+	
+	// Create sample ARM resource files for testing
+	sampleRuleset := `apiVersion: v1
+kind: Ruleset
+metadata:
+  id: test-ruleset
+  name: Test Ruleset
+spec:
+  rules:
+    testRule:
+      name: Test Rule
+      body: |
+        This is a test rule
+`
+	
+	if err := os.WriteFile(filepath.Join(workDir, "input.yml"), []byte(sampleRuleset), 0644); err != nil {
+		t.Fatalf("Failed to create input.yml: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workDir, "input1.yml"), []byte(sampleRuleset), 0644); err != nil {
+		t.Fatalf("Failed to create input1.yml: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(workDir, "input2.yml"), []byte(sampleRuleset), 0644); err != nil {
+		t.Fatalf("Failed to create input2.yml: %v", err)
 	}
 
 	tests := []struct {
@@ -42,7 +70,7 @@ func TestCompile(t *testing.T) {
 		},
 		{
 			name:    "with output path",
-			args:    []string{"compile", "input.yml", "output"},
+			args:    []string{"compile", "--tool", "cursor", "input.yml", "output"},
 			wantErr: false,
 		},
 		{
@@ -52,47 +80,47 @@ func TestCompile(t *testing.T) {
 		},
 		{
 			name:    "with namespace flag",
-			args:    []string{"compile", "--namespace", "test", "input.yml", "output"},
+			args:    []string{"compile", "--tool", "cursor", "--namespace", "test", "input.yml", "output"},
 			wantErr: false,
 		},
 		{
 			name:    "with force flag",
-			args:    []string{"compile", "--force", "input.yml", "output"},
+			args:    []string{"compile", "--tool", "cursor", "--force", "input.yml", "output"},
 			wantErr: false,
 		},
 		{
 			name:    "with recursive flag",
-			args:    []string{"compile", "--recursive", "input.yml", "output"},
+			args:    []string{"compile", "--tool", "cursor", "--recursive", "input.yml", "output"},
 			wantErr: false,
 		},
 		{
 			name:    "with include flag",
-			args:    []string{"compile", "--include", "*.yml", "input.yml", "output"},
+			args:    []string{"compile", "--tool", "cursor", "--include", "*.yml", "input.yml", "output"},
 			wantErr: false,
 		},
 		{
 			name:    "with exclude flag",
-			args:    []string{"compile", "--exclude", "test*", "input.yml", "output"},
+			args:    []string{"compile", "--tool", "cursor", "--exclude", "test*", "input.yml", "output"},
 			wantErr: false,
 		},
 		{
 			name:    "with fail-fast flag",
-			args:    []string{"compile", "--fail-fast", "input.yml", "output"},
+			args:    []string{"compile", "--tool", "cursor", "--fail-fast", "input.yml", "output"},
 			wantErr: false,
 		},
 		{
 			name:    "multiple input paths",
-			args:    []string{"compile", "input1.yml", "input2.yml", "output"},
+			args:    []string{"compile", "--tool", "cursor", "input1.yml", "input2.yml", "output"},
 			wantErr: false,
 		},
 		{
 			name:    "multiple include patterns",
-			args:    []string{"compile", "--include", "*.yml", "--include", "*.yaml", "input.yml", "output"},
+			args:    []string{"compile", "--tool", "cursor", "--include", "*.yml", "--include", "*.yaml", "input.yml", "output"},
 			wantErr: false,
 		},
 		{
 			name:    "multiple exclude patterns",
-			args:    []string{"compile", "--exclude", "test*", "--exclude", "tmp*", "input.yml", "output"},
+			args:    []string{"compile", "--tool", "cursor", "--exclude", "test*", "--exclude", "tmp*", "input.yml", "output"},
 			wantErr: false,
 		},
 		{
@@ -135,6 +163,7 @@ func TestCompile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := exec.Command(binaryPath, tt.args...)
+			cmd.Dir = workDir // Set working directory to where test files are
 			output, err := cmd.CombinedOutput()
 
 			if tt.wantErr {

@@ -25,10 +25,19 @@ type Registry struct {
 
 // NewRegistry creates registry directory and metadata.json
 func NewRegistry(registryKey interface{}) (*Registry, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
+	armHome := os.Getenv("ARM_HOME")
+	if armHome == "" {
+		var err error
+		armHome, err = os.UserHomeDir()
+		if err != nil {
+			return nil, err
+		}
 	}
+	return NewRegistryWithHomeDir(registryKey, armHome)
+}
+
+// NewRegistryWithHomeDir creates registry directory and metadata.json with custom home directory
+func NewRegistryWithHomeDir(registryKey interface{}, homeDir string) (*Registry, error) {
 	baseDir := filepath.Join(homeDir, ".arm")
 	return NewRegistryWithPath(baseDir, registryKey)
 }
