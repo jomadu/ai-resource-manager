@@ -2,38 +2,58 @@
 
 # ARM Implementation Plan
 
-## Status: ⚠️ HIGH PRIORITY CLEANUP ISSUE IDENTIFIED
+## Status: ✅ ALL FEATURES COMPLETE
 
-**Latest Update:** 2026-01-26 12:32 PST  
-**Status:** Critical cleanup bug identified ⚠️ | All tests passing ✅ | 100% pass rate ✅  
-**Issue:** Empty directories and index files remain after uninstalling all packages from sinks  
+**Latest Update:** 2026-01-26 13:00 PST  
+**Status:** All features implemented ✅ | All tests passing ✅ | 100% pass rate ✅  
+**Recent Completion:** Sink cleanup on uninstall ✅  
+
+---
+
+## ✅ COMPLETED: Sink Cleanup on Uninstall (2026-01-26 13:00 PST)
+
+**Status:** ✅ COMPLETE  
 **Priority:** HIGH - User-facing issue affecting clean uninstall experience  
-**Action Required:** Implement cleanup logic in sink manager uninstall operation
 
-### Critical Issue Details
+### What Was Implemented
 
-**Problem:** When packages are uninstalled (especially the last package), the following are NOT cleaned up:
-1. Empty directories in sink (e.g., `.cursor/rules/arm/registry/package/version/`)
-2. `arm-index.json` file when all packages removed
-3. `arm_index.*` files when all rulesets/promptsets removed
+1. **CleanupEmptyDirectories() function** - Added to `internal/arm/sink/manager.go`
+   - Removes empty directories recursively using multiple passes
+   - Bottom-up traversal (deepest directories first)
+   - Continues until no more directories can be removed
+   - Never removes sink root directory
 
-**Impact:** 
-- Cluttered sink directories with empty folders
-- Orphaned index files with no packages
-- Poor user experience on clean uninstall
+2. **Updated Uninstall() method** - Modified in `internal/arm/sink/manager.go`
+   - Removes `arm-index.json` when all packages uninstalled
+   - Removes `arm_index.*` priority index files when all rulesets uninstalled
+   - Calls CleanupEmptyDirectories() AFTER removing index files (critical ordering)
+   - Ensures complete cleanup of empty directory structures
 
-**Required Changes:**
-1. Add `CleanupEmptyDirectories()` function to sink manager
-2. Call cleanup after file deletion in `Uninstall()`
-3. Remove `arm-index.json` when both rulesets and promptsets are empty
-4. Ensure `GenerateRulesetIndexRuleFile()` removes file when no rulesets
-5. Add e2e test for complete cleanup verification
+3. **Comprehensive unit tests** - Added to `internal/arm/sink/manager_test.go`
+   - TestCleanupEmptyDirectories with 5 subtests
+   - Tests empty directory removal, non-empty preservation, root protection
+   - Tests deeply nested directories and mixed scenarios
 
-**Specification Updated:** ✅ `specs/sink-compilation.md` updated with:
-- New acceptance criteria for cleanup behavior
-- Algorithm for `Uninstall()` with cleanup
-- Algorithm for `CleanupEmptyDirectories()`
-- Edge cases for empty directory and index file removal
+4. **Comprehensive e2e tests** - Added `test/e2e/cleanup_test.go`
+   - TestUninstallCleanup with 4 subtests
+   - Tests empty directory cleanup, index file removal, priority index removal
+   - Tests multiple packages in same sink
+
+5. **Updated existing test** - Modified `test/e2e/manifest_test.go`
+   - Updated TestIndexFileCreation/UpdatedOnUninstall
+   - Now expects index file removal (correct behavior)
+
+### Test Results
+- All unit tests pass ✅
+- All e2e tests pass ✅
+- 100% pass rate maintained ✅
+- No regressions introduced ✅
+
+### Files Modified
+- `internal/arm/sink/manager.go` - Added CleanupEmptyDirectories(), updated Uninstall()
+- `internal/arm/sink/manager_test.go` - Added comprehensive unit tests
+- `test/e2e/cleanup_test.go` - Added comprehensive e2e tests (NEW FILE)
+- `test/e2e/manifest_test.go` - Updated existing test expectations
 
 ---
 
@@ -51,11 +71,11 @@
 **Audit Date:** 2026-01-26 06:52 PST (Post-Fix Verification)  
 **Auditor:** Kiro CLI Agent (systematic code analysis)  
 **Audit Scope:** Complete codebase analysis including all specifications, source code, and tests  
-**Test Status:** 74 test files (13 e2e, 61 unit), 100% pass rate  
+**Test Status:** 75 test files (14 e2e, 61 unit), 100% pass rate  
 **Code Quality:** Clean codebase, zero critical TODOs, zero security vulnerabilities  
 **Specifications:** 10/10 fully implemented with all acceptance criteria met  
 **Verification Method:** Direct code inspection, symbol search, grep analysis, test execution  
-**Total Go Files:** 119 (41 production, 74 test, 4 helpers)  
+**Total Go Files:** 120 (41 production, 75 test, 4 helpers)  
 **Audit Result:** ✅ ALL FEATURES CONFIRMED IMPLEMENTED, ALL TESTS PASSING
 
 ---
@@ -66,6 +86,7 @@ ARM (AI Resource Manager) is **FEATURE COMPLETE** and **PRODUCTION READY**. All 
 
 ### Key Findings
 - ✅ **All 10 specifications fully implemented** with acceptance criteria met
+- ✅ **Sink cleanup on uninstall implemented** (2026-01-26) - Complete cleanup of empty directories and index files
 - ✅ **Integrity verification implemented** (service.go:359-366) - verifies package integrity during install
 - ✅ **Prerelease comparison implemented** (version.go:32-34) - full semver precedence rules
 - ✅ **Lock file colocation implemented** (2026-01-26) - Lock file always colocated with manifest file
@@ -87,17 +108,12 @@ ARM (AI Resource Manager) is **FEATURE COMPLETE** and **PRODUCTION READY**. All 
 | pattern-filtering.md | ✅ Complete | Glob patterns, include/exclude, archive extraction |
 | cache-management.md | ✅ Complete | Storage structure, timestamps, cleanup, file locking, ARM_HOME |
 | priority-resolution.md | ✅ Complete | Priority assignment, index generation, conflict resolution |
-| sink-compilation.md | ✅ Complete | All tools (Cursor, AmazonQ, Copilot, Markdown) |
+| sink-compilation.md | ✅ Complete | All tools (Cursor, AmazonQ, Copilot, Markdown), cleanup on uninstall |
 | registry-management.md | ✅ Complete | Git, GitLab, Cloudsmith registries |
 | package-installation.md | ✅ Complete | Install/update/upgrade/uninstall workflows |
 | version-resolution.md | ✅ Complete | Semver parsing, constraint matching, resolution |
-| e2e-testing.md | ✅ Complete | 13 e2e test suites covering all workflows |
+| e2e-testing.md | ✅ Complete | 14 e2e test suites covering all workflows |
 | constructor-injection.md | ✅ Complete | ARM_HOME, ARM_CONFIG_PATH, *WithHomeDir() constructors |
-| sink-compilation.md | ✅ Complete | All tools (Cursor, AmazonQ, Copilot, Markdown) |
-| registry-management.md | ✅ Complete | Git, GitLab, Cloudsmith registries |
-| package-installation.md | ✅ Complete | Install/update/upgrade/uninstall workflows |
-| version-resolution.md | ✅ Complete | Semver parsing, constraint matching, resolution |
-| e2e-testing.md | ✅ Complete | 13 e2e test suites covering all workflows |
 | constructor-injection.md | ✅ Complete | Dependency injection for testability |
 
 **All 10 specifications fully implemented with all acceptance criteria met.**
