@@ -148,11 +148,20 @@ arm install promptset --include "review/**/*.yml" --include "refactor/**/*.yml" 
 
 ## Documentation
 
+### Getting Started
+
 - **[Concepts](docs/concepts.md)** - Core concepts, file types, and resource definitions
-- **[Resource Schemas](docs/resource-schemas.md)** - ARM resource YAML schemas
+- **[Commands](docs/commands.md)** - Complete command reference and usage examples
+
+### Using ARM
+
 - **[Registries](docs/registries.md)** - Registry management and types
 - **[Sinks](docs/sinks.md)** - Sink configuration and compilation
-- **[Commands](docs/commands.md)** - Complete command reference and usage examples
+- **[Resource Schemas](docs/resource-schemas.md)** - ARM resource YAML schemas
+
+### Publishing Resources
+
+- **[Publishing Guide](docs/publishing-guide.md)** - How to create and publish rulesets to Git repositories
 
 ### Registry Types
 
