@@ -682,11 +682,6 @@ These are NOT bugs or missing features - they are documented design decisions th
   - **Current**: Per-package file locking prevents corruption within package operations
   - **Trade-off**: Simplicity and performance vs theoretical race conditions
   - **Documented**: specs/package-installation.md line 513
-- **No automatic cleanup of old sinks** - User must explicitly clean or uninstall
-  - **Rationale**: Prevents accidental data loss
-  - **Current**: When reinstalling to different sinks, old sinks retain files
-  - **Workaround**: Use `arm clean sinks` or `arm uninstall` before reinstalling
-  - **Documented**: specs/package-installation.md line 507
 - **No nested archive extraction** - Only top-level archives supported
   - **Rationale**: Simplicity, nested archives are rare in practice
   - **Current**: Archives within archives are not extracted
@@ -958,16 +953,11 @@ These are documented design decisions, not bugs:
    - Rationale: Single-user tool, concurrent operations rare
    - Documented: specs/package-installation.md line 513
 
-2. **No automatic cleanup of old sinks** - User must explicitly clean
-   - Rationale: Prevents accidental data loss
-   - Workaround: Use `arm clean sinks` or `arm uninstall`
-   - Documented: specs/package-installation.md line 507
-
-3. **No nested archive extraction** - Only top-level archives
+2. **No nested archive extraction** - Only top-level archives
    - Rationale: Simplicity, nested archives rare
    - Trade-off: Simplicity vs edge case support
 
-4. **Partial operation failures not atomic** - File-level atomicity only
+3. **Partial operation failures not atomic** - File-level atomicity only
    - Rationale: Complexity vs benefit trade-off
    - Acceptable: User can re-run operation
    - Documented: specs/package-installation.md line 515
@@ -1170,18 +1160,12 @@ The following are **documented design decisions** that reflect intentional trade
    - **Trade-off:** Simplicity and performance vs theoretical race conditions
    - **Documented:** specs/package-installation.md line 513
 
-2. **No automatic cleanup of old sinks** - User must explicitly clean or uninstall
-   - **Rationale:** Prevents accidental data loss
-   - **Current:** When reinstalling to different sinks, old sinks retain files
-   - **Workaround:** Use `arm clean sinks` or `arm uninstall` before reinstalling
-   - **Documented:** specs/package-installation.md line 507
-
-3. **No nested archive extraction** - Only top-level archives supported
+2. **No nested archive extraction** - Only top-level archives supported
    - **Rationale:** Simplicity, nested archives are rare in practice
    - **Current:** Archives within archives are not extracted
    - **Trade-off:** Simplicity vs edge case support
 
-4. **Partial operation failures not atomic** - File-level atomicity only
+3. **Partial operation failures not atomic** - File-level atomicity only
    - **Rationale:** Complexity vs benefit trade-off
    - **Current:** Some sinks may be updated while others fail
    - **Acceptable:** User can re-run operation to complete
