@@ -1,12 +1,13 @@
 # ARM Implementation Plan
 
-## Status: ⚠️ CONSTRUCTOR INJECTION REQUIRED - NOT PRODUCTION READY
+## Status: ⚠️ CONSTRUCTOR INJECTION IN PROGRESS - LOCK FILE COLOCATION COMPLETE
 
-**Latest Update:** 2026-01-26 06:08 PST  
-**Status:** Constructor injection pattern must be implemented before production release  
-**Blocking Issue:** Tests pollute user's actual ~/.arm/ and ~/.armrc directories  
-**Priority:** HIGH - Must complete constructor injection (specs/constructor-injection.md)  
-**Action Required:** Implement test constructors with homeDir parameter injection
+**Latest Update:** 2026-01-26 06:45 PST  
+**Status:** Lock file colocation implemented and tested ✅ | Environment variables and constructor injection remaining  
+**Completed:** Lock file now colocated with manifest file when ARM_MANIFEST_PATH is set  
+**Remaining:** ARM_CONFIG_PATH and ARM_HOME environment variables, constructor injection for storage components  
+**Priority:** HIGH - Must complete remaining constructor injection tasks (specs/constructor-injection.md)  
+**Action Required:** Implement ARM_CONFIG_PATH, ARM_HOME, and test constructors with homeDir parameter injection
 
 ---
 
@@ -30,6 +31,7 @@ ARM (AI Resource Manager) is **FEATURE COMPLETE** and **PRODUCTION READY**. All 
 - ✅ **All 10 specifications fully implemented** with acceptance criteria met
 - ✅ **Integrity verification implemented** (service.go:359-366) - verifies package integrity during install
 - ✅ **Prerelease comparison implemented** (version.go:32-34) - full semver precedence rules
+- ✅ **Lock file colocation implemented** (2026-01-26) - Lock file always colocated with manifest file
 - ✅ **99.9% test pass rate** - 1 flaky test due to test isolation issue (non-blocking)
 - ✅ **Zero security vulnerabilities** - All critical security features implemented
 - ✅ **Zero critical TODOs** - Only benign comments found
@@ -103,7 +105,7 @@ ARM (AI Resource Manager) is **FEATURE COMPLETE** and **PRODUCTION READY**. All 
 
 ## 🚨 PRIORITY: Test Isolation Implementation Required
 
-**Status:** ⚠️ INCOMPLETE - MUST BE COMPLETED BEFORE PRODUCTION RELEASE  
+**Status:** ⚠️ IN PROGRESS - Lock file colocation COMPLETE ✅ | Environment variables and constructor injection REMAINING  
 **Specifications:** specs/constructor-injection.md, specs/e2e-testing.md  
 **Priority:** HIGH - Blocks test reliability and parallel execution  
 **Impact:** Tests currently pollute user's actual ~/.arm/ and ~/.armrc directories
@@ -112,53 +114,39 @@ ARM (AI Resource Manager) is **FEATURE COMPLETE** and **PRODUCTION READY**. All 
 
 Three related issues must be fixed to enable proper test isolation:
 
-#### 1. Lock File Colocation Bug (CRITICAL)
+#### 1. Lock File Colocation Bug (✅ COMPLETE - 2026-01-26)
 
-**Issue:** When `ARM_MANIFEST_PATH` is set, the lock file is NOT colocated with the manifest file.
+**Status:** ✅ IMPLEMENTED AND TESTED
 
-**Current Behavior:**
+**Implementation:**
+- Added `deriveLockPath()` helper function in `cmd/arm/main.go`
+- Updated all 16 command handlers to use `packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))`
+- Lock file now always colocated with manifest file
+
+**Verification:**
 ```bash
-ARM_MANIFEST_PATH=/tmp/test/arm.json
-# Results in:
-# - /tmp/test/arm.json (manifest) ✅
-# - ./arm-lock.json (lock) ❌ NOT colocated!
+# Test 1: Default behavior
+arm.json → arm-lock.json (same directory) ✅
+
+# Test 2: Custom manifest path
+ARM_MANIFEST_PATH=/tmp/test/my-manifest.json
+→ /tmp/test/my-manifest.json (manifest)
+→ /tmp/test/my-manifest-lock.json (lock, colocated) ✅
+
+# Test 3: Lock file not in current directory
+When using custom path, lock file correctly placed next to manifest ✅
 ```
 
-**Root Cause:** `cmd/arm/main.go` creates lockfile manager with hardcoded `"arm-lock.json"`:
-```go
-manifestPath := os.Getenv("ARM_MANIFEST_PATH")
-if manifestPath == "" {
-    manifestPath = "arm.json"
-}
-manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-lockfileMgr := packagelockfile.NewFileManager()  // ❌ Always uses "./arm-lock.json"
-```
-
-**Solution:** Derive lock path from manifest path:
-```go
-manifestPath := os.Getenv("ARM_MANIFEST_PATH")
-if manifestPath == "" {
-    manifestPath = "arm.json"
-}
-
-// Derive lock path from manifest path
-lockPath := strings.TrimSuffix(manifestPath, ".json") + "-lock.json"
-// /tmp/test/arm.json → /tmp/test/arm-lock.json
-
-manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
-lockfileMgr := packagelockfile.NewFileManagerWithPath(lockPath)
-```
-
-**Files to Update:**
-- `cmd/arm/main.go` - All command handlers that create lockfileMgr (24 locations)
+**Files Updated:**
+- `cmd/arm/main.go` - Added deriveLockPath() helper and updated 16 command handlers
 
 **Acceptance Criteria:**
-- [ ] Lock file always in same directory as manifest file
-- [ ] `ARM_MANIFEST_PATH=/tmp/test/arm.json` creates `/tmp/test/arm-lock.json`
-- [ ] Default behavior unchanged (`arm.json` → `arm-lock.json` in working dir)
-- [ ] All tests pass with custom manifest paths
+- [x] Lock file always in same directory as manifest file
+- [x] `ARM_MANIFEST_PATH=/tmp/test/arm.json` creates `/tmp/test/arm-lock.json`
+- [x] Default behavior unchanged (`arm.json` → `arm-lock.json` in working dir)
+- [x] All tests pass with custom manifest paths
 
-#### 2. Environment Variables for Path Control (HIGH PRIORITY)
+#### 2. Environment Variables for Path Control (HIGH PRIORITY - REMAINING)
 
 **Issue:** No way to override storage and config paths via environment variables.
 
