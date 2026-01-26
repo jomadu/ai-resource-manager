@@ -26,6 +26,9 @@ Cache downloaded packages locally to avoid redundant network requests, enabling 
 - [ ] Nuke removes entire storage directory
 - [ ] Cross-process file locking prevents concurrent access corruption
 - [ ] Git repositories cached in `repo/` subdirectory (git registries only)
+- [ ] Storage components accept home directory as constructor parameter for test isolation
+- [ ] Default constructors call os.UserHomeDir() for production use
+- [ ] Test constructors accept temporary directory paths for isolation
 
 ## Data Structures
 
@@ -115,6 +118,10 @@ type FileLock struct {
 ```
 
 **Purpose:**
+- Prevents concurrent access to same package/registry
+- Cross-process locking using file system
+- Lock acquired before read/write operations
+- Lock released after operation completes
 - Prevents concurrent access to same package/registry
 - Cross-process locking using file system
 - Lock acquired before read/write operations
@@ -390,12 +397,13 @@ function NukeCache():
 
 **Source files:**
 - `internal/arm/storage/storage.go` - GenerateKey, directory structure documentation
-- `internal/arm/storage/registry.go` - Registry metadata and directory management
+- `internal/arm/storage/registry.go` - Registry metadata and directory management (accepts homeDir parameter)
 - `internal/arm/storage/package.go` - PackageCache operations (Set, Get, Remove, Cleanup)
 - `internal/arm/storage/repo.go` - Git repository management
 - `internal/arm/storage/lock.go` - FileLock implementation
-- `internal/arm/service/service.go` - CleanCacheByAge, CleanCacheByTimeSinceLastAccess, NukeCache
+- `internal/arm/service/service.go` - CleanCacheByAge, CleanCacheByTimeSinceLastAccess, NukeCache (accepts homeDir parameter)
 - `internal/arm/registry/integrity.go` - Integrity calculation (used by cache for verification)
+- `internal/arm/config/manager.go` - Config file manager (accepts workingDir and homeDir parameters)
 
 **Related specs:**
 - `package-installation.md` - Uses cache to store/retrieve packages, defines integrity verification requirements

@@ -31,6 +31,9 @@ git tag v1.0.0
 - Tests clean up after themselves
 - No shared state between tests
 - Tests can run in parallel
+- **Direct path injection** - Tests pass t.TempDir() to component constructors to avoid polluting user's ~/.arm/ and ~/.armrc
+- Components accept directory paths as constructor parameters
+- No direct os.UserHomeDir() calls in testable components
 
 ### CI Compatibility
 
@@ -431,3 +434,6 @@ test/e2e/
 - Use table-driven tests for variations
 - Mock time for cache age tests
 - Use golden files for complex output verification
+- **Pass t.TempDir() to constructors** - Inject test directories directly as string parameters
+- Components should accept directory paths via constructor for testability
+- Avoid direct os.UserHomeDir() calls in components

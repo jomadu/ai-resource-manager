@@ -21,6 +21,9 @@ Authenticate with registries requiring tokens (GitLab, Cloudsmith) to access pri
 - [ ] Missing sections return error when token required
 - [ ] File permissions should be 0600 for security
 - [ ] Multiple registry sections supported in single file
+- [ ] Config manager accepts working directory and home directory as constructor parameters
+- [ ] Default constructor calls os.Getwd() and os.UserHomeDir() for production use
+- [ ] Test constructor accepts temporary directory paths for isolation
 
 ## Data Structures
 
@@ -63,6 +66,10 @@ type FileManager struct {
 **Fields:**
 - `workingDir` - Path to project directory containing `.armrc`
 - `userHomeDir` - Path to user home directory containing `.armrc`
+
+**Construction:**
+- `NewFileManager()` - Calls os.Getwd() and os.UserHomeDir() for production
+- `NewFileManagerWithPaths(workingDir, userHomeDir)` - Direct path injection for testing
 
 ## Algorithm
 
@@ -351,7 +358,7 @@ function makeRequest(ctx context.Context, method string, path string) (*http.Res
 ## Implementation Mapping
 
 **Source files:**
-- `internal/arm/config/manager.go` - .armrc parsing and hierarchical lookup
+- `internal/arm/config/manager.go` - .armrc parsing and hierarchical lookup (accepts workingDir and homeDir parameters)
 - `internal/arm/registry/gitlab.go` - GitLab authentication (Bearer token)
 - `internal/arm/registry/cloudsmith.go` - Cloudsmith authentication (Token)
 
