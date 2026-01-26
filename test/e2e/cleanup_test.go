@@ -37,7 +37,7 @@ func TestUninstallCleanup(t *testing.T) {
 
 		// Find at least one directory was created
 		var foundDir bool
-		filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
 			if err == nil && info.IsDir() && path != sinkDir {
 				foundDir = true
 			}
@@ -52,7 +52,7 @@ func TestUninstallCleanup(t *testing.T) {
 
 		// Verify empty directories are removed
 		var emptyDirs []string
-		filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
 			if err == nil && info.IsDir() && path != sinkDir {
 				entries, _ := os.ReadDir(path)
 				if len(entries) == 0 {
@@ -141,7 +141,7 @@ func TestUninstallCleanup(t *testing.T) {
 
 		// Find priority index file
 		var priorityIndexPath string
-		filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
 			if err == nil && !info.IsDir() && filepath.Base(path) == "arm_index.mdc" {
 				priorityIndexPath = path
 			}
