@@ -76,7 +76,10 @@ func TestCleanCache(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Use isolated temp directory for each test
+			testHome := t.TempDir()
 			cmd := exec.Command(binaryPath, tt.args...)
+			cmd.Env = append(cmd.Environ(), "ARM_HOME="+testHome)
 			output, err := cmd.CombinedOutput()
 
 			if tt.expectError {
