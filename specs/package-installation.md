@@ -91,13 +91,14 @@ Install, update, upgrade, and uninstall packages from registries to sinks, maint
 4. List available versions from registry
 5. Resolve version using constraint (see version-resolution.md)
 6. Fetch package from registry with include/exclude patterns
-7. Update manifest with dependency config (version, sinks, patterns, priority)
-8. Update lock file with resolved version and integrity
-9. For each sink:
+7. Get old sinks from manifest (if package already installed)
+8. Remove package from all old sinks
+9. Update manifest with dependency config (version, sinks, patterns, priority)
+10. Update lock file with resolved version and integrity
+11. For each new sink:
    - Create sink manager
-   - Uninstall existing versions of package from sink
    - Compile and install package to sink
-10. Return success
+12. Return success
 
 **Pseudocode:**
 ```
@@ -118,6 +119,15 @@ function InstallRuleset(registryName, packageName, version, priority, include, e
     resolvedVersion = ResolveVersion(version, availableVersions)
     package = registry.GetPackage(packageName, resolvedVersion, include, exclude)
     
+    // Remove from old sinks (if package already installed)
+    oldDepConfig = manifest.GetRulesetDependency(registryName, packageName)
+    if oldDepConfig exists:
+        for oldSinkName in oldDepConfig.sinks:
+            if oldSinkName in allSinks:
+                oldSinkConfig = allSinks[oldSinkName]
+                oldSinkManager = NewSinkManager(oldSinkConfig.Directory, oldSinkConfig.Tool)
+                oldSinkManager.Uninstall(registryName, packageName)
+    
     // Update manifest
     depConfig = {
         version: version,
@@ -134,11 +144,10 @@ function InstallRuleset(registryName, packageName, version, priority, include, e
     }
     lockfile.UpsertDependencyLock(registryName, packageName, resolvedVersion, lockConfig)
     
-    // Install to sinks
+    // Install to new sinks
     for sinkName in sinks:
         sinkConfig = allSinks[sinkName]
         sinkManager = NewSinkManager(sinkConfig.Directory, sinkConfig.Tool)
-        sinkManager.Uninstall(registryName, packageName)  // Remove old versions
         sinkManager.InstallRuleset(package, priority)
     
     return success
@@ -307,9 +316,9 @@ function InstallAll():
 | Registry doesn't exist | Error: "registry not found" |
 | Sink doesn't exist | Error: "sink not found: {name}" |
 | No versions satisfy constraint | Error: "no version satisfies constraint" |
-| Package already installed (same version) | Reinstall (idempotent) |
-| Package already installed (different version) | Replace with new version |
-| Reinstall to different sinks | Old sinks retain files (no automatic cleanup across sinks) |
+| Package already installed (same version, same sinks) | Reinstall (idempotent) |
+| Package already installed (same version, different sinks) | Remove from old sinks, install to new sinks |
+| Package already installed (different version) | Remove from old sinks, install new version to new sinks |
 | Reinstall to same sink | Old version removed, new version installed |
 | Update with no newer version | Skip, report "already up to date" |
 | Upgrade to same version | Idempotent, updates manifest constraint to "latest" |
@@ -467,19 +476,46 @@ arm install ruleset test-registry/clean-code@1.0.0 sink-b
 ```
 
 **Expected Behavior:**
-1. First install: Files written to sink-a
-2. Second install: Files written to sink-b
-3. Manifest updated to show sinks: ["sink-b"]
-4. Files in sink-a remain (no automatic cleanup across sinks)
+1. First install: Files written to sink-a, manifest shows sinks: ["sink-a"]
+2. Second install:
+   - Read manifest, see package currently in sink-a
+   - Remove files from sink-a
+   - Install files to sink-b
+   - Update manifest to show sinks: ["sink-b"]
 
 **Verification:**
 - arm.json shows sinks: ["sink-b"]
 - Files exist in sink-b
-- Files still exist in sink-a (orphaned)
+- Files removed from sink-a (automatic cleanup)
 
-**Note:** To clean sink-a, user must manually run `arm clean sinks` or uninstall before reinstalling.
+### Example 6: Reinstall with Partial Overlap
 
-### Example 6: Install All (Reproducible)
+**Input:**
+```bash
+# Initial install to two sinks
+arm install ruleset test-registry/clean-code@1.0.0 sink-a sink-b
+
+# Reinstall to different sinks with partial overlap
+arm install ruleset test-registry/clean-code@1.0.0 sink-b sink-c
+```
+
+**Expected Behavior:**
+1. First install: Files written to sink-a and sink-b
+2. Second install:
+   - Read manifest, see package currently in sink-a and sink-b
+   - Remove files from sink-a (not in new list)
+   - Remove files from sink-b (will be reinstalled)
+   - Install files to sink-b (fresh install)
+   - Install files to sink-c (new sink)
+   - Update manifest to show sinks: ["sink-b", "sink-c"]
+
+**Verification:**
+- arm.json shows sinks: ["sink-b", "sink-c"]
+- Files removed from sink-a
+- Files exist in sink-b (reinstalled)
+- Files exist in sink-c (new)
+
+### Example 7: Install All (Reproducible)
 
 **Input:**
 ```bash
@@ -504,7 +540,7 @@ arm install
 
 **Idempotency**: Install operations are idempotent. Installing the same package version multiple times produces the same result.
 
-**Reinstall Behavior**: When reinstalling a package to different sinks, ARM updates the manifest to reflect the new sinks but does NOT automatically remove files from old sinks. Users must explicitly clean old sinks using `arm clean sinks` or uninstall before reinstalling.
+**Reinstall Behavior**: When reinstalling a package to different sinks, ARM automatically removes files from all old sinks (as listed in the manifest) before installing to the new sinks. The command specifies the complete intent - the new sink list replaces the old sink list entirely.
 
 **Within-Sink Replacement**: When installing a package to a sink that already has a different version of that package, the old version is automatically removed before installing the new version.
 
