@@ -380,6 +380,55 @@ function CalculateIntegrity(files):
 - **Path-sensitive**: Renaming files changes hash
 - **Collision-resistant**: SHA256 provides strong cryptographic guarantees
 
+## Integrity Verification
+
+### Purpose
+Detect corrupted, tampered, or modified packages by comparing calculated hash against locked hash. This ensures reproducible builds and prevents installation of packages that have changed since they were locked.
+
+### When to Verify
+1. **Install** - If package already exists in lock file, verify calculated integrity matches locked integrity before reinstalling
+2. **Update** - Calculate integrity of new version and store in lock file (no comparison needed - new version expected)
+3. **Upgrade** - Calculate integrity of new version and store in lock file (no comparison needed - new version expected)
+4. **Install All** - Verify every package against lock file to ensure reproducible builds
+
+### Verification Algorithm
+1. Fetch package from registry or cache
+2. Calculate integrity: `SHA256(sorted file paths + file contents)`
+3. Get locked integrity from `arm-lock.json` for this registry/package/version
+4. **If locked integrity exists AND doesn't match calculated:**
+   - Return error with both hashes
+   - Do NOT install package
+   - Do NOT update lock file
+   - Do NOT write to sinks
+5. **If no locked integrity OR hashes match:**
+   - Proceed with installation
+   - Store calculated integrity in lock file
+   - Write files to sinks
+
+### Error Messages
+When integrity verification fails, display:
+```
+Error: integrity verification failed for {registry}/{package}@{version}
+  Expected: sha256-abc123...
+  Got:      sha256-xyz789...
+  
+This indicates the package has been modified since it was locked.
+To resolve:
+  1. If you trust the new package: delete arm-lock.json and reinstall
+  2. If you suspect tampering: investigate the package source
+```
+
+### Security Guarantees
+- **Tamper detection**: Any modification to package files is detected
+- **Reproducible builds**: Same lock file always installs identical packages
+- **Cache corruption detection**: Corrupted cached packages fail verification
+- **Registry compromise detection**: Modified packages on registry fail verification
+
+### Backwards Compatibility
+- If lock file exists but has no integrity field for a package: skip verification (legacy lock files)
+- If lock file doesn't exist: no verification (first install)
+- Integrity is always calculated and stored, even when verification is skipped
+
 ## Edge Cases
 
 | Condition | Expected Behavior |
