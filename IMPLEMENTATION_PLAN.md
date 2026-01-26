@@ -1,11 +1,12 @@
 # ARM Implementation Plan
 
-## Status: FEATURE COMPLETE ✅ - PRODUCTION READY
+## Status: ⚠️ CONSTRUCTOR INJECTION REQUIRED - NOT PRODUCTION READY
 
-**Latest Verification:** 2026-01-26 06:05 PST  
-**Status:** All tests passing, no build errors, ralph-0.0.51 tag created  
-**Test Execution:** `go test ./...` - PASS (99.9% pass rate maintained)  
-**Action:** Verified feature-complete status, created ralph-0.0.51 tag
+**Latest Update:** 2026-01-26 06:08 PST  
+**Status:** Constructor injection pattern must be implemented before production release  
+**Blocking Issue:** Tests pollute user's actual ~/.arm/ and ~/.armrc directories  
+**Priority:** HIGH - Must complete constructor injection (specs/constructor-injection.md)  
+**Action Required:** Implement test constructors with homeDir parameter injection
 
 ---
 
@@ -97,6 +98,60 @@ ARM (AI Resource Manager) is **FEATURE COMPLETE** and **PRODUCTION READY**. All 
 **Impact:** None (cosmetic only, does not affect functionality)  
 **Priority:** Low (documentation cleanup)  
 **Fix:** Remove or update the outdated comment
+
+---
+
+## 🚨 PRIORITY: Constructor Injection Implementation Required
+
+**Status:** ⚠️ INCOMPLETE - MUST BE COMPLETED BEFORE PRODUCTION RELEASE  
+**Specification:** specs/constructor-injection.md  
+**Priority:** HIGH - Blocks test reliability and parallel execution  
+**Impact:** Tests currently pollute user's actual ~/.arm/ and ~/.armrc directories
+
+### What Needs to Be Done
+
+The constructor injection pattern must be implemented to enable test isolation. This prevents tests from writing to the user's actual home directory.
+
+### Components Requiring Updates
+
+1. **`internal/arm/storage/registry.go`** - Add `NewRegistryWithHomeDir()`
+   - Current: `NewRegistry()` calls `os.UserHomeDir()` directly
+   - Required: Add test constructor that accepts homeDir as string parameter
+   - Pattern: See specs/constructor-injection.md lines 73-90
+
+2. **`internal/arm/service/service.go`** - Add `*WithHomeDir()` variants for cache methods
+   - `CleanCacheByAgeWithHomeDir(ctx, maxAge, homeDir)`
+   - `CleanCacheByTimeSinceLastAccessWithHomeDir(ctx, maxAge, homeDir)`
+   - `NukeCacheWithHomeDir(ctx, homeDir)`
+   - Pattern: See specs/constructor-injection.md lines 117-133
+
+3. **Update all tests** - Pass `t.TempDir()` to test constructors
+   - Replace direct `NewRegistry()` calls with `NewRegistryWithHomeDir(registryKey, t.TempDir())`
+   - Replace cache method calls with `*WithHomeDir()` variants
+   - Ensures tests use isolated temporary directories
+
+### Already Correct
+- ✅ `internal/arm/config/manager.go` - Already has `NewFileManagerWithPaths()`
+
+### Acceptance Criteria
+- [ ] Components accept home directory path as constructor parameter
+- [ ] Default constructors call `os.UserHomeDir()` internally for production use
+- [ ] Test constructors accept directory paths directly (no OS calls)
+- [ ] No direct `os.UserHomeDir()` calls in component methods
+- [ ] Tests pass `t.TempDir()` to test constructors
+- [ ] Tests don't pollute user's actual home directory
+- [ ] All tests pass with parallel execution enabled
+
+### Why This Is Critical
+- **Test reliability** - Eliminates flaky tests caused by shared state
+- **Parallel execution** - Enables safe concurrent test runs
+- **Developer experience** - Tests don't pollute developer's actual ARM directories
+- **CI/CD safety** - Tests won't interfere with each other in CI environments
+
+### Implementation Reference
+See full specification: `specs/constructor-injection.md`  
+Pattern examples: Lines 40-62 (before/after comparison)  
+Component details: Lines 66-133
 
 ---
 
