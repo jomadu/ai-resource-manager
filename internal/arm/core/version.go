@@ -8,6 +8,7 @@ import (
 )
 
 // Compare returns -1 if v is older than other, 0 if equal, 1 if newer
+// Implements semver precedence rules including prerelease comparison
 func (v *Version) Compare(other *Version) int {
 	if v.Major < other.Major {
 		return -1
@@ -27,7 +28,120 @@ func (v *Version) Compare(other *Version) int {
 	if v.Patch > other.Patch {
 		return 1
 	}
+
+	// Compare prerelease versions per semver spec
+	return comparePrerelease(v.Prerelease, other.Prerelease)
+}
+
+// comparePrerelease compares two prerelease strings per semver spec
+// Returns -1 if a < b, 0 if equal, 1 if a > b
+func comparePrerelease(a, b string) int {
+	// Per semver: version without prerelease > version with prerelease
+	if a == "" && b == "" {
+		return 0
+	}
+	if a == "" {
+		return 1 // no prerelease > prerelease
+	}
+	if b == "" {
+		return -1 // prerelease < no prerelease
+	}
+
+	// Both have prereleases - compare identifiers
+	aParts := splitPrerelease(a)
+	bParts := splitPrerelease(b)
+
+	for i := 0; i < len(aParts) && i < len(bParts); i++ {
+		cmp := comparePrereleaseIdentifier(aParts[i], bParts[i])
+		if cmp != 0 {
+			return cmp
+		}
+	}
+
+	// All compared identifiers are equal - longer prerelease wins
+	if len(aParts) < len(bParts) {
+		return -1
+	}
+	if len(aParts) > len(bParts) {
+		return 1
+	}
 	return 0
+}
+
+// splitPrerelease splits a prerelease string by dots
+func splitPrerelease(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := []string{}
+	current := ""
+	for _, ch := range s {
+		if ch == '.' {
+			if current != "" {
+				parts = append(parts, current)
+				current = ""
+			}
+		} else {
+			current += string(ch)
+		}
+	}
+	if current != "" {
+		parts = append(parts, current)
+	}
+	return parts
+}
+
+// comparePrereleaseIdentifier compares two prerelease identifiers
+// Per semver: numeric identifiers are compared as integers,
+// alphanumeric identifiers are compared lexically,
+// numeric identifiers always have lower precedence than non-numeric
+func comparePrereleaseIdentifier(a, b string) int {
+	aNum, aIsNum := parseNumericIdentifier(a)
+	bNum, bIsNum := parseNumericIdentifier(b)
+
+	if aIsNum && bIsNum {
+		// Both numeric - compare as integers
+		if aNum < bNum {
+			return -1
+		}
+		if aNum > bNum {
+			return 1
+		}
+		return 0
+	}
+
+	if aIsNum {
+		return -1 // numeric < alphanumeric
+	}
+	if bIsNum {
+		return 1 // alphanumeric > numeric
+	}
+
+	// Both alphanumeric - compare lexically
+	if a < b {
+		return -1
+	}
+	if a > b {
+		return 1
+	}
+	return 0
+}
+
+// parseNumericIdentifier attempts to parse a string as a numeric identifier
+// Returns the integer value and true if successful, 0 and false otherwise
+func parseNumericIdentifier(s string) (int, bool) {
+	if s == "" {
+		return 0, false
+	}
+	// Per semver: numeric identifiers must not have leading zeros
+	if len(s) > 1 && s[0] == '0' {
+		return 0, false
+	}
+	val, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, false
+	}
+	return val, true
 }
 
 // CompareTo returns -1 if v is older than other, 0 if equal, 1 if newer
