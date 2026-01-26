@@ -65,6 +65,75 @@ ARM supports two versioning models:
 2. Configure sinks with your desired AI tool and target directory
 3. Install packages from registries as rulesets or promptsets to sinks
 
+## Environment Variables
+
+ARM supports environment variables to customize file locations for testing, CI/CD, and multi-user environments.
+
+### ARM_MANIFEST_PATH
+
+Controls the location of `arm.json` and `arm-lock.json`.
+
+```bash
+ARM_MANIFEST_PATH=/custom/path/arm.json
+# Results in:
+# - /custom/path/arm.json (manifest)
+# - /custom/path/arm-lock.json (lock file, colocated)
+```
+
+**Default:** `./arm.json` and `./arm-lock.json` in current working directory
+
+**Use cases:**
+- Testing with isolated manifests
+- CI/CD with build-specific configurations
+- Managing multiple ARM projects in same directory
+
+### ARM_CONFIG_PATH
+
+Overrides the `.armrc` configuration file location. When set, this is the ONLY config file used (no hierarchical lookup).
+
+```bash
+ARM_CONFIG_PATH=/custom/path/.armrc
+# Results in:
+# - Only reads /custom/path/.armrc
+# - Ignores both ./.armrc and ~/.armrc
+```
+
+**Default:** Hierarchical lookup (`./.armrc` overrides `~/.armrc`)
+
+**Use cases:**
+- CI/CD with centralized authentication
+- Testing with isolated credentials
+- Custom config locations in containerized environments
+
+### ARM_HOME
+
+Overrides the home directory for the `.arm/` directory (storage, cache). Does NOT affect `.armrc` location.
+
+```bash
+ARM_HOME=/custom/home
+# Results in:
+# - /custom/home/.arm/storage/ (package cache)
+```
+
+**Default:** User's home directory from `os.UserHomeDir()`
+
+**Use cases:**
+- Docker with mounted volumes
+- Multi-user systems with separate caches
+- Network storage for shared team caches
+- CI/CD with build-specific cache directories
+
+### Priority Order
+
+**For .armrc lookup:**
+1. `ARM_CONFIG_PATH` - If set, use this exact file (bypasses hierarchy)
+2. `./armrc` - Project config (highest priority in hierarchy)
+3. `~/.armrc` - User config (fallback in hierarchy)
+
+**For .arm/storage/ lookup:**
+1. `$ARM_HOME/.arm/storage/` - If ARM_HOME is set
+2. `~/.arm/storage/` - Default
+
 ## How to Publish Packages
 
 **ARM resource files** (YAML) - Cross-platform definitions that ARM compiles to any tool format.
