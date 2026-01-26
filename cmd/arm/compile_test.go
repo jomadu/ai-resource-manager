@@ -20,7 +20,7 @@ func TestCompile(t *testing.T) {
 
 	// Create test working directory with sample input files
 	workDir := t.TempDir()
-	
+
 	// Create sample ARM resource files for testing
 	sampleRuleset := `apiVersion: v1
 kind: Ruleset
@@ -34,14 +34,40 @@ spec:
       body: |
         This is a test rule
 `
-	
-	if err := os.WriteFile(filepath.Join(workDir, "input.yml"), []byte(sampleRuleset), 0644); err != nil {
+
+	sampleRuleset1 := `apiVersion: v1
+kind: Ruleset
+metadata:
+  id: test-ruleset-1
+  name: Test Ruleset 1
+spec:
+  rules:
+    testRule1:
+      name: Test Rule 1
+      body: |
+        This is test rule 1
+`
+
+	sampleRuleset2 := `apiVersion: v1
+kind: Ruleset
+metadata:
+  id: test-ruleset-2
+  name: Test Ruleset 2
+spec:
+  rules:
+    testRule2:
+      name: Test Rule 2
+      body: |
+        This is test rule 2
+`
+
+	if err := os.WriteFile(filepath.Join(workDir, "input.yml"), []byte(sampleRuleset), 0o644); err != nil {
 		t.Fatalf("Failed to create input.yml: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(workDir, "input1.yml"), []byte(sampleRuleset), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(workDir, "input1.yml"), []byte(sampleRuleset1), 0o644); err != nil {
 		t.Fatalf("Failed to create input1.yml: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(workDir, "input2.yml"), []byte(sampleRuleset), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(workDir, "input2.yml"), []byte(sampleRuleset2), 0o644); err != nil {
 		t.Fatalf("Failed to create input2.yml: %v", err)
 	}
 
@@ -162,7 +188,20 @@ spec:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd := exec.Command(binaryPath, tt.args...)
+			// Create unique output directory for this subtest
+			subtestDir := t.TempDir()
+
+			// Replace "output" in args with unique output path
+			args := make([]string, len(tt.args))
+			for i, arg := range tt.args {
+				if arg == "output" {
+					args[i] = filepath.Join(subtestDir, "output")
+				} else {
+					args[i] = arg
+				}
+			}
+
+			cmd := exec.Command(binaryPath, args...)
 			cmd.Dir = workDir // Set working directory to where test files are
 			output, err := cmd.CombinedOutput()
 
