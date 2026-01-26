@@ -353,6 +353,18 @@ func (s *ArmService) resolveAndFetchPackage(ctx context.Context, registryName, p
 		return nil, "", nil, err
 	}
 
+	// Verify integrity if package is already locked
+	lockedInfo, err := s.lockfileMgr.GetDependencyLock(ctx, registryName, packageName, resolvedVer.Version)
+	if err == nil && lockedInfo != nil && lockedInfo.Integrity != "" {
+		// Lock exists with integrity - verify it matches
+		if pkg.Integrity != lockedInfo.Integrity {
+			return nil, "", nil, fmt.Errorf("integrity verification failed for %s/%s@%s\n  Expected: %s\n  Got:      %s\n\nThis indicates the package has been modified since it was locked.\nTo resolve:\n  1. If you trust the new package: delete arm-lock.json and reinstall\n  2. If you suspect tampering: investigate the package source",
+				registryName, packageName, resolvedVer.Version,
+				lockedInfo.Integrity, pkg.Integrity)
+		}
+	}
+	// If lock doesn't exist or has no integrity field, skip verification (backwards compatibility)
+
 	return pkg, resolvedVer.Version, allSinks, nil
 }
 
