@@ -145,9 +145,7 @@ func TestCompile(t *testing.T) {
 					t.Errorf("Expected error containing %q, got: %s", tt.errContains, output)
 				}
 			} else if err != nil {
-				// Note: These tests will fail because CompileFiles is not implemented yet
-				// That's expected - we're testing CLI validation, not full functionality
-				t.Logf("Command failed (expected until CompileFiles is implemented): %v\nOutput: %s", err, output)
+				t.Errorf("Unexpected error: %v\nOutput: %s", err, output)
 			}
 		})
 	}
