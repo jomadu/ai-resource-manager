@@ -1,25 +1,130 @@
-# Test Isolation via Constructor Injection
+# Test Isolation via Constructor Injection and Environment Variables
 
 ## Job to be Done
-Enable test isolation by injecting directory paths directly into component constructors, preventing tests from polluting user's home directory. Additionally, ensure lock file is always colocated with manifest file.
+Enable test isolation through environment variables and constructor injection, preventing tests from polluting user's home directory. Additionally, ensure lock file is always colocated with manifest file.
 
 ## Activities
-1. **Accept directory paths as constructor parameters** - Components receive paths instead of calling os.UserHomeDir()
-2. **Provide default constructors** - Production code calls os.UserHomeDir() once in constructor
-3. **Provide test constructors** - Tests pass t.TempDir() directly as string parameters
-4. **Derive lock file path from manifest path** - Ensure arm-lock.json lives next to arm.json
+1. **Add environment variable support** - ARM_MANIFEST_PATH, ARM_CONFIG_PATH, ARM_HOME
+2. **Accept directory paths as constructor parameters** - Components receive paths instead of calling os.UserHomeDir()
+3. **Provide default constructors** - Production code checks env vars, falls back to os.UserHomeDir()
+4. **Provide test constructors** - Tests pass t.TempDir() directly as string parameters
+5. **Derive lock file path from manifest path** - Ensure arm-lock.json lives next to arm.json
 
 ## Acceptance Criteria
+- [ ] ARM_MANIFEST_PATH controls manifest and lock file location (already exists)
+- [ ] ARM_CONFIG_PATH overrides .armrc location (single file, no hierarchy)
+- [ ] ARM_HOME overrides home directory for .arm/ and .armrc
 - [ ] Lock file always colocated with manifest file (same directory)
 - [ ] Lock path derived from manifest path (arm.json → arm-lock.json)
 - [ ] Components accept home directory path as constructor parameter
-- [ ] Default constructors call os.UserHomeDir() internally for production use
+- [ ] Default constructors check env vars before calling os.UserHomeDir()
 - [ ] Test constructors accept directory paths directly (no OS calls)
 - [ ] No direct os.UserHomeDir() calls in component methods
-- [ ] Tests pass t.TempDir() to test constructors
+- [ ] Tests can use env vars or direct path injection
 - [ ] Tests don't pollute user's actual home directory
 
 ## Pattern
+
+## Environment Variables
+
+ARM supports three environment variables for controlling file locations:
+
+### ARM_MANIFEST_PATH (Already Exists)
+Controls the location of `arm.json` and `arm-lock.json`.
+
+```bash
+ARM_MANIFEST_PATH=/tmp/test/arm.json
+# Results in:
+# - /tmp/test/arm.json (manifest)
+# - /tmp/test/arm-lock.json (lock file, colocated)
+```
+
+**Default:** `./arm.json` and `./arm-lock.json` in current working directory
+
+### ARM_CONFIG_PATH (New)
+Overrides the `.armrc` configuration file location. When set, this is the ONLY config file used (no hierarchical lookup).
+
+```bash
+ARM_CONFIG_PATH=/tmp/test/.armrc
+# Results in:
+# - Only reads /tmp/test/.armrc
+# - Ignores both ./.armrc and ~/.armrc
+```
+
+**Default:** Hierarchical lookup (`./.armrc` overrides `~/.armrc`)
+
+### ARM_HOME (New)
+Overrides the home directory for all ARM user files. This is the parent directory for `.arm/` subdirectories and `.armrc`.
+
+```bash
+ARM_HOME=/tmp/test
+# Results in:
+# - /tmp/test/.arm/storage/registries/... (package cache)
+# - /tmp/test/.armrc (if ARM_CONFIG_PATH not set)
+# Future: /tmp/test/.arm/logs/, /tmp/test/.arm/cache/, etc.
+```
+
+**Default:** User's home directory from `os.UserHomeDir()`
+
+### Priority Order
+
+1. **ARM_CONFIG_PATH** - If set, use this exact file (highest priority)
+2. **ARM_HOME** - If set, use `$ARM_HOME/.armrc` and `$ARM_HOME/.arm/storage/`
+3. **os.UserHomeDir()** - Default fallback
+
+### Implementation Pattern
+
+```go
+// Get config path
+func getConfigPath() string {
+    // Explicit override
+    if path := os.Getenv("ARM_CONFIG_PATH"); path != "" {
+        return path
+    }
+    
+    // ARM_HOME override
+    armHome := os.Getenv("ARM_HOME")
+    if armHome == "" {
+        armHome, _ = os.UserHomeDir()
+    }
+    
+    return filepath.Join(armHome, ".armrc")
+}
+
+// Get storage path
+func getStoragePath() string {
+    armHome := os.Getenv("ARM_HOME")
+    if armHome == "" {
+        armHome, _ = os.UserHomeDir()
+    }
+    
+    return filepath.Join(armHome, ".arm", "storage")
+}
+```
+
+### Test Usage
+
+**Option 1: Environment Variables**
+```go
+func TestWithEnvVars(t *testing.T) {
+    testDir := t.TempDir()
+    t.Setenv("ARM_MANIFEST_PATH", filepath.Join(testDir, "arm.json"))
+    t.Setenv("ARM_HOME", testDir)
+    
+    // All ARM operations now isolated to testDir
+}
+```
+
+**Option 2: Direct Path Injection**
+```go
+func TestWithDirectPaths(t *testing.T) {
+    testDir := t.TempDir()
+    registry, err := storage.NewRegistryWithHomeDir(registryKey, testDir)
+    // Uses testDir/.arm/storage/ instead of ~/.arm/storage/
+}
+```
+
+## Constructor Injection Pattern
 
 ### Before (Direct OS Call in Methods)
 ```go
@@ -40,20 +145,24 @@ func NewRegistry(registryKey interface{}) (*Registry, error) {
 
 **Problem:** Tests create registries in user's actual ~/.arm/ directory
 
-### After (Constructor Injection)
+### After (Constructor Injection + Environment Variables)
 ```go
 type Registry struct {
     registryKey interface{}
     registryDir string
 }
 
-// Production constructor - calls os.UserHomeDir() once
+// Production constructor - checks env vars, then calls os.UserHomeDir()
 func NewRegistry(registryKey interface{}) (*Registry, error) {
-    homeDir, err := os.UserHomeDir()
-    if err != nil {
-        return nil, err
+    armHome := os.Getenv("ARM_HOME")
+    if armHome == "" {
+        var err error
+        armHome, err = os.UserHomeDir()
+        if err != nil {
+            return nil, err
+        }
     }
-    return NewRegistryWithHomeDir(registryKey, homeDir)
+    return NewRegistryWithHomeDir(registryKey, armHome)
 }
 
 // Test constructor - accepts directory path directly
@@ -63,7 +172,10 @@ func NewRegistryWithHomeDir(registryKey interface{}, homeDir string) (*Registry,
 }
 ```
 
-**Benefits:** Tests pass t.TempDir() to NewRegistryWithHomeDir()
+**Benefits:** 
+- Production code can use ARM_HOME environment variable
+- Tests can use environment variables OR direct path injection
+- No OS calls in component methods
 
 ## Components to Update
 
@@ -105,7 +217,25 @@ func NewFileManager() *FileManager {
 }
 ```
 
-**Already correct!** - Already has NewFileManagerWithPaths() for testing
+**Updated:**
+```go
+func NewFileManager() *FileManager {
+    workingDir, _ := os.Getwd()
+    
+    // Check ARM_HOME environment variable
+    userHomeDir := os.Getenv("ARM_HOME")
+    if userHomeDir == "" {
+        userHomeDir, _ = os.UserHomeDir()
+    }
+    
+    return &FileManager{
+        workingDir:  workingDir,
+        userHomeDir: userHomeDir,
+    }
+}
+```
+
+**Note:** ARM_CONFIG_PATH is handled at a higher level (in config file reading logic)
 
 ### 3. service.ArmService (Cache Methods)
 **Current:**
@@ -128,10 +258,14 @@ func (s *ArmService) CleanCacheByAge(ctx context.Context, maxAge time.Duration) 
 
 func (s *ArmService) CleanCacheByAgeWithHomeDir(ctx context.Context, maxAge time.Duration, homeDir string) error {
     if homeDir == "" {
-        var err error
-        homeDir, err = os.UserHomeDir()
-        if err != nil {
-            return err
+        // Check ARM_HOME environment variable
+        homeDir = os.Getenv("ARM_HOME")
+        if homeDir == "" {
+            var err error
+            homeDir, err = os.UserHomeDir()
+            if err != nil {
+                return err
+            }
         }
     }
     storageDir := filepath.Join(homeDir, ".arm", "storage")
@@ -139,20 +273,36 @@ func (s *ArmService) CleanCacheByAgeWithHomeDir(ctx context.Context, maxAge time
 }
 ```
 
+**Apply same pattern to:**
+- `CleanCacheByTimeSinceLastAccess` → `CleanCacheByTimeSinceLastAccessWithHomeDir`
+- `NukeCache` → `NukeCacheWithHomeDir`
+
 ## Test Usage
 
 ### Production
 ```go
-// Uses actual user home directory
+// Uses actual user home directory (or ARM_HOME if set)
 registry, err := storage.NewRegistry(registryKey)
 ```
 
-### Testing
+### Testing with Environment Variables
 ```go
 func TestRegistry(t *testing.T) {
     testHome := t.TempDir()
+    t.Setenv("ARM_HOME", testHome)
+    
+    // Uses testHome/.arm/storage/ instead of ~/.arm/storage/
+    registry, err := storage.NewRegistry(registryKey)
+}
+```
+
+### Testing with Direct Path Injection
+```go
+func TestRegistry(t *testing.T) {
+    testHome := t.TempDir()
+    
+    // Uses testHome/.arm/storage/ instead of ~/.arm/storage/
     registry, err := storage.NewRegistryWithHomeDir(registryKey, testHome)
-    // Uses testHome instead of actual user home
 }
 ```
 
@@ -166,10 +316,10 @@ func TestRegistry(t *testing.T) {
 
 ## Benefits
 
-### Simplicity
-- No interfaces or abstractions needed
-- Just string parameters
-- Minimal code changes
+### Flexibility
+- Production can use environment variables for custom locations
+- Tests can use environment variables OR direct path injection
+- No interfaces or mocking frameworks needed
 
 ### Test Reliability
 - Tests use isolated temporary directories
@@ -177,22 +327,34 @@ func TestRegistry(t *testing.T) {
 - Parallel test execution is safe
 - Automatic cleanup via t.TempDir()
 
+### Production Use Cases
+- **CI/CD:** Set ARM_HOME to build-specific cache directory
+- **Docker:** Mount volumes and point ARM_HOME to mounted path
+- **Multi-user systems:** Separate ARM directories per user/project
+- **Network storage:** Point ARM_HOME to shared network drive
+
 ### Backward Compatibility
 - Existing production code unchanged (uses default constructors)
 - Existing tests can migrate incrementally
 - No breaking changes to public API
+- Environment variables are optional
 
 ## Implementation Mapping
+
+**Environment variables:**
+- `ARM_MANIFEST_PATH` - Already exists, controls arm.json location
+- `ARM_CONFIG_PATH` - New, overrides .armrc location (single file)
+- `ARM_HOME` - New, overrides home directory for .arm/ and .armrc
 
 **Lock file colocation:**
 - `cmd/arm/main.go` - All command handlers (24 locations) must derive lock path from manifest path
 
 **Components to update:**
-- `internal/arm/storage/registry.go` - Add NewRegistryWithHomeDir()
-- `internal/arm/service/service.go` - Add *WithHomeDir() variants for cache methods
+- `internal/arm/storage/registry.go` - Add NewRegistryWithHomeDir(), check ARM_HOME in NewRegistry()
+- `internal/arm/service/service.go` - Add *WithHomeDir() variants for cache methods, check ARM_HOME
+- `internal/arm/config/manager.go` - Check ARM_HOME in NewFileManager(), handle ARM_CONFIG_PATH in file reading
 
 **Already correct:**
-- `internal/arm/config/manager.go` - Already has NewFileManagerWithPaths()
 - `internal/arm/manifest/manager.go` - Uses relative paths (no home dir needed)
 - `internal/arm/packagelockfile/manager.go` - Uses relative paths (no home dir needed)
 
