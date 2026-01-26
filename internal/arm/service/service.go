@@ -1458,9 +1458,20 @@ func (s *ArmService) SetPromptsetSinks(ctx context.Context, registry, promptset 
 
 // CleanCacheByAge cleans cache by age
 func (s *ArmService) CleanCacheByAge(ctx context.Context, maxAge time.Duration) error {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return err
+	return s.CleanCacheByAgeWithHomeDir(ctx, maxAge, "")
+}
+
+// CleanCacheByAgeWithHomeDir cleans cache by age with custom home directory
+func (s *ArmService) CleanCacheByAgeWithHomeDir(ctx context.Context, maxAge time.Duration, homeDir string) error {
+	if homeDir == "" {
+		homeDir = os.Getenv("ARM_HOME")
+		if homeDir == "" {
+			var err error
+			homeDir, err = os.UserHomeDir()
+			if err != nil {
+				return err
+			}
+		}
 	}
 	storageDir := filepath.Join(homeDir, ".arm", "storage")
 	return s.cleanCacheByAgeWithPath(ctx, maxAge, storageDir)
@@ -1494,9 +1505,20 @@ func (s *ArmService) cleanCacheByAgeWithPath(ctx context.Context, maxAge time.Du
 
 // CleanCacheByTimeSinceLastAccess cleans cache by time since last access
 func (s *ArmService) CleanCacheByTimeSinceLastAccess(ctx context.Context, maxTimeSinceLastAccess time.Duration) error {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return err
+	return s.CleanCacheByTimeSinceLastAccessWithHomeDir(ctx, maxTimeSinceLastAccess, "")
+}
+
+// CleanCacheByTimeSinceLastAccessWithHomeDir cleans cache by time since last access with custom home directory
+func (s *ArmService) CleanCacheByTimeSinceLastAccessWithHomeDir(ctx context.Context, maxTimeSinceLastAccess time.Duration, homeDir string) error {
+	if homeDir == "" {
+		homeDir = os.Getenv("ARM_HOME")
+		if homeDir == "" {
+			var err error
+			homeDir, err = os.UserHomeDir()
+			if err != nil {
+				return err
+			}
+		}
 	}
 	storageDir := filepath.Join(homeDir, ".arm", "storage")
 	return s.cleanCacheByTimeSinceLastAccessWithPath(ctx, maxTimeSinceLastAccess, storageDir)
@@ -1530,9 +1552,20 @@ func (s *ArmService) cleanCacheByTimeSinceLastAccessWithPath(ctx context.Context
 
 // NukeCache nukes the cache
 func (s *ArmService) NukeCache(ctx context.Context) error {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return err
+	return s.NukeCacheWithHomeDir(ctx, "")
+}
+
+// NukeCacheWithHomeDir nukes the cache with custom home directory
+func (s *ArmService) NukeCacheWithHomeDir(ctx context.Context, homeDir string) error {
+	if homeDir == "" {
+		homeDir = os.Getenv("ARM_HOME")
+		if homeDir == "" {
+			var err error
+			homeDir, err = os.UserHomeDir()
+			if err != nil {
+				return err
+			}
+		}
 	}
 	storageDir := filepath.Join(homeDir, ".arm", "storage")
 	return s.nukeCacheWithPath(ctx, storageDir)

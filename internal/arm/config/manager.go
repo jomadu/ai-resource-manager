@@ -19,15 +19,18 @@ type Manager interface {
 type FileManager struct {
 	workingDir  string
 	userHomeDir string
+	configPath  string // Explicit config path (bypasses hierarchy)
 }
 
 // NewFileManager creates a new file manager with default OS paths
 func NewFileManager() *FileManager {
 	workingDir, _ := os.Getwd()
 	userHomeDir, _ := os.UserHomeDir()
+	configPath := os.Getenv("ARM_CONFIG_PATH")
 	return &FileManager{
 		workingDir:  workingDir,
 		userHomeDir: userHomeDir,
+		configPath:  configPath,
 	}
 }
 
@@ -36,14 +39,30 @@ func NewFileManagerWithPaths(workingDir, userHomeDir string) *FileManager {
 	return &FileManager{
 		workingDir:  workingDir,
 		userHomeDir: userHomeDir,
+		configPath:  "",
+	}
+}
+
+// NewFileManagerWithConfigPath creates a new file manager with explicit config path (bypasses hierarchy)
+func NewFileManagerWithConfigPath(configPath string) *FileManager {
+	return &FileManager{
+		workingDir:  "",
+		userHomeDir: "",
+		configPath:  configPath,
 	}
 }
 
 // GetAllSections retrieves all sections from .armrc files
-// Looks in project .armrc first, then user home .armrc
+// If ARM_CONFIG_PATH is set, only reads that file (bypasses hierarchy)
+// Otherwise looks in project .armrc first, then user home .armrc
 // Project sections completely override user home sections with the same name
 func (f *FileManager) GetAllSections(ctx context.Context) (map[string]map[string]string, error) {
 	result := make(map[string]map[string]string)
+
+	// If explicit config path is set, only use that file (bypass hierarchy)
+	if f.configPath != "" {
+		return f.getAllSectionsFromFile(f.configPath)
+	}
 
 	// Load user home file first (base)
 	if f.userHomeDir != "" {
@@ -75,8 +94,14 @@ func (f *FileManager) GetAllSections(ctx context.Context) (map[string]map[string
 }
 
 // GetSection retrieves all key-value pairs from a section using hierarchical lookup
-// Looks in project .armrc first, then user home .armrc
+// If ARM_CONFIG_PATH is set, only reads that file (bypasses hierarchy)
+// Otherwise looks in project .armrc first, then user home .armrc
 func (f *FileManager) GetSection(ctx context.Context, section string) (map[string]string, error) {
+	// If explicit config path is set, only use that file (bypass hierarchy)
+	if f.configPath != "" {
+		return f.getSectionFromFile(f.configPath, section)
+	}
+
 	// Try project .armrc first
 	if f.workingDir != "" {
 		projectRcPath := filepath.Join(f.workingDir, ".armrc")
