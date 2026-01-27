@@ -16,7 +16,8 @@ Resolve package versions from semantic version constraints, tags, branches, and 
 - [x] Parse caret (^1.0.0) and tilde (~1.2.0) constraints
 - [x] Resolve "latest" to highest semantic version
 - [x] Resolve branch names to commit hashes
-- [x] Compare versions with prerelease precedence (1.0.0-alpha < 1.0.0-beta < 1.0.0)
+- [ ] Compare versions with prerelease precedence (1.0.0-alpha.1 < 1.0.0-alpha.2 < 1.0.0-beta.1 < 1.0.0-rc.1 < 1.0.0)
+- [ ] Resolve "latest" with no semantic versions to first configured branch
 - [x] Prioritize semantic versions over branches
 - [x] Handle mixed version formats (v1.0.0, 1.0.0, tags without semver)
 
@@ -62,15 +63,16 @@ type Constraint struct {
    - `~1.2.3` → Tilde (>=1.2.3 <1.3.0)
 
 ### Resolve Version
-1. List available versions from registry
-2. Separate semantic versions from branches
-3. If constraint is "latest":
-   - Return highest semantic version
-4. If constraint is branch name:
-   - Resolve to commit hash
-5. If constraint is semantic:
-   - Filter versions satisfying constraint
-   - Return highest matching version
+1. Parse constraint from version string
+2. Filter available versions that satisfy constraint
+3. If no matches, return error
+4. Sort matches by version (highest first)
+5. Return first match
+
+**Special cases:**
+- "latest" constraint: matches all versions, returns highest
+- "latest" with no semantic versions: should return first configured branch (currently returns lexicographically highest - BUG)
+- Branch name constraint: matches exact branch name only
 
 ### Compare Versions
 1. Compare major, minor, patch numerically
@@ -88,9 +90,9 @@ type Constraint struct {
 |-----------|-------------------|
 | Version without 'v' prefix | Parse as semantic version |
 | Version with 'v' prefix | Strip 'v' and parse |
-| Prerelease versions | 1.0.0-alpha < 1.0.0-beta < 1.0.0 |
+| Prerelease versions | 1.0.0-alpha.1 < 1.0.0-alpha.2 < 1.0.0-beta.1 < 1.0.0-rc.1 < 1.0.0 |
 | Build metadata | Ignored in comparison |
-| No semantic versions | Use branches in configured order |
+| No semantic versions | Use first configured branch (currently: lexicographic sort - BUG) |
 | Mixed versions and branches | Semantic versions take precedence |
 | Invalid version string | Return error |
 | Constraint not satisfied | Return error with available versions |
@@ -116,6 +118,7 @@ type Constraint struct {
 ```go
 ParseVersion("v1.2.3") → Version{1, 2, 3, "", ""}
 ParseVersion("1.2.3-alpha.1") → Version{1, 2, 3, "alpha.1", ""}
+ParseVersion("1.2.3-rc.1") → Version{1, 2, 3, "rc.1", ""}
 ParseVersion("2.0.0+build.123") → Version{2, 0, 0, "", "build.123"}
 ```
 
@@ -129,13 +132,17 @@ constraint.IsSatisfiedBy(ParseVersion("2.0.0")) → false
 
 ### Version Comparison
 ```go
-v1 := ParseVersion("1.0.0-alpha")
-v2 := ParseVersion("1.0.0-beta")
-v3 := ParseVersion("1.0.0")
+v1 := ParseVersion("1.0.0-alpha.1")
+v2 := ParseVersion("1.0.0-alpha.2")
+v3 := ParseVersion("1.0.0-beta.1")
+v4 := ParseVersion("1.0.0-rc.1")
+v5 := ParseVersion("1.0.0")
 
 v1.CompareTo(v2) → -1 (v1 < v2)
 v2.CompareTo(v3) → -1 (v2 < v3)
-v3.CompareTo(v1) → 1  (v3 > v1)
+v3.CompareTo(v4) → -1 (v3 < v4)
+v4.CompareTo(v5) → -1 (v4 < v5)
+v5.CompareTo(v1) → 1  (v5 > v1)
 ```
 
 ### Resolution Examples
