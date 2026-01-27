@@ -68,9 +68,13 @@ git push origin ralph-0.0.X
 - `internal/arm/sink/` - Sink management and compilation
 - `internal/arm/manifest/` - Manifest file handling
 - `internal/arm/storage/` - Package storage and caching
+- `internal/arm/core/` - Version resolution, pattern matching, archive extraction
+- `internal/arm/config/` - .armrc configuration management
+- `internal/arm/packagelockfile/` - Lock file management
 - `docs/` - User documentation
-- `specs/` - Builder specifications (e2e testing)
+- `specs/` - Technical specifications (JTBDs, acceptance criteria, algorithms)
+- `test/e2e/` - End-to-end integration tests
 
 ## Current Status
 
-All functionality implemented and tested. See IMPLEMENTATION_PLAN.md for details.
+All functionality implemented and tested. See IMPLEMENTATION_PLAN.md and specs/ for details.
