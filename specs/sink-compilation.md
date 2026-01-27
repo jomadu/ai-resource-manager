@@ -67,10 +67,12 @@ Compile ARM resource files (YAML) to tool-specific formats and manage output dir
 2. For each rule in ruleset:
    - Generate filename using tool-specific generator
    - Generate content using tool-specific compiler
-   - Embed metadata (priority, enforcement, scope)
+   - Embed metadata (namespace, ruleset info, rule info, enforcement, scope)
 3. Write files to sink directory
-4. Update arm-index.json
+4. Update arm-index.json with priority
 5. Generate arm_index.* priority file
+
+**Note:** RULESET priority (from `--priority` flag) is NOT embedded in individual rule files. It's stored in arm-index.json and arm_index.* only.
 
 ### Compile Promptset
 1. Parse ARM resource YAML
@@ -81,14 +83,16 @@ Compile ARM resource files (YAML) to tool-specific formats and manage output dir
 4. Update arm-index.json
 
 ### Generate Priority Index
-1. Collect all rulesets in sink
-2. Sort by priority (highest first)
-3. Generate tool-specific index file:
-   - Cursor: arm_index.mdc with frontmatter
+1. Load arm-index.json from sink
+2. Collect all rulesets with priorities
+3. Sort by priority (highest first)
+4. Generate markdown file:
+   - Cursor: arm_index.mdc
    - Amazon Q: arm_index.md
    - Copilot: arm_index.instructions.md
    - Markdown: arm_index.md
-4. Include instructions for AI to respect priority order
+5. List rulesets in priority order with file paths
+6. Include instructions for AI to respect priority order
 
 ### Cleanup on Uninstall
 1. Remove package files from sink
@@ -156,12 +160,26 @@ Compile ARM resource files (YAML) to tool-specific formats and manage output dir
 └── arm_index.instructions.md
 ```
 
-### Cursor Rule with Frontmatter
+### Cursor Rule with Frontmatter and Metadata
 ```markdown
 ---
-priority: 100
-enforcement: required
-scope: all
+description: "Enforce clean code practices"
+globs: **/*.ts
+alwaysApply: true
+---
+
+---
+namespace: ai-rules/clean-code-ruleset@1.0.0
+ruleset:
+  id: clean-code-ruleset
+  name: Clean Code Ruleset
+  rules:
+    - ruleOne
+    - ruleTwo
+rule:
+  id: ruleOne
+  name: Rule One
+  enforcement: MUST
 ---
 
 # Rule Title
@@ -169,8 +187,21 @@ scope: all
 Rule body content here.
 ```
 
-### Amazon Q Rule (Pure Markdown)
+### Amazon Q Rule (Metadata + Content)
 ```markdown
+---
+namespace: ai-rules/clean-code-ruleset@1.0.0
+ruleset:
+  id: clean-code-ruleset
+  name: Clean Code Ruleset
+  rules:
+    - ruleOne
+rule:
+  id: ruleOne
+  name: Rule One
+  enforcement: MUST
+---
+
 # Rule Title
 
 Rule body content here.
@@ -178,19 +209,35 @@ Rule body content here.
 
 ### Priority Index (arm_index.mdc)
 ```markdown
----
-priority: 999
-enforcement: required
-scope: all
----
+# ARM Rulesets
 
-# ARM Priority Index
+This file defines the installation priorities for rulesets managed by ARM.
 
-When multiple rules conflict, apply them in this priority order:
+## Priority Rules
 
-1. team-standards (priority: 200)
-2. clean-code-ruleset (priority: 100)
-3. security-ruleset (priority: 100)
+**This index is the authoritative source of truth for ruleset priorities.** When conflicts arise between rulesets, follow this priority order:
+
+1. **Higher priority numbers take precedence** over lower priority numbers
+2. **Rules from higher priority rulesets override** conflicting rules from lower priority rulesets
+3. **Always consult this index** to resolve any ambiguity about which rules to follow
+
+## Installed Rulesets
+
+### ai-rules/team-standards@1.0.0
+- **Priority:** 200
+- **Rules:**
+  - arm/ai-rules/team-standards/1.0.0/rules/teamStandards_rule.mdc
+
+### ai-rules/clean-code-ruleset@1.0.0
+- **Priority:** 100
+- **Rules:**
+  - arm/ai-rules/clean-code-ruleset/1.0.0/rules/cleanCode_ruleOne.mdc
+  - arm/ai-rules/clean-code-ruleset/1.0.0/rules/cleanCode_ruleTwo.mdc
+
+### ai-rules/security-ruleset@1.0.0
+- **Priority:** 100
+- **Rules:**
+  - arm/ai-rules/security-ruleset/1.0.0/rules/security_rule.mdc
 ```
 
 ### Cleanup Example
