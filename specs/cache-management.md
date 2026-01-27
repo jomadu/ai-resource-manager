@@ -25,52 +25,67 @@ Store downloaded packages locally to avoid redundant downloads, enable offline u
 ### Registry Metadata
 ```json
 {
-  "key": "abc123def456",
   "url": "https://github.com/org/repo",
-  "created": "2024-01-15T10:30:00Z"
+  "type": "git",
+  "group_id": "123",
+  "project_id": "456",
+  "owner": "myorg",
+  "repository": "myrepo"
 }
 ```
 
+**Note:** `group_id` and `project_id` are GitLab-specific. `owner` and `repository` are Cloudsmith-specific.
+
 ### Package Metadata
+Package metadata is the raw package key object serialized to JSON. Fields vary based on the package key:
+
 ```json
 {
   "name": "clean-code-ruleset",
-  "created": "2024-01-15T10:30:00Z"
+  "include": ["**/*.yml"],
+  "exclude": ["**/experimental/**"],
+  "version": "1.0.0"
 }
 ```
 
 ### Version Metadata
 ```json
 {
-  "version": "v1.0.0",
-  "created": "2024-01-15T10:30:00Z",
-  "accessed": "2024-01-20T14:45:00Z",
-  "commit": "abc123def456",
-  "integrity": "sha256-xyz789..."
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0,
+    "prerelease": "",
+    "build": "",
+    "version": "1.0.0",
+    "isSemver": true
+  },
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z",
+  "accessedAt": "2024-01-20T14:45:00Z"
 }
 ```
 
 ## Algorithm
 
 ### Generate Cache Key
-1. Extract registry URL and configuration
-2. Normalize URL (strip protocol, trailing slashes)
-3. Sort configuration keys alphabetically
-4. Concatenate URL + sorted config
-5. Hash with SHA256
-6. Return first 16 characters of hex digest
+1. JSON marshal the registry key object
+2. Hash with SHA256
+3. Return full 64-character hex digest
+
+**Note:** Cache key generation relies on JSON marshaling determinism. The same registry configuration will produce the same cache key.
 
 ### Store Package
 1. Generate cache key for registry
 2. Create directory structure: registries/{key}/packages/{package}/{version}/
-3. Write metadata.json with timestamps
+3. Write metadata.json with timestamps (createdAt, updatedAt, accessedAt)
 4. Copy files to files/ subdirectory
-5. Update accessed timestamp
+5. Update accessedAt timestamp on subsequent reads
 
 ### Clean by Age
 1. Traverse all version directories
 2. Read metadata.json for each version
-3. Calculate age from created timestamp
+3. Calculate age from updatedAt timestamp
 4. If age > threshold, remove version directory
 5. If package has no versions, remove package directory
 6. If registry has no packages, remove registry directory
@@ -78,16 +93,17 @@ Store downloaded packages locally to avoid redundant downloads, enable offline u
 ### Clean by Access Time
 1. Traverse all version directories
 2. Read metadata.json for each version
-3. Calculate time since last access
+3. Calculate time since accessedAt timestamp
 4. If time > threshold, remove version directory
 5. Clean up empty parent directories
 
 ### File Locking
-1. Create .lock file in target directory
-2. Use flock (Unix) or LockFileEx (Windows)
-3. Wait with timeout if lock held
-4. Perform operation
-5. Release lock and remove .lock file
+1. Create .lock file in target directory using O_CREATE|O_EXCL for atomicity
+2. Retry with 10ms sleep if lock file exists
+3. Wait with timeout if lock held (default: 10s)
+4. Check context cancellation during wait
+5. Perform operation
+6. Release lock and remove .lock file
 
 ## Edge Cases
 
@@ -96,7 +112,7 @@ Store downloaded packages locally to avoid redundant downloads, enable offline u
 | Cache key collision | Extremely unlikely (SHA256), but would share cache |
 | Missing metadata.json | Treat as corrupted, skip or remove |
 | Concurrent access | File lock prevents corruption, second process waits |
-| Lock timeout | Return error after timeout (default: 30s) |
+| Lock timeout | Return error after timeout (default: 10s) |
 | ARM_HOME not set | Use os.UserHomeDir() |
 | ARM_HOME set | Use ARM_HOME/.arm/storage/ |
 | Partial download | Atomic write or cleanup on error |
@@ -142,13 +158,18 @@ Store downloaded packages locally to avoid redundant downloads, enable offline u
 ### Cache Key Generation
 ```go
 // Git registry
-url := "https://github.com/org/repo"
-branches := []string{"main", "develop"}
-key := GenerateKey(url, branches) // "abc123def456"
+registryKey := map[string]interface{}{
+    "url":  "https://github.com/org/repo",
+    "type": "git",
+}
+key := GenerateKey(registryKey) // Full 64-char SHA256 hash
 
-// Same URL, different branches = different key
-branches2 := []string{"main"}
-key2 := GenerateKey(url, branches2) // "def789abc123"
+// Same URL, different type = different key
+registryKey2 := map[string]interface{}{
+    "url":  "https://github.com/org/repo",
+    "type": "gitlab",
+}
+key2 := GenerateKey(registryKey2) // Different hash
 ```
 
 ### Clean by Age
