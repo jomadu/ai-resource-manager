@@ -1,15 +1,21 @@
 #!/bin/bash
-# Usage: ./loop.sh [plan] [max_iterations]
+# Usage: ./loop.sh [plan|spec] [max_iterations]
 # Examples:
 #   ./loop.sh              # Build mode, unlimited iterations
 #   ./loop.sh 20           # Build mode, max 20 iterations
 #   ./loop.sh plan         # Plan mode, unlimited iterations
 #   ./loop.sh plan 5       # Plan mode, max 5 iterations
+#   ./loop.sh spec         # Spec mode, unlimited iterations
+#   ./loop.sh spec 10      # Spec mode, max 10 iterations
 
 # Parse arguments
 if [ "$1" = "plan" ]; then
     MODE="plan"
     PROMPT_FILE="PROMPT_plan.md"
+    MAX_ITERATIONS=${2:-0}
+elif [ "$1" = "spec" ]; then
+    MODE="spec"
+    PROMPT_FILE="PROMPT_spec.md"
     MAX_ITERATIONS=${2:-0}
 elif [[ "$1" =~ ^[0-9]+$ ]]; then
     MODE="build"
