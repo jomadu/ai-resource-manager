@@ -16,7 +16,7 @@ Validate ARM functionality through comprehensive end-to-end tests covering all u
 10. Test multi-sink installations
 
 ## Acceptance Criteria
-- [x] 55 E2E tests across 14 test suites covering all workflows
+- [x] 56 E2E tests across 14 test suites covering all workflows
 - [x] Tests use isolated temporary directories
 - [x] Tests don't pollute user's ARM directories
 - [x] Tests create local Git repositories for reproducibility
@@ -24,7 +24,7 @@ Validate ARM functionality through comprehensive end-to-end tests covering all u
 - [x] Tests verify manifest and lock file correctness
 - [x] Tests verify compiled output for each tool
 - [x] Tests verify cache structure and metadata
-- [x] Tests verify cleanup behavior
+- [x] Tests verify cleanup behavior (empty directories, index files)
 - [x] All tests pass reliably (100% pass rate)
 
 ## Test Suites
