@@ -27,13 +27,18 @@ Install, update, upgrade, and uninstall AI resource packages (rulesets and promp
 ```json
 {
   "dependencies": {
-    "registry/package": {
+    "registry/clean-code-ruleset": {
       "type": "ruleset",
       "version": "^1.0.0",
       "priority": 100,
       "sinks": ["cursor-rules", "q-rules"],
       "include": ["**/*.yml"],
       "exclude": ["**/experimental/**"]
+    },
+    "registry/code-review-promptset": {
+      "type": "promptset",
+      "version": "^2.0.0",
+      "sinks": ["cursor-commands"]
     }
   }
 }
@@ -53,51 +58,103 @@ Install, update, upgrade, and uninstall AI resource packages (rulesets and promp
 
 **Note:** Lock file uses composite key format: `registry/package@version`
 
+## Data Structures
+
+### Sink Path Structure
+```
+{sink}/arm/{registry}/{package}/{version}/{file}
+
+Example:
+.cursor/rules/arm/ai-rules/clean-code-ruleset/1.0.0/rules/cleanCode_ruleOne.mdc
+```
+
+### ARM Index (arm-index.json)
+```json
+{
+  "version": 1,
+  "rulesets": {
+    "registry/package@v1.0.0": {
+      "priority": 100,
+      "files": ["arm/registry/package/v1.0.0/rules/rule.mdc"]
+    }
+  },
+  "promptsets": {
+    "registry/package@v2.0.0": {
+      "files": ["arm/registry/package/v2.0.0/prompts/prompt.md"]
+    }
+  }
+}
+```
+
+**Note:** Tracks installed packages per sink using composite keys
+
 ## Algorithm
 
 ### Install
-1. Parse package key (registry/package@version)
+1. Validate sinks exist in manifest
 2. Resolve version from registry (semver, branch, or tag)
-3. Fetch package files from registry
+3. Fetch package files from registry (cached in ~/.arm/storage/)
 4. Calculate SHA256 integrity hash
-5. Store in cache (~/.arm/storage/)
-6. Compile to tool-specific format for each sink
-7. Write to sink directories
-8. Update arm.json and arm-lock.json
+5. Verify integrity if package already locked (prevents tampering)
+6. Update manifest (version constraint, sinks, patterns, priority)
+7. Update lock file (resolved version, integrity) using composite key `registry/package@version`
+8. For each sink:
+   - Uninstall all existing versions of package
+   - Parse ARM resource files (rulesets/promptsets) and compile to tool format
+   - Copy non-resource files directly
+   - Write to hierarchical path: `{sink}/arm/{registry}/{package}/{version}/{file}`
+   - Update arm-index.json with installed files and priority
+   - Regenerate arm_index.* priority file (rulesets only)
 
 ### Update
 1. Read manifest for version constraint
 2. Resolve highest version satisfying constraint
-3. If newer than locked version, install new version
-4. Uninstall old version from sinks
-5. Update lock file
+3. Skip if version unchanged (optimization)
+4. If version changed:
+   - Uninstall old version from sinks
+   - Remove old lock entry
+   - Install new version to sinks
+   - Update lock file with new version and integrity
+5. Manifest constraint unchanged
+6. Continue on error (partial success allowed)
 
 ### Upgrade
 1. Fetch latest version from registry (ignore constraint)
-2. Install new version
-3. Uninstall old version from sinks
-4. Update manifest constraint and lock file
+2. Skip if version unchanged
+3. If version changed:
+   - Uninstall old version from sinks
+   - Remove old lock entry
+   - Install new version to sinks
+   - Update lock file with new version and integrity
+   - Update manifest constraint to `^{major}.0.0`
+4. Continue on error (partial success allowed)
 
 ### Uninstall
-1. Remove files from each sink
-2. Remove package from arm-index.json
-3. If no packages remain, remove arm-index.json
-4. If no rulesets remain, remove arm_index.* priority files
-5. Clean up empty directories recursively
-6. Update arm.json and arm-lock.json
+1. For each sink:
+   - Load arm-index.json
+   - Find all versions matching `registry/package@*` prefix
+   - Remove all files from disk
+   - Delete entries from index
+   - If no packages remain, remove arm-index.json and arm_index.*
+   - Otherwise, save index and regenerate arm_index.*
+   - Clean up empty directories recursively
+2. Remove from lock file
+3. Remove from manifest
 
 ## Edge Cases
 
 | Condition | Expected Behavior |
 |-----------|-------------------|
-| Package already installed | Reinstall (replace files) |
+| Package already installed | Uninstall old versions, then install new |
 | Version not found | Error with available versions |
-| Integrity mismatch | Error and refuse to install |
+| Integrity mismatch on install | Error and refuse to install (package tampered) |
 | No lock file on update | Treat as fresh install |
 | Sink doesn't exist | Error (must add sink first) |
 | Empty directory after uninstall | Remove directory recursively |
 | Nested empty directories | Remove all empty ancestors |
 | Sink root directory empty | Keep sink root, only remove subdirs |
+| Update/upgrade with errors | Continue processing remaining packages (partial success) |
+| Uninstall package | Removes all versions matching `registry/package@*` |
 
 ## Dependencies
 
