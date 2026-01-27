@@ -42,16 +42,16 @@ Install, update, upgrade, and uninstall AI resource packages (rulesets and promp
 ### Lock Entry (arm-lock.json)
 ```json
 {
+  "version": 1,
   "dependencies": {
     "registry/package@v1.0.0": {
-      "version": "v1.0.0",
-      "resolved": "https://github.com/org/repo",
-      "integrity": "sha256-abc123...",
-      "commit": "abc123def456"
+      "integrity": "sha256-abc123..."
     }
   }
 }
 ```
+
+**Note:** Lock file uses composite key format: `registry/package@version`
 
 ## Algorithm
 
