@@ -15,6 +15,6 @@ Study the implementation and update specs/:
    - Reorganize/refactor specs if JTBDs or topics have evolved
 5. Keep specs minimal but complete
 6. When you learn something new about how to contextualize with the codebase or run the application, update AGENTS.md but keep it brief and operational only
-7. Commit changes with descriptive message
+7. Commit changes with descriptive message using the "conventional commit message" format (feat:, fix:, docs:, etc.) standard.
 
 Focus: What does the code actually do? What are the acceptance criteria from tests?
