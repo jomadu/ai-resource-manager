@@ -24,7 +24,7 @@ ARM solves these problems with a modern dependency manager approach.
 - **Consistent, versioned installs** using semantic versioning (except for [git based registry](docs/git-registry.md) without semver tags, which gets a little funky)
 - **Reliable, reproducible environments** through manifest and lock files (similar to npm's `package.json` and `package-lock.json`)
 - **Backwards compatibility** with existing repositories like [awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules) - use them immediately without conversion
-- **Flexible formats** - authors can write cross-platform ARM resources or tool-specific files
+- **Write once, deploy everywhere** - compile ARM resource schemas to any tool format (Cursor, Copilot, Amazon Q, Markdown)
 - **Priority-based rule composition** for layering multiple rulesets with clear conflict resolution (your team's standards > internet best practices)
 - **Flexible registry support** for managing AI resources from Git, GitLab, and Cloudsmith
 - **Automated update workflow:** easily check for updates and apply them across projects ([nice](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTlycTA1ejFwdnZtZHNzOG5tYnVwajF3bDAwYzllcnU1dm5oNWplMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NEvPzZ8bd1V4Y/giphy.gif))
@@ -138,6 +138,18 @@ arm install ruleset --include "security/**/*.yml" --exclude "**/experimental/**"
 
 # Install only specific prompt files
 arm install promptset --include "review/**/*.yml" --include "refactor/**/*.yml" ai-rules/code-review-promptset cursor-commands
+```
+
+Compile local ARM resource files to tool-specific formats:
+```bash
+# Compile a single ruleset file
+arm compile ruleset my-rules.yml --tool cursor --output .cursor/rules/
+
+# Compile all YAML files in a directory
+arm compile ruleset ./rules/ --tool copilot --output .github/copilot/ --recursive
+
+# Compile with namespace for organization
+arm compile ruleset ./rules/ --tool cursor --output .cursor/rules/ --namespace my-team
 ```
 
 ## Documentation
