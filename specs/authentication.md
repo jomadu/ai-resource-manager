@@ -8,32 +8,33 @@ Securely authenticate with private registries using token-based authentication c
 2. Support hierarchical .armrc lookup (project > user)
 3. Expand environment variables in tokens
 4. Apply authentication to registry requests
-5. Support Bearer and Token authentication schemes
 
 ## Acceptance Criteria
 - [x] Load .armrc from project directory (./.armrc)
 - [x] Load .armrc from user home directory (~/.armrc)
 - [x] Project .armrc overrides user .armrc
 - [x] Support ARM_CONFIG_PATH to override .armrc location (bypasses hierarchy)
-- [x] Parse INI-style sections [registry-url]
+- [x] Parse INI-style sections with `registry` prefix
 - [x] Expand ${ENV_VAR} in token values
-- [x] Support authToken field
-- [x] Apply Bearer token to HTTP requests
-- [x] Apply Token header to HTTP requests
-- [x] Match registry URL to .armrc section
+- [x] Support `token` field
+- [x] GitLab: Apply Bearer token to HTTP requests
+- [x] Cloudsmith: Apply Token header to HTTP requests
 
 ## Data Structures
 
 ### .armrc File Format
 ```ini
-[https://github.com/org/private-repo]
-authToken = ${GITHUB_TOKEN}
+# GitLab with project ID
+[registry https://gitlab.example.com/project/123]
+token = glpat-xyz123
 
-[https://gitlab.com]
-authToken = glpat-xyz123
+# GitLab with group ID
+[registry https://gitlab.example.com/group/456]
+token = ${GITLAB_TOKEN}
 
-[https://api.cloudsmith.io]
-authToken = Bearer ${CLOUDSMITH_TOKEN}
+# Cloudsmith
+[registry https://api.cloudsmith.io/myorg/myrepo]
+token = ${CLOUDSMITH_TOKEN}
 ```
 
 ## Algorithm
@@ -56,20 +57,22 @@ authToken = Bearer ${CLOUDSMITH_TOKEN}
 4. Return expanded token
 
 ### Apply Authentication
-1. Normalize registry URL (strip protocol, trailing slashes)
-2. Find matching section in .armrc
-3. Extract authToken
-4. Expand environment variables
-5. Detect authentication scheme:
-   - If token starts with "Bearer ", use as-is
-   - Otherwise, prepend "Bearer "
-6. Add Authorization header to request
 
-### Section Matching
-1. Normalize both URLs (strip protocol, trailing slashes)
-2. Compare normalized URLs
-3. Support exact match and prefix match
-4. Return matching section or nil
+**GitLab:**
+1. Construct auth key: `{url}/project/{id}` or `{url}/group/{id}`
+2. Prepend `"registry "` to auth key
+3. Look up section in .armrc by exact string match
+4. Extract `token` field value
+5. Expand environment variables
+6. Set header: `Authorization: Bearer {token}`
+
+**Cloudsmith:**
+1. Construct auth key: `{url}/{owner}/{repo}`
+2. Prepend `"registry "` to auth key
+3. Look up section in .armrc by exact string match
+4. Extract `token` field value
+5. Expand environment variables
+6. Set header: `Authorization: Token {token}`
 
 ## Edge Cases
 
@@ -78,12 +81,11 @@ authToken = Bearer ${CLOUDSMITH_TOKEN}
 | No .armrc files | No authentication applied |
 | ARM_CONFIG_PATH set | Use only that file, ignore ./.armrc and ~/.armrc |
 | ARM_CONFIG_PATH not set | Use hierarchical lookup (./.armrc overrides ~/.armrc) |
-| Environment variable not set | Leave ${VAR} unexpanded (will fail auth) |
+| Environment variable not set | Expands to empty string |
 | Invalid .armrc syntax | Skip malformed lines, continue parsing |
-| Multiple matching sections | Use first match |
-| Token without Bearer prefix | Prepend "Bearer " automatically |
-| Token with Bearer prefix | Use as-is |
-| .armrc file permissions | Warn if world-readable (security risk) |
+| Section not found | Return error |
+| Token field not found | Return error |
+| .armrc file permissions | Should be 0600 (owner read/write only) |
 
 ## Dependencies
 
@@ -104,24 +106,23 @@ authToken = Bearer ${CLOUDSMITH_TOKEN}
 
 ### User .armrc (~/.armrc)
 ```ini
-[https://github.com]
-authToken = ${GITHUB_TOKEN}
+[registry https://gitlab.example.com/project/123]
+token = ${GITLAB_TOKEN}
 
-[https://gitlab.com]
-authToken = glpat-abc123
+[registry https://api.cloudsmith.io/myorg/myrepo]
+token = ${CLOUDSMITH_TOKEN}
 ```
 
 ### Project .armrc (./.armrc)
 ```ini
-[https://github.com/myorg/private-repo]
-authToken = ${PROJECT_GITHUB_TOKEN}
+[registry https://gitlab.example.com/project/456]
+token = glpat-project-token
 ```
 
 ### Environment Variables
 ```bash
-export GITHUB_TOKEN=ghp_xyz789
-export PROJECT_GITHUB_TOKEN=ghp_abc123
-export CLOUDSMITH_TOKEN=cs_def456
+export GITLAB_TOKEN=glpat-xyz789
+export CLOUDSMITH_TOKEN=ckcy-abc123
 ```
 
 ### Hierarchical Lookup
@@ -140,55 +141,54 @@ export ARM_CONFIG_PATH=/custom/path/.armrc
 ### Token Expansion
 ```ini
 # Before expansion
-authToken = ${GITHUB_TOKEN}
+token = ${GITLAB_TOKEN}
 
-# After expansion (GITHUB_TOKEN=ghp_xyz789)
-authToken = ghp_xyz789
+# After expansion (GITLAB_TOKEN=glpat-xyz789)
+token = glpat-xyz789
 ```
 
-### Authentication Schemes
+### Authentication Headers
 ```ini
-# Automatic Bearer prefix
-[https://github.com]
-authToken = ghp_xyz789
-# Results in: Authorization: Bearer ghp_xyz789
+# GitLab
+[registry https://gitlab.example.com/project/123]
+token = glpat-xyz789
+# Results in: Authorization: Bearer glpat-xyz789
 
-# Explicit Bearer prefix
-[https://api.cloudsmith.io]
-authToken = Bearer cs_abc123
-# Results in: Authorization: Bearer cs_abc123
-
-# Token scheme (alternative)
-[https://gitlab.com]
-authToken = Token glpat-xyz789
-# Results in: Authorization: Token glpat-xyz789
+# Cloudsmith
+[registry https://api.cloudsmith.io/myorg/myrepo]
+token = ckcy-abc123
+# Results in: Authorization: Token ckcy-abc123
 ```
 
-### Section Matching
+### Section Name Format
+
+**GitLab with Project ID:**
 ```ini
-[https://github.com/myorg/repo]
-authToken = ${GITHUB_TOKEN}
+[registry https://gitlab.example.com/project/123]
+token = glpat-xyz
 ```
 
-```bash
-# Matches:
-# - https://github.com/myorg/repo
-# - https://github.com/myorg/repo.git
-# - github.com/myorg/repo
-
-# Does not match:
-# - https://github.com/otherorg/repo
-# - https://gitlab.com/myorg/repo
+**GitLab with Group ID:**
+```ini
+[registry https://gitlab.example.com/group/456]
+token = glpat-xyz
 ```
 
-### File Permissions Warning
-```bash
-# If .armrc is world-readable (chmod 644)
-$ arm install ruleset private-registry/rules cursor-rules
-Warning: .armrc file is world-readable (permissions: 644)
-Consider running: chmod 600 ~/.armrc
+**Cloudsmith:**
+```ini
+[registry https://api.cloudsmith.io/myorg/myrepo]
+token = ckcy-xyz
+```
 
-# Recommended permissions (chmod 600)
-$ chmod 600 ~/.armrc
-$ chmod 600 ./.armrc
+**Important:** Section names must exactly match the constructed auth key:
+- GitLab: `registry {url}/project/{id}` or `registry {url}/group/{id}`
+- Cloudsmith: `registry {url}/{owner}/{repo}`
+- No URL normalization is performed
+- Exact string match required
+
+### File Permissions
+```bash
+# Recommended permissions (owner read/write only)
+chmod 600 ~/.armrc
+chmod 600 ./.armrc
 ```
