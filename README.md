@@ -174,3 +174,5 @@ arm compile ruleset ./rules/ --tool cursor --output .cursor/rules/ --namespace m
 - **[Git Registry](docs/git-registry.md)** - GitHub, GitLab, and Git remotes
 - **[GitLab Registry](docs/gitlab-registry.md)** - GitLab Package Registry
 - **[Cloudsmith Registry](docs/cloudsmith-registry.md)** - Cloudsmith package repository
+
+Buy Me a Coffee: buymeacoffee.com/max.dunn
