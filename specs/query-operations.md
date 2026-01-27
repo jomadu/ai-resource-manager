@@ -1,13 +1,14 @@
 # Query Operations
 
 ## Job to be Done
-Query installed packages, check for outdated dependencies, and view detailed package information to maintain awareness of project dependencies.
+Query installed packages, check for outdated dependencies, view detailed package information, and list available versions from registries to maintain awareness of project dependencies and discover packages.
 
 ## Activities
 1. List all installed packages with versions and sinks
 2. Check for outdated packages with available updates
 3. View detailed information about specific packages
-4. Display information in multiple formats (table, JSON)
+4. List available versions for a package from its registry
+5. Display information in multiple formats (table, JSON, list)
 
 ## Acceptance Criteria
 - [x] List all installed rulesets and promptsets
@@ -15,6 +16,7 @@ Query installed packages, check for outdated dependencies, and view detailed pac
 - [x] Check for outdated packages comparing current vs latest versions
 - [x] Display outdated packages in table or JSON format
 - [x] View detailed info for specific package (registry/package format)
+- [ ] List available versions for a package from registry
 - [x] Handle missing manifest gracefully
 - [x] Handle missing lock file gracefully
 - [x] Sort output alphabetically for deterministic results
@@ -71,6 +73,14 @@ type OutdatedDependency struct {
 3. Read lock file for installed version
 4. Return combined DependencyInfo
 
+### List Available Versions
+1. Parse package key (registry/package)
+2. Extract registry name
+3. Create registry instance from manifest config
+4. Call registry.ListPackageVersions(packageName)
+5. Sort versions (semver descending, branches in config order)
+6. Return version list
+
 ## Edge Cases
 
 | Condition | Expected Behavior |
@@ -81,6 +91,8 @@ type OutdatedDependency struct {
 | Registry unavailable | Error: "failed to fetch latest version" |
 | Package not in manifest | Error: "package not found in manifest" |
 | Malformed package key | Error: "invalid package format (expected registry/package)" |
+| Registry not configured | Error: "registry not found: {name}" |
+| Package not found in registry | Error: "package not found in registry" |
 
 ## Dependencies
 
@@ -192,7 +204,32 @@ test-registry/clean-code-ruleset:
 - Include/exclude patterns displayed with quotes
 - Version shown without 'v' prefix
 
-### Example 4: No Dependencies
+### Example 4: List Available Versions
+
+**Command:**
+```bash
+arm list versions test-registry/clean-code-ruleset
+```
+
+**Expected Output:**
+```
+test-registry/clean-code-ruleset:
+  - 2.1.0
+  - 2.0.0
+  - 1.5.0
+  - 1.0.0
+  - main (branch)
+  - develop (branch)
+```
+
+**Verification:**
+- All available versions from registry are listed
+- Semantic versions sorted descending (highest first)
+- Branches listed after semver versions in config order
+- 2-space indentation for version list
+- Branch versions labeled with "(branch)"
+
+### Example 5: No Dependencies
 
 **Command:**
 ```bash
@@ -212,6 +249,7 @@ arm list dependency
 
 - Query operations are read-only and never modify manifest or lock files
 - Outdated check requires network access to registries
+- List versions requires network access to query registry
 - List and info commands work offline using cached manifest/lock data
 - Output is always sorted alphabetically for deterministic results (important for testing)
 - JSON output format uses lowercase keys: "package", "type", "constraint", "current", "wanted", "latest"
