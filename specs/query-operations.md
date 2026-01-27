@@ -107,20 +107,20 @@ type OutdatedDependency struct {
 
 **Command:**
 ```bash
-arm list
+arm list dependency
 ```
 
 **Expected Output:**
 ```
-NAME                              TYPE       VERSION   CONSTRAINT   SINKS
-test-registry/clean-code-ruleset  ruleset    v1.0.0    ^1.0.0       cursor-rules, q-rules
-test-registry/code-review         promptset  v2.1.0    ~2.1.0       cursor-commands
+- test-registry/clean-code-ruleset@1.0.0
+- test-registry/code-review@2.1.0
 ```
 
 **Verification:**
 - All dependencies from arm.json are listed
 - Versions match arm-lock.json
 - Output is sorted alphabetically
+- Format: dash-prefixed list with `@version` suffix
 
 ### Example 2: Check Outdated Dependencies
 
@@ -129,69 +129,84 @@ test-registry/code-review         promptset  v2.1.0    ~2.1.0       cursor-comma
 arm outdated
 ```
 
-**Expected Output (Table):**
+**Expected Output (Table - default):**
 ```
-NAME                              TYPE       CURRENT   LATEST    CONSTRAINT
-test-registry/clean-code-ruleset  ruleset    v1.0.0    v1.2.0    ^1.0.0
+PACKAGE                           TYPE       CONSTRAINT  CURRENT  WANTED  LATEST
+test-registry/clean-code-ruleset  ruleset    ^1.0.0      1.0.0    1.1.0   1.2.0
 ```
 
 **Expected Output (JSON):**
 ```json
 [
   {
-    "name": "test-registry/clean-code-ruleset",
+    "package": "test-registry/clean-code-ruleset",
     "type": "ruleset",
-    "current": "v1.0.0",
-    "latest": "v1.2.0",
-    "constraint": "^1.0.0"
+    "constraint": "^1.0.0",
+    "current": "1.0.0",
+    "wanted": "1.1.0",
+    "latest": "1.2.0"
   }
 ]
 ```
 
+**Expected Output (List):**
+```
+test-registry/clean-code-ruleset
+```
+
 **Verification:**
 - Only outdated packages are shown
-- Latest version is fetched from registry
-- Constraint is shown for reference
+- Table format includes WANTED column (highest version satisfying constraint)
+- JSON uses lowercase keys: "package", "type", "constraint", "current", "wanted", "latest"
+- List format shows package names only (no dashes)
+- Versions shown without 'v' prefix
 
 ### Example 3: View Dependency Info
 
 **Command:**
 ```bash
-arm info test-registry/clean-code-ruleset
+arm info dependency test-registry/clean-code-ruleset
 ```
 
 **Expected Output:**
 ```
-Name:        test-registry/clean-code-ruleset
-Type:        ruleset
-Version:     v1.0.0
-Constraint:  ^1.0.0
-Priority:    100
-Sinks:       cursor-rules, q-rules
-Include:     **/*.yml
-Exclude:     **/experimental/**
+test-registry/clean-code-ruleset:
+    type: ruleset
+    version: 1.0.0
+    constraint: ^1.0.0
+    priority: 100
+    sinks:
+        - cursor-rules
+        - q-rules
+    include:
+        - "**/*.yml"
+    exclude:
+        - "**/experimental/**"
 ```
 
 **Verification:**
 - All configuration details are shown
 - Data comes from both manifest and lock file
-- Include/exclude patterns are displayed if set
+- 4-space indentation for nested levels
+- Arrays use dash-prefixed items
+- Include/exclude patterns displayed with quotes
+- Version shown without 'v' prefix
 
 ### Example 4: No Dependencies
 
 **Command:**
 ```bash
-arm list
+arm list dependency
 ```
 
 **Expected Output:**
 ```
-No dependencies installed.
+(empty output or no dependencies message)
 ```
 
 **Verification:**
 - Graceful handling of empty manifest
-- No error, just informational message
+- No error, just empty list or informational message
 
 ## Notes
 
@@ -199,4 +214,7 @@ No dependencies installed.
 - Outdated check requires network access to registries
 - List and info commands work offline using cached manifest/lock data
 - Output is always sorted alphabetically for deterministic results (important for testing)
-- JSON output format is useful for scripting and automation
+- JSON output format uses lowercase keys: "package", "type", "constraint", "current", "wanted", "latest"
+- Table format includes WANTED column showing highest version satisfying constraint
+- List format shows package names only (no dashes, no version)
+- Versions displayed without 'v' prefix in all outputs
