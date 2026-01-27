@@ -15,7 +15,7 @@ Compile local ARM resource files (YAML) to tool-specific formats without install
 - [x] Compile all YAML files in directory
 - [x] Recursive directory traversal with --recursive
 - [x] Validate-only mode without writing files
-- [x] Pattern filtering with --include and --exclude
+- [ ] Pattern filtering with --include and --exclude (uses filepath.Match on basename only, not core.MatchPattern)
 - [x] Custom namespace with --namespace
 - [x] Force overwrite with --force
 - [x] Fail-fast mode with --fail-fast
@@ -61,9 +61,16 @@ type CompileRequest struct {
 ### File Discovery
 1. Default include patterns: `*.yml`, `*.yaml`
 2. Walk directories (recursive if flag set)
-3. Check exclude patterns first (exclude overrides include)
-4. Check include patterns (if specified)
-5. Return list of matching files
+3. Get relative path from directory root for pattern matching
+4. Check exclude patterns first using `core.MatchPattern()` (exclude overrides include)
+5. Check include patterns using `core.MatchPattern()` (supports `**` wildcards)
+6. Return list of matching files
+
+**Pattern Matching:**
+- Uses `core.MatchPattern()` for full path matching (same as package installation)
+- Supports `**` for recursive directory matching
+- Supports `*` for single path component wildcards
+- Patterns match against relative paths from the input directory
 
 ### Tool-Specific Compilation
 - **Cursor**: `.mdc` with frontmatter for rules, `.md` for prompts
@@ -94,10 +101,11 @@ type CompileRequest struct {
 
 **Source files:**
 - `cmd/arm/main.go` - handleCompile() CLI handler
-- `internal/arm/service/service.go` - CompileFiles(), compileFile(), discoverFiles()
+- `internal/arm/service/service.go` - CompileFiles(), compileFile(), discoverFiles(), matchesPatterns()
 - `internal/arm/compiler/compiler.go` - CompileRuleset(), CompilePromptset()
 - `internal/arm/filetype/filetype.go` - IsRulesetFile(), IsPromptsetFile()
 - `internal/arm/parser/parser.go` - ParseRuleset(), ParsePromptset()
+- `internal/arm/core/pattern.go` - MatchPattern() for glob pattern support
 - `test/e2e/compile_test.go` - E2E compilation tests
 
 **Related specs:**
@@ -138,10 +146,10 @@ arm compile my-rules.yml --tool cursor --output .cursor/rules/ --namespace my-te
 ### Compile with Pattern Filtering
 ```bash
 arm compile ./rules/ --tool amazonq --output .amazonq/rules/ \
-  --include "security-*.yml" --exclude "*-experimental.yml" --recursive
+  --include "security/**/*.yml" --exclude "**/experimental/**" --recursive
 ```
 
-**Input:** Only files matching `security-*.yml` but not `*-experimental.yml`
+**Input:** Only files matching `security/**/*.yml` but not `**/experimental/**`
 **Output:** Compiled `.md` files in `.amazonq/rules/`
 
 ### Force Overwrite
@@ -158,4 +166,4 @@ arm compile my-rules.yml --tool cursor --output .cursor/rules/ --force
 - Does not generate arm_index.* priority files (use sink installation for that)
 - Does not track installations in arm-index.json (standalone operation)
 - Namespace defaults to resource metadata ID if not specified
-- File discovery uses simple pattern matching (not glob ** syntax like package installation)
+- Pattern matching uses `core.MatchPattern()` with full `**` wildcard support (same as package installation)
