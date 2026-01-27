@@ -16,7 +16,7 @@ Validate ARM functionality through comprehensive end-to-end tests covering all u
 10. Test multi-sink installations
 
 ## Acceptance Criteria
-- [x] 14 E2E test suites covering all workflows
+- [x] 55 E2E tests across 14 test suites covering all workflows
 - [x] Tests use isolated temporary directories
 - [x] Tests don't pollute user's ARM directories
 - [x] Tests create local Git repositories for reproducibility

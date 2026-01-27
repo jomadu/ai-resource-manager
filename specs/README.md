@@ -4,11 +4,12 @@
 
 1. **Manage AI Resources Across Projects** - Install, update, upgrade, and uninstall AI rulesets and promptsets from remote registries with version tracking
 2. **Compile Resources for Multiple Tools** - Transform ARM resources into tool-specific formats (Cursor, Amazon Q, Copilot, Markdown) with proper directory layouts
-3. **Resolve Rule Conflicts** - Apply priority-based resolution when multiple rulesets define overlapping rules
-4. **Cache and Optimize Performance** - Store packages locally to avoid redundant downloads, enable offline usage, and provide cleanup mechanisms
-5. **Authenticate with Registries** - Securely access private registries using token-based authentication via .armrc files
-6. **Filter Package Contents** - Selectively install files from packages using glob patterns with archive extraction
-7. **Verify Package Integrity** - Ensure downloaded packages match expected content using SHA256 hashing
+3. **Develop Resources Locally** - Compile local ARM resource files to tool formats without registry installation for testing and development
+4. **Resolve Rule Conflicts** - Apply priority-based resolution when multiple rulesets define overlapping rules
+5. **Cache and Optimize Performance** - Store packages locally to avoid redundant downloads, enable offline usage, and provide cleanup mechanisms
+6. **Authenticate with Registries** - Securely access private registries using token-based authentication via .armrc files
+7. **Filter Package Contents** - Selectively install files from packages using glob patterns with archive extraction
+8. **Verify Package Integrity** - Ensure downloaded packages match expected content using SHA256 hashing
 
 ## Topics of Concern
 
@@ -26,6 +27,7 @@
 
 ### Compilation & Output
 - **Sink Management** - Configure output destinations with tool-specific formats and directory paths
+- **Standalone Compilation** - Compile local ARM resource files without registry installation for development and testing
 - **Tool Compilation** - Generate Cursor (.mdc with frontmatter), Amazon Q (.md), Copilot (.instructions.md), Markdown (.md)
 - **Priority Resolution** - Generate arm_index.* files for conflict resolution with priority ordering
 - **Layout Modes** - Hierarchical (preserves structure in arm/ subdirectory) vs Flat (single directory with hash prefixes for Copilot)
@@ -62,6 +64,7 @@
 
 ### Compilation & Output
 - [sink-compilation.md](sink-compilation.md) - Tool-specific compilation and sink management
+- [standalone-compilation.md](standalone-compilation.md) - Local file compilation without registry installation
 - [priority-resolution.md](priority-resolution.md) - Priority-based rule conflict resolution
 
 ### Performance & Filtering
