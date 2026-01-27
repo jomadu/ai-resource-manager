@@ -39,18 +39,26 @@ Compile ARM resource files (YAML) to tool-specific formats and manage output dir
 ### ARM Index (arm-index.json)
 ```json
 {
-  "packages": {
+  "version": 1,
+  "rulesets": {
     "registry/package@version": {
-      "files": {
-        "arm/registry/package/version/rules/rule.mdc": {
-          "hash": "abc123",
-          "path": "rules/rule.yml"
-        }
-      }
+      "priority": 100,
+      "files": [
+        "arm/registry/package/version/rules/rule.mdc"
+      ]
+    }
+  },
+  "promptsets": {
+    "registry/package@version": {
+      "files": [
+        "arm/registry/package/version/prompts/prompt.md"
+      ]
     }
   }
 }
 ```
+
+**Note:** Tracks installed packages per sink with file paths and priority (for rulesets)
 
 ## Algorithm
 
