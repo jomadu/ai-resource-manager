@@ -10,7 +10,7 @@ Seamlessly connect to Git repositories such as [awesome-cursorrules](https://git
 
 ## Why ARM?
 
-Managing AI resources for coding assistants like Cursor or Amazon Q is cumbersome:
+Managing AI resources for coding assistants is cumbersome:
 
 - **Manual duplication**: Copying resources disconnects them from updates and the original source
 - **Hidden breaking changes**: Updates may unexpectedly alter your AI's behavior
@@ -92,21 +92,16 @@ arm add registry cloudsmith --owner myorg --repo ai-rules my-cloudsmith
 
 Configure sinks (output destinations):
 
-**Cursor:**
 ```bash
+# Cursor
 arm add sink --tool cursor cursor-rules .cursor/rules
 arm add sink --tool cursor cursor-commands .cursor/commands
-```
 
-**GitHub Copilot:**
-```bash
+# GitHub Copilot
 arm add sink --tool copilot copilot-rules .github/copilot
-```
 
-**Amazon Q:**
-```bash
+# Amazon Q
 arm add sink --tool amazonq q-rules .amazonq/rules
-arm add sink --tool amazonq q-prompts .amazonq/prompts
 ```
 
 Install ruleset:
@@ -119,10 +114,9 @@ Install promptset:
 arm install promptset ai-rules/code-review-promptset cursor-commands
 ```
 
-Install to multiple sinks:
+Install to multiple tools:
 ```bash
-arm install ruleset ai-rules/clean-code-ruleset cursor-rules q-rules
-arm install promptset ai-rules/code-review-promptset cursor-commands q-prompts
+arm install ruleset ai-rules/clean-code-ruleset cursor-rules copilot-rules q-rules
 ```
 
 Install with priority (higher priority rules take precedence):
