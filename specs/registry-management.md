@@ -56,48 +56,123 @@ Configure and manage remote package registries (Git, GitLab, Cloudsmith) for dis
 ## Algorithm
 
 ### Git Registry - List Packages
-1. Clone or fetch repository to cache
-2. List all .yml and .yaml files
-3. Extract package names from file paths
-4. Return unique package names
+Returns empty list. Git registries don't have predefined packages - users define package names as arbitrary labels when installing. Package boundaries are determined by include/exclude patterns, not repository structure.
 
 ### Git Registry - List Versions
-1. List all tags (semantic versions)
-2. List configured branches
-3. Sort versions (semver tags first, then branches)
-4. Return version list
+1. Ensure repository cloned/fetched: `git fetch --all --tags --force`
+2. List all tags via `git tag -l`
+3. Filter to only semantic version tags (non-semver tags ignored)
+4. If branches configured:
+   - Get remote branches via `git branch -r`
+   - Match configured branches using glob patterns (e.g., `main`, `feature/*`)
+   - Preserve config order for matched branches
+5. Sort semantic versions descending (highest first)
+6. Append matched branches in config order
+7. Return version list
+
+**Note:** packageName parameter is ignored (versions are repository-wide)
 
 ### Git Registry - Fetch Package
-1. Resolve version to commit hash
-2. Checkout commit in cached repository
-3. Collect files matching package name and patterns
-4. Extract archives if present
-5. Calculate SHA256 integrity hash
-6. Return files and metadata
+
+**Cache Strategy:**
+- Cache key: `{version, normalized_include_patterns, normalized_exclude_patterns}`
+- Package name NOT in cache key (allows pattern reuse across "packages")
+- Pattern normalization: trim whitespace, normalize path separators (`\` → `/`), sort alphabetically
+
+**Algorithm:**
+1. Generate cache key from version + normalized patterns
+2. Check cache first - return if available
+3. If cache miss:
+   - Ensure repository cloned/fetched
+   - List files: `git ls-tree -r --name-only {commit}`
+   - Extract content: `git show {commit}:{path}` for each file
+   - Extract archives (.zip, .tar.gz) and merge with loose files
+   - Apply include/exclude pattern filtering
+   - Cache filtered results
+4. Calculate SHA256 integrity hash (sorted paths for determinism)
+5. Return package with files and metadata
+
+**Note:** No git checkout performed - files extracted directly from commit objects
 
 ### GitLab Registry - List Packages
-1. Call GitLab API: GET /projects/{id}/packages
-2. Filter for generic packages
-3. Return package names
+1. Load authentication token from .armrc
+2. Determine API endpoint (projectId and groupId are mutually exclusive):
+   - If projectId: `/api/v4/projects/{id}/packages`
+   - If groupId: `/api/v4/groups/{id}/packages`
+3. Paginate through all results (100 per page):
+   - Fetch page with `?page={n}&per_page=100`
+   - Continue until page returns < 100 items
+4. Filter for `package_type == "generic"`
+5. Deduplicate by package name (multiple versions → single entry)
+6. Return unique package names
 
 ### GitLab Registry - List Versions
-1. Call GitLab API: GET /projects/{id}/packages?package_name={name}
-2. Extract version from each package
-3. Sort by semantic version
-4. Return version list
+1. Load authentication token
+2. Call API with pagination (same as List Packages)
+3. Filter for matching package name and `package_type == "generic"`
+4. Extract version from each package
+5. Sort by semantic version descending
+6. Return version list
 
 ### GitLab Registry - Fetch Package
-1. Call GitLab API: GET /projects/{id}/packages/{package_id}/package_files
-2. Download each file
-3. Extract archives if present
-4. Calculate SHA256 integrity hash
-5. Return files and metadata
+1. Load authentication token
+2. Find package by name and version
+3. Get package files:
+   - Project: `/api/v4/projects/{id}/packages/{pkg_id}/package_files`
+   - Group: `/api/v4/groups/{id}/-/packages/{pkg_id}/package_files`
+4. Download each file:
+   - Project: `/api/v4/projects/{id}/packages/generic/{name}/{version}/{filename}`
+   - Group: `/api/v4/groups/{id}/-/packages/generic/{name}/{version}/{filename}`
+5. Extract archives and merge with loose files
+6. Apply include/exclude pattern filtering
+7. Cache filtered results (same cache key strategy as Git)
+8. Calculate SHA256 integrity hash
+9. Return package with files and metadata
 
-### Cloudsmith Registry - Similar to GitLab
-1. Use Cloudsmith API endpoints
-2. Support pagination for large package lists
-3. Download raw package files
-4. Calculate integrity hash
+### Cloudsmith Registry - List Packages
+1. Load authentication token
+2. Call `/v1/packages/{owner}/{repo}/`
+3. Paginate using Link header (RFC 5988):
+   - Parse `Link: <url>; rel="next"` header
+   - Extract path component from full URL
+   - Continue until no `rel="next"` link
+4. Filter for `format == "raw"` packages
+5. Deduplicate by package name
+6. Return unique package names
+
+### Cloudsmith Registry - List Versions
+1. Load authentication token
+2. Query packages: `/v1/packages/{owner}/{repo}/?query={packageName}`
+3. Paginate using Link header
+4. Filter for `format == "raw"` packages
+5. Match by name OR filename prefix:
+   - Include if `pkg.Name == packageName`
+   - Include if `pkg.Filename` starts with `packageName`
+6. Deduplicate versions (multiple files → single version)
+7. Sort versions:
+   - If both semver: semantic comparison descending
+   - If either non-semver: lexicographic ascending
+8. Return version list
+
+### Cloudsmith Registry - Fetch Package
+1. Load authentication token
+2. Query and download matching packages (same matching as List Versions)
+3. Extract archives and merge with loose files
+4. Apply include/exclude pattern filtering
+5. Cache filtered results (same cache key strategy as Git)
+6. Calculate SHA256 integrity hash
+7. Return package with files and metadata
+
+### Calculate Integrity Hash
+1. Collect all file paths from package
+2. Sort paths alphabetically (ensures deterministic hash)
+3. Create SHA256 hasher
+4. For each path in sorted order:
+   - Hash the path string (UTF-8 bytes)
+   - Hash the file content bytes
+5. Return hex digest with `"sha256-"` prefix
+
+**Example:** Files `[{path: "b.yml", ...}, {path: "a.yml", ...}]` → hash order: `a.yml` (path+content), then `b.yml` (path+content) → `"sha256-abc123..."`
 
 ## Edge Cases
 
@@ -110,16 +185,29 @@ Configure and manage remote package registries (Git, GitLab, Cloudsmith) for dis
 | Version not found | Error with available versions |
 | Git repository empty | Return empty package list |
 | No semantic version tags | Use branches only |
+| Non-semver tags in Git | Filtered out (only semver tags included) |
+| Branch glob pattern | Match using `filepath.Match()` (e.g., `feature/*`) |
 | Archive extraction fails | Error, don't install |
 | Integrity hash mismatch | Error, refuse to install |
+| Concurrent git operations | File lock prevents corruption |
+| Cache key collision | Multiple packages with same patterns share cache (by design) |
+| GitLab pagination >100 | Automatically fetch all pages |
+| Cloudsmith Link header | Parse RFC 5988 format for next page |
 
 ## Dependencies
 
-- Git operations (clone, fetch, checkout)
+- Git operations (clone, fetch, ls-tree, show) - no checkout required
 - HTTP client (for GitLab/Cloudsmith APIs)
-- Authentication (authentication.md)
+- Authentication (authentication.md) - see note below on .armrc format
 - Archive extraction (pattern-filtering.md)
 - Cache storage (cache-management.md)
+- File locking (cross-process git operation protection)
+
+**Authentication Note:** GitLab and Cloudsmith registries use registry-specific .armrc sections:
+- GitLab: `[registry {url}/project/{id}]` or `[registry {url}/group/{id}]`
+- Cloudsmith: `[registry {url}/{owner}/{repo}]`
+- Token field: `token` (not `authToken`)
+- See authentication.md for details
 
 ## Implementation Mapping
 
@@ -167,34 +255,53 @@ arm add registry cloudsmith --owner myorg --repo ai-rules my-cloudsmith
 arm add registry cloudsmith --url https://api.cloudsmith.io --owner myorg --repo ai-rules my-cloudsmith
 ```
 
-### List Packages
+### List Registries
 ```bash
-arm list registry my-rules
+arm list registry
 # Output:
-# my-rules:
-#   - clean-code-ruleset
-#   - security-ruleset
-#   - code-review-promptset
+# - my-org
+# - my-gitlab
+# - cloudsmith-registry
 ```
 
-### List Versions
+### Registry Info
 ```bash
-arm info dependency my-rules/clean-code-ruleset
+arm info registry my-org
 # Output:
-# my-rules/clean-code-ruleset:
-#     type: ruleset
-#     version: 2.0.0
-#     constraint: ^2.0.0
-#     priority: 100
-#     sinks:
-#         - cursor-rules
-# 
-# Available versions:
-#     - 2.0.0
-#     - 1.1.0
-#     - 1.0.0
-#     - main (branch)
-#     - develop (branch)
+# my-org:
+#     type: git
+#     url: https://github.com/my-org/arm-registry
+```
+
+### List Package Versions
+```bash
+# List all available versions for a package
+arm list versions my-org/clean-code-ruleset
+# Output:
+# my-org/clean-code-ruleset:
+#   - 2.1.0
+#   - 2.0.0
+#   - 1.5.0
+#   - 1.0.0
+#   - main (branch)
+#   - develop (branch)
+```
+
+### List Packages (GitLab/Cloudsmith only)
+```bash
+# Note: Git registries don't support package listing (returns empty by design)
+# GitLab/Cloudsmith registries have explicit packages that can be queried via API
+# Currently no CLI command to list packages from a registry
+# Packages are discovered during installation
+```
+
+### Branch Glob Patterns
+```bash
+# Match multiple branches with patterns
+arm add registry git --url https://github.com/org/repo --branches "main,feature/*,release-*" my-rules
+
+# Matches: main, feature/auth, feature/ui, release-1.0, release-2.0
+# Does not match: develop, hotfix/bug
 ```
 
 ### Package Naming Models
@@ -205,10 +312,12 @@ arm info dependency my-rules/clean-code-ruleset
 # - clean-code.yml
 # - security.yml
 
-# You choose the package name:
+# You choose the package name (arbitrary label):
 arm install ruleset my-rules/my-clean-code cursor-rules
 arm install ruleset my-rules/team-standards cursor-rules
-# Package name is just a label
+
+# Package name is NOT derived from repository structure
+# Multiple "packages" with same patterns share cache
 ```
 
 **GitLab/Cloudsmith (Registry-Named):**
@@ -217,8 +326,35 @@ arm install ruleset my-rules/team-standards cursor-rules
 # - clean-code-ruleset
 # - security-ruleset
 
-# Must use exact package name:
+# Must use exact package name from registry:
 arm install ruleset my-gitlab/clean-code-ruleset cursor-rules
 arm install ruleset my-gitlab/security-ruleset cursor-rules
-# Package name must match registry
+```
+
+### Cache Key Behavior
+```bash
+# These two installs share the same cache (same version + patterns):
+arm install ruleset my-rules/package-a@1.0.0 --include "**/*.yml" cursor-rules
+arm install ruleset my-rules/package-b@1.0.0 --include "**/*.yml" q-rules
+
+# Cache key: {version: "1.0.0", include: ["**/*.yml"], exclude: []}
+# Package names "package-a" and "package-b" are just labels
+```
+
+### Authentication Examples
+
+**GitLab (.armrc):**
+```ini
+[registry https://gitlab.com/project/123]
+token = glpat-xyz123
+
+# Or for group:
+[registry https://gitlab.com/group/456]
+token = glpat-abc789
+```
+
+**Cloudsmith (.armrc):**
+```ini
+[registry https://api.cloudsmith.io/myorg/ai-rules]
+token = ${CLOUDSMITH_TOKEN}
 ```

@@ -11,7 +11,7 @@
 7. **Filter Package Contents** - Selectively install files from packages using glob patterns with archive extraction (zip, tar.gz)
 8. **Verify Package Integrity** - Ensure downloaded packages match expected content using SHA256 hashing stored in lock file
 9. **Test in Isolation** - Support environment variables (ARM_HOME, ARM_CONFIG_PATH, ARM_MANIFEST_PATH) for test isolation and custom configurations
-10. **Query Package Information** - List installed packages, check for outdated dependencies, and view package details
+10. **Query Package Information** - List installed packages, check for outdated dependencies, view package details, and list available versions from registries
 
 ## Topics of Concern
 
@@ -21,7 +21,7 @@
 - **Dependency Tracking** - Track installed packages in arm.json (manifest) and arm-lock.json (lock file, colocated with manifest)
 - **Update Workflows** - Update within constraints vs upgrade to latest (ignoring constraints), with manifest and lock file updates
 - **Uninstall Cleanup** - Remove packages from sinks, clean up empty directories recursively, remove arm-index.json and arm_index.* files
-- **Query Operations** - List installed packages, check for outdated dependencies, view package details
+- **Query Operations** - List installed packages, check for outdated dependencies, view package details, list available versions from registries
 
 ### Registry Integration
 - **Registry Types** - Git (GitHub, GitLab, Git remotes), GitLab Package Registry, Cloudsmith
@@ -60,7 +60,7 @@
 ### Core Workflows
 - [package-installation.md](package-installation.md) - Install, update, upgrade, uninstall workflows
 - [version-resolution.md](version-resolution.md) - Semantic versioning, constraints, branch resolution
-- [query-operations.md](query-operations.md) - List packages, check outdated, view dependency info
+- [query-operations.md](query-operations.md) - List packages, check outdated, view dependency info, list available versions
 
 ### Registry & Authentication
 - [registry-management.md](registry-management.md) - Git, GitLab, Cloudsmith registry types
