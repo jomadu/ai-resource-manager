@@ -1,13 +1,11 @@
 # ORIENT
 
+Study @AGENTS.md for spec vs implementation definitions.
 Study specifications in `specs/*` with up to 250 parallel subagents.
 Study @IMPLEMENTATION_PLAN.md (if present) to understand the plan so far.
 Study implementation in `internal/*`, `cmd/*`, `test/*`, and `docs/*` with up to 250 parallel subagents.
 
 Specifications drive the entire repo: README, CI/CD, configs, code, tests, and docs.
-
-Implementation is in: `internal/*`, `cmd/*`, `test/*`, `docs/*`, root files, and infrastructure (`.github/*`, etc.)
-Specification is in: `specs/*`
 
 Log: [ORIENT] Starting orientation...
 Log when done: [ORIENT] ✓ Complete
@@ -56,8 +54,7 @@ Log when done: [COMMIT] ✓ Complete
 Priority 1 (Must do):
 - Plan only - do NOT implement anything
 - Do NOT assume functionality is missing - confirm with code search in implementation first
-- Implementation is in: internal/cmd/test/docs, root files, and infrastructure (.github/*, etc.)
-- Specification is in: specs
+- See @AGENTS.md for spec vs implementation definitions
 
 Priority 2 (Important):
 - If element is missing from implementation, search first to confirm it doesn't exist

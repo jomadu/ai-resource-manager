@@ -1,13 +1,10 @@
 # ORIENT
 
+Study @AGENTS.md for spec vs implementation definitions.
 Study specifications in `specs/*` with up to 500 parallel subagents.
 Study @IMPLEMENTATION_PLAN.md to understand current work.
-Study @AGENTS.md to learn how to build and test.
 
 Specifications drive the entire repo: README, CI/CD, configs, code, tests, and docs.
-
-Implementation is in: `internal/*`, `cmd/*`, `test/*`, `docs/*`, root files, and infrastructure (`.github/*`, etc.)
-Specification is in: `specs/*`
 
 Log: [ORIENT] Starting orientation...
 Log when done: [ORIENT] ✓ Complete

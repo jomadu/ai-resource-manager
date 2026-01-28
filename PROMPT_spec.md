@@ -1,11 +1,9 @@
 # ORIENT
 
+Study @AGENTS.md for spec vs implementation definitions.
 ULTRASTUDY the implementation in `internal/*`, `cmd/*`, `test/*`, `docs/*`, root files, and infrastructure (`.github/*`, etc.) to understand architecture, features, components, functions, and edge cases.
 
 Specifications should drive the entire repo: README, CI/CD, configs, code, tests, and docs.
-
-Implementation is in: `internal/*`, `cmd/*`, `test/*`, `docs/*`, root files, and infrastructure
-Specification is in: `specs/*`
 
 Log: [ORIENT] Starting deep implementation study...
 Log when done: [ORIENT] ✓ Complete
@@ -62,13 +60,13 @@ Priority 1 (Must do):
 - Implementation is the source of truth - specs document what exists
 - Verify all claims by inspection - don't assume specs are correct, or that the JTBDs or topics of concern are complete or accurate
 - Deep-dive verification - trace through actual implementation code to find discrepancies
-- Implementation includes: internal/cmd/test/docs, root files, and infrastructure (.github/*, etc.)
-- Specification is in: specs
+- See @AGENTS.md for spec vs implementation definitions
 
 Priority 2 (Important):
 - When bugs found in implementation: uncheck acceptance criteria, add to "Known Issues"
 - When improvements found: add to "Areas for Improvement"
 - Update @AGENTS.md when learning how to contextualize with implementation or run application (keep brief and operational only)
+- Update @AGENTS.md spec vs implementation definitions if they evolve
 - Root files and infrastructure need specs too (CI/CD, build configs, install scripts, etc.)
 
 Priority 3 (Context):
