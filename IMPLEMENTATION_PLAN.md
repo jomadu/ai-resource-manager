@@ -4,16 +4,22 @@
 
 ARM is a fully functional dependency manager for AI packages with comprehensive test coverage (75 test files, 120 total Go files, 100% E2E test pass rate). All core functionality is implemented and tested.
 
-## Missing Features & Bugs (Priority Order)
+## Outstanding Items (Priority Order)
 
 ### Priority 1: Missing CLI Command
 
 - [ ] **Implement `arm list versions` command** (query-operations.md)
   - Spec: List available versions for a package from its registry
-  - Backend: `ListPackageVersions()` already implemented in all registries
+  - Backend: `ListPackageVersions()` already implemented in all registries (git.go, gitlab.go, cloudsmith.go)
   - Missing: CLI handler in `cmd/arm/main.go`
-  - Add case for "versions" in `handleList()` switch (line 951-965)
-  - Format output: package name, then indented list of versions (semver descending, branches labeled)
+  - Implementation:
+    - Add case "versions" in `handleList()` switch statement (line 951-965)
+    - Create `handleListVersions()` function
+    - Parse package key (registry/package) from args
+    - Call service layer to get registry and list versions
+    - Format output: package name header, then indented list of versions
+    - Sort: semver descending, branches in config order
+    - Label branches with "(branch)" suffix
   - Example: `arm list versions test-registry/clean-code-ruleset`
   - Files to modify: `cmd/arm/main.go`
 
@@ -21,72 +27,116 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 
 - [ ] **Fix default pattern behavior in registries** (pattern-filtering.md)
   - Bug: When no patterns specified, registries return ALL files instead of defaulting to `["**/*.yml", "**/*.yaml"]`
-  - Files: `internal/arm/registry/git.go:199`, `internal/arm/registry/gitlab.go:374`, `internal/arm/registry/cloudsmith.go:337`
-  - Fix: Add default pattern logic in `matchesPatterns()` functions
-  - Impact: Users must explicitly specify `--include "**/*.yml"` to avoid getting non-YAML files
+  - Root cause: `matchesPatterns()` returns true when both include and exclude are empty
+  - Files affected:
+    - `internal/arm/registry/git.go:199` (GitRegistry.matchesPatterns)
+    - `internal/arm/registry/gitlab.go:374` (matchesPatterns helper)
+    - `internal/arm/registry/cloudsmith.go:337` (CloudsmithRegistry.matchesPatterns)
+  - Fix: Add default pattern logic at start of function:
+    ```go
+    if len(include) == 0 && len(exclude) == 0 {
+        include = []string{"**/*.yml", "**/*.yaml"}
+    }
+    ```
+  - Impact: Users currently must explicitly specify `--include "**/*.yml"` to avoid getting non-YAML files
+  - Test: Verify install without patterns only gets YAML files
 
 - [ ] **Fix pattern matching in standalone compilation** (standalone-compilation.md, pattern-filtering.md)
-  - Bug: `internal/arm/service/service.go:1763` uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)`
+  - Bug: `internal/arm/service/service.go:1763,1778` uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)`
+  - Root cause: Pattern matching on basename only, not full path
   - Impact: Patterns like `security/**/*.yml` don't work in `arm compile` command
-  - Fix: Replace `filepath.Match` with `core.MatchPattern` in `matchesPatterns()` function
-  - Files: `internal/arm/service/service.go`
+  - Fix: Replace both occurrences:
+    ```go
+    // Before
+    if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
+    
+    // After
+    if core.MatchPattern(pattern, filePath) {
+    ```
+  - Files: `internal/arm/service/service.go` (matchesPatterns function)
+  - Test: Verify `arm compile` with `--include "security/**/*.yml"` works correctly
 
-### Priority 3: Version Resolution Bugs
-
-- [ ] **Fix prerelease version comparison** (version-resolution.md)
-  - Bug: Prerelease precedence not fully implemented (1.0.0-alpha.1 < 1.0.0-alpha.2 < 1.0.0-beta.1 < 1.0.0-rc.1 < 1.0.0)
-  - Files: `internal/arm/core/version.go` (comparePrerelease function)
-  - Impact: May select wrong version when multiple prereleases exist
-  - Note: Basic prerelease comparison exists, but may not handle all edge cases
-
-- [ ] **Fix "latest" resolution with no semantic versions** (version-resolution.md)
-  - Bug: When no semantic versions exist, "latest" uses lexicographic sort instead of first configured branch
-  - Files: `internal/arm/core/helpers.go` (ResolveVersion or GetBestMatching)
-  - Impact: Unpredictable behavior when using @latest on branch-only repositories
-
-### Priority 4: Update/Upgrade Error Handling
+### Priority 3: Update/Upgrade Error Handling
 
 - [ ] **Fix UpdateAll to continue on error** (package-installation.md)
   - Bug: `UpdateAll()` returns on first error instead of continuing for partial success
-  - Files: `internal/arm/service/service.go:730-780`
-  - Expected: Continue processing remaining packages, collect errors, return combined error
-  - Note: `UpdatePackages()` correctly implements partial success
+  - Files: `internal/arm/service/service.go:731-780` (UpdateAll function)
+  - Expected behavior: Continue processing remaining packages, collect errors, return combined error
+  - Reference: `UpdatePackages()` (line 600-729) correctly implements partial success pattern
+  - Implementation:
+    - Collect errors in slice instead of returning immediately
+    - Continue loop on error
+    - Return combined error at end if any errors occurred
+  - Test: Verify update continues when one package fails
 
 - [ ] **Fix UpgradeAll to continue on error** (package-installation.md)
   - Bug: `UpgradeAll()` returns on first error instead of continuing for partial success
-  - Files: `internal/arm/service/service.go` (UpgradeAll function)
-  - Expected: Continue processing remaining packages, collect errors, return combined error
-  - Note: `UpgradePackages()` correctly implements partial success
+  - Files: `internal/arm/service/service.go:887-950` (UpgradeAll function)
+  - Expected behavior: Continue processing remaining packages, collect errors, return combined error
+  - Reference: `UpgradePackages()` correctly implements partial success pattern
+  - Implementation: Same pattern as UpdateAll fix
+  - Test: Verify upgrade continues when one package fails
 
-### Priority 5: Documentation Improvements
+### Priority 4: Documentation Improvements
 
 - [ ] **Update help text for `arm list` command**
-  - Current help only shows `arm list registry` (line 149-156 in cmd/arm/main.go)
-  - Should show all subcommands: `registry`, `sink`, `dependency`, `versions`
-  - Update help text in `showHelp()` function
+  - Current: Only shows `arm list registry` (line 149-156 in cmd/arm/main.go)
+  - Should show: All subcommands (registry, sink, dependency, versions)
+  - Files: `cmd/arm/main.go` (showHelp function, case "list")
+  - Add lines:
+    ```
+    fmt.Println("  arm list sink")
+    fmt.Println("  arm list dependency")
+    fmt.Println("  arm list versions REGISTRY/PACKAGE")
+    ```
 
-- [ ] **Add examples for `arm list versions` to docs/commands.md**
-  - Show usage and expected output format
-  - Document semver sorting and branch labeling
+- [ ] **Add `arm list versions` to docs/commands.md**
+  - Add new section under "Core" commands
+  - Show usage: `arm list versions REGISTRY/PACKAGE`
+  - Document output format (semver descending, branches labeled)
+  - Provide examples with expected output
+  - Files: `docs/commands.md`
 
-### Priority 6: Test Coverage
+### Priority 5: Test Coverage
 
 - [ ] **Add E2E test for `arm list versions` command**
-  - Create test in `test/e2e/query_test.go` (new file)
-  - Test with Git registry (semver tags + branches)
-  - Test with GitLab registry (pagination)
-  - Test with Cloudsmith registry
-  - Verify output format and sorting
+  - Create new file: `test/e2e/query_test.go`
+  - Test scenarios:
+    - List versions from Git registry (semver tags + branches)
+    - List versions from GitLab registry (test pagination)
+    - List versions from Cloudsmith registry
+    - Verify output format and sorting
+    - Test error cases (package not found, registry not configured)
+  - Use existing test helpers from `test/e2e/helpers/`
 
 - [ ] **Add tests for pattern filtering bugs**
   - Test default pattern behavior in registries
+    - Install without patterns, verify only YAML files installed
+    - Files: `test/e2e/install_test.go`
   - Test ** patterns in standalone compilation
-  - Files: `test/e2e/install_test.go`, `test/e2e/compile_test.go`
+    - Compile with `--include "security/**/*.yml"`, verify correct files
+    - Files: `test/e2e/compile_test.go`
 
-- [ ] **Add tests for prerelease version comparison**
-  - Test alpha < beta < rc < release precedence
-  - Test numeric vs alphanumeric prerelease identifiers
-  - Files: `internal/arm/core/version_test.go`
+### Priority 6: Version Resolution Edge Cases (Low Priority - May Not Be Bugs)
+
+- [ ] **Verify prerelease version comparison** (version-resolution.md)
+  - Spec mentions: 1.0.0-alpha.1 < 1.0.0-alpha.2 < 1.0.0-beta.1 < 1.0.0-rc.1 < 1.0.0
+  - Current implementation: `internal/arm/core/version.go` (comparePrerelease function)
+  - Status: Implementation looks correct, but spec notes "may not handle all edge cases"
+  - Action: Review existing tests in `internal/arm/core/version_test.go`
+  - If gaps found, add tests for:
+    - Alpha < beta < rc < release precedence
+    - Numeric vs alphanumeric prerelease identifiers
+    - Multiple prerelease components (1.0.0-alpha.1.2)
+
+- [ ] **Verify "latest" resolution with no semantic versions** (version-resolution.md)
+  - Spec: When no semantic versions exist, "latest" should use first configured branch
+  - Current: May use lexicographic sort instead
+  - Files: `internal/arm/core/helpers.go` (ResolveVersion or GetBestMatching)
+  - Status: One test is skipped for this scenario (test/e2e/version_test.go:321)
+  - Action: Review implementation and determine if this is actually a bug
+  - If bug confirmed, fix to use first configured branch from registry config
+
 
 ## Completed Features ✅
 
@@ -96,13 +146,14 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 - ✅ Registry management (Git, GitLab, Cloudsmith)
 - ✅ Sink management and compilation (Cursor, Amazon Q, Copilot, Markdown)
 - ✅ Priority-based rule conflict resolution
-- ✅ Pattern filtering (include/exclude with glob patterns)
+- ✅ Pattern filtering (include/exclude with glob patterns) - has bugs but functional
 - ✅ Archive extraction (zip, tar.gz)
 - ✅ Cache management (storage, cleanup, file locking)
 - ✅ Authentication (token-based via .armrc)
 - ✅ Integrity verification (SHA256 hashing)
 - ✅ Query operations (list dependencies, check outdated, info)
-- ✅ Standalone compilation (local files without registry)
+- ✅ Standalone compilation (local files without registry) - has pattern bug but functional
+- ✅ Backend for listing package versions (ListPackageVersions in all registries)
 
 ### Infrastructure
 - ✅ Cross-platform builds (Linux, macOS, Windows - amd64/arm64)
@@ -118,11 +169,12 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 - ✅ 14 E2E test suites covering all workflows
 - ✅ Test isolation via environment variables
 - ✅ 100% E2E test pass rate
+- ✅ Only 2 skipped tests (both documented with reasons)
 
 ### Documentation
-- ✅ README.md (6718 bytes)
+- ✅ README.md (comprehensive overview)
 - ✅ 12 docs files (2686 lines total)
-- ✅ Complete command reference
+- ✅ Complete command reference (except `arm list versions`)
 - ✅ Registry type documentation
 - ✅ Publishing guide
 - ✅ Migration guide (v2 to v3)
@@ -131,7 +183,7 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 ## Implementation Notes
 
 ### Why So Little Left?
-The project is essentially feature-complete. The only missing piece is exposing an already-implemented backend feature (`ListPackageVersions`) through the CLI.
+The project is essentially feature-complete. The main missing piece is exposing an already-implemented backend feature (`ListPackageVersions`) through the CLI. The bugs are edge cases that don't prevent normal usage.
 
 ### Code Quality
 - All linting passes (13 linters enabled)
@@ -147,11 +199,12 @@ The project is essentially feature-complete. The only missing piece is exposing 
 
 ## Next Steps
 
-1. Implement `arm list versions` CLI command
-2. Update help text
-3. Add E2E test
-4. Update documentation
-5. Consider project complete
+1. Implement `arm list versions` CLI command (Priority 1)
+2. Fix pattern filtering bugs (Priority 2)
+3. Fix UpdateAll/UpgradeAll error handling (Priority 3)
+4. Update documentation (Priority 4)
+5. Add test coverage for new features and bug fixes (Priority 5)
+6. Investigate version resolution edge cases if time permits (Priority 6)
 
 ## Maintenance Items
 
