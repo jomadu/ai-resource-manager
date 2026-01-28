@@ -11,7 +11,7 @@ Log when done: [ORIENT] ✓ Complete
 
 # TASK
 
-Study @IMPLEMENTATION_PLAN.md (if present; it may be incorrect).
+Study @IMPLEMENTATION_PLAN.md (if present; assume it is inaccurate and incomplete).
 
 Use up to 500 parallel subagents to:
 - Study existing source code in `internal/*`, `cmd/*`, `test/*`, and `docs/*`
