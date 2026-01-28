@@ -11,11 +11,8 @@ Study the implementation and update specs/:
    - Specs may not exist yet - create them
    - Existing specs may be outdated - fix them
    - Implementation is the source of truth
-   - Deep-dive algorithm verification: For each spec with algorithms, trace through actual implementation code to find exact discrepancies between spec and real behavior
-   - Create DISCREPANCIES.md with findings (file:line references, what's wrong, what's correct)
-   - Incorporate findings from DISCREPANCIES.md into specs
+   - Deep-dive algorithm verification: For each spec with algorithms, trace through actual implementation code to find exact discrepancies between spec and real behavior, then fix specs directly
    - When bugs found in code: uncheck acceptance criteria + add brief note
-   - Delete DISCREPANCIES.md after incorporating fixes
    - Reorganize/refactor specs if JTBDs or topics have evolved
 4. Keep specs minimal but complete
 5. When you learn something new about how to contextualize with the codebase or run the application, update AGENTS.md but keep it brief and operational only
