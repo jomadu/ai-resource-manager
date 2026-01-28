@@ -10,11 +10,11 @@ Study the implementation and update specs/:
    - Allow large refactorings when structure needs to change
 3. Update or create spec documents in specs/ using TEMPLATE.md
    - Assume existing specs are inaccurate, incomplete, and outdated
-   - Verify all claims by inspection and hard study of the implementation
+   - Verify all claims (especially the acceptance criteria) by inspection and hard study of the implementation
    - Specs may not exist yet - create them
    - Implementation is the source of truth
-   - Don't assume existing acceptance criteria status is correct - verify against actual implementation
-   - Deep-dive verification: Trace through actual implementation code to find exact discrepancies in algorithms, data structures, and interfaces between spec and real behavior, then fix specs directly
+
+   - Deep-dive verification: Trace through actual implementation code to find exact discrepancies between spec and real behavior, then fix specs directly
    - When bugs found in code: uncheck acceptance criteria + add brief note
    - When opportunities for improvement found: add to "Areas for Improvement" section of spec
    - Reorganize/refactor specs if JTBDs or topics have evolved
