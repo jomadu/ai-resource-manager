@@ -962,6 +962,8 @@ func handleList() {
 		handleListRegistry()
 	case "sink":
 		handleListSink()
+	case "dependency":
+		handleListDependency()
 	case "versions":
 		handleListVersions()
 	default:
@@ -1341,6 +1343,39 @@ func handleListSink() {
 	sort.Strings(names)
 	for _, name := range names {
 		fmt.Println(name)
+	}
+}
+
+func handleListDependency() {
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
+
+	ctx := context.Background()
+	lockFile, err := lockfileMgr.GetLockFile(ctx)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return
+		}
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if lockFile == nil || lockFile.Dependencies == nil || len(lockFile.Dependencies) == 0 {
+		return
+	}
+
+	keys := make([]string, 0, len(lockFile.Dependencies))
+	for key := range lockFile.Dependencies {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		fmt.Printf("- %s\n", key)
 	}
 }
 
