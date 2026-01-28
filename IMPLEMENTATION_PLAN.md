@@ -8,22 +8,6 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 
 ### Priority 1: Pattern Filtering Bugs
 
-- [ ] **Fix default pattern behavior in registries** (pattern-filtering.md)
-  - Bug: When no patterns specified, registries return ALL files instead of defaulting to `["**/*.yml", "**/*.yaml"]`
-  - Root cause: `matchesPatterns()` returns true when both include and exclude are empty
-  - Files affected:
-    - `internal/arm/registry/git.go:199` (GitRegistry.matchesPatterns)
-    - `internal/arm/registry/gitlab.go:374` (matchesPatterns helper)
-    - `internal/arm/registry/cloudsmith.go:337` (CloudsmithRegistry.matchesPatterns)
-  - Fix: Add default pattern logic at start of function:
-    ```go
-    if len(include) == 0 && len(exclude) == 0 {
-        include = []string{"**/*.yml", "**/*.yaml"}
-    }
-    ```
-  - Impact: Users currently must explicitly specify `--include "**/*.yml"` to avoid getting non-YAML files
-  - Test: Verify install without patterns only gets YAML files
-
 - [ ] **Fix pattern matching in standalone compilation** (standalone-compilation.md, pattern-filtering.md)
   - Bug: `internal/arm/service/service.go:1763,1778` uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)`
   - Root cause: Pattern matching on basename only, not full path
@@ -39,7 +23,7 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
   - Files: `internal/arm/service/service.go` (matchesPatterns function)
   - Test: Verify `arm compile` with `--include "security/**/*.yml"` works correctly
 
-### Priority 3: Update/Upgrade Error Handling
+### Priority 2: Update/Upgrade Error Handling
 
 - [ ] **Fix UpdateAll to continue on error** (package-installation.md)
   - Bug: `UpdateAll()` returns on first error instead of continuing for partial success
@@ -114,7 +98,8 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 - ✅ Registry management (Git, GitLab, Cloudsmith)
 - ✅ Sink management and compilation (Cursor, Amazon Q, Copilot, Markdown)
 - ✅ Priority-based rule conflict resolution
-- ✅ Pattern filtering (include/exclude with glob patterns) - has bugs but functional
+- ✅ Pattern filtering (include/exclude with glob patterns)
+- ✅ Default pattern behavior in registries (defaults to `**/*.yml` and `**/*.yaml` when no patterns specified)
 - ✅ Archive extraction (zip, tar.gz)
 - ✅ Cache management (storage, cleanup, file locking)
 - ✅ Authentication (token-based via .armrc)
