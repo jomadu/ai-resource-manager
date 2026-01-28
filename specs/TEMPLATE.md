@@ -97,3 +97,7 @@ function ActivityName(input):
 ## Notes
 
 [Any additional context, design decisions, or rationale that helps builders understand the specification.]
+
+## Areas for Improvement
+
+[List any known limitations or potential enhancements for future consideration.]
