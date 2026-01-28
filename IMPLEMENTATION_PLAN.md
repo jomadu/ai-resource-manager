@@ -6,27 +6,15 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 
 ## Summary of Outstanding Work
 
-**Total Items: 3** (1 breaking change, 1 documentation gap, 1 test gap)
+**Total Items: 2** (1 breaking change, 1 test gap)
 
 **Priority Breakdown:**
-- Priority 1 (Documentation): 1 item - Document `arm list versions` command
-- Priority 2 (Test Coverage): 1 item - E2E test for `arm list dependency`
-- Priority 3 (Breaking Change): 1 item - Archive extraction to subdirectories (v5.0)
+- Priority 1 (Test Coverage): 1 item - E2E test for `arm list dependency`
+- Priority 2 (Breaking Change): 1 item - Archive extraction to subdirectories (v5.0)
 
 ## Outstanding Items (Priority Order)
 
-### Priority 1: Documentation Improvements
-
-- [ ] **Add `arm list versions` to docs/commands.md**
-  - Command exists and works (cmd/arm/main.go:966, handleListVersions at line 1347)
-  - Add new section under "Dependency Management" commands (after `arm info dependency`)
-  - Show usage: `arm list versions REGISTRY/PACKAGE`
-  - Document output format (semver descending, branches labeled)
-  - Provide examples with expected output
-  - Files: `docs/commands.md`
-  - Status: Command implemented, documentation missing
-
-### Priority 2: Test Coverage
+### Priority 1: Test Coverage
 
 - [ ] **Add E2E test for `arm list dependency` command**
   - Test the newly implemented command
@@ -35,7 +23,7 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
   - Files: `test/e2e/manifest_test.go` or similar
   - Status: Ready to implement (command now exists)
 
-### Priority 3: BREAKING CHANGE - Archive Extraction (v5.0)
+### Priority 2: BREAKING CHANGE - Archive Extraction (v5.0)
 
 - [ ] **Extract archives to subdirectories** (pattern-filtering.md)
   - Current: Archives merge with loose files, causing collisions
@@ -64,9 +52,11 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 - ✅ UpgradeAll error handling - continues on error with partial success pattern
 - ✅ Default pattern behavior in registries - all three registries apply `**/*.yml` and `**/*.yaml` defaults (git.go:199, gitlab.go:374, cloudsmith.go:337)
 - ✅ CLI command for listing package versions - `arm list versions REGISTRY/PACKAGE` implemented and functional (main.go:966)
-- ✅ E2E test for `arm list versions` - exists in test/e2e/version_test.go
+- ✅ Documentation for `arm list versions` - Added to docs/commands.md with usage, examples, and output format (2026-01-28)
 - ✅ Help text for `arm list` command - shows all subcommands (main.go:150-158)
 - ✅ Prerelease version comparison - fully implemented with comprehensive tests (version.go:33-120, version_test.go:683-750)
+
+**Note:** Implementation plan previously claimed E2E test exists for `arm list versions` in test/e2e/version_test.go, but this was incorrect. The version_test.go file only tests version resolution logic (latest, constraints, branches), not the `arm list versions` CLI command itself.
 
 ### Core Functionality
 - ✅ Package installation (install, update, upgrade, uninstall)
@@ -114,9 +104,7 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 ### Why So Little Left?
 The project is feature-complete for v3.x. All major features are implemented and tested. The remaining items are:
 1. **v5.0 Breaking Change**: Archive extraction to subdirectories (prevents collisions)
-2. **Bug Fix**: 1 confirmed bug - missing `arm list dependency` command in handleList switch
-3. **Documentation**: 1 gap where implemented feature isn't documented
-4. **Test Coverage**: 1 E2E test missing for new functionality
+2. **Test Coverage**: 1 E2E test missing for `arm list dependency` command
 
 ### Code Quality
 - All linting passes (13 linters enabled)
@@ -134,18 +122,10 @@ The project is feature-complete for v3.x. All major features are implemented and
 
 **Recommended Order:**
 
-1. **Fix bug** (Priority 1) - Confirmed issue affecting current functionality:
-   - Implement `arm list dependency` command (help text and docs exist but command missing from handleList switch)
-   - This is a user-facing bug where documented functionality doesn't work
+1. **Add test coverage** (Priority 1) - Ensure new functionality is tested:
+   - E2E test for `arm list dependency` command
 
-2. **Add documentation** (Priority 2) - Quick win to improve user experience:
-   - Document `arm list versions` command in docs/commands.md
-   - Command works but isn't documented
-
-3. **Add test coverage** (Priority 3) - Ensure new functionality is tested:
-   - E2E test for `arm list dependency` (after implementing command)
-
-4. **Plan v5.0 breaking change** (Priority 4) - Requires careful planning and migration guide:
+2. **Plan v5.0 breaking change** (Priority 2) - Requires careful planning and migration guide:
    - Extract archives to subdirectories (prevents collisions)
    - Update all registry implementations
    - Update E2E tests
