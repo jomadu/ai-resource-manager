@@ -17,8 +17,6 @@ Ralph prompts are hard to:
 
 ## Grug Solution: Do Less, Not More
 
-## Grug Solution: Do Less, Not More
-
 ### Improvement 1: Add Headers (No New Files)
 
 Current:
