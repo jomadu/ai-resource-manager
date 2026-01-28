@@ -1,9 +1,10 @@
 Study the implementation and update specs/:
 
-1. Study code in internal/, cmd/, test/, docs/, and project files in root directory to understand architecture, features, components, functions, and edge cases. ULTRASTUDY.
+1. ULTRASTUDY the code in internal/, cmd/, test/, docs/, and project files in root directory to understand architecture, features, components, functions, and edge cases.
 2. Update specs/README.md with current Jobs to be Done (JTBDs) and Topics of Concern
+   - Assume existing README.md is inaccurate, incomplete, and outdated
+   - Verify all claims by inspection and hard study of the implementation
    - README.md may not exist yet - create it
-   - Existing README.md may be outdated - fix it
    - Keep the existing format (JTBDs section, Topics section, Spec docs links)
    - Update if core JTBDs or topics change
    - Allow large refactorings when structure needs to change
