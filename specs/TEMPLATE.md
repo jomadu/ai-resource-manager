@@ -98,6 +98,10 @@ function ActivityName(input):
 
 [Any additional context, design decisions, or rationale that helps builders understand the specification.]
 
+## Known Issues
+
+[List any known bugs or limitations discovered during deep-dive analysis, with references to source files if applicable.]
+
 ## Areas for Improvement
 
 [List any known limitations or potential enhancements for future consideration.]
