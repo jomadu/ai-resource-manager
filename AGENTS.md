@@ -65,10 +65,6 @@ git commit -m "type: description"
 
 # Push changes
 git push
-
-# Create tag (ralph-* prefix for agent work)
-git tag ralph-0.0.X
-git push origin ralph-0.0.X
 ```
 
 ## Project Structure
