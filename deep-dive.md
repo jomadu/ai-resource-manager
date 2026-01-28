@@ -1,0 +1,3 @@
+let's do a deep dive into the code that backs the algorithms described in specs/e2e-testing.md. our goal is to find any discrepancies in the specification algorithms. study the code very hard, and be exact in describing how the spec might be incorrect. output to an actionable summary document.
+
+take the recommendations and incorporate them into the spec in such a way that the spec is minimal, complete, and accurate. when there are bugs found in the code, uncheck relevant acceptance criteria and make a brief note. when you are done, remove the summary document. 
