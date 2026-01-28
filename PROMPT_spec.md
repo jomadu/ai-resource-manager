@@ -2,6 +2,8 @@
 
 ULTRASTUDY the implementation in `internal/*`, `cmd/*`, `test/*`, `docs/*`, root files, and infrastructure (`.github/*`, etc.) to understand architecture, features, components, functions, and edge cases.
 
+Specifications should drive the entire repo: README, CI/CD, configs, code, tests, and docs.
+
 Implementation is in: `internal/*`, `cmd/*`, `test/*`, `docs/*`, root files, and infrastructure
 Specification is in: `specs/*`
 
