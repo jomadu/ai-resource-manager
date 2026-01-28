@@ -151,6 +151,9 @@ func printCommandHelp(command string) {
 		fmt.Println()
 		fmt.Println("Usage:")
 		fmt.Println("  arm list registry")
+		fmt.Println("  arm list sink")
+		fmt.Println("  arm list dependency")
+		fmt.Println("  arm list versions REGISTRY/PACKAGE")
 		fmt.Println()
 		fmt.Println("Displays a simple list of configured registry names.")
 	case "info":
@@ -959,6 +962,8 @@ func handleList() {
 		handleListRegistry()
 	case "sink":
 		handleListSink()
+	case "versions":
+		handleListVersions()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown list target: %s\n", os.Args[2])
 		os.Exit(1)
@@ -1336,6 +1341,67 @@ func handleListSink() {
 	sort.Strings(names)
 	for _, name := range names {
 		fmt.Println(name)
+	}
+}
+
+func handleListVersions() {
+	if len(os.Args) < 4 {
+		fmt.Fprintf(os.Stderr, "Usage: arm list versions REGISTRY/PACKAGE\n")
+		os.Exit(1)
+	}
+
+	packageKey := os.Args[3]
+	registryName, packageName := manifest.ParseDependencyKey(packageKey)
+	if registryName == "" || packageName == "" {
+		fmt.Fprintf(os.Stderr, "Invalid package format '%s' (expected: registry/package)\n", packageKey)
+		os.Exit(1)
+	}
+
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+
+	// Get registry config
+	registryConfig, err := svc.GetRegistryConfig(ctx, registryName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: registry '%s' not found\n", registryName)
+		os.Exit(1)
+	}
+
+	// Create registry instance
+	reg, err := registryFactory.CreateRegistry(registryName, registryConfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating registry: %v\n", err)
+		os.Exit(1)
+	}
+
+	// List versions
+	versions, err := reg.ListPackageVersions(ctx, packageName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error listing versions: %v\n", err)
+		os.Exit(1)
+	}
+
+	if len(versions) == 0 {
+		fmt.Printf("%s:\n  (no versions found)\n", packageKey)
+		return
+	}
+
+	fmt.Printf("%s:\n", packageKey)
+	for _, version := range versions {
+		if version.IsSemver {
+			fmt.Printf("  - %s\n", version.Version)
+		} else {
+			fmt.Printf("  - %s (branch)\n", version.Version)
+		}
 	}
 }
 
