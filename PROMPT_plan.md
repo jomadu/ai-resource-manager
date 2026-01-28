@@ -1,10 +1,10 @@
 # ORIENT
 
-Study `docs/*` and `specs/*` with up to 250 parallel subagents to learn the application specifications.
+Study `specs/*` with up to 250 parallel subagents to learn the application specifications.
 Study @IMPLEMENTATION_PLAN.md (if present) to understand the plan so far.
-Study `internal/*` and `cmd/*` with up to 250 parallel subagents to understand shared utilities and components.
+Study `internal/*`, `cmd/*`, `test/*`, and `docs/*` with up to 250 parallel subagents to understand shared utilities and components.
 
-For reference, the application source code is in `internal/*` and `cmd/*`.
+For reference, the application source code is in `internal/*`, `cmd/*`, `test/*`, and `docs/*`.
 
 Log: [ORIENT] Starting orientation...
 Log when done: [ORIENT] ✓ Complete
@@ -14,8 +14,8 @@ Log when done: [ORIENT] ✓ Complete
 Study @IMPLEMENTATION_PLAN.md (if present; it may be incorrect).
 
 Use up to 500 parallel subagents to:
-- Study existing source code in `internal/*` and `cmd/*`
-- Compare it against `docs/*` and `specs/*`
+- Study existing source code in `internal/*`, `cmd/*`, `test/*`, and `docs/*`
+- Compare it against `specs/*`
 - Search for TODO, minimal implementations, placeholders, skipped/flaky tests, inconsistent patterns
 
 Use a subagent to:
@@ -53,7 +53,7 @@ Log when done: [COMMIT] ✓ Complete
 Priority 1 (Must do):
 - Plan only - do NOT implement anything
 - Do NOT assume functionality is missing - confirm with code search first
-- Treat `internal/*` and `cmd/*` as the project's standard libraries
+- Treat `internal/*`, `cmd/*`, `test/*`, and `docs/*` as the project's standard libraries
 - Prefer consolidated, idiomatic implementations over ad-hoc copies
 
 Priority 2 (Important):
