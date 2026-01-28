@@ -8,7 +8,7 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 
 ### Priority 1: Pattern Filtering Bugs
 
-- [ ] **Fix pattern matching in standalone compilation** (standalone-compilation.md, pattern-filtering.md)
+- [x] **Fix pattern matching in standalone compilation** (standalone-compilation.md, pattern-filtering.md)
   - Bug: `internal/arm/service/service.go:1763,1778` uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)`
   - Root cause: Pattern matching on basename only, not full path
   - Impact: Patterns like `security/**/*.yml` don't work in `arm compile` command
@@ -22,6 +22,7 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
     ```
   - Files: `internal/arm/service/service.go` (matchesPatterns function)
   - Test: Verify `arm compile` with `--include "security/**/*.yml"` works correctly
+  - Status: COMPLETED - Fixed matchesPatterns function to use core.MatchPattern for full path matching
 
 ### Priority 2: Update/Upgrade Error Handling
 

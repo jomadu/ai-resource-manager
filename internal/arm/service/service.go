@@ -1763,7 +1763,7 @@ func (s *ArmService) discoverInDirectory(dir string, recursive bool, include, ex
 func (s *ArmService) matchesPatterns(filePath string, include, exclude []string) bool {
 	// Check exclude patterns first
 	for _, pattern := range exclude {
-		if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
+		if core.MatchPattern(pattern, filePath) {
 			return false
 		}
 	}
@@ -1775,7 +1775,7 @@ func (s *ArmService) matchesPatterns(filePath string, include, exclude []string)
 
 	// Check include patterns
 	for _, pattern := range include {
-		if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
+		if core.MatchPattern(pattern, filePath) {
 			return true
 		}
 	}
