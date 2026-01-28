@@ -27,7 +27,7 @@ Log when done: [TASK] ✓ Complete
 
 # VALIDATE
 
-Run tests for the code you changed: `go test ./...`
+Run tests for the code you changed (see AGENTS.md for how to run tests)
 
 If tests fail:
 - Fix the issues
@@ -68,7 +68,6 @@ Priority 2 (Important):
 - If inconsistencies found in specs/*, use subagent with ultrathink to update them
 
 Priority 3 (Nice to have):
-- Create git tag with prefix 'ralph-' when no errors (start at ralph-0.0.0, increment patch)
 - Add logging if needed for debugging
 
 # LOGGING
