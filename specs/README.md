@@ -15,11 +15,13 @@
 10. **Query Package Information** - List installed packages, check for outdated dependencies, view package details, and list available versions from registries
 
 ### Infrastructure & Distribution
-11. **Build Cross-Platform Binaries** - Compile ARM for Linux (amd64, arm64), macOS (amd64, arm64), and Windows (amd64) with version metadata
-12. **Automate Releases** - Use semantic-release with conventional commits to automatically version, tag, and publish releases
-13. **Install and Uninstall** - Provide shell scripts for easy installation and removal on Linux, macOS, and Windows
-14. **Ensure Code Quality** - Run linting, formatting, and security checks via CI/CD and pre-commit hooks
-15. **Test Continuously** - Execute unit and E2E tests on every push and PR with coverage reporting
+11. **Build Cross-Platform Binaries** - Compile ARM for Linux (amd64, arm64), macOS (amd64, arm64), and Windows (amd64) with version metadata injection via LDFLAGS
+12. **Automate Releases** - Use semantic-release with conventional commits to automatically version, tag, create GitHub releases, and upload binaries
+13. **Install and Uninstall** - Provide shell scripts for easy installation and removal on Linux, macOS, and Windows with platform detection
+14. **Ensure Code Quality** - Run linting (13 linters), formatting (gofmt, goimports), and pre-commit hooks with conventional commit validation
+15. **Test Continuously** - Execute unit and E2E tests (75 test files, 120 total Go files) on every push and PR with race detection and coverage reporting
+16. **Scan for Security Issues** - Run CodeQL analysis on Go code and GitHub Actions, review dependencies on PRs, weekly scheduled scans
+17. **Manage Dependencies** - Automated dependency updates via Dependabot for Go modules
 
 ## Topics of Concern
 
@@ -65,19 +67,25 @@
 
 ### Build & Distribution
 - **Cross-Platform Builds** - Makefile targets for building Linux, macOS, Windows binaries with LDFLAGS for version injection
-- **Version Metadata** - Inject version, commit hash, build timestamp, and platform into binary at build time
-- **Installation Scripts** - Shell scripts for automated installation with platform detection and PATH configuration
-- **Release Automation** - GitHub Actions workflows for semantic-release, binary building, and asset uploading
+- **Version Metadata** - Inject version, commit hash, build timestamp via LDFLAGS at build time (buildVersion, buildCommit, buildTimestamp)
+- **Installation Scripts** - Shell scripts (install.sh, uninstall.sh) with platform detection, GitHub API integration, and PATH configuration
+- **Release Automation** - GitHub Actions workflows for semantic-release, binary building, and asset uploading with .tar.gz and SHA256 checksums
 - **Artifact Management** - Package binaries as .tar.gz with SHA256 checksums for integrity verification
 
 ### Code Quality & CI/CD
-- **Linting** - golangci-lint with 13 enabled linters (errcheck, gosimple, govet, gofmt, goimports, etc.)
+- **Linting** - golangci-lint with 13 enabled linters (errcheck, gosimple, govet, ineffassign, staticcheck, typecheck, unused, gofmt, goimports, misspell, gocritic, unconvert, unparam)
 - **Formatting** - gofmt and goimports for consistent code style
-- **Pre-commit Hooks** - Automated checks for trailing whitespace, YAML/JSON validation, conventional commits, go fmt, go imports, go mod tidy
-- **Conventional Commits** - Enforce commit message format (feat, fix, docs, refactor, test, chore) via commitlint workflow
-- **Security Scanning** - CodeQL analysis for Go and GitHub Actions, dependency review on PRs, weekly scheduled scans
-- **Test Coverage** - Upload coverage reports to Codecov on every build
+- **Pre-commit Hooks** - Automated checks for trailing whitespace, end-of-file-fixer, YAML/JSON validation, merge conflicts, large files, conventional commits, go fmt, go imports, go mod tidy, golangci-lint
+- **Conventional Commits** - Enforce commit message format (feat, fix, docs, refactor, test, chore) via commitlint workflow on push and PRs
+- **Security Scanning** - CodeQL analysis for Go and GitHub Actions, dependency review on PRs (dependency-review-action), weekly scheduled scans
+- **Test Coverage** - Upload coverage reports to Codecov on every build (75 test files, 120 total Go files)
 - **Build Matrix** - Test on multiple platforms (Linux amd64/arm64, macOS amd64/arm64, Windows amd64)
+- **Dependency Management** - Dependabot for Go modules with weekly updates, max 5 open PRs
+
+### Documentation
+- **User Documentation** - 12 docs files covering concepts, commands, registries, sinks, storage, resource schemas, publishing guide, migration guide
+- **Root Files** - README.md (user-facing), CONTRIBUTING.md (development setup), SECURITY.md (vulnerability reporting), LICENSE.txt (GPL-3.0), go.mod/go.sum (dependencies), .gitignore (exclusions)
+- **Configuration Files** - .golangci.yml (linting), .pre-commit-config.yaml (hooks), .releaserc.json (semantic-release), package.json (npm deps), .github/dependabot.yml (dependency updates)
 
 ## Specification Documents
 
@@ -108,3 +116,5 @@
 - [ci-cd-workflows.md](ci-cd-workflows.md) - GitHub Actions for build, test, lint, security, release
 - [installation-scripts.md](installation-scripts.md) - Install and uninstall shell scripts
 - [code-quality.md](code-quality.md) - Linting, formatting, pre-commit hooks, conventional commits
+- [root-files.md](root-files.md) - go.mod, .gitignore, CONTRIBUTING.md, SECURITY.md, LICENSE.txt, package.json, .releaserc.json, dependabot.yml
+- [user-documentation.md](user-documentation.md) - README.md, docs/ structure, concepts, commands, registries, sinks, publishing guide, migration guide
