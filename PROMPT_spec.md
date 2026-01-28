@@ -13,13 +13,12 @@ Study the implementation and update specs/:
    - Verify all claims (especially the acceptance criteria) by inspection and hard study of the implementation
    - Specs may not exist yet - create them
    - Implementation is the source of truth
-
    - Deep-dive verification: Trace through actual implementation code to find exact discrepancies between spec and real behavior, then fix specs directly
-   - When bugs found in code: uncheck acceptance criteria + add to "Known Issues" section with brief note
+   - When bugs found in code: uncheck relevant acceptance criteria and add to "Known Issues" section of spec
    - When opportunities for improvement found: add to "Areas for Improvement" section of spec
    - Reorganize/refactor specs if JTBDs or topics have evolved
-4. Keep specs minimal but complete
-5. When you learn something new about how to contextualize with the codebase or run the application, update AGENTS.md but keep it brief and operational only
-6. Commit changes with descriptive message using the "conventional commit message" format (feat:, fix:, docs:, etc.) standard.
+   - Keep specs minimal but complete and accurate
+4. When you learn something new about how to contextualize with the codebase or run the application, update AGENTS.md but keep it brief and operational only
+5. Commit changes with descriptive message using the "conventional commit message" format (feat:, fix:, docs:, etc.) standard.
 
 Focus: What does the code actually do? What are the acceptance criteria from tests?
