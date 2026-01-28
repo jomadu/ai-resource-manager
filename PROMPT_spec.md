@@ -14,6 +14,7 @@ Study the implementation and update specs/:
    - Don't assume existing acceptance criteria status is correct - verify against actual implementation
    - Deep-dive verification: Trace through actual implementation code to find exact discrepancies in algorithms, data structures, and interfaces between spec and real behavior, then fix specs directly
    - When bugs found in code: uncheck acceptance criteria + add brief note
+   - When opportunities for improvement found: add to "Areas for Improvement" section of spec
    - Reorganize/refactor specs if JTBDs or topics have evolved
 4. Keep specs minimal but complete
 5. When you learn something new about how to contextualize with the codebase or run the application, update AGENTS.md but keep it brief and operational only
