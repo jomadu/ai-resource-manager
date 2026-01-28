@@ -1,7 +1,7 @@
 # ORIENT
 
-Study @AGENTS.md for spec vs implementation definitions.
-Study specifications in `specs/*` with up to 500 parallel subagents.
+Study @AGENTS.md for spec vs implementation definitions. If definitions don't exist, investigate and create them.
+Study specifications (see @AGENTS.md for what constitutes specs) with up to 500 parallel subagents.
 Study @IMPLEMENTATION_PLAN.md to understand current work.
 
 Specifications drive the entire repo: README, CI/CD, configs, code, tests, and docs.
@@ -14,12 +14,12 @@ Log when done: [ORIENT] ✓ Complete
 Follow @IMPLEMENTATION_PLAN.md and choose the most important item to address.
 
 Before making changes:
-- Search implementation (internal/cmd/test/docs) first - don't assume not implemented
+- Search implementation (see @AGENTS.md for what constitutes implementation) first - don't assume not implemented
 - Use up to 500 parallel subagents for searches/reads
 - Use only 1 subagent for build/tests
 - Use subagents when complex reasoning needed (debugging, architectural decisions)
 
-Implement functionality per specifications (specs/*) using parallel subagents.
+Implement functionality per specifications (see @AGENTS.md for what constitutes specs) using parallel subagents.
 
 Log: [TASK] Starting task: <task name>
 Log when done: [TASK] ✓ Complete
@@ -60,11 +60,11 @@ Priority 1 (Must do):
 - Single sources of truth, no migrations/adapters
 
 Priority 2 (Important):
-- Update @AGENTS.md when learning operational things (keep brief and operational only)
+- Update @AGENTS.md when learning operational things or if spec vs implementation definitions evolve (keep brief and operational only)
 - Capture the why in documentation - tests and implementation importance
 - Clean completed items from plan when it gets large
 - For any bugs noticed, resolve them or document in @IMPLEMENTATION_PLAN.md even if unrelated
-- If inconsistencies found in specs/*, use subagent with ultrathink to update them
+- If inconsistencies found in specs (see @AGENTS.md for what constitutes specs), use subagent with ultrathink to update them
 
 Priority 3 (Nice to have):
 - Add logging if needed for debugging
