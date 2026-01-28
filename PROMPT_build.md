@@ -1,10 +1,10 @@
 # ORIENT
 
-Study `docs/*` and `specs/*` with up to 500 parallel subagents to learn the application specifications.
+Study `specs/*` with up to 500 parallel subagents to learn the application specifications.
 Study @IMPLEMENTATION_PLAN.md to understand current work.
 Study @AGENTS.md to learn how to build and test.
 
-For reference, the application source code is in `internal/*` and `cmd/*`.
+For reference, the application source code is in `internal/*`, `cmd/*`, `test/*`, and `docs/*`.
 
 Log: [ORIENT] Starting orientation...
 Log when done: [ORIENT] ✓ Complete
