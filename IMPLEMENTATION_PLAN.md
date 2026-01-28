@@ -26,7 +26,7 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 
 ### Priority 2: Update/Upgrade Error Handling
 
-- [ ] **Fix UpdateAll to continue on error** (package-installation.md)
+- [x] **Fix UpdateAll to continue on error** (package-installation.md)
   - Bug: `UpdateAll()` returns on first error instead of continuing for partial success
   - Files: `internal/arm/service/service.go:731-780` (UpdateAll function)
   - Expected behavior: Continue processing remaining packages, collect errors, return combined error
@@ -36,14 +36,16 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
     - Continue loop on error
     - Return combined error at end if any errors occurred
   - Test: Verify update continues when one package fails
+  - Status: COMPLETED - UpdateAll now continues on error with partial success pattern
 
-- [ ] **Fix UpgradeAll to continue on error** (package-installation.md)
+- [x] **Fix UpgradeAll to continue on error** (package-installation.md)
   - Bug: `UpgradeAll()` returns on first error instead of continuing for partial success
   - Files: `internal/arm/service/service.go:887-950` (UpgradeAll function)
   - Expected behavior: Continue processing remaining packages, collect errors, return combined error
   - Reference: `UpgradePackages()` correctly implements partial success pattern
   - Implementation: Same pattern as UpdateAll fix
   - Test: Verify upgrade continues when one package fails
+  - Status: COMPLETED - UpgradeAll now continues on error with partial success pattern
 
 ### Priority 3: Documentation Improvements
 
