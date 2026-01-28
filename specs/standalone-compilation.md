@@ -15,7 +15,7 @@ Compile local ARM resource files (YAML) to tool-specific formats without install
 - [x] Compile all YAML files in directory
 - [x] Recursive directory traversal with --recursive
 - [x] Validate-only mode without writing files
-- [ ] Pattern filtering with --include and --exclude (uses filepath.Match on basename only, not core.MatchPattern)
+- [ ] Pattern filtering with --include and --exclude (BUG: uses filepath.Match on basename, not core.MatchPattern)
 - [x] Custom namespace with --namespace
 - [x] Force overwrite with --force
 - [x] Fail-fast mode with --fail-fast
@@ -59,18 +59,22 @@ type CompileRequest struct {
 4. Report success or errors
 
 ### File Discovery
-1. Default include patterns: `*.yml`, `*.yaml`
+1. Default include patterns: `*.yml`, `*.yaml` (non-recursive, root-level only)
 2. Walk directories (recursive if flag set)
 3. Get relative path from directory root for pattern matching
-4. Check exclude patterns first using `core.MatchPattern()` (exclude overrides include)
-5. Check include patterns using `core.MatchPattern()` (supports `**` wildcards)
+4. Check exclude patterns first using `filepath.Match()` on basename (exclude overrides include)
+5. Check include patterns using `filepath.Match()` on basename (supports `*` wildcards only)
 6. Return list of matching files
 
-**Pattern Matching:**
-- Uses `core.MatchPattern()` for full path matching (same as package installation)
-- Supports `**` for recursive directory matching
-- Supports `*` for single path component wildcards
-- Patterns match against relative paths from the input directory
+**Note:** Current implementation uses `filepath.Match(pattern, filepath.Base(filePath))` which:
+- Only matches against filename, not full path
+- Doesn't support `**` wildcards
+- Differs from registry pattern matching (BUG: service.go:1763)
+
+**Contrast with Registry Pattern Matching:**
+- Registries use `core.MatchPattern()` with full path and `**` support
+- Registries default to `**/*.yml`, `**/*.yaml` (recursive)
+- Compile defaults to `*.yml`, `*.yaml` (non-recursive)
 
 ### Tool-Specific Compilation
 - **Cursor**: `.mdc` with frontmatter for rules, `.md` for prompts
@@ -80,16 +84,17 @@ type CompileRequest struct {
 
 ## Edge Cases
 
-| Condition | Expected Behavior |
-|-----------|-------------------|
-| No files found | Error: "no files found matching criteria" |
-| Invalid tool name | Error: "invalid tool: X (must be cursor, copilot, amazonq, or markdown)" |
-| File not ruleset/promptset | Error: "file X is not a valid ruleset or promptset" |
-| Invalid YAML | Error: "failed to parse ruleset/promptset X: <details>" |
-| Output file exists | Error unless --force specified |
-| Multiple errors | Report first error unless --fail-fast disabled |
-| No output path in validate mode | Skip output path requirement |
-| Empty namespace | Use resource metadata ID as namespace |
+| Condition | Expected Behavior | Current Status |
+|-----------|-------------------|----------------|
+| No files found | Error: "no files found matching criteria" | ✅ Works |
+| Invalid tool name | Error: "invalid tool: X (must be cursor, copilot, amazonq, or markdown)" | ✅ Works |
+| File not ruleset/promptset | Error: "file X is not a valid ruleset or promptset" | ✅ Works |
+| Invalid YAML | Error: "failed to parse ruleset/promptset X: <details>" | ✅ Works |
+| Output file exists | Error unless --force specified | ✅ Works |
+| Multiple errors | Report first error unless --fail-fast disabled | ✅ Works |
+| No output path in validate mode | Skip output path requirement | ✅ Works |
+| Empty namespace | Use resource metadata ID as namespace | ✅ Works |
+| Pattern with ** wildcard | Should work like install | ❌ Uses filepath.Match on basename |
 
 ## Dependencies
 
@@ -166,4 +171,29 @@ arm compile my-rules.yml --tool cursor --output .cursor/rules/ --force
 - Does not generate arm_index.* priority files (use sink installation for that)
 - Does not track installations in arm-index.json (standalone operation)
 - Namespace defaults to resource metadata ID if not specified
-- Pattern matching uses `core.MatchPattern()` with full `**` wildcard support (same as package installation)
+
+## Implementation Mapping
+
+**Source files:**
+- `cmd/arm/main.go` - handleCompile() CLI handler
+- `internal/arm/service/service.go` - CompileFiles(), compileFile(), discoverFiles() (line 1671), matchesPatterns() (line 1763) ⚠️ Wrong pattern matcher
+- `internal/arm/compiler/compiler.go` - CompileRuleset(), CompilePromptset()
+- `internal/arm/filetype/filetype.go` - IsRulesetFile(), IsPromptsetFile()
+- `internal/arm/parser/parser.go` - ParseRuleset(), ParsePromptset()
+- `internal/arm/core/pattern.go` - MatchPattern() (NOT used by compile, should be)
+- `test/e2e/compile_test.go` - E2E compilation tests
+
+**Related specs:**
+- `sink-compilation.md` - Compilation as part of package installation
+- `pattern-filtering.md` - Pattern matching algorithm (registries use this correctly)
+
+## Known Bugs
+
+### Bug: Compile Uses Wrong Pattern Matcher
+**Location:** `internal/arm/service/service.go:1763`  
+**Issue:** Uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)`  
+**Impact:**
+- Only matches against filename, not full path
+- Doesn't support `**` wildcards
+- Pattern `security/**/*.yml` doesn't work
+**Fix:** Replace with `core.MatchPattern()` to match registry behavior
