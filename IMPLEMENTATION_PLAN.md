@@ -10,9 +10,9 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 
 **Priority Breakdown:**
 - Priority 1 (Breaking Change): 1 item - Archive extraction to subdirectories (v5.0)
-- Priority 2 (Bug Fix): 1 item - Missing list dependency command
-- Priority 3 (Documentation): 1 item - Document list versions
-- Priority 4 (Test Coverage): 1 item - E2E test for list dependency
+- Priority 2 (Bug Fix): 1 item - Missing `arm list dependency` command
+- Priority 3 (Documentation): 1 item - Document `arm list versions` command
+- Priority 4 (Test Coverage): 1 item - E2E test for `arm list dependency`
 
 ## Outstanding Items (Priority Order)
 
@@ -36,13 +36,19 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 ### Priority 2: Bug Fix
 
 - [ ] **Implement `arm list dependency` command** (query-operations.md)
-  - Bug: Help text mentions `arm list dependency` but command not implemented in handleList() switch
-  - Current: `arm list` shows all dependencies, `arm info dependency` works, but `arm list dependency` subcommand missing
+  - Bug: Documented command not implemented in handleList() switch
+  - Current: `arm list` (no args) shows all dependencies grouped under "Dependencies:" header
+  - Required: `arm list dependency` should be a dedicated subcommand with different output format
+  - Expected output: Dash-prefixed list of `registry/package@version` (see docs/commands.md:527-550)
   - Files to update:
-    - `cmd/arm/main.go` - Add "dependency" case to handleList() switch (around line 965)
-    - Create handleListDependency() function (similar to handleListRegistry/handleListSink)
-  - Expected output: Dash-prefixed list of registry/package@version
-  - Status: MISSING - Help text exists but command not wired up in handleList()
+    - `cmd/arm/main.go` - Add "dependency" case to handleList() switch (line 954-971)
+    - Create `handleListDependency()` function (similar to handleListRegistry/handleListSink)
+  - Implementation notes:
+    - Read manifest and lock file
+    - Combine rulesets and promptsets
+    - Format as `- registry/package@version`
+    - Sort alphabetically
+  - Status: CONFIRMED BUG - Documented in docs/commands.md but not implemented in code
 
 ### Priority 3: Documentation Improvements
 
