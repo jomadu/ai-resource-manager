@@ -77,7 +77,7 @@
 - **Formatting** - gofmt and goimports for consistent code style
 - **Pre-commit Hooks** - Automated checks for trailing whitespace, end-of-file-fixer, YAML/JSON validation, merge conflicts, large files, conventional commits, go fmt, go imports, go mod tidy, golangci-lint
 - **Conventional Commits** - Enforce commit message format (feat, fix, docs, refactor, test, chore) via commitlint workflow on push and PRs
-- **Security Scanning** - CodeQL analysis for Go and GitHub Actions, dependency review on PRs (dependency-review-action), weekly scheduled scans
+- **Security Scanning** - CodeQL analysis for Go and GitHub Actions (languages: actions, go), dependency review on PRs (dependency-review-action), weekly scheduled scans
 - **Test Coverage** - Upload coverage reports to Codecov on every build (75 test files, 120 total Go files)
 - **Build Matrix** - Test on multiple platforms (Linux amd64/arm64, macOS amd64/arm64, Windows amd64)
 - **Dependency Management** - Dependabot for Go modules with weekly updates, max 5 open PRs
@@ -86,6 +86,38 @@
 - **User Documentation** - 12 docs files covering concepts, commands, registries, sinks, storage, resource schemas, publishing guide, migration guide
 - **Root Files** - README.md (user-facing), CONTRIBUTING.md (development setup), SECURITY.md (vulnerability reporting), LICENSE.txt (GPL-3.0), go.mod/go.sum (dependencies), .gitignore (exclusions)
 - **Configuration Files** - .golangci.yml (linting), .pre-commit-config.yaml (hooks), .releaserc.json (semantic-release), package.json (npm deps), .github/dependabot.yml (dependency updates)
+
+## Specification Documents
+
+### Core Workflows
+- [package-installation.md](package-installation.md) - Install, update, upgrade, uninstall workflows
+- [version-resolution.md](version-resolution.md) - Semantic versioning, constraints, branch resolution
+- [query-operations.md](query-operations.md) - List packages, check outdated, view dependency info, list available versions
+
+### Registry & Authentication
+- [registry-management.md](registry-management.md) - Git, GitLab, Cloudsmith registry types
+- [authentication.md](authentication.md) - Token-based authentication via .armrc
+
+### Compilation & Output
+- [sink-compilation.md](sink-compilation.md) - Tool-specific compilation and sink management
+- [standalone-compilation.md](standalone-compilation.md) - Local file compilation without registry installation
+- [priority-resolution.md](priority-resolution.md) - Priority-based rule conflict resolution
+
+### Performance & Filtering
+- [cache-management.md](cache-management.md) - Storage structure, cleanup, file locking
+- [pattern-filtering.md](pattern-filtering.md) - Glob patterns, archive extraction
+
+### Testing & Development
+- [constructor-injection.md](constructor-injection.md) - Test isolation via environment variables
+- [e2e-testing.md](e2e-testing.md) - End-to-end test specifications
+
+### Infrastructure
+- [build-system.md](build-system.md) - Makefile, cross-platform builds, version injection
+- [ci-cd-workflows.md](ci-cd-workflows.md) - GitHub Actions for build, test, lint, security, release
+- [installation-scripts.md](installation-scripts.md) - Install and uninstall shell scripts
+- [code-quality.md](code-quality.md) - Linting, formatting, pre-commit hooks, conventional commits
+- [root-files.md](root-files.md) - go.mod, .gitignore, CONTRIBUTING.md, SECURITY.md, LICENSE.txt, package.json, .releaserc.json, dependabot.yml
+- [user-documentation.md](user-documentation.md) - README.md, docs/ structure, concepts, commands, registries, sinks, publishing guide, migration guide
 
 ## Specification Documents
 
