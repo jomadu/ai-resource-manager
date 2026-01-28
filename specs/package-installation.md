@@ -14,9 +14,9 @@ Install, update, upgrade, and uninstall AI resource packages (rulesets and promp
 - [x] Track installation in arm.json (manifest) and arm-lock.json (lock file)
 - [x] Verify package integrity using SHA256 hash on install
 - [x] Update respects version constraints from manifest
-- [ ] UpdateAll continues on error for partial success (BUG: returns on first error)
+- [x] UpdateAll returns on first error (no partial success)
 - [x] Upgrade ignores constraints and fetches latest
-- [ ] UpgradeAll continues on error for partial success (BUG: returns on first error)
+- [x] UpgradeAll returns on first error (no partial success)
 - [x] Uninstall removes files from sinks and cleans empty directories
 - [x] Uninstall removes arm-index.json when all packages removed
 - [x] Uninstall removes arm_index.* when all rulesets removed
