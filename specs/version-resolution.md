@@ -16,8 +16,8 @@ Resolve package versions from semantic version constraints, tags, branches, and 
 - [x] Parse caret (^1.0.0) and tilde (~1.2.0) constraints
 - [x] Resolve "latest" to highest semantic version
 - [x] Resolve branch names to commit hashes
-- [ ] Compare versions with prerelease precedence (1.0.0-alpha.1 < 1.0.0-alpha.2 < 1.0.0-beta.1 < 1.0.0-rc.1 < 1.0.0)
-- [ ] Resolve "latest" with no semantic versions to first configured branch
+- [x] Compare versions with prerelease precedence (1.0.0-alpha.1 < 1.0.0-alpha.2 < 1.0.0-beta.1 < 1.0.0-rc.1 < 1.0.0)
+- [x] Resolve "latest" with no semantic versions to first configured branch
 - [x] Prioritize semantic versions over branches
 - [x] Handle mixed version formats (v1.0.0, 1.0.0, tags without semver)
 

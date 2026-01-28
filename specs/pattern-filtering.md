@@ -23,13 +23,13 @@ Selectively install files from packages using glob patterns with include/exclude
 - [x] Support * wildcard for single path component
 - [x] Support --include patterns (OR logic - match any)
 - [x] Support --exclude patterns (override includes)
-- [ ] Default to **/*.yml and **/*.yaml if no patterns specified (BUG: git.go:199, gitlab.go:374, cloudsmith.go:337)
+- [x] Default to **/*.yml and **/*.yaml if no patterns specified
 - [x] Extract .zip archives automatically
 - [x] Extract .tar.gz archives automatically
 - [ ] **BREAKING CHANGE v5.0**: Extract archives to subdirectories named after archive (prevents collisions, enables skillset path resolution)
-- [ ] Apply patterns after archive extraction
+- [x] Apply patterns after archive extraction
 - [x] Prevent directory traversal attacks in archives
-- [ ] Use consistent pattern matching across install and compile (BUG: service.go:1763 uses filepath.Match on basename)
+- [x] Use consistent pattern matching across install and compile
 
 ## Data Structures
 
@@ -52,8 +52,8 @@ Pattern matching uses simple string slices passed to functions. No dedicated str
 ### Filter Files (Standalone Compilation)
 1. Apply defaults: if `len(include) == 0`, set `include = ["*.yml", "*.yaml"]`
 2. Get relative path from input directory
-3. Check exclude patterns using `core.MatchPattern()` on full path (BUG: uses filepath.Match on basename)
-4. Check include patterns using `core.MatchPattern()` on full path (BUG: uses filepath.Match on basename)
+3. Check exclude patterns using `core.MatchPattern()` on full path
+4. Check include patterns using `core.MatchPattern()` on full path
 5. Otherwise skip file
 
 ### Extract Archive
@@ -84,7 +84,7 @@ Pattern matching uses simple string slices passed to functions. No dedicated str
 
 | Condition | Expected Behavior | Current Status |
 |-----------|-------------------|----------------|
-| No patterns specified | Default to **/*.yml and **/*.yaml | ❌ BUG: Registries return all files |
+| No patterns specified | Default to **/*.yml and **/*.yaml | ✅ Works |
 | Empty include list | Include all files | ✅ Works |
 | File matches include and exclude | Exclude wins (skip file) | ✅ Works |
 | Multiple include patterns | OR logic (match any) | ✅ Works |
@@ -94,7 +94,7 @@ Pattern matching uses simple string slices passed to functions. No dedicated str
 | Corrupted archive | Return error, don't install | ✅ Works |
 | Multiple archives with same structure | Each extracts to own subdirectory (no collision) | ❌ BREAKING: Currently merges and collides |
 | Archive + loose file same name | Both preserved in different paths | ❌ BREAKING: Currently archive overwrites loose |
-| Compile with ** patterns | Should work like install | ❌ BUG: Uses filepath.Match on basename |
+| Compile with ** patterns | Should work like install | ✅ Works |
 
 ## Dependencies
 
@@ -115,16 +115,7 @@ Pattern matching uses simple string slices passed to functions. No dedicated str
 
 ## Known Bugs
 
-### Bug 1: Registries Don't Apply Default Patterns
-**Files:** `internal/arm/registry/{git,gitlab,cloudsmith}.go`  
-**Issue:** When no patterns specified, returns ALL files instead of defaulting to `["**/*.yml", "**/*.yaml"]`
-
-### Bug 2: Compile Uses Wrong Pattern Matcher
-**File:** `internal/arm/service/service.go:1763`  
-**Issue:** Uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)`  
-**Impact:** Patterns like `security/**/*.yml` don't work in `arm compile`
-
-### Bug 3: Archive Merge Causes Collisions (BREAKING CHANGE v5.0)
+### Bug: Archive Merge Causes Collisions (BREAKING CHANGE v5.0)
 **Files:** `internal/arm/core/archive.go`, all registry implementations  
 **Issue:** Archives are merged with loose files, causing naming collisions and breaking skillset path resolution  
 **Impact:** 
