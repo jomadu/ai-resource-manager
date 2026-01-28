@@ -19,9 +19,10 @@
 12. **Automate Releases** - Use semantic-release with conventional commits to automatically version, tag, create GitHub releases, and upload binaries
 13. **Install and Uninstall** - Provide shell scripts for easy installation and removal on Linux, macOS, and Windows with platform detection
 14. **Ensure Code Quality** - Run linting (13 linters), formatting (gofmt, goimports), and pre-commit hooks with conventional commit validation
-15. **Test Continuously** - Execute unit and E2E tests (75 test files, 120 total Go files) on every push and PR with race detection and coverage reporting
+15. **Test Continuously** - Execute unit and E2E tests (75 test files, 120 total Go files, 14 E2E test suites) on every push and PR with race detection and coverage reporting
 16. **Scan for Security Issues** - Run CodeQL analysis on Go code and GitHub Actions, review dependencies on PRs, weekly scheduled scans
 17. **Manage Dependencies** - Automated dependency updates via Dependabot for Go modules
+18. **Document User Workflows** - Provide comprehensive documentation (12 docs files, 2686 lines) covering concepts, commands, registries, sinks, publishing, and migration
 
 ## Topics of Concern
 
@@ -83,9 +84,10 @@
 - **Dependency Management** - Dependabot for Go modules with weekly updates, max 5 open PRs
 
 ### Documentation
-- **User Documentation** - 12 docs files covering concepts, commands, registries, sinks, storage, resource schemas, publishing guide, migration guide
+- **User Documentation** - 12 docs files (2686 lines) covering concepts, commands, registries, sinks, storage, resource schemas, publishing guide, migration guide
 - **Root Files** - README.md (user-facing), CONTRIBUTING.md (development setup), SECURITY.md (vulnerability reporting), LICENSE.txt (GPL-3.0), go.mod/go.sum (dependencies), .gitignore (exclusions)
 - **Configuration Files** - .golangci.yml (linting), .pre-commit-config.yaml (hooks), .releaserc.json (semantic-release), package.json (npm deps), .github/dependabot.yml (dependency updates)
+- **Agent Operations** - AGENTS.md (spec vs implementation definitions, build/test/git workflows, project structure)
 
 ## Specification Documents
 

@@ -48,7 +48,7 @@ Log when done: [VALIDATE] ✓ Specs accurate
 
 When specs are accurate:
 - `git add -A`
-- `git commit -m "docs: update specs from implementation"` (conventional commit format: feat/fix/docs/refactor/test/chore)
+- `git commit -m "docs: update [specs...] from implementation"` (conventional commit format: feat/fix/docs/refactor/test/chore) (fill in specs... with relevant specifications)
 - `git push`
 
 Log: [COMMIT] Committing spec updates...
