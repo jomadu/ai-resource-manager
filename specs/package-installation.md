@@ -14,7 +14,9 @@ Install, update, upgrade, and uninstall AI resource packages (rulesets and promp
 - [x] Track installation in arm.json (manifest) and arm-lock.json (lock file)
 - [x] Verify package integrity using SHA256 hash on install
 - [x] Update respects version constraints from manifest
+- [ ] UpdateAll continues on error for partial success (BUG: returns on first error)
 - [x] Upgrade ignores constraints and fetches latest
+- [ ] UpgradeAll continues on error for partial success (BUG: returns on first error)
 - [x] Uninstall removes files from sinks and cleans empty directories
 - [x] Uninstall removes arm-index.json when all packages removed
 - [x] Uninstall removes arm_index.* when all rulesets removed
@@ -98,36 +100,38 @@ Example:
 5. Verify integrity if package already locked (prevents tampering)
 6. Update manifest (version constraint, sinks, patterns, priority)
 7. Update lock file (resolved version, integrity) using composite key `registry/package@version`
-8. For each sink:
-   - Uninstall all existing versions of package
-   - Parse ARM resource files (rulesets/promptsets) and compile to tool format
-   - Copy non-resource files directly
-   - Write to hierarchical path: `{sink}/arm/{registry}/{package}/{version}/{file}`
-   - Update arm-index.json with installed files and priority
-   - Regenerate arm_index.* priority file (rulesets only)
+8. For each sink, call `sinkMgr.InstallRuleset()` or `sinkMgr.InstallPromptset()` which:
+   - Uninstalls all existing versions of package
+   - Parses ARM resource files and compiles to tool format
+   - Copies non-resource files directly
+   - Writes to hierarchical path: `{sink}/arm/{registry}/{package}/{version}/{file}`
+   - Updates arm-index.json with installed files and priority
+   - Regenerates arm_index.* priority file (rulesets only)
 
 ### Update
-1. Read manifest for version constraint
-2. Resolve highest version satisfying constraint
-3. Skip if version unchanged (optimization)
-4. If version changed:
-   - Uninstall old version from sinks
-   - Remove old lock entry
-   - Install new version to sinks
-   - Update lock file with new version and integrity
-5. Manifest constraint unchanged
-6. Continue on error (partial success allowed)
+1. For each dependency in manifest:
+   - Read version constraint from manifest
+   - Resolve highest version satisfying constraint
+   - Skip if version unchanged
+   - If version changed:
+     - Uninstall old version from sinks
+     - Remove old lock entry
+     - Install new version to sinks
+     - Update lock file with new version and integrity
+   - Manifest constraint unchanged
+2. Continue on error for partial success (BUG: UpdateAll returns on first error)
 
 ### Upgrade
-1. Fetch latest version from registry (ignore constraint)
-2. Skip if version unchanged
-3. If version changed:
-   - Uninstall old version from sinks
-   - Remove old lock entry
-   - Install new version to sinks
-   - Update lock file with new version and integrity
-   - Update manifest constraint to `^{major}.0.0`
-4. Continue on error (partial success allowed)
+1. For each dependency in manifest:
+   - Fetch latest version from registry (ignore constraint)
+   - Skip if version unchanged
+   - If version changed:
+     - Uninstall old version from sinks
+     - Remove old lock entry
+     - Install new version to sinks
+     - Update lock file with new version and integrity
+     - Update manifest constraint to `^{major}.0.0`
+2. Continue on error for partial success (BUG: UpgradeAll returns on first error)
 
 ### Uninstall
 1. For each sink:
@@ -153,8 +157,16 @@ Example:
 | Empty directory after uninstall | Remove directory recursively |
 | Nested empty directories | Remove all empty ancestors |
 | Sink root directory empty | Keep sink root, only remove subdirs |
-| Update/upgrade with errors | Continue processing remaining packages (partial success) |
+| Update/upgrade with errors | Continue processing remaining packages (BUG: UpdateAll/UpgradeAll return on first error) |
 | Uninstall package | Removes all versions matching `registry/package@*` |
+
+## Known Bugs
+
+### Bug: UpdateAll/UpgradeAll Don't Continue on Error
+**Files:** `internal/arm/service/service.go` (UpdateAll, UpgradeAll)  
+**Issue:** Return on first error instead of continuing for partial success  
+**Expected:** Continue processing remaining packages, return error only if all fail  
+**Note:** UpdatePackages and UpgradePackages correctly implement partial success
 
 ## Dependencies
 
@@ -167,7 +179,7 @@ Example:
 ## Implementation Mapping
 
 **Source files:**
-- `internal/arm/service/service.go` - InstallRuleset, InstallPromptset, UpdatePackages, UpgradePackages, UninstallPackages
+- `internal/arm/service/service.go` - InstallRuleset, InstallPromptset, UpdatePackages (partial success ✓), UpdateAll (BUG: fail-fast), UpgradePackages (partial success ✓), UpgradeAll (BUG: fail-fast), UninstallPackages
 - `internal/arm/service/dependency_test.go` - Unit tests for install workflows
 - `internal/arm/sink/manager.go` - InstallRuleset, InstallPromptset, Uninstall, CleanupEmptyDirectories
 - `cmd/arm/main.go` - CLI handlers for install, update, upgrade, uninstall
