@@ -6,73 +6,43 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 
 ## Outstanding Items (Priority Order)
 
-### Priority 1: Pattern Filtering Bugs
+### Priority 1: BREAKING CHANGE - Archive Extraction (v5.0)
 
-- [x] **Fix pattern matching in standalone compilation** (standalone-compilation.md, pattern-filtering.md)
-  - Bug: `internal/arm/service/service.go:1763,1778` uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)`
-  - Root cause: Pattern matching on basename only, not full path
-  - Impact: Patterns like `security/**/*.yml` don't work in `arm compile` command
-  - Fix: Replace both occurrences:
-    ```go
-    // Before
-    if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
-    
-    // After
-    if core.MatchPattern(pattern, filePath) {
-    ```
-  - Files: `internal/arm/service/service.go` (matchesPatterns function)
-  - Test: Verify `arm compile` with `--include "security/**/*.yml"` works correctly
-  - Status: COMPLETED - Fixed matchesPatterns function to use core.MatchPattern for full path matching
+- [ ] **Extract archives to subdirectories** (pattern-filtering.md)
+  - Current: Archives merge with loose files, causing collisions
+  - Required: Extract archives to subdirectories named after archive (minus extension)
+  - Example: `rules.tar.gz` containing `file.yml` → extracts to `rules/file.yml`
+  - Impact: Breaking change - prevents collisions, enables skillset path resolution
+  - Files to update:
+    - `internal/arm/core/archive.go` - Rename ExtractAndMerge → Extract, add subdirectory logic
+    - `internal/arm/registry/git.go` - Change ExtractAndMerge → Extract (line 168)
+    - `internal/arm/registry/gitlab.go` - Change ExtractAndMerge → Extract (line 214)
+    - `internal/arm/registry/cloudsmith.go` - Change ExtractAndMerge → Extract (line 255)
+    - `test/e2e/archive_test.go` - Update expectations for subdirectory structure
+  - Spec: `specs/pattern-filtering.md` (see BREAKING CHANGE v5.0 section)
+  - Status: NOT STARTED - Required for v5.0 release
 
-### Priority 2: Update/Upgrade Error Handling
-
-- [x] **Fix UpdateAll to continue on error** (package-installation.md)
-  - Bug: `UpdateAll()` returns on first error instead of continuing for partial success
-  - Files: `internal/arm/service/service.go:731-780` (UpdateAll function)
-  - Expected behavior: Continue processing remaining packages, collect errors, return combined error
-  - Reference: `UpdatePackages()` (line 600-729) correctly implements partial success pattern
-  - Implementation:
-    - Collect errors in slice instead of returning immediately
-    - Continue loop on error
-    - Return combined error at end if any errors occurred
-  - Test: Verify update continues when one package fails
-  - Status: COMPLETED - UpdateAll now continues on error with partial success pattern
-
-- [x] **Fix UpgradeAll to continue on error** (package-installation.md)
-  - Bug: `UpgradeAll()` returns on first error instead of continuing for partial success
-  - Files: `internal/arm/service/service.go:887-950` (UpgradeAll function)
-  - Expected behavior: Continue processing remaining packages, collect errors, return combined error
-  - Reference: `UpgradePackages()` correctly implements partial success pattern
-  - Implementation: Same pattern as UpdateAll fix
-  - Test: Verify upgrade continues when one package fails
-  - Status: COMPLETED - UpgradeAll now continues on error with partial success pattern
-
-### Priority 3: Documentation Improvements
-
-- [x] **Update help text for `arm list` command**
-  - Current: Only shows `arm list registry` (line 149-156 in cmd/arm/main.go)
-  - Should show: All subcommands (registry, sink, dependency, versions)
-  - Files: `cmd/arm/main.go` (showHelp function, case "list")
-  - Status: COMPLETED - Added all subcommands to help text
+### Priority 2: Documentation Improvements
 
 - [ ] **Add `arm list versions` to docs/commands.md**
+  - Command exists and works (cmd/arm/main.go:965)
   - Add new section under "Core" commands
   - Show usage: `arm list versions REGISTRY/PACKAGE`
   - Document output format (semver descending, branches labeled)
   - Provide examples with expected output
   - Files: `docs/commands.md`
+  - Status: Command implemented, documentation missing
 
-### Priority 4: Test Coverage
+### Priority 3: Test Coverage
 
 - [ ] **Add E2E test for `arm list versions` command**
-  - Test default pattern behavior in registries
-    - Install without patterns, verify only YAML files installed
-    - Files: `test/e2e/install_test.go`
-  - Test ** patterns in standalone compilation
-    - Compile with `--include "security/**/*.yml"`, verify correct files
-    - Files: `test/e2e/compile_test.go`
+  - Test listing versions from different registry types
+  - Verify semver sorting (descending)
+  - Verify branch labeling
+  - Files: `test/e2e/version_test.go` or new `test/e2e/list_versions_test.go`
+  - Status: Command works, E2E test missing
 
-### Priority 5: Version Resolution Edge Cases (Low Priority - May Not Be Bugs)
+### Priority 4: Version Resolution Edge Cases (Low Priority - May Not Be Bugs)
 
 - [ ] **Verify prerelease version comparison** (version-resolution.md)
   - Spec mentions: 1.0.0-alpha.1 < 1.0.0-alpha.2 < 1.0.0-beta.1 < 1.0.0-rc.1 < 1.0.0
@@ -95,6 +65,14 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 
 ## Completed Features ✅
 
+### Recently Completed (Verified 2026-01-28)
+- ✅ Pattern matching in standalone compilation - matchesPatterns uses core.MatchPattern for full path matching
+- ✅ UpdateAll error handling - continues on error with partial success pattern
+- ✅ UpgradeAll error handling - continues on error with partial success pattern
+- ✅ Help text for `arm list` command - shows all subcommands (registry, sink, dependency, versions)
+- ✅ Default pattern behavior in registries - all three registries (Git, GitLab, Cloudsmith) apply `**/*.yml` and `**/*.yaml` defaults when no patterns specified
+- ✅ CLI command for listing package versions - `arm list versions REGISTRY/PACKAGE` implemented and functional
+
 ### Core Functionality
 - ✅ Package installation (install, update, upgrade, uninstall)
 - ✅ Version resolution (semver, constraints, branches, latest)
@@ -103,12 +81,12 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 - ✅ Priority-based rule conflict resolution
 - ✅ Pattern filtering (include/exclude with glob patterns)
 - ✅ Default pattern behavior in registries (defaults to `**/*.yml` and `**/*.yaml` when no patterns specified)
-- ✅ Archive extraction (zip, tar.gz)
+- ✅ Archive extraction (zip, tar.gz) - NOTE: v5.0 will change to subdirectory extraction
 - ✅ Cache management (storage, cleanup, file locking)
 - ✅ Authentication (token-based via .armrc)
 - ✅ Integrity verification (SHA256 hashing)
 - ✅ Query operations (list dependencies, check outdated, info, list versions)
-- ✅ Standalone compilation (local files without registry) - has pattern bug but functional
+- ✅ Standalone compilation (local files without registry)
 - ✅ CLI command for listing package versions (`arm list versions REGISTRY/PACKAGE`)
 
 ### Infrastructure
@@ -139,13 +117,17 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 ## Implementation Notes
 
 ### Why So Little Left?
-The project is essentially feature-complete. All major features are implemented and tested. The remaining items are bug fixes for edge cases that don't prevent normal usage.
+The project is feature-complete for v3.x. All major features are implemented and tested. The remaining items are:
+1. **v5.0 Breaking Change**: Archive extraction to subdirectories (prevents collisions)
+2. **Documentation**: Add `arm list versions` to docs/commands.md
+3. **Test Coverage**: Add E2E test for `arm list versions`
+4. **Edge Cases**: Version resolution edge cases (may not be actual bugs)
 
 ### Code Quality
 - All linting passes (13 linters enabled)
 - All tests pass (go test ./... succeeds)
-- No TODO/FIXME/HACK comments in production code
-- Only 2 skipped tests (both documented with reasons)
+- No TODO/FIXME/HACK comments in production code (only in docs/examples and git history)
+- Only 2 skipped tests (both documented with reasons in test files)
 
 ### Architecture
 - Clean separation: cmd/ (CLI) → internal/arm/service/ (business logic) → internal/arm/* (components)
@@ -155,11 +137,10 @@ The project is essentially feature-complete. All major features are implemented 
 
 ## Next Steps
 
-1. Fix pattern filtering bugs (Priority 1)
-2. Fix UpdateAll/UpgradeAll error handling (Priority 2)
-3. Update documentation (Priority 3)
-4. Add test coverage for bug fixes (Priority 4)
-5. Investigate version resolution edge cases if time permits (Priority 5)
+1. **v5.0 Breaking Change**: Implement archive extraction to subdirectories (Priority 1)
+2. Document `arm list versions` command (Priority 2)
+3. Add E2E test for `arm list versions` (Priority 3)
+4. Investigate version resolution edge cases if time permits (Priority 4)
 
 ## Maintenance Items
 
