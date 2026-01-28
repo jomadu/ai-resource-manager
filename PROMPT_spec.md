@@ -46,7 +46,7 @@ Log when done: [VALIDATE] ✓ Specs accurate
 
 When specs are accurate:
 - `git add -A`
-- `git commit -m "docs: update specs from implementation"` (conventional commit format: feat/fix/docs/refactor/test/chore)
+- `git commit -m "docs: update specs [specs...] from implementation"` (conventional commit format: feat/fix/docs/refactor/test/chore)
 - `git push`
 
 Log: [COMMIT] Committing spec updates...
@@ -56,7 +56,7 @@ Log when done: [COMMIT] ✓ Complete
 
 Priority 1 (Must do):
 - Implementation is the source of truth - specs document what exists
-- Verify all claims by inspection - don't assume specs are correct
+- Verify all claims by inspection - don't assume specs are correct, or that the JTBDs or topics of concern are complete or accurate
 - Deep-dive verification - trace through actual code to find discrepancies
 
 Priority 2 (Important):
