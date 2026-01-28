@@ -6,22 +6,12 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 
 ## Summary of Outstanding Work
 
-**Total Items: 2** (1 breaking change, 1 test gap)
+**Total Items: 1** (1 breaking change)
 
 **Priority Breakdown:**
-- Priority 1 (Test Coverage): 1 item - E2E test for `arm list dependency`
 - Priority 2 (Breaking Change): 1 item - Archive extraction to subdirectories (v5.0)
 
 ## Outstanding Items (Priority Order)
-
-### Priority 1: Test Coverage
-
-- [ ] **Add E2E test for `arm list dependency` command**
-  - Test the newly implemented command
-  - Verify output format (dash-prefixed list)
-  - Verify sorting (alphabetical)
-  - Files: `test/e2e/manifest_test.go` or similar
-  - Status: Ready to implement (command now exists)
 
 ### Priority 2: BREAKING CHANGE - Archive Extraction (v5.0)
 
@@ -46,6 +36,7 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 ## Completed Features ✅
 
 ### Recently Completed (Verified 2026-01-28)
+- ✅ E2E test for `arm list dependency` command - Tests output format (dash-prefixed), sorting (alphabetical), empty state, and uninstall cleanup (test/e2e/manifest_test.go:TestListDependency)
 - ✅ `arm list dependency` command - Lists installed dependencies in format `- registry/package@version`, sorted alphabetically (main.go:1350-1378)
 - ✅ Pattern matching in standalone compilation - matchesPatterns uses core.MatchPattern for full path matching (service.go:1833)
 - ✅ UpdateAll error handling - continues on error with partial success pattern
