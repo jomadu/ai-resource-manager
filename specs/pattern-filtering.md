@@ -14,71 +14,76 @@ Selectively install files from packages using glob patterns with include/exclude
 - [x] Support * wildcard for single path component
 - [x] Support --include patterns (OR logic - match any)
 - [x] Support --exclude patterns (override includes)
-- [x] Default to **/*.yml and **/*.yaml if no patterns specified
+- [ ] Default to **/*.yml and **/*.yaml if no patterns specified (BUG: registries return all files instead)
 - [x] Extract .zip archives automatically
 - [x] Extract .tar.gz archives automatically
 - [x] Merge extracted files with loose files (archives take precedence)
 - [x] Apply patterns after archive extraction
 - [x] Prevent directory traversal attacks in archives
+- [ ] Use consistent pattern matching across install and compile (BUG: compile uses filepath.Match on basename only)
 
 ## Data Structures
 
-### Pattern Matching
-```go
-type PatternMatcher struct {
-    Include []string  // OR'd together
-    Exclude []string  // Override includes
-}
-```
+Pattern matching uses simple string slices passed to functions. No dedicated struct exists.
 
 ## Algorithm
 
 ### Match Pattern
 1. Normalize path separators to /
-2. Split pattern and path on /
-3. Match components left-to-right:
-   - `**` matches zero or more path components
-   - `*` matches any characters except /
-   - Literal matches exact component
-4. Return true if pattern matches entire path
+2. If no wildcards, return exact match
+3. If pattern contains `**`, use recursive matching
+4. Otherwise use simple wildcard matching
 
-### Filter Files
-1. If no include patterns, default to ["**/*.yml", "**/*.yaml"]
-2. For each file:
-   - Check if matches any include pattern (OR logic)
-   - If matches, check if matches any exclude pattern
-   - If excluded, skip file
-   - Otherwise, include file
-3. Return filtered file list
+### Filter Files (Registry Operations)
+1. Apply defaults: if `len(include) == 0`, set `include = ["**/*.yml", "**/*.yaml"]`
+2. Check exclude patterns first (if any match, skip file)
+3. If no include patterns after defaults, include file
+4. Check include patterns (if any match, include file)
+5. Otherwise skip file
+
+**Note:** Current implementation skips step 1 (BUG: git.go:199, gitlab.go:374, cloudsmith.go:337)
+
+### Filter Files (Standalone Compilation)
+1. Apply defaults: if `len(include) == 0`, set `include = ["*.yml", "*.yaml"]`
+2. Get relative path from input directory
+3. Check exclude patterns using `core.MatchPattern()` (if any match, skip file)
+4. If no include patterns after defaults, include file
+5. Check include patterns using `core.MatchPattern()` (if any match, include file)
+6. Otherwise skip file
+
+**Note:** Current implementation uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)` (BUG: service.go:1763)
 
 ### Extract Archive
 1. Detect archive by extension (.zip, .tar.gz)
-2. Open archive for reading
+2. Write to temp file for streaming
 3. For each entry:
-   - Sanitize path (prevent ../ traversal)
-   - Extract to temporary directory
+   - Skip directories
+   - Sanitize path: skip if contains `..`, is absolute, or equals `.`
+   - Read content
 4. Return extracted files
 
 ### Merge Files
-1. Extract all archives to temporary directory
-2. Collect loose files from package
-3. Merge with archive files taking precedence
-4. Apply include/exclude patterns to merged list
-5. Return final file list
+1. Add all loose files to map
+2. Extract archives and add to map (overwrites loose files with same path)
+3. Convert map to slice
+4. Return merged files
+
+**Note:** Pattern filtering happens AFTER merge in registry GetPackage methods
 
 ## Edge Cases
 
-| Condition | Expected Behavior |
-|-----------|-------------------|
-| No patterns specified | Default to **/*.yml and **/*.yaml |
-| Empty include list | Include all files |
-| File matches include and exclude | Exclude wins (skip file) |
-| Multiple include patterns | OR logic (match any) |
-| Archive with ../ paths | Sanitize to prevent traversal |
-| Archive with absolute paths | Convert to relative |
-| Nested archives | Extract outer only (don't recurse) |
-| Corrupted archive | Return error, don't install |
-| Archive + loose file collision | Archive file takes precedence |
+| Condition | Expected Behavior | Current Status |
+|-----------|-------------------|----------------|
+| No patterns specified | Default to **/*.yml and **/*.yaml | ❌ Registries return all files |
+| Empty include list | Include all files | ✅ Works |
+| File matches include and exclude | Exclude wins (skip file) | ✅ Works |
+| Multiple include patterns | OR logic (match any) | ✅ Works |
+| Archive with ../ paths | Sanitize to prevent traversal | ✅ Works |
+| Archive with absolute paths | Skip (security) | ✅ Works |
+| Nested archives | Extract outer only (don't recurse) | ✅ Works |
+| Corrupted archive | Return error, don't install | ✅ Works |
+| Archive + loose file collision | Archive file takes precedence | ✅ Works |
+| Compile with ** patterns | Should work like install | ❌ Uses filepath.Match on basename |
 
 ## Dependencies
 
@@ -90,11 +95,25 @@ type PatternMatcher struct {
 **Source files:**
 - `internal/arm/core/pattern.go` - MatchPattern, matchDoublestar, matchSimpleWildcard
 - `internal/arm/core/archive.go` - ExtractAndMerge, extractZip, extractTarGz
-- `internal/arm/registry/git.go` - matchesPatterns (applies patterns)
-- `internal/arm/registry/gitlab.go` - matchesPatterns
-- `internal/arm/registry/cloudsmith.go` - matchesPatterns
+- `internal/arm/registry/git.go` - matchesPatterns (line 199) ⚠️ Missing default patterns
+- `internal/arm/registry/gitlab.go` - matchesPatterns (line 374) ⚠️ Missing default patterns
+- `internal/arm/registry/cloudsmith.go` - matchesPatterns (line 337) ⚠️ Missing default patterns
+- `internal/arm/service/service.go` - matchesPatterns (line 1763) ⚠️ Wrong implementation, discoverFiles (line 1671) ✅ Correct defaults
 - `test/e2e/archive_test.go` - E2E archive extraction tests
 - `test/e2e/install_test.go` - E2E pattern filtering tests
+
+## Known Bugs
+
+### Bug 1: Registries Don't Apply Default Patterns
+**Location:** `internal/arm/registry/{git,gitlab,cloudsmith}.go`  
+**Issue:** When `len(include) == 0`, registries return ALL files instead of defaulting to `["**/*.yml", "**/*.yaml"]`  
+**Fix:** Add default pattern logic before calling `matchesPatterns()`
+
+### Bug 2: Compile Uses Wrong Pattern Matcher
+**Location:** `internal/arm/service/service.go:1763`  
+**Issue:** Uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)`  
+**Impact:** Patterns like `security/**/*.yml` don't work in `arm compile`  
+**Fix:** Replace with `core.MatchPattern()` call
 
 ## Examples
 
@@ -133,28 +152,28 @@ arm install ruleset --include "**/*.yml" ai-rules/archived-rules cursor-rules
 ```
 Pattern: **/*.yml
 Matches:
-  - rules/clean-code.yml ✓
-  - security/auth/rules.yml ✓
-  - build/cursor/rule.yml ✓
+  - file.yml (root level - ** matches zero directories)
+  - rules/clean-code.yml
+  - security/auth/rules.yml
+  - build/cursor/rule.yml
 Does not match:
-  - rules/clean-code.md ✗
-  - README.yml (no directory) ✗
+  - rules/clean-code.md (wrong extension)
 
 Pattern: security/**/*.yml
 Matches:
-  - security/auth/rules.yml ✓
-  - security/crypto/aes.yml ✓
+  - security/auth/rules.yml
+  - security/crypto/aes.yml
 Does not match:
-  - rules/security.yml ✗
-  - security.yml ✗
+  - rules/security.yml (wrong prefix)
+  - security.yml (no directory after security/)
 
 Pattern: **/typescript-*
 Matches:
-  - rules/typescript-strict.yml ✓
-  - lang/typescript-eslint.yml ✓
+  - typescript-strict.yml (root level)
+  - rules/typescript-strict.yml
+  - lang/typescript-eslint.yml
 Does not match:
-  - rules/javascript-strict.yml ✗
-  - typescript.yml ✗
+  - rules/javascript-strict.yml (wrong prefix)
 ```
 
 ### Archive Precedence
