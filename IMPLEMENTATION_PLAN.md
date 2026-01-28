@@ -6,35 +6,16 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 
 ## Summary of Outstanding Work
 
-**Total Items: 4** (1 breaking change, 1 bug, 1 documentation gap, 1 test gap)
+**Total Items: 3** (1 breaking change, 1 documentation gap, 1 test gap)
 
 **Priority Breakdown:**
-- Priority 1 (Bug Fix): 1 item - Missing `arm list dependency` command implementation
-- Priority 2 (Documentation): 1 item - Document `arm list versions` command
-- Priority 3 (Test Coverage): 1 item - E2E test for `arm list dependency`
-- Priority 4 (Breaking Change): 1 item - Archive extraction to subdirectories (v5.0)
+- Priority 1 (Documentation): 1 item - Document `arm list versions` command
+- Priority 2 (Test Coverage): 1 item - E2E test for `arm list dependency`
+- Priority 3 (Breaking Change): 1 item - Archive extraction to subdirectories (v5.0)
 
 ## Outstanding Items (Priority Order)
 
-### Priority 1: Bug Fix - CONFIRMED BUG
-
-- [ ] **Implement `arm list dependency` command** (query-operations.md)
-  - Bug: Documented command not implemented in handleList() switch (cmd/arm/main.go:954-971)
-  - Help text exists (cmd/arm/main.go:158) but handler missing
-  - Current: `arm list` (no args) shows all dependencies grouped under "Dependencies:" header
-  - Required: `arm list dependency` should be a dedicated subcommand with different output format
-  - Expected output: Dash-prefixed list of `registry/package@version` (see docs/commands.md:527-550)
-  - Files to update:
-    - `cmd/arm/main.go` - Add "dependency" case to handleList() switch (line 954-971)
-    - Create `handleListDependency()` function (similar to handleListRegistry/handleListSink)
-  - Implementation notes:
-    - Read manifest and lock file
-    - Combine rulesets and promptsets
-    - Format as `- registry/package@version`
-    - Sort alphabetically
-  - Status: CONFIRMED BUG - Documented in help text and docs/commands.md but not implemented in code
-
-### Priority 2: Documentation Improvements
+### Priority 1: Documentation Improvements
 
 - [ ] **Add `arm list versions` to docs/commands.md**
   - Command exists and works (cmd/arm/main.go:966, handleListVersions at line 1347)
@@ -45,16 +26,16 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
   - Files: `docs/commands.md`
   - Status: Command implemented, documentation missing
 
-### Priority 3: Test Coverage
+### Priority 2: Test Coverage
 
 - [ ] **Add E2E test for `arm list dependency` command**
-  - Test after implementing the command
+  - Test the newly implemented command
   - Verify output format (dash-prefixed list)
   - Verify sorting (alphabetical)
   - Files: `test/e2e/manifest_test.go` or similar
-  - Status: Blocked by Priority 1 (implement command first)
+  - Status: Ready to implement (command now exists)
 
-### Priority 4: BREAKING CHANGE - Archive Extraction (v5.0)
+### Priority 3: BREAKING CHANGE - Archive Extraction (v5.0)
 
 - [ ] **Extract archives to subdirectories** (pattern-filtering.md)
   - Current: Archives merge with loose files, causing collisions
@@ -77,6 +58,7 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 ## Completed Features ✅
 
 ### Recently Completed (Verified 2026-01-28)
+- ✅ `arm list dependency` command - Lists installed dependencies in format `- registry/package@version`, sorted alphabetically (main.go:1350-1378)
 - ✅ Pattern matching in standalone compilation - matchesPatterns uses core.MatchPattern for full path matching (service.go:1833)
 - ✅ UpdateAll error handling - continues on error with partial success pattern
 - ✅ UpgradeAll error handling - continues on error with partial success pattern
