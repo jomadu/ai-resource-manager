@@ -19,39 +19,23 @@ func NewExtractor() *Extractor {
 	return &Extractor{}
 }
 
-// ExtractAndMerge extracts archives from files and merges with loose files
-func (e *Extractor) ExtractAndMerge(files []*File) ([]*File, error) {
-	fileMap := make(map[string]*File)
+// Extract extracts archives from files to subdirectories (no merge)
+func (e *Extractor) Extract(files []*File) ([]*File, error) {
+	var result []*File
 
-	// First, add all loose files
-	for _, file := range files {
-		if !e.isArchive(file.Path) {
-			fileMap[file.Path] = file
-		}
-	}
-
-	// Then extract archives (archives win on conflicts)
 	for _, file := range files {
 		if e.isArchive(file.Path) {
 			extractedFiles, err := e.extractArchive(file)
 			if err != nil {
 				return nil, fmt.Errorf("failed to extract %s: %w", file.Path, err)
 			}
-
-			// Add extracted files (overwriting loose files)
-			for _, extracted := range extractedFiles {
-				fileMap[extracted.Path] = extracted
-			}
+			result = append(result, extractedFiles...)
+		} else {
+			result = append(result, file)
 		}
 	}
 
-	// Convert map back to slice
-	var mergedFiles []*File
-	for _, file := range fileMap {
-		mergedFiles = append(mergedFiles, file)
-	}
-
-	return mergedFiles, nil
+	return result, nil
 }
 
 // isArchive checks if file is a supported archive format
@@ -59,19 +43,29 @@ func (e *Extractor) isArchive(path string) bool {
 	return strings.HasSuffix(path, ".tar.gz") || strings.HasSuffix(path, ".zip")
 }
 
-// extractArchive extracts a single archive file
+// extractArchive extracts a single archive file to subdirectory
 func (e *Extractor) extractArchive(file *File) ([]*File, error) {
+	subdirName := e.getSubdirName(file.Path)
+	
 	if strings.HasSuffix(file.Path, ".tar.gz") {
-		return e.extractTarGz(file)
+		return e.extractTarGz(file, subdirName)
 	}
 	if strings.HasSuffix(file.Path, ".zip") {
-		return e.extractZip(file)
+		return e.extractZip(file, subdirName)
 	}
 	return nil, fmt.Errorf("unsupported archive format: %s", file.Path)
 }
 
-// extractTarGz extracts a tar.gz archive
-func (e *Extractor) extractTarGz(file *File) ([]*File, error) {
+// getSubdirName returns subdirectory name from archive filename
+func (e *Extractor) getSubdirName(archivePath string) string {
+	base := filepath.Base(archivePath)
+	base = strings.TrimSuffix(base, ".tar.gz")
+	base = strings.TrimSuffix(base, ".zip")
+	return base
+}
+
+// extractTarGz extracts a tar.gz archive to subdirectory
+func (e *Extractor) extractTarGz(file *File, subdirName string) ([]*File, error) {
 	// Create temp file for streaming extraction
 	tempFile, err := os.CreateTemp("", "arm-extract-*.tar.gz")
 	if err != nil {
@@ -126,7 +120,7 @@ func (e *Extractor) extractTarGz(file *File) ([]*File, error) {
 		}
 
 		extractedFiles = append(extractedFiles, &File{
-			Path:    cleanName,
+			Path:    filepath.Join(subdirName, cleanName),
 			Content: content,
 			Size:    header.Size,
 		})
@@ -135,8 +129,8 @@ func (e *Extractor) extractTarGz(file *File) ([]*File, error) {
 	return extractedFiles, nil
 }
 
-// extractZip extracts a zip archive
-func (e *Extractor) extractZip(file *File) ([]*File, error) {
+// extractZip extracts a zip archive to subdirectory
+func (e *Extractor) extractZip(file *File, subdirName string) ([]*File, error) {
 	// Create temp file for streaming extraction
 	tempFile, err := os.CreateTemp("", "arm-extract-*.zip")
 	if err != nil {
@@ -188,7 +182,7 @@ func (e *Extractor) extractZip(file *File) ([]*File, error) {
 		}
 
 		extractedFiles = append(extractedFiles, &File{
-			Path:    cleanName,
+			Path:    filepath.Join(subdirName, cleanName),
 			Content: content,
 			Size:    int64(zipFile.UncompressedSize64),
 		})

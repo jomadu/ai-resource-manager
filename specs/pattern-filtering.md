@@ -26,7 +26,7 @@ Selectively install files from packages using glob patterns with include/exclude
 - [x] Default to **/*.yml and **/*.yaml if no patterns specified
 - [x] Extract .zip archives automatically
 - [x] Extract .tar.gz archives automatically
-- [ ] **BREAKING CHANGE v5.0**: Extract archives to subdirectories named after archive (prevents collisions, enables skillset path resolution)
+- [x] **BREAKING CHANGE v5.0**: Extract archives to subdirectories named after archive (prevents collisions, enables skillset path resolution)
 - [x] Apply patterns after archive extraction
 - [x] Prevent directory traversal attacks in archives
 - [x] Use consistent pattern matching across install and compile
@@ -105,25 +105,17 @@ Pattern matching uses simple string slices passed to functions. No dedicated str
 
 **Source files:**
 - `internal/arm/core/pattern.go` - MatchPattern, matchDoublestar, matchSimpleWildcard
-- `internal/arm/core/archive.go` - **NEEDS UPDATE**: Rename ExtractAndMerge → Extract, add subdirectory logic
-- `internal/arm/registry/git.go` - **NEEDS UPDATE**: Change ExtractAndMerge → Extract (line 168)
-- `internal/arm/registry/gitlab.go` - **NEEDS UPDATE**: Change ExtractAndMerge → Extract (line 214), missing default patterns
-- `internal/arm/registry/cloudsmith.go` - **NEEDS UPDATE**: Change ExtractAndMerge → Extract (line 255), missing default patterns
-- `internal/arm/service/service.go` - matchesPatterns (BUG: uses filepath.Match on basename), discoverFiles
-- `test/e2e/archive_test.go` - **NEEDS UPDATE**: Update expectations for subdirectory structure
+- `internal/arm/core/archive.go` - Extract (extracts to subdirectories), extractTarGz, extractZip, getSubdirName
+- `internal/arm/registry/git.go` - Uses Extract for archive handling
+- `internal/arm/registry/gitlab.go` - Uses Extract for archive handling
+- `internal/arm/registry/cloudsmith.go` - Uses Extract for archive handling
+- `internal/arm/service/service.go` - matchesPatterns, discoverFiles
+- `test/e2e/archive_test.go` - E2E tests for archive extraction to subdirectories
 - `test/e2e/install_test.go` - E2E pattern filtering tests
 
 ## Known Bugs
 
-### Bug: Archive Merge Causes Collisions (BREAKING CHANGE v5.0)
-**Files:** `internal/arm/core/archive.go`, all registry implementations  
-**Issue:** Archives are merged with loose files, causing naming collisions and breaking skillset path resolution  
-**Impact:** 
-- Multiple archives with same internal structure collide
-- Loose files are overwritten by archive files with same path
-- Skillset `source` references can't reliably point to files in archives
-**Fix:** Extract archives to subdirectories named after the archive (minus extension)  
-**Priority:** HIGH - Required for v5.0 release
+None - all known bugs have been resolved.
 
 ## Examples
 

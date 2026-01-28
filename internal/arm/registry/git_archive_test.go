@@ -52,7 +52,7 @@ func TestGitRegistry_GetPackage_WithArchiveAndPatterns(t *testing.T) {
 
 	// Extract
 	extractor := core.NewExtractor()
-	extracted, err := extractor.ExtractAndMerge([]*core.File{archiveFile})
+	extracted, err := extractor.Extract([]*core.File{archiveFile})
 	if err != nil {
 		t.Fatalf("extraction failed: %v", err)
 	}
@@ -63,7 +63,8 @@ func TestGitRegistry_GetPackage_WithArchiveAndPatterns(t *testing.T) {
 	}
 
 	// Apply patterns
-	include := []string{"security/**/*.yml"}
+	// Note: Archive extracts to subdirectory named after archive (rules/)
+	include := []string{"rules/security/**/*.yml"}
 	exclude := []string{"**/experimental/**"}
 
 	var filtered []*core.File
@@ -121,8 +122,8 @@ func TestGitRegistry_GetPackage_WithArchiveAndPatterns(t *testing.T) {
 	}
 
 	expectedPaths := map[string]bool{
-		"security/rule1.yml": false,
-		"security/rule2.yml": false,
+		"rules/security/rule1.yml": false,
+		"rules/security/rule2.yml": false,
 	}
 
 	for _, f := range filtered {

@@ -211,7 +211,7 @@ func (g *GitLabRegistry) GetPackage(ctx context.Context, packageName string, ver
 	}
 
 	extractor := core.NewExtractor()
-	files, err = extractor.ExtractAndMerge(files)
+	files, err = extractor.Extract(files)
 	if err != nil {
 		return nil, err
 	}

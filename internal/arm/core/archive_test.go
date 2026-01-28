@@ -187,7 +187,7 @@ func TestExtractTarGz(t *testing.T) {
 				Size:    int64(len(archive)),
 			}
 
-			extracted, err := extractor.extractTarGz(file)
+			extracted, err := extractor.extractTarGz(file, "test")
 
 			if tt.expectError && err == nil {
 				t.Error("expected error but got none")
@@ -199,9 +199,14 @@ func TestExtractTarGz(t *testing.T) {
 				t.Errorf("expected %d files, got %d", tt.expectCount, len(extracted))
 			}
 
-			// Verify content matches
+			// Verify content matches and subdirectory prefix
 			for _, extractedFile := range extracted {
-				if expectedContent, ok := tt.files[extractedFile.Path]; ok {
+				// Extract the filename after the subdirectory prefix
+				filename := extractedFile.Path
+				if len(filename) > 5 && filename[:5] == "test/" {
+					filename = filename[5:]
+				}
+				if expectedContent, ok := tt.files[filename]; ok {
 					if !bytes.Equal(extractedFile.Content, expectedContent) {
 						t.Errorf("content mismatch for %s", extractedFile.Path)
 					}
@@ -258,7 +263,7 @@ func TestExtractTarGzSecurity(t *testing.T) {
 				Size:    int64(len(archive)),
 			}
 
-			extracted, err := extractor.extractTarGz(file)
+			extracted, err := extractor.extractTarGz(file, "test")
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -291,7 +296,7 @@ func TestExtractTarGzErrors(t *testing.T) {
 				Size:    int64(len(tt.content)),
 			}
 
-			_, err := extractor.extractTarGz(file)
+			_, err := extractor.extractTarGz(file, "test")
 			if err == nil {
 				t.Error("expected error but got none")
 			}
@@ -364,7 +369,7 @@ func TestExtractZip(t *testing.T) {
 				Size:    int64(len(archive)),
 			}
 
-			extracted, err := extractor.extractZip(file)
+			extracted, err := extractor.extractZip(file, "test")
 
 			if tt.expectError && err == nil {
 				t.Error("expected error but got none")
@@ -376,9 +381,14 @@ func TestExtractZip(t *testing.T) {
 				t.Errorf("expected %d files, got %d", tt.expectCount, len(extracted))
 			}
 
-			// Verify content matches
+			// Verify content matches and subdirectory prefix
 			for _, extractedFile := range extracted {
-				if expectedContent, ok := tt.files[extractedFile.Path]; ok {
+				// Extract the filename after the subdirectory prefix
+				filename := extractedFile.Path
+				if len(filename) > 5 && filename[:5] == "test/" {
+					filename = filename[5:]
+				}
+				if expectedContent, ok := tt.files[filename]; ok {
 					if !bytes.Equal(extractedFile.Content, expectedContent) {
 						t.Errorf("content mismatch for %s", extractedFile.Path)
 					}
@@ -427,7 +437,7 @@ func TestExtractZipSecurity(t *testing.T) {
 				Size:    int64(len(archive)),
 			}
 
-			extracted, err := extractor.extractZip(file)
+			extracted, err := extractor.extractZip(file, "test")
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -460,7 +470,7 @@ func TestExtractZipErrors(t *testing.T) {
 				Size:    int64(len(tt.content)),
 			}
 
-			_, err := extractor.extractZip(file)
+			_, err := extractor.extractZip(file, "test")
 			if err == nil {
 				t.Error("expected error but got none")
 			}
@@ -468,8 +478,8 @@ func TestExtractZipErrors(t *testing.T) {
 	}
 }
 
-// TestExtractAndMerge tests the main extraction and merging logic
-func TestExtractAndMerge(t *testing.T) {
+// TestExtract tests the main extraction logic (no merge)
+func TestExtract(t *testing.T) {
 	extractor := NewExtractor()
 
 	tests := []struct {
@@ -504,7 +514,7 @@ func TestExtractAndMerge(t *testing.T) {
 				}
 			},
 			expectCount: 2,
-			description: "should extract all archives",
+			description: "should extract all archives to subdirectories",
 		},
 		{
 			name: "mixed loose and archives",
@@ -518,10 +528,10 @@ func TestExtractAndMerge(t *testing.T) {
 				}
 			},
 			expectCount: 2,
-			description: "should merge loose files and extracted archives",
+			description: "should preserve loose files and extract archives to subdirectories",
 		},
 		{
-			name: "archive overrides loose file",
+			name: "archive and loose file with same name",
 			setup: func() []*File {
 				return []*File{
 					{Path: "file.txt", Content: []byte("loose")},
@@ -531,8 +541,8 @@ func TestExtractAndMerge(t *testing.T) {
 					},
 				}
 			},
-			expectCount: 1,
-			description: "archive should override loose file with same path",
+			expectCount: 2,
+			description: "both files should be preserved (archive in subdirectory)",
 		},
 		{
 			name: "empty input",
@@ -551,7 +561,7 @@ func TestExtractAndMerge(t *testing.T) {
 			description: "should handle nil input",
 		},
 		{
-			name: "multiple archives with same file",
+			name: "multiple archives with same internal structure",
 			setup: func() []*File {
 				return []*File{
 					{
@@ -564,29 +574,29 @@ func TestExtractAndMerge(t *testing.T) {
 					},
 				}
 			},
-			expectCount: 1,
-			description: "later archive should override earlier",
+			expectCount: 2,
+			description: "both files should be preserved in separate subdirectories",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			files := tt.setup()
-			merged, err := extractor.ExtractAndMerge(files)
+			extracted, err := extractor.Extract(files)
 
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
 
-			if len(merged) != tt.expectCount {
-				t.Errorf("%s: expected %d files, got %d", tt.description, tt.expectCount, len(merged))
+			if len(extracted) != tt.expectCount {
+				t.Errorf("%s: expected %d files, got %d", tt.description, tt.expectCount, len(extracted))
 			}
 		})
 	}
 }
 
-// TestExtractAndMergeOverrideBehavior tests that archives override loose files
-func TestExtractAndMergeOverrideBehavior(t *testing.T) {
+// TestExtractSubdirectoryNaming tests that archives extract to correct subdirectories
+func TestExtractSubdirectoryNaming(t *testing.T) {
 	extractor := NewExtractor()
 
 	files := []*File{
@@ -597,22 +607,37 @@ func TestExtractAndMergeOverrideBehavior(t *testing.T) {
 		},
 	}
 
-	merged, err := extractor.ExtractAndMerge(files)
+	extracted, err := extractor.Extract(files)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if len(merged) != 1 {
-		t.Fatalf("expected 1 file, got %d", len(merged))
+	// Should have 2 files: loose config.yml and rules/config.yml from archive
+	if len(extracted) != 2 {
+		t.Fatalf("expected 2 files, got %d", len(extracted))
 	}
 
-	if string(merged[0].Content) != "archive-content" {
-		t.Errorf("expected archive content to override loose file, got: %s", string(merged[0].Content))
+	// Verify loose file
+	var foundLoose, foundArchive bool
+	for _, f := range extracted {
+		if f.Path == "config.yml" && string(f.Content) == "loose-content" {
+			foundLoose = true
+		}
+		if f.Path == "rules/config.yml" && string(f.Content) == "archive-content" {
+			foundArchive = true
+		}
+	}
+
+	if !foundLoose {
+		t.Error("loose file not found or has wrong content")
+	}
+	if !foundArchive {
+		t.Error("archive file not found in subdirectory or has wrong content")
 	}
 }
 
-// TestExtractAndMergeErrors tests error propagation
-func TestExtractAndMergeErrors(t *testing.T) {
+// TestExtractErrors tests error propagation
+func TestExtractErrors(t *testing.T) {
 	extractor := NewExtractor()
 
 	files := []*File{
@@ -620,7 +645,7 @@ func TestExtractAndMergeErrors(t *testing.T) {
 		{Path: "bad.tar.gz", Content: []byte("invalid archive")},
 	}
 
-	_, err := extractor.ExtractAndMerge(files)
+	_, err := extractor.Extract(files)
 	if err == nil {
 		t.Error("expected error from invalid archive")
 	}
