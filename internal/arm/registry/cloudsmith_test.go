@@ -558,8 +558,8 @@ func TestCloudsmithRegistry_GetPackage(t *testing.T) {
 					"name":     "test-package",
 					"version":  "1.0.0",
 					"format":   "raw",
-					"filename": "test-file.txt",
-					"cdn_url":  serverURL + "/download/test-file.txt",
+					"filename": "test-file.yml",
+					"cdn_url":  serverURL + "/download/test-file.yml",
 					"size":     11,
 				},
 			}
@@ -605,8 +605,8 @@ func TestCloudsmithRegistry_GetPackage(t *testing.T) {
 		t.Fatalf("Expected 1 file, got %d", len(pkg.Files))
 	}
 
-	if pkg.Files[0].Path != "test-file.txt" {
-		t.Errorf("Expected file path test-file.txt, got %s", pkg.Files[0].Path)
+	if pkg.Files[0].Path != "test-file.yml" {
+		t.Errorf("Expected file path test-file.yml, got %s", pkg.Files[0].Path)
 	}
 
 	if string(pkg.Files[0].Content) != "test content" {

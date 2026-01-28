@@ -372,8 +372,9 @@ func ensureProtocol(baseURL string) string {
 }
 
 func matchesPatterns(filePath string, include, exclude []string) bool {
+	// Default to YAML files if no patterns specified
 	if len(include) == 0 && len(exclude) == 0 {
-		return true
+		include = []string{"**/*.yml", "**/*.yaml"}
 	}
 
 	for _, pattern := range exclude {
