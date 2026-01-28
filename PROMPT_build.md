@@ -1,10 +1,11 @@
 # ORIENT
 
-Study `specs/*` with up to 500 parallel subagents to learn the application specifications.
+Study specifications in `specs/*` with up to 500 parallel subagents.
 Study @IMPLEMENTATION_PLAN.md to understand current work.
 Study @AGENTS.md to learn how to build and test.
 
-For reference, the application source code is in `internal/*`, `cmd/*`, `test/*`, and `docs/*`.
+Implementation is in: `internal/*`, `cmd/*`, `test/*`, and `docs/*`
+Specification is in: `specs/*`
 
 Log: [ORIENT] Starting orientation...
 Log when done: [ORIENT] ✓ Complete
@@ -14,12 +15,12 @@ Log when done: [ORIENT] ✓ Complete
 Follow @IMPLEMENTATION_PLAN.md and choose the most important item to address.
 
 Before making changes:
-- Search codebase first (don't assume not implemented)
+- Search implementation (internal/cmd/test/docs) first - don't assume not implemented
 - Use up to 500 parallel subagents for searches/reads
 - Use only 1 subagent for build/tests
 - Use subagents when complex reasoning needed (debugging, architectural decisions)
 
-Implement functionality per the specifications using parallel subagents.
+Implement functionality per specifications (specs/*) using parallel subagents.
 
 Log: [TASK] Starting task: <task name>
 Log when done: [TASK] ✓ Complete
@@ -64,7 +65,7 @@ Priority 2 (Important):
 - Capture the why in documentation - tests and implementation importance
 - Clean completed items from plan when it gets large
 - For any bugs noticed, resolve them or document in @IMPLEMENTATION_PLAN.md even if unrelated
-- If inconsistencies found in docs/* or specs/*, use subagent with ultrathink to update them
+- If inconsistencies found in specs/*, use subagent with ultrathink to update them
 
 Priority 3 (Nice to have):
 - Create git tag with prefix 'ralph-' when no errors (start at ralph-0.0.0, increment patch)

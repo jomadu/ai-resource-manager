@@ -1,10 +1,11 @@
 # ORIENT
 
-Study `specs/*` with up to 250 parallel subagents to learn the application specifications.
+Study specifications in `specs/*` with up to 250 parallel subagents.
 Study @IMPLEMENTATION_PLAN.md (if present) to understand the plan so far.
-Study `internal/*`, `cmd/*`, `test/*`, and `docs/*` with up to 250 parallel subagents to understand shared utilities and components.
+Study implementation in `internal/*`, `cmd/*`, `test/*`, and `docs/*` with up to 250 parallel subagents.
 
-For reference, the application source code is in `internal/*`, `cmd/*`, `test/*`, and `docs/*`.
+Implementation is in: `internal/*`, `cmd/*`, `test/*`, and `docs/*`
+Specification is in: `specs/*`
 
 Log: [ORIENT] Starting orientation...
 Log when done: [ORIENT] ✓ Complete
@@ -14,8 +15,8 @@ Log when done: [ORIENT] ✓ Complete
 Study @IMPLEMENTATION_PLAN.md (if present; assume it is inaccurate and incomplete).
 
 Use up to 500 parallel subagents to:
-- Study existing source code in `internal/*`, `cmd/*`, `test/*`, and `docs/*`
-- Compare it against `specs/*`
+- Study existing implementation in `internal/*`, `cmd/*`, `test/*`, and `docs/*`
+- Compare it against specifications in `specs/*`
 - Search for TODO, minimal implementations, placeholders, skipped/flaky tests, inconsistent patterns
 
 Use a subagent to:
@@ -52,12 +53,12 @@ Log when done: [COMMIT] ✓ Complete
 
 Priority 1 (Must do):
 - Plan only - do NOT implement anything
-- Do NOT assume functionality is missing - confirm with code search first
-- Treat `internal/*`, `cmd/*`, `test/*`, and `docs/*` as the project's standard libraries
-- Prefer consolidated, idiomatic implementations over ad-hoc copies
+- Do NOT assume functionality is missing - confirm with code search in implementation first
+- Implementation is in: internal/cmd/test/docs
+- Specification is in: specs
 
 Priority 2 (Important):
-- If element is missing, search first to confirm it doesn't exist
+- If element is missing from implementation, search first to confirm it doesn't exist
 - If needed, author specification at specs/FILENAME.md
 - If you create new element, document plan to implement it in @IMPLEMENTATION_PLAN.md using subagent
 
