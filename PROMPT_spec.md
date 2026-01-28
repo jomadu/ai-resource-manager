@@ -1,7 +1,7 @@
 # ORIENT
 
-Study @AGENTS.md for spec vs implementation definitions.
-ULTRASTUDY the implementation in `internal/*`, `cmd/*`, `test/*`, `docs/*`, root files, and infrastructure (`.github/*`, etc.) to understand architecture, features, components, functions, and edge cases.
+Study @AGENTS.md for spec vs implementation definitions. If definitions don't exist, investigate and create them.
+ULTRASTUDY the implementation (see @AGENTS.md for what constitutes implementation) to understand architecture, features, components, functions, and edge cases.
 
 Specifications should drive the entire repo: README, CI/CD, configs, code, tests, and docs.
 
@@ -10,7 +10,7 @@ Log when done: [ORIENT] ✓ Complete
 
 # TASK
 
-Update specs/README.md with current Jobs to be Done (JTBDs) and Topics of Concern:
+Update spec README (see @AGENTS.md for what constitutes specs) with current Jobs to be Done (JTBDs) and Topics of Concern:
 - Assume existing README.md is inaccurate, incomplete, and outdated
 - Verify all claims by inspection and hard study of the implementation
 - Include JTBDs and topics for code, documentation, root files, and infrastructure (workflows, CI/CD, etc.)
@@ -19,7 +19,7 @@ Update specs/README.md with current Jobs to be Done (JTBDs) and Topics of Concer
 - Update if core JTBDs or topics change
 - Allow large refactorings when structure needs to change
 
-Update or create spec documents in specs/ using TEMPLATE.md:
+Update or create spec documents (see @AGENTS.md for what constitutes specs) using TEMPLATE.md:
 - Assume existing specs are inaccurate, incomplete, and outdated
 - Verify all claims (especially acceptance criteria) by inspection and hard study of the implementation
 - Specs may not exist yet - create them
@@ -29,7 +29,7 @@ Update or create spec documents in specs/ using TEMPLATE.md:
 - When opportunities for improvement found: add to "Areas for Improvement" section of spec
 - Reorganize/refactor specs if JTBDs or topics have evolved
 - Keep specs minimal but complete and accurate
-- Root files and infrastructure need specs too (e.g., CI/CD workflows, build configs, install scripts)
+- If @AGENTS.md spec vs implementation definitions don't exist, create them based on investigation
 
 Log: [TASK] Updating specifications from implementation...
 Log when done: [TASK] ✓ Complete
@@ -65,8 +65,7 @@ Priority 1 (Must do):
 Priority 2 (Important):
 - When bugs found in implementation: uncheck acceptance criteria, add to "Known Issues"
 - When improvements found: add to "Areas for Improvement"
-- Update @AGENTS.md when learning how to contextualize with implementation or run application (keep brief and operational only)
-- Update @AGENTS.md spec vs implementation definitions if they evolve
+- Update @AGENTS.md when learning how to contextualize with implementation or run application, or if spec vs implementation definitions evolve (keep brief and operational only)
 - Root files and infrastructure need specs too (CI/CD, build configs, install scripts, etc.)
 
 Priority 3 (Context):
