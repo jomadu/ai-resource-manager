@@ -14,13 +14,13 @@ Selectively install files from packages using glob patterns with include/exclude
 - [x] Support * wildcard for single path component
 - [x] Support --include patterns (OR logic - match any)
 - [x] Support --exclude patterns (override includes)
-- [ ] Default to **/*.yml and **/*.yaml if no patterns specified (BUG: registries return all files instead)
+- [ ] Default to **/*.yml and **/*.yaml if no patterns specified (BUG: git.go:199, gitlab.go:374, cloudsmith.go:337)
 - [x] Extract .zip archives automatically
 - [x] Extract .tar.gz archives automatically
 - [x] Merge extracted files with loose files (archives take precedence)
 - [x] Apply patterns after archive extraction
 - [x] Prevent directory traversal attacks in archives
-- [ ] Use consistent pattern matching across install and compile (BUG: compile uses filepath.Match on basename only)
+- [ ] Use consistent pattern matching across install and compile (BUG: service.go:1763 uses filepath.Match on basename)
 
 ## Data Structures
 
@@ -28,30 +28,24 @@ Pattern matching uses simple string slices passed to functions. No dedicated str
 
 ## Algorithm
 
-### Match Pattern
+### Match Pattern (core.MatchPattern)
 1. Normalize path separators to /
 2. If no wildcards, return exact match
 3. If pattern contains `**`, use recursive matching
 4. Otherwise use simple wildcard matching
 
 ### Filter Files (Registry Operations)
-1. Apply defaults: if `len(include) == 0`, set `include = ["**/*.yml", "**/*.yaml"]`
-2. Check exclude patterns first (if any match, skip file)
-3. If no include patterns after defaults, include file
-4. Check include patterns (if any match, include file)
-5. Otherwise skip file
-
-**Note:** Current implementation skips step 1 (BUG: git.go:199, gitlab.go:374, cloudsmith.go:337)
+1. Apply defaults: if `len(include) == 0`, set `include = ["**/*.yml", "**/*.yaml"]` (BUG: not implemented)
+2. Check exclude patterns using `core.MatchPattern()` (if any match, skip file)
+3. Check include patterns using `core.MatchPattern()` (if any match, include file)
+4. Otherwise skip file
 
 ### Filter Files (Standalone Compilation)
 1. Apply defaults: if `len(include) == 0`, set `include = ["*.yml", "*.yaml"]`
 2. Get relative path from input directory
-3. Check exclude patterns using `core.MatchPattern()` (if any match, skip file)
-4. If no include patterns after defaults, include file
-5. Check include patterns using `core.MatchPattern()` (if any match, include file)
-6. Otherwise skip file
-
-**Note:** Current implementation uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)` (BUG: service.go:1763)
+3. Check exclude patterns using `core.MatchPattern()` on full path (BUG: uses filepath.Match on basename)
+4. Check include patterns using `core.MatchPattern()` on full path (BUG: uses filepath.Match on basename)
+5. Otherwise skip file
 
 ### Extract Archive
 1. Detect archive by extension (.zip, .tar.gz)
@@ -68,13 +62,11 @@ Pattern matching uses simple string slices passed to functions. No dedicated str
 3. Convert map to slice
 4. Return merged files
 
-**Note:** Pattern filtering happens AFTER merge in registry GetPackage methods
-
 ## Edge Cases
 
 | Condition | Expected Behavior | Current Status |
 |-----------|-------------------|----------------|
-| No patterns specified | Default to **/*.yml and **/*.yaml | ❌ Registries return all files |
+| No patterns specified | Default to **/*.yml and **/*.yaml | ❌ BUG: Registries return all files |
 | Empty include list | Include all files | ✅ Works |
 | File matches include and exclude | Exclude wins (skip file) | ✅ Works |
 | Multiple include patterns | OR logic (match any) | ✅ Works |
@@ -83,7 +75,7 @@ Pattern matching uses simple string slices passed to functions. No dedicated str
 | Nested archives | Extract outer only (don't recurse) | ✅ Works |
 | Corrupted archive | Return error, don't install | ✅ Works |
 | Archive + loose file collision | Archive file takes precedence | ✅ Works |
-| Compile with ** patterns | Should work like install | ❌ Uses filepath.Match on basename |
+| Compile with ** patterns | Should work like install | ❌ BUG: Uses filepath.Match on basename |
 
 ## Dependencies
 
@@ -95,25 +87,23 @@ Pattern matching uses simple string slices passed to functions. No dedicated str
 **Source files:**
 - `internal/arm/core/pattern.go` - MatchPattern, matchDoublestar, matchSimpleWildcard
 - `internal/arm/core/archive.go` - ExtractAndMerge, extractZip, extractTarGz
-- `internal/arm/registry/git.go` - matchesPatterns (line 199) ⚠️ Missing default patterns
-- `internal/arm/registry/gitlab.go` - matchesPatterns (line 374) ⚠️ Missing default patterns
-- `internal/arm/registry/cloudsmith.go` - matchesPatterns (line 337) ⚠️ Missing default patterns
-- `internal/arm/service/service.go` - matchesPatterns (line 1763) ⚠️ Wrong implementation, discoverFiles (line 1671) ✅ Correct defaults
+- `internal/arm/registry/git.go` - matchesPatterns (BUG: missing default patterns)
+- `internal/arm/registry/gitlab.go` - matchesPatterns (BUG: missing default patterns)
+- `internal/arm/registry/cloudsmith.go` - matchesPatterns (BUG: missing default patterns)
+- `internal/arm/service/service.go` - matchesPatterns (BUG: uses filepath.Match on basename), discoverFiles
 - `test/e2e/archive_test.go` - E2E archive extraction tests
 - `test/e2e/install_test.go` - E2E pattern filtering tests
 
 ## Known Bugs
 
 ### Bug 1: Registries Don't Apply Default Patterns
-**Location:** `internal/arm/registry/{git,gitlab,cloudsmith}.go`  
-**Issue:** When `len(include) == 0`, registries return ALL files instead of defaulting to `["**/*.yml", "**/*.yaml"]`  
-**Fix:** Add default pattern logic before calling `matchesPatterns()`
+**Files:** `internal/arm/registry/{git,gitlab,cloudsmith}.go`  
+**Issue:** When no patterns specified, returns ALL files instead of defaulting to `["**/*.yml", "**/*.yaml"]`
 
 ### Bug 2: Compile Uses Wrong Pattern Matcher
-**Location:** `internal/arm/service/service.go:1763`  
+**File:** `internal/arm/service/service.go:1763`  
 **Issue:** Uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)`  
-**Impact:** Patterns like `security/**/*.yml` don't work in `arm compile`  
-**Fix:** Replace with `core.MatchPattern()` call
+**Impact:** Patterns like `security/**/*.yml` don't work in `arm compile`
 
 ## Examples
 
