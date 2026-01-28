@@ -1,469 +1,440 @@
-# Ralph Prompt Architecture Improvements
+# Ralph Prompt Improvements (Grug Brain Edition)
 
-## Core Problem
+## Grug Brain Philosophy
 
-Current Ralph prompts are monolithic instruction blocks. They work but lack:
-- **Composability** - Can't mix/match concerns
-- **Interpretability** - Hard for agents to parse intent vs mechanics
-- **Flexibility** - Each use case needs a new prompt file
-- **Debuggability** - When Ralph fails, unclear which instruction caused it
+> grug brain developer not so smart, but grug brain developer program many long year and learn some things although mostly still confused
+> 
+> complexity very, very bad. say again: complexity very, very bad.
 
-## Proposed Architecture: Structured Prompt Composition
+Current Ralph prompts work. Don't break what works. Make small improvements only.
 
-### 1. Separate Concerns into Layers
+## Core Problem (Simple Version)
 
-```
-PROMPT.md = PHASE + TASK + GUARDRAILS + CONTEXT
-```
+Ralph prompts are hard to:
+- **Debug** - When Ralph fails, which instruction broke?
+- **Reuse** - Want same instructions across modes
+- **Understand** - What is Ralph supposed to do?
 
-**PHASE** - What stage of work (orient, plan, build, spec, test, deploy)
-**TASK** - What to accomplish this iteration
-**GUARDRAILS** - Invariants that must hold
-**CONTEXT** - Project-specific knowledge
+## Grug Solution: Do Less, Not More
 
-### 2. Use YAML Frontmatter for Machine-Readable Config
+## Grug Solution: Do Less, Not More
 
-```yaml
----
-mode: build
-phase: implement
-task_source: IMPLEMENTATION_PLAN.md
-task_selection: most_important
-subagent_budget:
-  search: 500
-  build: 1
-  reasoning: opus
-validation:
-  - run_tests
-  - update_plan
-  - commit
-context_files:
-  - AGENTS.md
-  - specs/*
-output_format: conventional_commit
----
-```
+### Improvement 1: Add Headers (No New Files)
 
-Agent parses this to understand:
-- What it's supposed to do
-- Resource constraints
-- Success criteria
-- Where to look for context
-
-### 3. Instruction Blocks with Semantic IDs
-
-Instead of:
+Current:
 ```
 0a. Study specs/* with up to 500 parallel Sonnet subagents...
 0b. Study @IMPLEMENTATION_PLAN.md...
+1. Your task is to implement...
 ```
 
-Use:
+Better:
 ```markdown
-## [ORIENT:specs]
-Study `specs/*` to learn application specifications.
-- Use: up to {{subagent_budget.search}} parallel subagents
-- Focus: behavioral requirements, acceptance criteria
+# ORIENT
 
-## [ORIENT:plan]
-Study `{{task_source}}` to understand current work state.
-- Treat as: potentially incorrect, verify claims
-- Extract: next most important task
+Study specs/* with up to 500 parallel Sonnet subagents...
+Study @IMPLEMENTATION_PLAN.md...
 
-## [TASK:implement]
-Implement functionality per specifications.
-- Before changes: search codebase (don't assume not implemented)
-- Selection: {{task_selection}} from {{task_source}}
-- Subagents: {{subagent_budget.search}} for search, {{subagent_budget.build}} for build/test
+# TASK
+
+Your task is to implement...
+
+# VALIDATE
+
+After implementing, run tests...
+
+# COMMIT
+
+When tests pass, update plan and commit...
+
+# GUARDRAILS
+
+- Important: Capture the why
+- Important: No placeholders
+- Important: Keep plan current
 ```
 
-Benefits:
-- Agent can reference specific blocks: "Following [TASK:implement]..."
-- Humans can debug: "Ralph failed at [ORIENT:plan]"
-- Composable: Mix/match blocks for different modes
-- Templatable: `{{variables}}` filled from frontmatter
+Why grug like:
+- Same file, just add `#` headers
+- Agent can say "doing ORIENT" or "stuck at VALIDATE"
+- Human can debug: "Ralph always fails at VALIDATE"
+- No templates, no YAML, no complexity
 
-### 4. Guardrails as Declarative Rules
+### Improvement 2: Put Numbers in Guardrails (Not Everywhere)
 
-Instead of numbered 9s:
+Current guardrails confusing:
 ```
 99999. Important: When authoring documentation...
 999999. Important: Single sources of truth...
+9999999. As soon as there are no build errors...
 ```
 
-Use structured rules:
-```yaml
-guardrails:
-  documentation:
-    rule: "Capture the why — tests and implementation importance"
-    applies_to: [docs, comments, specs]
-    severity: critical
-  
-  single_source_of_truth:
-    rule: "No migrations/adapters. If unrelated tests fail, resolve them."
-    applies_to: [implementation]
-    severity: critical
-  
-  no_placeholders:
-    rule: "Implement completely. Placeholders waste effort."
-    applies_to: [implementation]
-    severity: critical
-    
-  plan_hygiene:
-    rule: "Keep {{task_source}} current. Future work depends on this."
-    applies_to: [plan_updates]
-    severity: critical
-    when: after_task_completion
+Grug not know what number mean. More 9s = more important? Why?
+
+Better:
+```markdown
+# GUARDRAILS
+
+Priority 1 (Must do every time):
+- Keep IMPLEMENTATION_PLAN.md current after each task
+- Commit only when tests pass
+- No placeholders or stubs
+
+Priority 2 (Important but not blocking):
+- Update AGENTS.md when learning operational things
+- Clean completed items from plan when large
+- Add logging if needed for debugging
+
+Priority 3 (Nice to have):
+- Create git tag when no errors and ready
 ```
 
-Agent can:
-- Check which rules apply to current phase
-- Prioritize by severity
-- Understand when rules trigger
+Why grug like:
+- Clear priority
+- Agent know what can skip if stuck
+- Human can say "ignore Priority 3" to speed up
 
-### 5. Mode-Specific Prompt Composition
+### Improvement 3: One File for Common Things
 
-**Base Template** (`PROMPT_base.md`):
-```yaml
----
-# Filled by loop.sh based on mode argument
-mode: "{{MODE}}"
----
+Make `PROMPT_common.md`:
+```markdown
+# ORIENT
 
-## [ORIENT:context]
-{{include "blocks/orient_context.md"}}
+Study specs/* with up to 500 parallel Sonnet subagents to learn specifications.
+Study @IMPLEMENTATION_PLAN.md to understand current work.
+Study AGENTS.md to learn how to build/test.
 
-## [PHASE:{{mode}}]
-{{include "blocks/phase_{{mode}}.md"}}
+# GUARDRAILS
 
-## [VALIDATE]
-{{include "blocks/validate_{{mode}}.md"}}
+Priority 1:
+- Keep IMPLEMENTATION_PLAN.md current
+- Commit only when tests pass
+- No placeholders
 
-## [GUARDRAILS]
-{{include "guardrails.yaml" | render}}
+Priority 2:
+- Update AGENTS.md for operational learnings
+- Clean completed items when plan gets large
 ```
 
-**Block Files**:
-```
-prompts/
-├── PROMPT_base.md          # Composition template
-├── config/
-│   ├── build.yaml          # Build mode config
-│   ├── plan.yaml           # Plan mode config
-│   ├── spec.yaml           # Spec mode config
-│   └── test.yaml           # Test mode config
-├── blocks/
-│   ├── orient_context.md   # Standard orientation
-│   ├── phase_build.md      # Build-specific task
-│   ├── phase_plan.md       # Planning-specific task
-│   ├── phase_spec.md       # Spec-specific task
-│   ├── validate_build.md   # Build validation
-│   └── validate_plan.md    # Plan validation
-└── guardrails.yaml         # Shared invariants
+Then mode-specific prompts just include it:
+```markdown
+# MODE: BUILD
+
+{{include PROMPT_common.md}}
+
+# TASK
+
+Follow IMPLEMENTATION_PLAN.md and choose most important item.
+Search codebase first (don't assume not implemented).
+Implement using parallel subagents.
+
+# VALIDATE
+
+Run tests for the code you changed.
+If tests pass, update plan and commit.
 ```
 
-**loop.sh generates final prompt**:
+Why grug like:
+- Don't repeat same instructions in every file
+- Change common thing once, affects all modes
+- Still just markdown files, no fancy template engine
+- Can use simple `cat` or `sed` to include
+
+### Improvement 4: Make Variables Obvious
+
+Current:
+```
+Study specs/* with up to 500 parallel Sonnet subagents...
+```
+
+What if want different number? Edit every prompt? Grug not like.
+
+Better in loop.sh:
 ```bash
-# Render prompt from template + mode config
-render_prompt() {
-    local mode=$1
-    local config="prompts/config/${mode}.yaml"
-    local template="prompts/PROMPT_base.md"
-    
-    # Simple template engine (or use envsubst, mustache, etc.)
-    MODE=$mode envsubst < "$template" > "PROMPT_${mode}.md"
-}
+# At top of loop.sh
+SUBAGENT_SEARCH=500
+SUBAGENT_BUILD=1
+TEST_COMMAND="go test ./..."
 
-render_prompt "$MODE"
-cat "PROMPT_${MODE}.md" | kiro-cli chat --no-interactive --trust-all-tools
+# Replace in prompt before sending
+cat "$PROMPT_FILE" | \
+    sed "s/{{SUBAGENT_SEARCH}}/$SUBAGENT_SEARCH/g" | \
+    sed "s/{{SUBAGENT_BUILD}}/$SUBAGENT_BUILD/g" | \
+    sed "s/{{TEST_COMMAND}}/$TEST_COMMAND/g" | \
+    kiro-cli chat --no-interactive --trust-all-tools
 ```
 
-### 6. Self-Documenting Execution
-
-Agent outputs structured logs:
-```
-[ORIENT:specs] Studying 12 spec files with 250 subagents...
-[ORIENT:plan] Loaded IMPLEMENTATION_PLAN.md (47 tasks remaining)
-[TASK:implement] Selected: "Add --exclude flag to install command"
-[TASK:implement] Searching codebase for existing implementation...
-[TASK:implement] Not found. Proceeding with implementation.
-[VALIDATE:tests] Running: go test ./...
-[VALIDATE:tests] ✓ All tests passed
-[VALIDATE:plan] Updating IMPLEMENTATION_PLAN.md via subagent
-[VALIDATE:commit] git commit -m "feat: add --exclude flag to install command"
-[GUARDRAIL:plan_hygiene] ✓ Plan updated after task completion
-```
-
-Benefits:
-- Trace execution to specific prompt blocks
-- Identify where Ralph gets stuck
-- Validate guardrails are being followed
-
-### 7. Adaptive Subagent Budgets
-
-Instead of hardcoded numbers:
-```yaml
-subagent_budget:
-  search:
-    default: 500
-    adaptive: true
-    scale_by: task_complexity
-  build:
-    default: 1
-    reason: "Backpressure control - serial validation"
-  reasoning:
-    model: opus
-    when: [debugging, architecture, complex_analysis]
-    fallback: sonnet
-```
-
-Agent can:
-- Scale resources based on task size
-- Understand why limits exist
-- Make intelligent model choices
-
-### 8. Task Selection Strategies
-
-Make selection logic explicit:
-```yaml
-task_selection:
-  strategy: priority_first
-  filters:
-    - unblocked
-    - has_acceptance_criteria
-  sort_by:
-    - priority: desc
-    - dependencies: asc
-  fallback: ask_user
-```
-
-Alternative strategies:
-- `most_important` - Current Ralph default
-- `dependency_order` - Unblock other tasks first
-- `quick_wins` - Low-effort, high-value
-- `risk_reduction` - Tackle unknowns early
-- `user_specified` - Human picks from plan
-
-### 9. Validation Pipelines
-
-Instead of prose instructions:
-```yaml
-validation:
-  steps:
-    - name: run_tests
-      command: "{{test_command}}"
-      required: true
-      on_fail: fix_and_retry
-      
-    - name: update_plan
-      action: subagent_update
-      target: "{{task_source}}"
-      required: true
-      
-    - name: update_agents
-      action: subagent_update
-      target: AGENTS.md
-      required: false
-      when: operational_learning
-      
-    - name: commit
-      command: "git add -A && git commit -m '{{commit_message}}'"
-      required: true
-      format: conventional_commit
-      
-    - name: tag
-      command: "git tag {{next_version}}"
-      required: false
-      when: no_errors_and_no_tags_or_increment
-```
-
-Agent executes as pipeline, knows what's required vs optional.
-
-### 10. Context Budget Management
-
-Make context allocation explicit:
-```yaml
-context_budget:
-  total_tokens: 176000
-  allocation:
-    prompt_structure: 5000
-    specs: 15000
-    plan: 5000
-    agents: 2000
-    code_context: 149000
-  
-  optimization:
-    - prefer_summaries_over_full_files
-    - chunk_large_specs
-    - prioritize_relevant_code_only
-```
-
-Agent understands:
-- Why it should be concise
-- What to prioritize loading
-- When to use summaries vs full content
-
-## Implementation Strategy
-
-### Phase 1: Backward Compatible Enhancement
-Add YAML frontmatter to existing prompts without breaking current loop.sh:
+Prompt uses simple placeholders:
 ```markdown
----
-mode: build
-# ... config ...
----
-
-<!-- Existing prose instructions below -->
-0a. Study specs/* with up to 500 parallel Sonnet subagents...
+Study specs/* with up to {{SUBAGENT_SEARCH}} parallel Sonnet subagents...
+Use only {{SUBAGENT_BUILD}} subagent for build/tests.
+Run: {{TEST_COMMAND}}
 ```
 
-Agents that understand YAML get benefits, others ignore it.
+Why grug like:
+- One place to change numbers
+- No YAML, no config files
+- Just bash variables and sed
+- Works today, no new tools
 
-### Phase 2: Hybrid Approach
-Keep prose but add semantic IDs:
+### Improvement 5: Agent Logs What It's Doing
+
+Add to prompt:
 ```markdown
-## [ORIENT:specs]
-Study `specs/*` with up to 500 parallel Sonnet subagents to learn the application specifications.
+# LOGGING
+
+At start of each section, output:
+[ORIENT] Starting orientation...
+[TASK] Starting task...
+[VALIDATE] Running validation...
+[COMMIT] Committing changes...
+
+When done with section:
+[ORIENT] ✓ Complete
+[TASK] ✓ Complete
+[VALIDATE] ✓ Complete
 ```
 
-Enables better logging and debugging.
+Why grug like:
+- See where Ralph is
+- See where Ralph gets stuck
+- No fancy logging framework
+- Just ask agent to print things
 
-### Phase 3: Full Composition
-Migrate to block-based architecture with template rendering.
+## What Grug NOT Do
 
-## Use Case Examples
+❌ **YAML frontmatter** - More syntax to learn, can break
+❌ **Template engine** - New dependency, new complexity
+❌ **Config files** - More files to manage
+❌ **Validation pipelines** - Fancy but not needed yet
+❌ **Adaptive budgets** - Sounds smart but grug not understand when needed
+❌ **Multiple strategies** - One strategy work fine, why add more?
 
-### Use Case: Test-Driven Development Mode
+## Grug's Three Rules
 
-```yaml
----
-mode: tdd
-phase: red_green_refactor
-task_source: IMPLEMENTATION_PLAN.md
-validation:
-  - write_failing_test
-  - implement_minimal
-  - verify_test_passes
-  - refactor
-  - commit
----
+1. **If current thing work, change small** - Don't rewrite everything
+2. **If can do in bash, do in bash** - No new tools
+3. **If agent confused, make words simpler** - Not more structure
+
+## Implementation (Grug Way)
+
+### Step 1: Add headers to existing prompts (5 minutes)
+
+```bash
+# Edit PROMPT_build.md
+# Add: # ORIENT, # TASK, # VALIDATE, # COMMIT, # GUARDRAILS
+# Done
 ```
 
-### Use Case: Documentation-First Mode
+### Step 2: Fix guardrail numbers (5 minutes)
 
-```yaml
----
-mode: docs_first
-phase: document_then_implement
-task_source: DOCUMENTATION_PLAN.md
-validation:
-  - write_user_docs
-  - derive_acceptance_criteria
-  - implement_to_spec
-  - verify_docs_accurate
-  - commit
----
+```bash
+# Replace 99999. with "Priority 1:"
+# Replace 999999. with "Priority 2:"
+# Done
 ```
 
-### Use Case: Refactoring Mode
+### Step 3: Extract common parts (10 minutes)
 
-```yaml
----
-mode: refactor
-phase: improve_without_behavior_change
-task_source: REFACTORING_PLAN.md
-validation:
-  - snapshot_tests
-  - refactor_code
-  - verify_tests_unchanged
-  - check_performance
-  - commit
-guardrails:
-  behavior_preservation:
-    rule: "All existing tests must pass unchanged"
-    severity: critical
----
+```bash
+# Create PROMPT_common.md with ORIENT and GUARDRAILS
+# Update loop.sh to cat PROMPT_common.md and PROMPT_build.md together
+# Done
 ```
 
-### Use Case: Security Audit Mode
+### Step 4: Add variables to loop.sh (5 minutes)
 
-```yaml
----
-mode: security_audit
-phase: identify_vulnerabilities
-task_source: SECURITY_CHECKLIST.md
-subagent_budget:
-  analysis: 1000
-  reasoning: opus
-validation:
-  - scan_for_vulnerabilities
-  - document_findings
-  - suggest_fixes
-  - update_checklist
-output_format: security_report
----
+```bash
+# Add SUBAGENT_SEARCH=500 at top
+# Add sed to replace {{SUBAGENT_SEARCH}} before piping
+# Done
 ```
 
-### Use Case: Performance Optimization Mode
+### Step 5: Ask agent to log (2 minutes)
 
-```yaml
----
-mode: performance
-phase: profile_and_optimize
-task_source: PERFORMANCE_PLAN.md
-validation:
-  - benchmark_baseline
-  - implement_optimization
-  - benchmark_after
-  - verify_improvement
-  - document_results
-  - commit
-guardrails:
-  performance_regression:
-    rule: "No optimization that degrades other metrics >5%"
-    severity: critical
----
+```bash
+# Add "# LOGGING" section to prompt
+# Ask agent to print [SECTION] messages
+# Done
 ```
 
-## Benefits Summary
+**Total time: 27 minutes**
 
-**For Agents:**
-- Clear structure to parse and understand
-- Explicit resource constraints
-- Unambiguous success criteria
-- Self-documenting execution
+Compare to original plan: weeks of work, new tools, YAML, templates, configs.
 
-**For Humans:**
-- Debuggable (trace failures to specific blocks)
-- Composable (mix/match for new use cases)
-- Maintainable (change one block, affects all modes)
-- Readable (YAML + semantic IDs > numbered prose)
+Grug way: half hour, no new dependencies, works today.
 
-**For the Loop:**
-- Same outer loop mechanism
-- Fresh context per iteration
-- Deterministic setup
-- Eventual consistency
+## Example: Improved PROMPT_build.md (Grug Version)
 
-## Migration Path
+```markdown
+# ORIENT
 
-1. **Week 1**: Add YAML frontmatter to existing prompts (backward compatible)
-2. **Week 2**: Add semantic IDs to instruction blocks
-3. **Week 3**: Extract common blocks to separate files
-4. **Week 4**: Implement template rendering in loop.sh
-5. **Week 5**: Create 3-5 new mode configs to validate flexibility
-6. **Week 6**: Update AGENTS.md with new prompt architecture
+Study specs/* with up to {{SUBAGENT_SEARCH}} parallel Sonnet subagents to learn specifications.
+Study @IMPLEMENTATION_PLAN.md to understand current work.
+Study AGENTS.md to learn how to build and test.
 
-## Open Questions
+Log: [ORIENT] Starting orientation...
+Log when done: [ORIENT] ✓ Complete
 
-1. **Template engine choice**: envsubst, mustache, jinja2, or custom?
-2. **Guardrail enforcement**: Should loop.sh validate guardrails or trust agent?
-3. **Config validation**: JSON Schema for YAML configs?
-4. **Subagent communication**: Should subagents see the full prompt or just their block?
-5. **Failure recovery**: How should agent signal "I'm stuck, need human"?
+# TASK
 
-## Recommendation
+Follow @IMPLEMENTATION_PLAN.md and choose the most important item.
 
-Start with **Phase 1 (YAML frontmatter)** in your current PROMPT_spec.md. Test if Kiro/Claude can parse and use it. If successful, proceed to semantic IDs and composition.
+Before making changes:
+- Search codebase first (don't assume not implemented)
+- Use up to {{SUBAGENT_SEARCH}} parallel Sonnet subagents for searches
+- Use only {{SUBAGENT_BUILD}} subagent for build/tests
+- Use Opus subagents when complex reasoning needed
 
-The goal: **Make Ralph prompts as composable and maintainable as the code Ralph writes.**
+Log: [TASK] Starting task: <task name>
+Log when done: [TASK] ✓ Complete
+
+# VALIDATE
+
+Run tests for the code you changed: {{TEST_COMMAND}}
+
+If tests fail:
+- Fix the issues
+- Run tests again
+- Repeat until tests pass
+
+If tests pass:
+- Update @IMPLEMENTATION_PLAN.md with findings (use subagent)
+- Mark task as complete
+
+Log: [VALIDATE] Running tests...
+Log when done: [VALIDATE] ✓ Tests passed
+
+# COMMIT
+
+When tests pass:
+- `git add -A`
+- `git commit -m "conventional commit message"`
+- `git push`
+
+Log: [COMMIT] Committing changes...
+Log when done: [COMMIT] ✓ Complete
+
+# GUARDRAILS
+
+Priority 1 (Must do):
+- Keep @IMPLEMENTATION_PLAN.md current - future work depends on this
+- Commit only when tests pass
+- No placeholders or stubs - implement completely
+- If unrelated tests fail, fix them too
+
+Priority 2 (Important):
+- Update @AGENTS.md when learning operational things (keep brief)
+- Capture the why in documentation
+- Clean completed items from plan when it gets large
+
+Priority 3 (Nice to have):
+- Create git tag when no errors (start at 0.0.0, increment patch)
+- Add logging if needed for debugging
+```
+
+## Example: loop.sh (Grug Version)
+
+```bash
+#!/bin/bash
+
+# Configuration (one place to change things)
+SUBAGENT_SEARCH=500
+SUBAGENT_BUILD=1
+TEST_COMMAND="go test ./..."
+
+# Parse arguments (same as before)
+if [ "$1" = "plan" ]; then
+    MODE="plan"
+    PROMPT_FILE="PROMPT_plan.md"
+    MAX_ITERATIONS=${2:-0}
+elif [ "$1" = "spec" ]; then
+    MODE="spec"
+    PROMPT_FILE="PROMPT_spec.md"
+    MAX_ITERATIONS=${2:-0}
+elif [[ "$1" =~ ^[0-9]+$ ]]; then
+    MODE="build"
+    PROMPT_FILE="PROMPT_build.md"
+    MAX_ITERATIONS=$1
+else
+    MODE="build"
+    PROMPT_FILE="PROMPT_build.md"
+    MAX_ITERATIONS=0
+fi
+
+ITERATION=0
+CURRENT_BRANCH=$(git branch --show-current)
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Mode:   $MODE"
+echo "Prompt: $PROMPT_FILE"
+echo "Branch: $CURRENT_BRANCH"
+[ $MAX_ITERATIONS -gt 0 ] && echo "Max:    $MAX_ITERATIONS iterations"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [ ! -f "$PROMPT_FILE" ]; then
+    echo "Error: $PROMPT_FILE not found"
+    exit 1
+fi
+
+while true; do
+    if [ $MAX_ITERATIONS -gt 0 ] && [ $ITERATION -ge $MAX_ITERATIONS ]; then
+        echo "Reached max iterations: $MAX_ITERATIONS"
+        break
+    fi
+
+    # Simple variable substitution (grug way)
+    cat "$PROMPT_FILE" | \
+        sed "s/{{SUBAGENT_SEARCH}}/$SUBAGENT_SEARCH/g" | \
+        sed "s/{{SUBAGENT_BUILD}}/$SUBAGENT_BUILD/g" | \
+        sed "s/{{TEST_COMMAND}}/$TEST_COMMAND/g" | \
+        kiro-cli chat --no-interactive --trust-all-tools
+
+    git push origin "$CURRENT_BRANCH" || {
+        echo "Failed to push. Creating remote branch..."
+        git push -u origin "$CURRENT_BRANCH"
+    }
+
+    ITERATION=$((ITERATION + 1))
+    echo -e "\n\n======================== LOOP $ITERATION ========================\n"
+done
+```
+
+## When to Add Complexity (Grug Future)
+
+Only add complexity when:
+1. **Pain is real** - Not theoretical, actually hurting
+2. **Simple solution tried** - Headers and variables not enough
+3. **Benefit is clear** - Know exactly what problem it solves
+
+Examples of real pain:
+- "Ralph always fails at same step" → Need better logging (add it)
+- "Changing subagent count in 5 files is annoying" → Need variables (add it)
+- "Want to reuse instructions across modes" → Need includes (add it)
+
+Examples of theoretical pain:
+- "Might want 10 different modes someday" → Don't have 10 modes yet, don't build for it
+- "Could make adaptive budgets" → Current fixed budgets working fine
+- "YAML would be more structured" → Markdown working fine
+
+## Summary
+
+**Original plan**: YAML, templates, configs, validation pipelines, adaptive budgets, multiple strategies
+**Grug plan**: Headers, priority numbers, simple variables, logging
+
+**Original time**: Weeks
+**Grug time**: 27 minutes
+
+**Original complexity**: High
+**Grug complexity**: Low
+
+**Original risk**: Break everything
+**Grug risk**: Change small, test each step
+
+Grug brain developer say: **Start simple. Add complexity only when pain is real.**
+
+Ralph already work. Make small improvements. Ship it. See what breaks. Fix that. Repeat.
+
+Complexity is the enemy. Simple is the friend.
+
+Grug done now. Go write code.
