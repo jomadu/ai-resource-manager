@@ -1,9 +1,9 @@
 # ORIENT
 
-Study @AGENTS.md for spec vs implementation definitions.
-Study specifications in `specs/*` with up to 250 parallel subagents.
+Study @AGENTS.md for spec vs implementation definitions. If definitions don't exist, investigate and create them.
+Study specifications (see @AGENTS.md for what constitutes specs) with up to 250 parallel subagents.
 Study @IMPLEMENTATION_PLAN.md (if present) to understand the plan so far.
-Study implementation in `internal/*`, `cmd/*`, `test/*`, and `docs/*` with up to 250 parallel subagents.
+Study implementation (see @AGENTS.md for what constitutes implementation) with up to 250 parallel subagents.
 
 Specifications drive the entire repo: README, CI/CD, configs, code, tests, and docs.
 
@@ -15,8 +15,8 @@ Log when done: [ORIENT] ✓ Complete
 Study @IMPLEMENTATION_PLAN.md (if present; assume it is inaccurate and incomplete).
 
 Use up to 500 parallel subagents to:
-- Study existing implementation in `internal/*`, `cmd/*`, `test/*`, and `docs/*`
-- Compare it against specifications in `specs/*`
+- Study existing implementation (see @AGENTS.md for what constitutes implementation)
+- Compare it against specifications (see @AGENTS.md for what constitutes specs)
 - Search for TODO, minimal implementations, placeholders, skipped/flaky tests, inconsistent patterns
 
 Use a subagent to:
@@ -58,8 +58,9 @@ Priority 1 (Must do):
 
 Priority 2 (Important):
 - If element is missing from implementation, search first to confirm it doesn't exist
-- If needed, author specification at specs/FILENAME.md
+- If needed, author specification (see @AGENTS.md for what constitutes specs)
 - If you create new element, document plan to implement it in @IMPLEMENTATION_PLAN.md using subagent
+- Update @AGENTS.md when learning operational things or if spec vs implementation definitions evolve (keep brief and operational only)
 
 Priority 3 (Context):
 - Ultimate goal: Robust AI resource manager with semantic versioning, reproducible installs, and flexible registry support
