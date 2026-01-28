@@ -11,6 +11,7 @@ Study the implementation and update specs/:
    - Specs may not exist yet - create them
    - Existing specs may be outdated - fix them
    - Implementation is the source of truth
+   - Don't assume existing acceptance criteria status is correct - verify against actual implementation
    - Deep-dive algorithm verification: For each spec with algorithms, trace through actual implementation code to find exact discrepancies between spec and real behavior, then fix specs directly
    - When bugs found in code: uncheck acceptance criteria + add brief note
    - Reorganize/refactor specs if JTBDs or topics have evolved
