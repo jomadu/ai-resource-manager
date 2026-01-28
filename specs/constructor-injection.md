@@ -13,7 +13,7 @@ Enable test isolation by allowing components to accept custom paths via construc
 ## Acceptance Criteria
 - [x] ARM_HOME overrides home directory for .arm/storage/
 - [x] ARM_CONFIG_PATH overrides .armrc location (bypasses ./.armrc and ~/.armrc)
-- [x] ARM_MANIFEST_PATH overrides arm.json location
+- [x] ARM_MANIFEST_PATH resolved at CLI level (not in components)
 - [x] Lock file always colocated with manifest file
 - [x] NewRegistryWithHomeDir() accepts custom home directory
 - [x] *WithHomeDir() variants for cache methods
@@ -58,17 +58,25 @@ NewFileManagerWithPath(manifestPath string) (*FileManager, error)
    - Project overrides user
 4. Return configuration
 
-### ARM_MANIFEST_PATH Resolution
-1. Check if ARM_MANIFEST_PATH environment variable is set
+### ARM_MANIFEST_PATH Resolution (CLI Level)
+1. CLI handlers check ARM_MANIFEST_PATH environment variable
 2. If set, use that path
-3. If not set, use ./arm.json
-4. Return manifest path
+3. If not set, use "arm.json"
+4. Pass resolved path to manifest.NewFileManagerWithPath()
+
+**Note:** The manifest manager does not check ARM_MANIFEST_PATH. Path resolution is a CLI concern.
 
 ### Lock File Colocation
-1. Parse manifest path
-2. Extract directory and filename
-3. Replace extension: arm.json → arm-lock.json
-4. Return lock file path in same directory
+1. Take manifest path as input
+2. Strip `.json` suffix: `strings.TrimSuffix(manifestPath, ".json")`
+3. Append `-lock.json` suffix
+4. Return lock file path
+
+**Examples:**
+- `arm.json` → `arm-lock.json`
+- `./config/arm.json` → `./config/arm-lock.json`
+- `my-manifest.json` → `my-manifest-lock.json`
+- `arm` (no extension) → `arm-lock.json`
 
 ## Edge Cases
 
@@ -92,11 +100,12 @@ NewFileManagerWithPath(manifestPath string) (*FileManager, error)
 ## Implementation Mapping
 
 **Source files:**
-- `internal/arm/storage/registry.go` - NewRegistry, NewRegistryWithHomeDir
+- `internal/arm/storage/registry.go` - NewRegistry, NewRegistryWithHomeDir, NewRegistryWithPath
 - `internal/arm/service/service.go` - *WithHomeDir cache methods
-- `internal/arm/config/manager.go` - NewFileManager, ARM_CONFIG_PATH support
+- `internal/arm/config/manager.go` - NewFileManager, NewFileManagerWithPaths, NewFileManagerWithConfigPath
 - `internal/arm/manifest/manager.go` - NewFileManager, NewFileManagerWithPath
-- `cmd/arm/main.go` - deriveLockPath helper
+- `internal/arm/packagelockfile/manager.go` - NewFileManager, NewFileManagerWithPath
+- `cmd/arm/main.go` - deriveLockPath helper, ARM_MANIFEST_PATH resolution
 - `test/e2e/storage_test.go` - E2E cache isolation tests
 
 ## Examples
@@ -183,6 +192,10 @@ ARM_MANIFEST_PATH=/tmp/test/arm.json
 # Custom name
 ARM_MANIFEST_PATH=/tmp/test/my-manifest.json
 # Lock: /tmp/test/my-manifest-lock.json
+
+# No extension
+ARM_MANIFEST_PATH=arm
+# Lock: arm-lock.json
 ```
 
 ### Priority Order
@@ -197,10 +210,10 @@ ARM_MANIFEST_PATH=/tmp/test/my-manifest.json
 2. ~/.arm/storage/ - Default
 
 **For arm.json lookup:**
-1. $ARM_MANIFEST_PATH - If set
+1. $ARM_MANIFEST_PATH - If set (resolved at CLI level)
 2. ./arm.json - Default
 
 **For arm-lock.json lookup:**
 1. Always colocated with manifest file
-2. Same directory as arm.json
-3. Filename: {manifest-basename}-lock.json
+2. Same directory as manifest
+3. Filename: `strings.TrimSuffix(manifestPath, ".json") + "-lock.json"`
