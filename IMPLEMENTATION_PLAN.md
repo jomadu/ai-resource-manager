@@ -4,7 +4,7 @@
 
 ARM is a fully functional dependency manager for AI packages with comprehensive test coverage (75 test files, 120 total Go files, 100% E2E test pass rate). All core functionality is implemented and tested.
 
-## Missing Features (Priority Order)
+## Missing Features & Bugs (Priority Order)
 
 ### Priority 1: Missing CLI Command
 
@@ -12,14 +12,56 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
   - Spec: List available versions for a package from its registry
   - Backend: `ListPackageVersions()` already implemented in all registries
   - Missing: CLI handler in `cmd/arm/main.go`
-  - Add case for "versions" in `handleList()` switch
+  - Add case for "versions" in `handleList()` switch (line 951-965)
   - Format output: package name, then indented list of versions (semver descending, branches labeled)
   - Example: `arm list versions test-registry/clean-code-ruleset`
+  - Files to modify: `cmd/arm/main.go`
 
-### Priority 2: Documentation Improvements
+### Priority 2: Pattern Filtering Bugs
+
+- [ ] **Fix default pattern behavior in registries** (pattern-filtering.md)
+  - Bug: When no patterns specified, registries return ALL files instead of defaulting to `["**/*.yml", "**/*.yaml"]`
+  - Files: `internal/arm/registry/git.go:199`, `internal/arm/registry/gitlab.go:374`, `internal/arm/registry/cloudsmith.go:337`
+  - Fix: Add default pattern logic in `matchesPatterns()` functions
+  - Impact: Users must explicitly specify `--include "**/*.yml"` to avoid getting non-YAML files
+
+- [ ] **Fix pattern matching in standalone compilation** (standalone-compilation.md, pattern-filtering.md)
+  - Bug: `internal/arm/service/service.go:1763` uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)`
+  - Impact: Patterns like `security/**/*.yml` don't work in `arm compile` command
+  - Fix: Replace `filepath.Match` with `core.MatchPattern` in `matchesPatterns()` function
+  - Files: `internal/arm/service/service.go`
+
+### Priority 3: Version Resolution Bugs
+
+- [ ] **Fix prerelease version comparison** (version-resolution.md)
+  - Bug: Prerelease precedence not fully implemented (1.0.0-alpha.1 < 1.0.0-alpha.2 < 1.0.0-beta.1 < 1.0.0-rc.1 < 1.0.0)
+  - Files: `internal/arm/core/version.go` (comparePrerelease function)
+  - Impact: May select wrong version when multiple prereleases exist
+  - Note: Basic prerelease comparison exists, but may not handle all edge cases
+
+- [ ] **Fix "latest" resolution with no semantic versions** (version-resolution.md)
+  - Bug: When no semantic versions exist, "latest" uses lexicographic sort instead of first configured branch
+  - Files: `internal/arm/core/helpers.go` (ResolveVersion or GetBestMatching)
+  - Impact: Unpredictable behavior when using @latest on branch-only repositories
+
+### Priority 4: Update/Upgrade Error Handling
+
+- [ ] **Fix UpdateAll to continue on error** (package-installation.md)
+  - Bug: `UpdateAll()` returns on first error instead of continuing for partial success
+  - Files: `internal/arm/service/service.go:730-780`
+  - Expected: Continue processing remaining packages, collect errors, return combined error
+  - Note: `UpdatePackages()` correctly implements partial success
+
+- [ ] **Fix UpgradeAll to continue on error** (package-installation.md)
+  - Bug: `UpgradeAll()` returns on first error instead of continuing for partial success
+  - Files: `internal/arm/service/service.go` (UpgradeAll function)
+  - Expected: Continue processing remaining packages, collect errors, return combined error
+  - Note: `UpgradePackages()` correctly implements partial success
+
+### Priority 5: Documentation Improvements
 
 - [ ] **Update help text for `arm list` command**
-  - Current help only shows `arm list registry`
+  - Current help only shows `arm list registry` (line 149-156 in cmd/arm/main.go)
   - Should show all subcommands: `registry`, `sink`, `dependency`, `versions`
   - Update help text in `showHelp()` function
 
@@ -27,7 +69,7 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
   - Show usage and expected output format
   - Document semver sorting and branch labeling
 
-### Priority 3: Test Coverage
+### Priority 6: Test Coverage
 
 - [ ] **Add E2E test for `arm list versions` command**
   - Create test in `test/e2e/query_test.go` (new file)
@@ -35,6 +77,16 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
   - Test with GitLab registry (pagination)
   - Test with Cloudsmith registry
   - Verify output format and sorting
+
+- [ ] **Add tests for pattern filtering bugs**
+  - Test default pattern behavior in registries
+  - Test ** patterns in standalone compilation
+  - Files: `test/e2e/install_test.go`, `test/e2e/compile_test.go`
+
+- [ ] **Add tests for prerelease version comparison**
+  - Test alpha < beta < rc < release precedence
+  - Test numeric vs alphanumeric prerelease identifiers
+  - Files: `internal/arm/core/version_test.go`
 
 ## Completed Features ✅
 
