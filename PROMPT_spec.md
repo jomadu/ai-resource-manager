@@ -1,11 +1,10 @@
 Study the implementation and update specs/:
 
-1. ULTRASTUDY the code in internal/, cmd/, test/, docs/, and project files in root directory to understand architecture, features, components, functions, and edge cases.
-   - Note: User documentation in ./docs is part of the implementation and should have its own JTBDs and topics
+1. ULTRASTUDY the code in internal/, cmd/, test/, and project files in root directory to understand architecture, features, components, functions, and edge cases. Study user documentation in ./docs as part of the implementation.
 2. Update specs/README.md with current Jobs to be Done (JTBDs) and Topics of Concern
    - Assume existing README.md is inaccurate, incomplete, and outdated
    - Verify all claims by inspection and hard study of the implementation
-   - Include JTBDs and topics for user documentation (./docs) alongside code implementation
+   - Include JTBDs and topics for both code implementation and user documentation (./docs)
    - README.md may not exist yet - create it
    - Keep the existing format (JTBDs section, Topics section, Spec docs links)
    - Update if core JTBDs or topics change
