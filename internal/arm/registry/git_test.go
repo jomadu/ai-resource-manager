@@ -1113,9 +1113,9 @@ func TestGitRegistry_ArchiveSupport(t *testing.T) {
 
 	expected := []string{
 		"test-package/loose-file.yml",
-		"archive/from-zip/rule1.yml",      // archive.zip extracts to archive/ subdirectory
+		"archive/from-zip/rule1.yml", // archive.zip extracts to archive/ subdirectory
 		"archive/from-zip/rule2.yml",
-		"archive/from-tar/rule3.yml",      // archive.tar.gz extracts to archive/ subdirectory
+		"archive/from-tar/rule3.yml", // archive.tar.gz extracts to archive/ subdirectory
 		"archive/from-tar/rule4.yml",
 	}
 

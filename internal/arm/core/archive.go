@@ -46,7 +46,7 @@ func (e *Extractor) isArchive(path string) bool {
 // extractArchive extracts a single archive file to subdirectory
 func (e *Extractor) extractArchive(file *File) ([]*File, error) {
 	subdirName := e.getSubdirName(file.Path)
-	
+
 	if strings.HasSuffix(file.Path, ".tar.gz") {
 		return e.extractTarGz(file, subdirName)
 	}
