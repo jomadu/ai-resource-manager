@@ -9,14 +9,52 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
 **Total Items: 4** (1 breaking change, 1 bug, 1 documentation gap, 1 test gap)
 
 **Priority Breakdown:**
-- Priority 1 (Breaking Change): 1 item - Archive extraction to subdirectories (v5.0)
-- Priority 2 (Bug Fix): 1 item - Missing `arm list dependency` command
-- Priority 3 (Documentation): 1 item - Document `arm list versions` command
-- Priority 4 (Test Coverage): 1 item - E2E test for `arm list dependency`
+- Priority 1 (Bug Fix): 1 item - Missing `arm list dependency` command implementation
+- Priority 2 (Documentation): 1 item - Document `arm list versions` command
+- Priority 3 (Test Coverage): 1 item - E2E test for `arm list dependency`
+- Priority 4 (Breaking Change): 1 item - Archive extraction to subdirectories (v5.0)
 
 ## Outstanding Items (Priority Order)
 
-### Priority 1: BREAKING CHANGE - Archive Extraction (v5.0)
+### Priority 1: Bug Fix - CONFIRMED BUG
+
+- [ ] **Implement `arm list dependency` command** (query-operations.md)
+  - Bug: Documented command not implemented in handleList() switch (cmd/arm/main.go:954-971)
+  - Help text exists (cmd/arm/main.go:158) but handler missing
+  - Current: `arm list` (no args) shows all dependencies grouped under "Dependencies:" header
+  - Required: `arm list dependency` should be a dedicated subcommand with different output format
+  - Expected output: Dash-prefixed list of `registry/package@version` (see docs/commands.md:527-550)
+  - Files to update:
+    - `cmd/arm/main.go` - Add "dependency" case to handleList() switch (line 954-971)
+    - Create `handleListDependency()` function (similar to handleListRegistry/handleListSink)
+  - Implementation notes:
+    - Read manifest and lock file
+    - Combine rulesets and promptsets
+    - Format as `- registry/package@version`
+    - Sort alphabetically
+  - Status: CONFIRMED BUG - Documented in help text and docs/commands.md but not implemented in code
+
+### Priority 2: Documentation Improvements
+
+- [ ] **Add `arm list versions` to docs/commands.md**
+  - Command exists and works (cmd/arm/main.go:966, handleListVersions at line 1347)
+  - Add new section under "Dependency Management" commands (after `arm info dependency`)
+  - Show usage: `arm list versions REGISTRY/PACKAGE`
+  - Document output format (semver descending, branches labeled)
+  - Provide examples with expected output
+  - Files: `docs/commands.md`
+  - Status: Command implemented, documentation missing
+
+### Priority 3: Test Coverage
+
+- [ ] **Add E2E test for `arm list dependency` command**
+  - Test after implementing the command
+  - Verify output format (dash-prefixed list)
+  - Verify sorting (alphabetical)
+  - Files: `test/e2e/manifest_test.go` or similar
+  - Status: Blocked by Priority 1 (implement command first)
+
+### Priority 4: BREAKING CHANGE - Archive Extraction (v5.0)
 
 - [ ] **Extract archives to subdirectories** (pattern-filtering.md)
   - Current: Archives merge with loose files, causing collisions
@@ -32,43 +70,6 @@ ARM is a fully functional dependency manager for AI packages with comprehensive 
     - `specs/e2e-testing.md` - Update acceptance criteria checkboxes
   - Spec: `specs/pattern-filtering.md` (see BREAKING CHANGE v5.0 section)
   - Status: NOT STARTED - Required for v5.0 release
-
-### Priority 2: Bug Fix
-
-- [ ] **Implement `arm list dependency` command** (query-operations.md)
-  - Bug: Documented command not implemented in handleList() switch
-  - Current: `arm list` (no args) shows all dependencies grouped under "Dependencies:" header
-  - Required: `arm list dependency` should be a dedicated subcommand with different output format
-  - Expected output: Dash-prefixed list of `registry/package@version` (see docs/commands.md:527-550)
-  - Files to update:
-    - `cmd/arm/main.go` - Add "dependency" case to handleList() switch (line 954-971)
-    - Create `handleListDependency()` function (similar to handleListRegistry/handleListSink)
-  - Implementation notes:
-    - Read manifest and lock file
-    - Combine rulesets and promptsets
-    - Format as `- registry/package@version`
-    - Sort alphabetically
-  - Status: CONFIRMED BUG - Documented in docs/commands.md but not implemented in code
-
-### Priority 3: Documentation Improvements
-
-- [ ] **Add `arm list versions` to docs/commands.md**
-  - Command exists and works (cmd/arm/main.go:966)
-  - Add new section under "Dependency Management" commands (after `arm info dependency`)
-  - Show usage: `arm list versions REGISTRY/PACKAGE`
-  - Document output format (semver descending, branches labeled)
-  - Provide examples with expected output
-  - Files: `docs/commands.md`
-  - Status: Command implemented, documentation missing
-
-### Priority 4: Test Coverage
-
-- [ ] **Add E2E test for `arm list dependency` command**
-  - Test after implementing the command
-  - Verify output format (dash-prefixed list)
-  - Verify sorting (alphabetical)
-  - Files: `test/e2e/manifest_test.go` or similar
-  - Status: Blocked by Priority 2 (implement command first)
 
 
 
@@ -151,16 +152,18 @@ The project is feature-complete for v3.x. All major features are implemented and
 
 **Recommended Order:**
 
-1. **Fix bug** (Priority 2) - Confirmed issue affecting current functionality:
-   - Implement `arm list dependency` command (help text exists but command missing from handleList switch)
+1. **Fix bug** (Priority 1) - Confirmed issue affecting current functionality:
+   - Implement `arm list dependency` command (help text and docs exist but command missing from handleList switch)
+   - This is a user-facing bug where documented functionality doesn't work
 
-2. **Add documentation** (Priority 3) - Quick win to improve user experience:
+2. **Add documentation** (Priority 2) - Quick win to improve user experience:
    - Document `arm list versions` command in docs/commands.md
+   - Command works but isn't documented
 
-3. **Add test coverage** (Priority 4) - Ensure new functionality is tested:
+3. **Add test coverage** (Priority 3) - Ensure new functionality is tested:
    - E2E test for `arm list dependency` (after implementing command)
 
-4. **Plan v5.0 breaking change** (Priority 1) - Requires careful planning and migration guide:
+4. **Plan v5.0 breaking change** (Priority 4) - Requires careful planning and migration guide:
    - Extract archives to subdirectories (prevents collisions)
    - Update all registry implementations
    - Update E2E tests
