@@ -58,9 +58,9 @@ Why grug like:
 - Same file, just add `#` headers
 - Agent can say "doing ORIENT" or "stuck at VALIDATE"
 - Human can debug: "Ralph always fails at VALIDATE"
-- No templates, no YAML, no complexity
+- No templates, no variables, no sed, no complexity
 
-### Improvement 2: Put Numbers in Guardrails (Not Everywhere)
+### Improvement 2: Put Priority in Guardrails
 
 Current guardrails confusing:
 ```
@@ -94,90 +94,7 @@ Why grug like:
 - Agent know what can skip if stuck
 - Human can say "ignore Priority 3" to speed up
 
-### Improvement 3: One File for Common Things
-
-Make `PROMPT_common.md`:
-```markdown
-# ORIENT
-
-Study specs/* with up to 500 parallel Sonnet subagents to learn specifications.
-Study @IMPLEMENTATION_PLAN.md to understand current work.
-Study AGENTS.md to learn how to build/test.
-
-# GUARDRAILS
-
-Priority 1:
-- Keep IMPLEMENTATION_PLAN.md current
-- Commit only when tests pass
-- No placeholders
-
-Priority 2:
-- Update AGENTS.md for operational learnings
-- Clean completed items when plan gets large
-```
-
-Then mode-specific prompts just include it:
-```markdown
-# MODE: BUILD
-
-{{include PROMPT_common.md}}
-
-# TASK
-
-Follow IMPLEMENTATION_PLAN.md and choose most important item.
-Search codebase first (don't assume not implemented).
-Implement using parallel subagents.
-
-# VALIDATE
-
-Run tests for the code you changed.
-If tests pass, update plan and commit.
-```
-
-Why grug like:
-- Don't repeat same instructions in every file
-- Change common thing once, affects all modes
-- Still just markdown files, no fancy template engine
-- Can use simple `cat` or `sed` to include
-
-### Improvement 4: Make Variables Obvious
-
-Current:
-```
-Study specs/* with up to 500 parallel Sonnet subagents...
-```
-
-What if want different number? Edit every prompt? Grug not like.
-
-Better in loop.sh:
-```bash
-# At top of loop.sh
-SUBAGENT_SEARCH=500
-SUBAGENT_BUILD=1
-TEST_COMMAND="go test ./..."
-
-# Replace in prompt before sending
-cat "$PROMPT_FILE" | \
-    sed "s/{{SUBAGENT_SEARCH}}/$SUBAGENT_SEARCH/g" | \
-    sed "s/{{SUBAGENT_BUILD}}/$SUBAGENT_BUILD/g" | \
-    sed "s/{{TEST_COMMAND}}/$TEST_COMMAND/g" | \
-    kiro-cli chat --no-interactive --trust-all-tools
-```
-
-Prompt uses simple placeholders:
-```markdown
-Study specs/* with up to {{SUBAGENT_SEARCH}} parallel Sonnet subagents...
-Use only {{SUBAGENT_BUILD}} subagent for build/tests.
-Run: {{TEST_COMMAND}}
-```
-
-Why grug like:
-- One place to change numbers
-- No YAML, no config files
-- Just bash variables and sed
-- Works today, no new tools
-
-### Improvement 5: Agent Logs What It's Doing
+### Improvement 3: Agent Logs What It's Doing
 
 Add to prompt:
 ```markdown
@@ -203,17 +120,16 @@ Why grug like:
 
 ## What Grug NOT Do
 
+❌ **Variables and sed** - Just write the number in prompt
+❌ **Include files** - One prompt file, that's it
 ❌ **YAML frontmatter** - More syntax to learn, can break
 ❌ **Template engine** - New dependency, new complexity
 ❌ **Config files** - More files to manage
-❌ **Validation pipelines** - Fancy but not needed yet
-❌ **Adaptive budgets** - Sounds smart but grug not understand when needed
-❌ **Multiple strategies** - One strategy work fine, why add more?
 
 ## Grug's Three Rules
 
-1. **If current thing work, change small** - Don't rewrite everything
-2. **If can do in bash, do in bash** - No new tools
+1. **One prompt file** - No includes, no compilation, no variables
+2. **If want different number, edit the file** - Simple and clear
 3. **If agent confused, make words simpler** - Not more structure
 
 ## Implementation (Grug Way)
@@ -234,23 +150,7 @@ Why grug like:
 # Done
 ```
 
-### Step 3: Extract common parts (10 minutes)
-
-```bash
-# Create PROMPT_common.md with ORIENT and GUARDRAILS
-# Update loop.sh to cat PROMPT_common.md and PROMPT_build.md together
-# Done
-```
-
-### Step 4: Add variables to loop.sh (5 minutes)
-
-```bash
-# Add SUBAGENT_SEARCH=500 at top
-# Add sed to replace {{SUBAGENT_SEARCH}} before piping
-# Done
-```
-
-### Step 5: Ask agent to log (2 minutes)
+### Step 3: Ask agent to log (2 minutes)
 
 ```bash
 # Add "# LOGGING" section to prompt
@@ -258,18 +158,16 @@ Why grug like:
 # Done
 ```
 
-**Total time: 27 minutes**
+**Total time: 12 minutes**
 
-Compare to original plan: weeks of work, new tools, YAML, templates, configs.
-
-Grug way: half hour, no new dependencies, works today.
+No variables. No includes. No sed. Just edit the prompt file.
 
 ## Example: Improved PROMPT_build.md (Grug Version)
 
 ```markdown
 # ORIENT
 
-Study specs/* with up to {{SUBAGENT_SEARCH}} parallel Sonnet subagents to learn specifications.
+Study specs/* with up to 500 parallel Sonnet subagents to learn specifications.
 Study @IMPLEMENTATION_PLAN.md to understand current work.
 Study AGENTS.md to learn how to build and test.
 
@@ -282,8 +180,8 @@ Follow @IMPLEMENTATION_PLAN.md and choose the most important item.
 
 Before making changes:
 - Search codebase first (don't assume not implemented)
-- Use up to {{SUBAGENT_SEARCH}} parallel Sonnet subagents for searches
-- Use only {{SUBAGENT_BUILD}} subagent for build/tests
+- Use up to 500 parallel Sonnet subagents for searches
+- Use only 1 subagent for build/tests
 - Use Opus subagents when complex reasoning needed
 
 Log: [TASK] Starting task: <task name>
@@ -291,7 +189,7 @@ Log when done: [TASK] ✓ Complete
 
 # VALIDATE
 
-Run tests for the code you changed: {{TEST_COMMAND}}
+Run tests for the code you changed: `go test ./...`
 
 If tests fail:
 - Fix the issues
@@ -331,17 +229,19 @@ Priority 2 (Important):
 Priority 3 (Nice to have):
 - Create git tag when no errors (start at 0.0.0, increment patch)
 - Add logging if needed for debugging
+
+# LOGGING
+
+At start of each section above, output the log message shown.
+When done with section, output the completion message.
+This helps humans see where you are and where you get stuck.
 ```
 
 ## Example: loop.sh (Grug Version)
 
 ```bash
 #!/bin/bash
-
-# Configuration (one place to change things)
-SUBAGENT_SEARCH=500
-SUBAGENT_BUILD=1
-TEST_COMMAND="go test ./..."
+# Usage: ./loop.sh [plan|spec] [max_iterations]
 
 # Parse arguments (same as before)
 if [ "$1" = "plan" ]; then
@@ -383,12 +283,8 @@ while true; do
         break
     fi
 
-    # Simple variable substitution (grug way)
-    cat "$PROMPT_FILE" | \
-        sed "s/{{SUBAGENT_SEARCH}}/$SUBAGENT_SEARCH/g" | \
-        sed "s/{{SUBAGENT_BUILD}}/$SUBAGENT_BUILD/g" | \
-        sed "s/{{TEST_COMMAND}}/$TEST_COMMAND/g" | \
-        kiro-cli chat --no-interactive --trust-all-tools
+    # Just cat the file, no sed, no variables, no complexity
+    cat "$PROMPT_FILE" | kiro-cli chat --no-interactive --trust-all-tools
 
     git push origin "$CURRENT_BRANCH" || {
         echo "Failed to push. Creating remote branch..."
@@ -404,36 +300,37 @@ done
 
 Only add complexity when:
 1. **Pain is real** - Not theoretical, actually hurting
-2. **Simple solution tried** - Headers and variables not enough
+2. **Simple solution tried** - Headers and priorities not enough
 3. **Benefit is clear** - Know exactly what problem it solves
 
 Examples of real pain:
 - "Ralph always fails at same step" → Need better logging (add it)
-- "Changing subagent count in 5 files is annoying" → Need variables (add it)
-- "Want to reuse instructions across modes" → Need includes (add it)
+- "Want to reuse instructions across modes" → Copy/paste is fine for 3 files
 
-Examples of theoretical pain:
-- "Might want 10 different modes someday" → Don't have 10 modes yet, don't build for it
-- "Could make adaptive budgets" → Current fixed budgets working fine
-- "YAML would be more structured" → Markdown working fine
+Examples of NOT real pain:
+- "Changing subagent count in 3 files is annoying" → Just change 3 files, takes 30 seconds
+- "Could make variables" → Variables add complexity, just edit the number
+- "Could include common parts" → Copy/paste is simpler than includes
 
 ## Summary
 
-**Original plan**: YAML, templates, configs, validation pipelines, adaptive budgets, multiple strategies
-**Grug plan**: Headers, priority numbers, simple variables, logging
+**Original plan**: Variables, sed, includes, YAML, templates
+**Grug plan**: Headers, priority numbers, logging
 
-**Original time**: Weeks
-**Grug time**: 27 minutes
+**Original time**: 27 minutes
+**Grug time**: 12 minutes
 
-**Original complexity**: High
-**Grug complexity**: Low
+**Original files**: Multiple (PROMPT_common.md, etc.)
+**Grug files**: One prompt file per mode
 
-**Original risk**: Break everything
-**Grug risk**: Change small, test each step
+**Original loop.sh**: sed substitution
+**Grug loop.sh**: Just cat the file
 
-Grug brain developer say: **Start simple. Add complexity only when pain is real.**
+Grug brain developer say: **One file. No magic. Just words.**
 
-Ralph already work. Make small improvements. Ship it. See what breaks. Fix that. Repeat.
+Ralph already work. Add headers. Add priorities. Add logging. Done.
+
+If want different number, edit the file. If want different words, edit the file. File is source of truth.
 
 Complexity is the enemy. Simple is the friend.
 
