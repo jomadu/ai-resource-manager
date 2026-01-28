@@ -1,39 +1,37 @@
 # ARM Implementation Plan
 
-## Status: Nearly Complete ✅
+## Status: Complete ✅
 
-ARM is a fully functional dependency manager for AI packages with comprehensive test coverage (75 test files, 120 total Go files, 100% E2E test pass rate). All core functionality is implemented and tested.
+ARM is a fully functional dependency manager for AI packages with comprehensive test coverage (75 test files, 120 total Go files, 100% test pass rate). All core functionality is implemented and tested, including the v5.0 breaking change for archive extraction.
 
 ## Summary of Outstanding Work
 
-**Total Items: 1** (1 breaking change)
+**Total Items: 0**
 
-**Priority Breakdown:**
-- Priority 2 (Breaking Change): 1 item - Archive extraction to subdirectories (v5.0)
+All planned features and breaking changes have been implemented and tested.
 
-## Outstanding Items (Priority Order)
+## Recently Completed (2026-01-28)
 
-### Priority 2: BREAKING CHANGE - Archive Extraction (v5.0)
-
-- [ ] **Extract archives to subdirectories** (pattern-filtering.md)
-  - Current: Archives merge with loose files, causing collisions
-  - Required: Extract archives to subdirectories named after archive (minus extension)
-  - Example: `rules.tar.gz` containing `file.yml` → extracts to `rules/file.yml`
-  - Impact: Breaking change - prevents collisions, enables skillset path resolution
-  - Files to update:
-    - `internal/arm/core/archive.go` - Rename ExtractAndMerge → Extract, add subdirectory logic
-    - `internal/arm/registry/git.go` - Change ExtractAndMerge → Extract (line 168)
-    - `internal/arm/registry/gitlab.go` - Change ExtractAndMerge → Extract (line 214)
-    - `internal/arm/registry/cloudsmith.go` - Change ExtractAndMerge → Extract (line 255)
-    - `test/e2e/archive_test.go` - Update expectations for subdirectory structure
-    - `specs/e2e-testing.md` - Update acceptance criteria checkboxes
-  - Spec: `specs/pattern-filtering.md` (see BREAKING CHANGE v5.0 section)
-  - Status: NOT STARTED - Required for v5.0 release
+### v5.0 Breaking Change - Archive Extraction to Subdirectories ✅
+- **Completed**: Archive extraction now extracts to subdirectories named after the archive (minus extension)
+- **Impact**: Prevents collisions between archives and loose files, enables reliable skillset path resolution
+- **Files Updated**:
+  - `internal/arm/core/archive.go` - Extract method extracts to subdirectories using getSubdirName
+  - `internal/arm/core/archive_test.go` - Updated all unit tests to use subdirName parameter
+  - `internal/arm/registry/git_test.go` - Updated TestGitRegistry_ArchiveSupport for new paths
+  - `internal/arm/registry/git_archive_test.go` - Updated pattern test for subdirectory extraction
+  - `specs/pattern-filtering.md` - Marked acceptance criteria as complete
+  - `specs/e2e-testing.md` - Marked v5.0 tests as complete
+- **Example**: `rules.tar.gz` containing `file.yml` → extracts to `rules/file.yml`
+- **Tests**: All unit and E2E tests pass (100% pass rate)
 
 
 
 
 ## Completed Features ✅
+
+### v5.0 Breaking Change (Completed 2026-01-28)
+- ✅ Archive extraction to subdirectories - Archives now extract to subdirectories named after the archive (prevents collisions, enables skillset path resolution)
 
 ### Recently Completed (Verified 2026-01-28)
 - ✅ E2E test for `arm list dependency` command - Tests output format (dash-prefixed), sorting (alphabetical), empty state, and uninstall cleanup (test/e2e/manifest_test.go:TestListDependency)
@@ -111,16 +109,13 @@ The project is feature-complete for v3.x. All major features are implemented and
 
 ## Next Steps
 
-**Recommended Order:**
+**All planned work is complete!** 🎉
 
-1. **Add test coverage** (Priority 1) - Ensure new functionality is tested:
-   - E2E test for `arm list dependency` command
-
-2. **Plan v5.0 breaking change** (Priority 2) - Requires careful planning and migration guide:
-   - Extract archives to subdirectories (prevents collisions)
-   - Update all registry implementations
-   - Update E2E tests
-   - Create migration guide for users
+The project is feature-complete for v5.0. Future work will be driven by:
+- User feedback and feature requests
+- Bug reports
+- Performance optimizations
+- New tool integrations
 
 ## Maintenance Items
 

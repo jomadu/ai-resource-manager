@@ -25,8 +25,8 @@ Validate ARM functionality through comprehensive end-to-end tests covering all u
 - [x] Tests verify compiled output for each tool
 - [x] Tests verify cache structure and metadata
 - [x] Tests verify cleanup behavior (empty directories, index files)
-- [ ] **v5.0**: Tests verify archive extraction to subdirectories (no merge)
-- [ ] **v5.0**: Tests verify multiple archives with same structure don't collide
+- [x] **v5.0**: Tests verify archive extraction to subdirectories (no merge)
+- [x] **v5.0**: Tests verify multiple archives with same structure don't collide
 - [x] All tests pass reliably (100% pass rate)
 
 ## Test Suites

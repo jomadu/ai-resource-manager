@@ -252,7 +252,7 @@ func (c *CloudsmithRegistry) GetPackage(ctx context.Context, packageName string,
 
 	// Extract archives and merge with loose files
 	extractor := core.NewExtractor()
-	files, err = extractor.ExtractAndMerge(rawFiles)
+	files, err = extractor.Extract(rawFiles)
 	if err != nil {
 		return nil, err
 	}

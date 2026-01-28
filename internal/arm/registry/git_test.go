@@ -1097,8 +1097,12 @@ func TestGitRegistry_ArchiveSupport(t *testing.T) {
 
 	// Should have: 1 loose file + 2 from zip + 2 from tar.gz = 5 files
 	// (archive files themselves are not included after extraction)
+	// Archives extract to subdirectories named after the archive
 	if len(pkg.Files) != 5 {
 		t.Errorf("expected 5 files (1 loose + 2 from zip + 2 from tar.gz), got %d", len(pkg.Files))
+		for _, f := range pkg.Files {
+			t.Logf("  - %s", f.Path)
+		}
 	}
 
 	// Verify all expected files are present
@@ -1109,10 +1113,10 @@ func TestGitRegistry_ArchiveSupport(t *testing.T) {
 
 	expected := []string{
 		"test-package/loose-file.yml",
-		"from-zip/rule1.yml",
-		"from-zip/rule2.yml",
-		"from-tar/rule3.yml",
-		"from-tar/rule4.yml",
+		"archive/from-zip/rule1.yml",      // archive.zip extracts to archive/ subdirectory
+		"archive/from-zip/rule2.yml",
+		"archive/from-tar/rule3.yml",      // archive.tar.gz extracts to archive/ subdirectory
+		"archive/from-tar/rule4.yml",
 	}
 
 	for _, exp := range expected {

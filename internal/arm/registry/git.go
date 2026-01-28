@@ -165,7 +165,7 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 
 	// Extract archives and merge with loose files
 	extractor := core.NewExtractor()
-	files, err = extractor.ExtractAndMerge(files)
+	files, err = extractor.Extract(files)
 	if err != nil {
 		return nil, err
 	}
