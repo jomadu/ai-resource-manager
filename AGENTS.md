@@ -1,5 +1,18 @@
 # ARM Agent Operations Guide
 
+## Spec vs Implementation
+
+**Specification** (what should exist):
+- `specs/*` - JTBDs, acceptance criteria, algorithms, design decisions
+
+**Implementation** (what actually exists):
+- `internal/*` - Core business logic
+- `cmd/*` - CLI commands and handlers
+- `test/*` - Unit and integration tests
+- `docs/*` - User-facing documentation
+- Root files - README.md, Makefile, go.mod, etc.
+- Infrastructure - `.github/*` (workflows, CI/CD), scripts/*, etc.
+
 ## Build & Test
 
 ```bash
