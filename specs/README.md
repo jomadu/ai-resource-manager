@@ -2,6 +2,7 @@
 
 ## Jobs to be Done (JTBDs)
 
+### Core Functionality
 1. **Manage AI Resources Across Projects** - Install, update, upgrade, and uninstall AI rulesets and promptsets from remote registries with version tracking and integrity verification
 2. **Compile Resources for Multiple Tools** - Transform ARM resources into tool-specific formats (Cursor, Amazon Q, Copilot, Markdown) with hierarchical or flat layouts
 3. **Develop Resources Locally** - Compile local ARM resource files to tool formats without registry installation for testing and development
@@ -12,6 +13,13 @@
 8. **Verify Package Integrity** - Ensure downloaded packages match expected content using SHA256 hashing stored in lock file
 9. **Test in Isolation** - Support environment variables (ARM_HOME, ARM_CONFIG_PATH, ARM_MANIFEST_PATH) for test isolation and custom configurations
 10. **Query Package Information** - List installed packages, check for outdated dependencies, view package details, and list available versions from registries
+
+### Infrastructure & Distribution
+11. **Build Cross-Platform Binaries** - Compile ARM for Linux (amd64, arm64), macOS (amd64, arm64), and Windows (amd64) with version metadata
+12. **Automate Releases** - Use semantic-release with conventional commits to automatically version, tag, and publish releases
+13. **Install and Uninstall** - Provide shell scripts for easy installation and removal on Linux, macOS, and Windows
+14. **Ensure Code Quality** - Run linting, formatting, and security checks via CI/CD and pre-commit hooks
+15. **Test Continuously** - Execute unit and E2E tests on every push and PR with coverage reporting
 
 ## Topics of Concern
 
@@ -55,6 +63,22 @@
 - **Lock File Colocation** - arm-lock.json always colocated with arm.json (derived from manifest path)
 - **E2E Testing** - 14 comprehensive test suites covering all workflows with 100% pass rate
 
+### Build & Distribution
+- **Cross-Platform Builds** - Makefile targets for building Linux, macOS, Windows binaries with LDFLAGS for version injection
+- **Version Metadata** - Inject version, commit hash, build timestamp, and platform into binary at build time
+- **Installation Scripts** - Shell scripts for automated installation with platform detection and PATH configuration
+- **Release Automation** - GitHub Actions workflows for semantic-release, binary building, and asset uploading
+- **Artifact Management** - Package binaries as .tar.gz with SHA256 checksums for integrity verification
+
+### Code Quality & CI/CD
+- **Linting** - golangci-lint with 13 enabled linters (errcheck, gosimple, govet, gofmt, goimports, etc.)
+- **Formatting** - gofmt and goimports for consistent code style
+- **Pre-commit Hooks** - Automated checks for trailing whitespace, YAML/JSON validation, conventional commits, go fmt, go imports, go mod tidy
+- **Conventional Commits** - Enforce commit message format (feat, fix, docs, refactor, test, chore) via commitlint workflow
+- **Security Scanning** - CodeQL analysis for Go and GitHub Actions, dependency review on PRs, weekly scheduled scans
+- **Test Coverage** - Upload coverage reports to Codecov on every build
+- **Build Matrix** - Test on multiple platforms (Linux amd64/arm64, macOS amd64/arm64, Windows amd64)
+
 ## Specification Documents
 
 ### Core Workflows
@@ -75,6 +99,12 @@
 - [cache-management.md](cache-management.md) - Storage structure, cleanup, file locking
 - [pattern-filtering.md](pattern-filtering.md) - Glob patterns, archive extraction
 
-### Testing
+### Testing & Development
 - [constructor-injection.md](constructor-injection.md) - Test isolation via environment variables
 - [e2e-testing.md](e2e-testing.md) - End-to-end test specifications
+
+### Infrastructure
+- [build-system.md](build-system.md) - Makefile, cross-platform builds, version injection
+- [ci-cd-workflows.md](ci-cd-workflows.md) - GitHub Actions for build, test, lint, security, release
+- [installation-scripts.md](installation-scripts.md) - Install and uninstall shell scripts
+- [code-quality.md](code-quality.md) - Linting, formatting, pre-commit hooks, conventional commits
