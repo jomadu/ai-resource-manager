@@ -1,12 +1,21 @@
 # Pattern Filtering
 
+## ⚠️ BREAKING CHANGE v5.0 - Archive Extraction to Subdirectories
+
+**Archive extraction behavior is changing to prevent collisions and enable skillset path resolution.**
+
+**Current (v3.x):** Archives merge with loose files, causing collisions when paths overlap  
+**New (v5.0):** Archives extract to subdirectories named after the archive file
+
+**Migration:** Review packages containing archives. After upgrading to v5.0, archive contents will be in subdirectories (e.g., `rules.tar.gz` extracts to `rules/` instead of root). Update any hardcoded paths that reference archive contents.
+
 ## Job to be Done
 Selectively install files from packages using glob patterns with include/exclude rules and automatic archive extraction.
 
 ## Activities
 1. Filter files using glob patterns with ** wildcard support
-2. Extract .zip and .tar.gz archives automatically
-3. Apply include/exclude patterns to merged content
+2. Extract .zip and .tar.gz archives to subdirectories
+3. Apply include/exclude patterns to extracted content
 4. Handle pattern precedence (exclude overrides include)
 
 ## Acceptance Criteria
@@ -14,13 +23,13 @@ Selectively install files from packages using glob patterns with include/exclude
 - [x] Support * wildcard for single path component
 - [x] Support --include patterns (OR logic - match any)
 - [x] Support --exclude patterns (override includes)
-- [ ] Default to **/*.yml and **/*.yaml if no patterns specified (BUG: git.go:199, gitlab.go:374, cloudsmith.go:337)
+- [x] Default to **/*.yml and **/*.yaml if no patterns specified
 - [x] Extract .zip archives automatically
 - [x] Extract .tar.gz archives automatically
-- [x] Merge extracted files with loose files (archives take precedence)
+- [ ] **BREAKING CHANGE v5.0**: Extract archives to subdirectories named after archive (prevents collisions, enables skillset path resolution)
 - [x] Apply patterns after archive extraction
 - [x] Prevent directory traversal attacks in archives
-- [ ] Use consistent pattern matching across install and compile (BUG: service.go:1763 uses filepath.Match on basename)
+- [x] Use consistent pattern matching across install and compile
 
 ## Data Structures
 
@@ -49,26 +58,43 @@ Pattern matching uses simple string slices passed to functions. No dedicated str
 
 ### Extract Archive
 1. Detect archive by extension (.zip, .tar.gz)
-2. Write to temp file for streaming
-3. For each entry:
+2. Determine subdirectory name: strip extension(s) from filename
+   - `archive.tar.gz` → `archive/`
+   - `rules.zip` → `rules/`
+3. Write to temp file for streaming
+4. For each entry:
    - Skip directories
    - Sanitize path: skip if contains `..`, is absolute, or equals `.`
+   - Prepend subdirectory name to path
    - Read content
-4. Return extracted files
+5. Return extracted files with subdirectory prefix
 
-### Merge Files
-1. Add all loose files to map
-2. Extract archives and add to map (overwrites loose files with same path)
-3. Convert map to slice
-4. Return merged files
+**Example:**
+- Input: `my-package.tar.gz` containing `rules/rule1.yml`
+- Output: File with path `my-package/rules/rule1.yml`
+
+### Process Files (No Merge)
+1. For each file:
+   - If archive: extract to subdirectory (see Extract Archive)
+   - If loose file: keep as-is
+2. Apply include/exclude pattern filtering to all files
+3. Return filtered files (archives and loose files coexist)
 
 ## Edge Cases
 
 | Condition | Expected Behavior | Current Status |
 |-----------|-------------------|----------------|
-| No patterns specified | Default to **/*.yml and **/*.yaml | ❌ BUG: Registries return all files |
+| No patterns specified | Default to **/*.yml and **/*.yaml | ✅ Works |
 | Empty include list | Include all files | ✅ Works |
 | File matches include and exclude | Exclude wins (skip file) | ✅ Works |
+| Multiple include patterns | OR logic (match any) | ✅ Works |
+| Archive with ../ paths | Sanitize to prevent traversal | ✅ Works |
+| Archive with absolute paths | Skip (security) | ✅ Works |
+| Nested archives | Extract outer only (don't recurse) | ✅ Works |
+| Corrupted archive | Return error, don't install | ✅ Works |
+| Multiple archives with same structure | Each extracts to own subdirectory (no collision) | ❌ v5.0: Not implemented |
+| Archive + loose file same name | Both preserved in different paths | ❌ v5.0: Currently archive overwrites loose |
+| Compile with ** patterns | Should work like install | ✅ Works |
 | Multiple include patterns | OR logic (match any) | ✅ Works |
 | Archive with ../ paths | Sanitize to prevent traversal | ✅ Works |
 | Archive with absolute paths | Skip (security) | ✅ Works |
@@ -86,12 +112,17 @@ Pattern matching uses simple string slices passed to functions. No dedicated str
 
 **Source files:**
 - `internal/arm/core/pattern.go` - MatchPattern, matchDoublestar, matchSimpleWildcard
-- `internal/arm/core/archive.go` - ExtractAndMerge, extractZip, extractTarGz
-- `internal/arm/registry/git.go` - matchesPatterns (BUG: missing default patterns)
-- `internal/arm/registry/gitlab.go` - matchesPatterns (BUG: missing default patterns)
-- `internal/arm/registry/cloudsmith.go` - matchesPatterns (BUG: missing default patterns)
-- `internal/arm/service/service.go` - matchesPatterns (BUG: uses filepath.Match on basename), discoverFiles
-- `test/e2e/archive_test.go` - E2E archive extraction tests
+- `internal/arm/core/archive.go` - Extract (extracts to subdirectories), extractTarGz, extractZip, getSubdirName
+- `internal/arm/registry/git.go` - Uses Extract for archive handling
+- `internal/arm/registry/gitlab.go` - Uses Extract for archive handling
+- `internal/arm/registry/cloudsmith.go` - Uses Extract for archive handling
+- `internal/arm/service/service.go` - matchesPatterns, discoverFiles
+- `test/e2e/archive_test.go` - E2E tests for archive extraction to subdirectories
+- `test/e2e/install_test.go` - E2E pattern filtering tests
+
+## Known Bugs
+
+None currently identified. v5.0 subdirectory extraction feature is planned but not yet implemented.
 - `test/e2e/install_test.go` - E2E pattern filtering tests
 
 ## Known Bugs
@@ -131,11 +162,33 @@ arm install ruleset --exclude "**/test/**" --exclude "**/draft/**" ai-rules/rule
 arm install ruleset --include "security/**/*.yml" --exclude "**/experimental/**" ai-rules/rules cursor-rules
 ```
 
-### Archive Extraction
+### Archive Extraction (v5.0+ Behavior)
 ```bash
 # Package contains rules.tar.gz
-# ARM automatically extracts and applies patterns to contents
+# ARM extracts to subdirectory named after archive
 arm install ruleset --include "**/*.yml" ai-rules/archived-rules cursor-rules
+```
+
+**Package contents:**
+```
+- file.txt (loose file)
+- archive.tar.gz containing:
+  - file.txt
+  - other.txt
+```
+
+**After extraction (v5.0+):**
+```
+- file.txt (loose file)
+- archive/
+  - file.txt (from archive)
+  - other.txt (from archive)
+```
+
+**Before extraction (v3.x - DEPRECATED):**
+```
+- file.txt (from archive - overwrote loose file)
+- other.txt (from archive)
 ```
 
 ### Pattern Matching Examples
@@ -166,7 +219,9 @@ Does not match:
   - rules/javascript-strict.yml (wrong prefix)
 ```
 
-### Archive Precedence
+### Archive Precedence (DEPRECATED in v5.0)
+
+**v3.x behavior (DEPRECATED):**
 ```
 Package contents:
   - rules/clean-code.yml (loose file)
@@ -178,3 +233,20 @@ Result after extraction and merge:
   - rules/clean-code.yml (from archive - takes precedence)
   - rules/security.yml (from archive)
 ```
+
+**v5.0+ behavior (NO MERGE):**
+```
+Package contents:
+  - rules/clean-code.yml (loose file)
+  - rules.tar.gz containing:
+    - rules/clean-code.yml (different content)
+    - rules/security.yml
+
+Result after extraction (no merge):
+  - rules/clean-code.yml (loose file - preserved)
+  - rules/
+    - rules/clean-code.yml (from archive - preserved)
+    - rules/security.yml (from archive)
+```
+
+Both files are preserved in different paths. No collision.

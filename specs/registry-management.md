@@ -86,7 +86,7 @@ Returns empty list. Git registries don't have predefined packages - users define
    - Ensure repository cloned/fetched
    - List files: `git ls-tree -r --name-only {commit}`
    - Extract content: `git show {commit}:{path}` for each file
-   - Extract archives (.zip, .tar.gz) and merge with loose files
+   - Extract archives (.zip, .tar.gz) to subdirectories (v5.0+)
    - Apply include/exclude pattern filtering
    - Cache filtered results
 4. Calculate SHA256 integrity hash (sorted paths for determinism)
@@ -123,7 +123,7 @@ Returns empty list. Git registries don't have predefined packages - users define
 4. Download each file:
    - Project: `/api/v4/projects/{id}/packages/generic/{name}/{version}/{filename}`
    - Group: `/api/v4/groups/{id}/-/packages/generic/{name}/{version}/{filename}`
-5. Extract archives and merge with loose files
+5. Extract archives to subdirectories (v5.0+)
 6. Apply include/exclude pattern filtering
 7. Cache filtered results (same cache key strategy as Git)
 8. Calculate SHA256 integrity hash
@@ -157,7 +157,7 @@ Returns empty list. Git registries don't have predefined packages - users define
 ### Cloudsmith Registry - Fetch Package
 1. Load authentication token
 2. Query and download matching packages (same matching as List Versions)
-3. Extract archives and merge with loose files
+3. Extract archives to subdirectories (v5.0+)
 4. Apply include/exclude pattern filtering
 5. Cache filtered results (same cache key strategy as Git)
 6. Calculate SHA256 integrity hash

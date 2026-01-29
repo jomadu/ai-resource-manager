@@ -25,6 +25,8 @@ Validate ARM functionality through comprehensive end-to-end tests covering all u
 - [x] Tests verify compiled output for each tool
 - [x] Tests verify cache structure and metadata
 - [x] Tests verify cleanup behavior (empty directories, index files)
+- [ ] **v5.0**: Tests verify archive extraction to subdirectories (no merge)
+- [ ] **v5.0**: Tests verify multiple archives with same structure don't collide
 - [x] All tests pass reliably (100% pass rate)
 
 ## Test Suites
@@ -96,9 +98,11 @@ Validate ARM functionality through comprehensive end-to-end tests covering all u
 - TestArmrcSectionMatching - URL matching
 
 ### archive_test.go
-- TestArchiveTarGz - .tar.gz extraction
-- TestArchiveZip - .zip extraction
-- TestArchiveMixedWithLooseFiles - Archive + loose files
+- TestArchiveTarGz - .tar.gz extraction to subdirectory
+- TestArchiveZip - .zip extraction to subdirectory
+- TestArchiveMixedWithLooseFiles - Archive + loose files (no collision)
+- TestMultipleArchivesSameStructure - Multiple archives with same internal paths (no collision)
+- TestArchiveSubdirectoryNaming - Verify archive name becomes subdirectory
 - TestArchivePrecedenceOverLooseFiles - Archive precedence
 - TestArchiveWithIncludeExcludePatterns - Pattern filtering
 
