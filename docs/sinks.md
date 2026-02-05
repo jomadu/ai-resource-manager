@@ -101,5 +101,111 @@ ARM resource definitions are automatically compiled to tool-specific formats:
 - **Cursor**: Markdown with YAML frontmatter (`.mdc`) for rules, plain markdown (`.md`) for prompts
 - **Amazon Q**: Pure markdown (`.md`) for both rules and prompts
 - **Copilot**: Instructions format (`.instructions.md`) for both rules (copilot doesn't have a "prompts" resource)
+- **Kiro CLI**: Pure markdown (`.md`) for both rules and prompts
 
 Each compiled resource includes embedded metadata for priority resolution and resource tracking.
+
+## Tool-Specific Details
+
+### Cursor
+
+**Layout**: Hierarchical (default)
+
+**File Extensions**:
+- Rulesets: `.mdc` (Markdown with YAML frontmatter)
+- Promptsets: `.md` (Plain markdown)
+
+**Priority Index**: `arm_index.mdc`
+
+**Default Paths**:
+- Rules: `.cursor/rules/`
+- Prompts: `.cursor/commands/`
+
+**Example**:
+```bash
+arm add sink --tool cursor cursor-rules .cursor/rules
+arm add sink --tool cursor cursor-commands .cursor/commands
+arm install ruleset ai-rules/clean-code-ruleset cursor-rules
+arm install promptset ai-rules/code-review-prompts cursor-commands
+```
+
+### Amazon Q
+
+**Layout**: Hierarchical (default)
+
+**File Extensions**:
+- Rulesets: `.md` (Pure markdown)
+- Promptsets: `.md` (Pure markdown)
+
+**Priority Index**: `arm_index.md`
+
+**Default Paths**:
+- Rules: `.amazonq/rules/`
+- Prompts: `.amazonq/prompts/`
+
+**Example**:
+```bash
+arm add sink --tool amazonq q-rules .amazonq/rules
+arm add sink --tool amazonq q-prompts .amazonq/prompts
+arm install ruleset ai-rules/clean-code-ruleset q-rules
+arm install promptset ai-rules/code-review-prompts q-prompts
+```
+
+### GitHub Copilot
+
+**Layout**: Flat (required by Copilot)
+
+**File Extensions**:
+- Rulesets: `.instructions.md`
+- Promptsets: Not supported (Copilot doesn't have a prompts concept)
+
+**Priority Index**: `arm_index.instructions.md`
+
+**Default Path**:
+- Rules: `.github/copilot/`
+
+**Example**:
+```bash
+arm add sink --tool copilot copilot-rules .github/copilot
+arm install ruleset ai-rules/clean-code-ruleset copilot-rules
+```
+
+### Kiro CLI
+
+**Layout**: Hierarchical (default)
+
+**File Extensions**:
+- Rulesets: `.md` (Pure markdown)
+- Promptsets: `.md` (Pure markdown)
+
+**Priority Index**: `arm_index.md`
+
+**Default Paths**:
+- Rules: `.kiro/steering/`
+- Prompts: `.kiro/prompts/`
+
+**Example**:
+```bash
+arm add sink --tool kiro kiro-steering .kiro/steering
+arm add sink --tool kiro kiro-prompts .kiro/prompts
+arm install ruleset ai-rules/clean-code-ruleset kiro-steering
+arm install promptset ai-rules/code-review-prompts kiro-prompts
+```
+
+### Markdown (Generic)
+
+**Layout**: Hierarchical (default)
+
+**File Extensions**:
+- Rulesets: `.md` (Pure markdown)
+- Promptsets: `.md` (Pure markdown)
+
+**Priority Index**: `arm_index.md`
+
+**Use Case**: Generic markdown output for custom tools or documentation
+
+**Example**:
+```bash
+arm add sink --tool markdown docs-rules ./docs/rules
+arm install ruleset ai-rules/clean-code-ruleset docs-rules
+```

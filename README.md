@@ -102,6 +102,10 @@ arm add sink --tool copilot copilot-rules .github/copilot
 
 # Amazon Q
 arm add sink --tool amazonq q-rules .amazonq/rules
+
+# Kiro CLI
+arm add sink --tool kiro kiro-steering .kiro/steering
+arm add sink --tool kiro kiro-prompts .kiro/prompts
 ```
 
 Install ruleset:
