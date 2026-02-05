@@ -1861,10 +1861,12 @@ func (s *ArmService) parseTool(toolStr string) (compiler.Tool, error) {
 		return compiler.Copilot, nil
 	case "amazonq":
 		return compiler.AmazonQ, nil
+	case "kiro":
+		return compiler.Kiro, nil
 	case "markdown":
 		return compiler.Markdown, nil
 	default:
-		return "", fmt.Errorf("invalid tool: %s (must be cursor, copilot, amazonq, or markdown)", toolStr)
+		return "", fmt.Errorf("invalid tool: %s (must be cursor, copilot, amazonq, kiro, or markdown)", toolStr)
 	}
 }
 

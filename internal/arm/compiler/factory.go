@@ -13,10 +13,8 @@ func (f *DefaultRuleGeneratorFactory) NewRuleGenerator(tool Tool) (RuleGenerator
 	switch tool {
 	case Cursor:
 		return &CursorRuleGenerator{}, nil
-	case Markdown:
+	case Markdown, AmazonQ, Kiro:
 		return &MarkdownRuleGenerator{}, nil
-	case AmazonQ:
-		return &AmazonQRuleGenerator{}, nil
 	case Copilot:
 		return &CopilotRuleGenerator{}, nil
 	default:
@@ -35,10 +33,8 @@ func (f *DefaultPromptGeneratorFactory) NewPromptGenerator(tool Tool) (PromptGen
 	switch tool {
 	case Cursor:
 		return &CursorPromptGenerator{}, nil
-	case Markdown:
+	case Markdown, AmazonQ, Kiro:
 		return &MarkdownPromptGenerator{}, nil
-	case AmazonQ:
-		return &AmazonQPromptGenerator{}, nil
 	case Copilot:
 		return &CopilotPromptGenerator{}, nil
 	default:
@@ -57,10 +53,8 @@ func (f *DefaultRuleFilenameGeneratorFactory) NewRuleFilenameGenerator(tool Tool
 	switch tool {
 	case Cursor:
 		return &CursorRuleFilenameGenerator{}, nil
-	case Markdown:
+	case Markdown, AmazonQ, Kiro:
 		return &MarkdownRuleFilenameGenerator{}, nil
-	case AmazonQ:
-		return &AmazonQRuleFilenameGenerator{}, nil
 	case Copilot:
 		return &CopilotRuleFilenameGenerator{}, nil
 	default:
@@ -79,10 +73,8 @@ func (f *DefaultPromptFilenameGeneratorFactory) NewPromptFilenameGenerator(tool 
 	switch tool {
 	case Cursor:
 		return &CursorPromptFilenameGenerator{}, nil
-	case Markdown:
+	case Markdown, AmazonQ, Kiro:
 		return &MarkdownPromptFilenameGenerator{}, nil
-	case AmazonQ:
-		return &AmazonQPromptFilenameGenerator{}, nil
 	case Copilot:
 		return &CopilotPromptFilenameGenerator{}, nil
 	default:

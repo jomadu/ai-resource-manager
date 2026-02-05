@@ -614,10 +614,12 @@ func handleAddSink() {
 		compilerTool = compiler.Copilot
 	case "amazonq":
 		compilerTool = compiler.AmazonQ
+	case "kiro":
+		compilerTool = compiler.Kiro
 	case "markdown":
 		compilerTool = compiler.Markdown
 	default:
-		fmt.Fprintf(os.Stderr, "Invalid tool: %s (must be cursor, copilot, amazonq, or markdown)\n", tool)
+		fmt.Fprintf(os.Stderr, "Invalid tool: %s (must be cursor, copilot, amazonq, kiro, or markdown)\n", tool)
 		os.Exit(1)
 	}
 
