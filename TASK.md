@@ -1,5 +1,7 @@
 # TASK: Add Kiro CLI Tool Support
 
+## Status: ✅ COMPLETE
+
 ## Goal
 
 Enable ARM to install promptsets to `.kiro/prompts/` and rulesets to `.kiro/steering/` directories, supporting the Kiro CLI tool format.
@@ -225,3 +227,33 @@ Add E2E tests in `test/e2e/compile_test.go`:
 - Kiro CLI Migration Guide: `KIRO-CLI/upgrading-from-amazon-q.md`
 - Kiro uses `.kiro/steering/` for workspace scope, `~/.kiro/steering/` for global scope
 - Kiro uses `.kiro/prompts/` for workspace scope, `~/.kiro/prompts/` for global scope
+
+---
+
+## Implementation Summary
+
+**Completed in commits:**
+- `1d2eccc` - feat: add Kiro tool support and refactor Amazon Q compiler
+- `4a15543` - test: add E2E tests for Kiro tool compilation
+- `be94c0a` - docs: add Kiro CLI support to documentation
+
+**What was implemented:**
+1. ✅ Added `Kiro` tool constant to `internal/arm/compiler/types.go`
+2. ✅ Refactored factory to map Kiro, AmazonQ, and Markdown to same generators
+3. ✅ Deleted `internal/arm/compiler/amazonq.go` (duplicate of markdown.go)
+4. ✅ Deleted `internal/arm/compiler/amazonq_test.go` (covered by markdown tests)
+5. ✅ Updated `cmd/arm/main.go` to handle "kiro" tool in sink commands
+6. ✅ Updated `internal/arm/service/service.go` to map "kiro" string to compiler.Kiro
+7. ✅ Added E2E tests: `TestCompilationToolFormats/KiroFormat` and `TestCompilationPromptsets/KiroPrompts`
+8. ✅ Updated documentation: README.md, docs/commands.md, docs/sinks.md, docs/concepts.md
+
+**Verification:**
+- All tests pass: `go test ./...`
+- E2E tests verify:
+  - Ruleset installation to `.kiro/steering/`
+  - Promptset installation to `.kiro/prompts/`
+  - Hierarchical layout (arm/{registry}/{package}/{version}/)
+  - Priority index generation (`arm_index.md`)
+  - Markdown format (`.md` extension)
+
+**Branch:** `kiro-cli-support` (ready to merge to main)
