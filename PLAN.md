@@ -2,107 +2,144 @@
 
 ## Priority-Ordered Tasks
 
-### 1. Update Specifications (TDD Approach)
-**Files:**
-- `specs/sink-compilation.md` - Add Kiro to acceptance criteria and examples
-- `specs/standalone-compilation.md` - Add Kiro to acceptance criteria and examples
+### 1. Update Specification - Document Kiro Tool Support
+**File:** `specs/sink-compilation.md`
 
 **Changes:**
-- Add `[x] Compile to Kiro format (.md for both rules and prompts)` to acceptance criteria
-- Add Kiro examples showing `.kiro/steering/` and `.kiro/prompts/` paths
-- Document that Kiro/AmazonQ/Markdown share identical output format
-- Add note about factory mapping three tools to same generators
+- Add Kiro to list of supported tools in acceptance criteria
+- Document Kiro default paths (`.kiro/steering/`, `.kiro/prompts/`)
+- Add Kiro to priority index generation algorithm (uses `arm_index.md`)
+- Add Kiro examples showing hierarchical layout
+- Document that Kiro/AmazonQ/Markdown share identical format
 
-**Rationale:** Define expected behavior before implementation (TDD)
+**Acceptance:**
+- [ ] Kiro listed in acceptance criteria
+- [ ] Kiro paths documented
+- [ ] Kiro examples added
+- [ ] Format equivalence documented
 
-### 2. Add Kiro Tool Constant
-**File:** `internal/arm/compiler/types.go`
-- Add `Kiro Tool = "kiro"` constant after AmazonQ
+**Dependencies:** None
 
-### 3. Refactor Factory to Eliminate Duplication
+---
+
+### 2. Refactor Compiler - Eliminate Duplication and Add Kiro
 **Files:** 
-- `internal/arm/compiler/factory.go` - Map AmazonQ/Kiro/Markdown to same generators
+- `internal/arm/compiler/types.go` - Add Kiro constant
+- `internal/arm/compiler/factory.go` - Map Kiro/AmazonQ/Markdown to same generators
 - `internal/arm/compiler/amazonq.go` - DELETE (duplicate of markdown.go)
 - `internal/arm/compiler/amazonq_test.go` - DELETE (covered by markdown tests)
 
 **Changes:**
-- `NewRuleGenerator()`: `case Markdown, AmazonQ, Kiro: return &MarkdownRuleGenerator{}, nil`
-- `NewPromptGenerator()`: `case Markdown, AmazonQ, Kiro: return &MarkdownPromptGenerator{}, nil`
-- `NewRuleFilenameGenerator()`: `case Markdown, AmazonQ, Kiro: return &MarkdownRuleFilenameGenerator{}, nil`
-- `NewPromptFilenameGenerator()`: `case Markdown, AmazonQ, Kiro: return &MarkdownPromptFilenameGenerator{}, nil`
+- Add `Kiro Tool = "kiro"` constant to types.go
+- Update all four factory methods to map Kiro/AmazonQ/Markdown to markdown generators:
+  - `NewRuleGenerator()` → `MarkdownRuleGenerator`
+  - `NewPromptGenerator()` → `MarkdownPromptGenerator`
+  - `NewRuleFilenameGenerator()` → `MarkdownRuleFilenameGenerator`
+  - `NewPromptFilenameGenerator()` → `MarkdownPromptFilenameGenerator`
+- Delete amazonq.go and amazonq_test.go files
 
-**Rationale:** Eliminates ~200 lines of duplicate code, makes format equivalence explicit
+**Acceptance:**
+- [ ] Kiro constant added
+- [ ] Factory maps all three tools to markdown generators
+- [ ] amazonq.go deleted
+- [ ] amazonq_test.go deleted
+- [ ] All existing tests pass (including Amazon Q E2E tests)
 
-**Dependencies:** Requires step 2 (Kiro constant)
+**Dependencies:** Task 1 (spec defines behavior)
 
-### 4. Update CLI Tool Validation
-**File:** `cmd/arm/main.go`
-- Add "kiro" to valid tool list in `handleAddSink()`
-- Add "kiro" to valid tool list in `handleCompile()`
+---
 
-**Dependencies:** Requires step 2 (Kiro constant)
+### 3. Update Sink Management - Handle Kiro Tool Type
+**Files:**
+- `cmd/arm/main.go` - Add "kiro" to valid tool options
+- `internal/arm/sink/manager.go` - Handle kiro tool type in priority index generation
 
-### 5. Add E2E Tests
+**Changes:**
+- Add "kiro" to tool validation in CLI
+- Ensure priority index generation handles kiro tool (should use `arm_index.md` like markdown/amazonq)
+
+**Acceptance:**
+- [ ] `arm add sink --tool kiro` command works
+- [ ] `arm install ruleset ... kiro-sink` works
+- [ ] `arm install promptset ... kiro-sink` works
+- [ ] Priority index (`arm_index.md`) generated for kiro rulesets
+- [ ] Hierarchical layout used
+
+**Dependencies:** Task 2 (compiler must support kiro)
+
+---
+
+### 4. Add E2E Tests - Verify Kiro Compilation
 **File:** `test/e2e/compile_test.go`
-- `TestKiroRulesetCompilation` - Verify ruleset to .kiro/steering/
-- `TestKiroPromptsetCompilation` - Verify promptset to .kiro/prompts/
-- `TestKiroPriorityIndex` - Verify arm_index.md generation
-- Follow existing AmazonQ test patterns
 
-**Dependencies:** Requires steps 2-4 (implementation complete)
+**Changes:**
+- Add `TestKiroRulesetCompilation` - Verify ruleset compilation to .kiro/steering/
+- Add `TestKiroPromptsetCompilation` - Verify promptset compilation to .kiro/prompts/
+- Add `TestKiroPriorityIndex` - Verify arm_index.md generation
+- Add `TestKiroMultiplePriorities` - Verify priority ordering
 
-### 6. Update User Documentation
+**Acceptance:**
+- [ ] All four Kiro E2E tests pass
+- [ ] Tests verify correct file paths
+- [ ] Tests verify markdown format
+- [ ] Tests verify priority index generation
+
+**Dependencies:** Task 3 (sink management must work)
+
+---
+
+### 5. Update User Documentation - Add Kiro Examples
 **Files:**
 - `README.md` - Add Kiro to supported tools list
 - `docs/concepts.md` - Document Kiro tool support
-- `docs/sinks.md` - Add Kiro sink examples
-- `docs/commands.md` - Add Kiro command examples
+- `docs/sinks.md` - Add Kiro sink configuration examples
+- `docs/commands.md` - Update examples to include Kiro
 
 **Changes:**
-- Add Kiro examples: `arm add sink --tool kiro kiro-steering .kiro/steering`
-- Add Kiro examples: `arm install ruleset my-registry/clean-code kiro-steering`
-- Document default paths: `.kiro/steering/` (rulesets), `.kiro/prompts/` (promptsets)
-- Note: Kiro uses markdown format (same as AmazonQ)
+- Add Kiro to "Configure sinks" examples
+- Add Kiro to "Install to multiple tools" examples
+- Document `.kiro/steering/` and `.kiro/prompts/` paths
+- Note that Kiro uses markdown format (same as Amazon Q)
 
-**Dependencies:** Can happen anytime after step 1 (specs define behavior)
+**Acceptance:**
+- [ ] README.md includes Kiro
+- [ ] docs/concepts.md documents Kiro
+- [ ] docs/sinks.md has Kiro examples
+- [ ] docs/commands.md has Kiro examples
 
-## Acceptance Criteria
+**Dependencies:** Task 4 (implementation complete and tested)
 
-- [ ] Specs updated with Kiro acceptance criteria and examples
-- [ ] Kiro tool constant added to types.go
-- [ ] Factory maps Kiro/AmazonQ/Markdown to same generators
-- [ ] amazonq.go and amazonq_test.go deleted
-- [ ] `arm add sink --tool kiro` works
-- [ ] `arm add sink --tool amazonq` still works (backward compatible)
-- [ ] `arm install ruleset ... kiro-steering` installs to .kiro/steering/
-- [ ] `arm install promptset ... kiro-prompts` installs to .kiro/prompts/
-- [ ] Priority index (arm_index.md) generated for rulesets
-- [ ] Hierarchical layout: arm/{registry}/{package}/{version}/
-- [ ] All existing tests pass (including AmazonQ E2E tests)
-- [ ] E2E tests added for Kiro compilation
-- [ ] User docs updated with Kiro examples
+---
 
 ## Task Dependencies
 
 ```
-Step 1 (Specs) → Independent (can start immediately)
-Step 2 (Constant) → Independent
-Step 3 (Factory) → Requires Step 2
-Step 4 (CLI) → Requires Step 2
-Step 5 (Tests) → Requires Steps 2, 3, 4
-Step 6 (Docs) → Requires Step 1 (specs define behavior)
+1. Update Spec (no dependencies)
+   ↓
+2. Refactor Compiler (depends on spec)
+   ↓
+3. Update Sink Management (depends on compiler)
+   ↓
+4. Add E2E Tests (depends on sink management)
+   ↓
+5. Update Documentation (depends on tests passing)
 ```
 
 ## Implementation Notes
 
-**Key Architectural Change:** Refactoring eliminates duplication by making format equivalence explicit in factory. Three tool constants map to one implementation.
+### Key Design Decision: Eliminate Duplication
+The current codebase has `amazonq.go` as a duplicate of `markdown.go`. This refactor:
+- Makes format equivalence explicit (Kiro/AmazonQ/Markdown → same generators)
+- Reduces code duplication (delete ~200 lines of duplicate code)
+- Simplifies maintenance (one implementation for three tools)
+- Preserves backward compatibility (Amazon Q still works, just mapped differently)
 
-**Backward Compatibility:** AmazonQ tool constant remains valid, mapped to markdown generators.
+### Testing Strategy
+- Existing Amazon Q E2E tests continue to pass (validates backward compatibility)
+- New Kiro E2E tests verify identical behavior
+- Unit tests for markdown generators cover all three tools
 
-**Output Format:** All three tools (Kiro/AmazonQ/Markdown) produce:
-- `.md` file extension
-- YAML frontmatter with metadata
-- Same filename pattern: `{id}_{id}.md`
-- Hierarchical layout: `{sink}/arm/{registry}/{package}/{version}/{file}`
-
-**Priority Index:** Standard markdown format (arm_index.md) works for all three tools.
+### Rollout
+- No breaking changes (Amazon Q continues to work)
+- Kiro is additive (new tool support)
+- Documentation updated to reflect new capability
