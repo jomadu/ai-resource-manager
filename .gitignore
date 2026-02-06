@@ -44,3 +44,7 @@ test-sandbox/
 /progress.txt
 /.last-branch
 /archive/
+
+# Beads SQLite transient files
+.beads/*.db-shm
+.beads/*.db-wal
