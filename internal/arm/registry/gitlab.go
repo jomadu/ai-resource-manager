@@ -211,7 +211,7 @@ func (g *GitLabRegistry) GetPackage(ctx context.Context, packageName string, ver
 	}
 
 	extractor := core.NewExtractor()
-	files, err = extractor.ExtractAndMerge(files)
+	files, err = extractor.Extract(files)
 	if err != nil {
 		return nil, err
 	}
@@ -372,8 +372,9 @@ func ensureProtocol(baseURL string) string {
 }
 
 func matchesPatterns(filePath string, include, exclude []string) bool {
+	// Default to YAML files if no patterns specified
 	if len(include) == 0 && len(exclude) == 0 {
-		return true
+		include = []string{"**/*.yml", "**/*.yaml"}
 	}
 
 	for _, pattern := range exclude {

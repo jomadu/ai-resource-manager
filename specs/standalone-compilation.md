@@ -15,7 +15,7 @@ Compile local ARM resource files (YAML) to tool-specific formats without install
 - [x] Compile all YAML files in directory
 - [x] Recursive directory traversal with --recursive
 - [x] Validate-only mode without writing files
-- [ ] Pattern filtering with --include and --exclude (BUG: service.go:1763 uses filepath.Match on basename)
+- [x] Pattern filtering with --include and --exclude
 - [x] Custom namespace with --namespace
 - [x] Force overwrite with --force
 - [x] Fail-fast mode with --fail-fast
@@ -62,8 +62,8 @@ type CompileRequest struct {
 1. Default include patterns: `*.yml`, `*.yaml` (non-recursive, root-level only)
 2. Walk directories (recursive if flag set)
 3. Get relative path from directory root
-4. Check exclude patterns using `filepath.Match()` on basename (BUG: should use `core.MatchPattern()` on full path)
-5. Check include patterns using `filepath.Match()` on basename (BUG: should use `core.MatchPattern()` on full path)
+4. Check exclude patterns using `core.MatchPattern()` on full path
+5. Check include patterns using `core.MatchPattern()` on full path
 6. Return list of matching files
 
 ### Tool-Specific Compilation
@@ -84,7 +84,7 @@ type CompileRequest struct {
 | Multiple errors | Report first error unless --fail-fast disabled | ✅ Works |
 | No output path in validate mode | Skip output path requirement | ✅ Works |
 | Empty namespace | Use resource metadata ID as namespace | ✅ Works |
-| Pattern with ** wildcard | Should work like install | ❌ BUG: Uses filepath.Match on basename |
+| Pattern with ** wildcard | Should work like install | ✅ Works |
 
 ## Dependencies
 
@@ -105,10 +105,7 @@ type CompileRequest struct {
 
 ## Known Bugs
 
-### Bug: Compile Uses Wrong Pattern Matcher
-**File:** `internal/arm/service/service.go:1763`  
-**Issue:** Uses `filepath.Match(pattern, filepath.Base(filePath))` instead of `core.MatchPattern(pattern, filePath)`  
-**Impact:** Patterns like `security/**/*.yml` don't work in `arm compile`
+None. All functionality is implemented and working correctly.
 
 ## Notes
 

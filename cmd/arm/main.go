@@ -151,6 +151,9 @@ func printCommandHelp(command string) {
 		fmt.Println()
 		fmt.Println("Usage:")
 		fmt.Println("  arm list registry")
+		fmt.Println("  arm list sink")
+		fmt.Println("  arm list dependency")
+		fmt.Println("  arm list versions REGISTRY/PACKAGE")
 		fmt.Println()
 		fmt.Println("Displays a simple list of configured registry names.")
 	case "info":
@@ -611,10 +614,12 @@ func handleAddSink() {
 		compilerTool = compiler.Copilot
 	case "amazonq":
 		compilerTool = compiler.AmazonQ
+	case "kiro":
+		compilerTool = compiler.Kiro
 	case "markdown":
 		compilerTool = compiler.Markdown
 	default:
-		fmt.Fprintf(os.Stderr, "Invalid tool: %s (must be cursor, copilot, amazonq, or markdown)\n", tool)
+		fmt.Fprintf(os.Stderr, "Invalid tool: %s (must be cursor, copilot, amazonq, kiro, or markdown)\n", tool)
 		os.Exit(1)
 	}
 
@@ -959,6 +964,10 @@ func handleList() {
 		handleListRegistry()
 	case "sink":
 		handleListSink()
+	case "dependency":
+		handleListDependency()
+	case "versions":
+		handleListVersions()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown list target: %s\n", os.Args[2])
 		os.Exit(1)
@@ -1336,6 +1345,100 @@ func handleListSink() {
 	sort.Strings(names)
 	for _, name := range names {
 		fmt.Println(name)
+	}
+}
+
+func handleListDependency() {
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
+
+	ctx := context.Background()
+	lockFile, err := lockfileMgr.GetLockFile(ctx)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return
+		}
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if lockFile == nil || lockFile.Dependencies == nil || len(lockFile.Dependencies) == 0 {
+		return
+	}
+
+	keys := make([]string, 0, len(lockFile.Dependencies))
+	for key := range lockFile.Dependencies {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		fmt.Printf("- %s\n", key)
+	}
+}
+
+func handleListVersions() {
+	if len(os.Args) < 4 {
+		fmt.Fprintf(os.Stderr, "Usage: arm list versions REGISTRY/PACKAGE\n")
+		os.Exit(1)
+	}
+
+	packageKey := os.Args[3]
+	registryName, packageName := manifest.ParseDependencyKey(packageKey)
+	if registryName == "" || packageName == "" {
+		fmt.Fprintf(os.Stderr, "Invalid package format '%s' (expected: registry/package)\n", packageKey)
+		os.Exit(1)
+	}
+
+	manifestPath := os.Getenv("ARM_MANIFEST_PATH")
+	if manifestPath == "" {
+		manifestPath = "arm.json"
+	}
+
+	manifestMgr := manifest.NewFileManagerWithPath(manifestPath)
+	lockfileMgr := packagelockfile.NewFileManagerWithPath(deriveLockPath(manifestPath))
+	registryFactory := &registry.DefaultFactory{}
+	svc := service.NewArmService(manifestMgr, lockfileMgr, registryFactory)
+
+	ctx := context.Background()
+
+	// Get registry config
+	registryConfig, err := svc.GetRegistryConfig(ctx, registryName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: registry '%s' not found\n", registryName)
+		os.Exit(1)
+	}
+
+	// Create registry instance
+	reg, err := registryFactory.CreateRegistry(registryName, registryConfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating registry: %v\n", err)
+		os.Exit(1)
+	}
+
+	// List versions
+	versions, err := reg.ListPackageVersions(ctx, packageName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error listing versions: %v\n", err)
+		os.Exit(1)
+	}
+
+	if len(versions) == 0 {
+		fmt.Printf("%s:\n  (no versions found)\n", packageKey)
+		return
+	}
+
+	fmt.Printf("%s:\n", packageKey)
+	for _, version := range versions {
+		if version.IsSemver {
+			fmt.Printf("  - %s\n", version.Version)
+		} else {
+			fmt.Printf("  - %s (branch)\n", version.Version)
+		}
 	}
 }
 

@@ -11,6 +11,7 @@ const (
 	Cursor   Tool = "cursor"
 	Markdown Tool = "markdown"
 	AmazonQ  Tool = "amazonq"
+	Kiro     Tool = "kiro"
 	Copilot  Tool = "copilot"
 )
 

@@ -480,3 +480,82 @@ func TestManifestPreservesConfiguration(t *testing.T) {
 		t.Error("q-rules not preserved")
 	}
 }
+
+// TestListDependency validates that arm list dependency command works correctly
+func TestListDependency(t *testing.T) {
+	workDir := t.TempDir()
+	arm := helpers.NewARMRunner(t, workDir)
+
+	// Setup: Create test Git repositories
+	repoDir1 := t.TempDir()
+	repo1 := helpers.NewGitRepo(t, repoDir1)
+	repo1.WriteFile("test-ruleset.yml", helpers.MinimalRuleset)
+	repo1.Commit("Initial commit")
+	repo1.Tag("v1.0.0")
+
+	repoDir2 := t.TempDir()
+	repo2 := helpers.NewGitRepo(t, repoDir2)
+	repo2.WriteFile("security-ruleset.yml", helpers.SecurityRuleset)
+	repo2.Commit("Initial commit")
+	repo2.Tag("v2.0.0")
+
+	repoURL1 := "file://" + repoDir1
+	repoURL2 := "file://" + repoDir2
+
+	arm.MustRun("add", "registry", "git", "--url", repoURL1, "test-registry")
+	arm.MustRun("add", "registry", "git", "--url", repoURL2, "security-registry")
+	arm.MustRun("add", "sink", "--tool", "cursor", "cursor-rules", ".cursor/rules")
+
+	t.Run("EmptyWhenNoInstalls", func(t *testing.T) {
+		output := arm.MustRun("list", "dependency")
+		if strings.TrimSpace(output) != "" {
+			t.Errorf("expected empty output, got: %s", output)
+		}
+	})
+
+	t.Run("ShowsSingleDependency", func(t *testing.T) {
+		arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "cursor-rules")
+		output := arm.MustRun("list", "dependency")
+
+		if !strings.Contains(output, "- test-registry/test-ruleset@") {
+			t.Errorf("expected dependency in output, got: %s", output)
+		}
+		if !strings.Contains(output, "1.0.0") {
+			t.Errorf("expected version 1.0.0 in output, got: %s", output)
+		}
+	})
+
+	t.Run("ShowsMultipleDependenciesSorted", func(t *testing.T) {
+		arm.MustRun("install", "ruleset", "security-registry/security-ruleset@2.0.0", "cursor-rules")
+		output := arm.MustRun("list", "dependency")
+
+		lines := strings.Split(strings.TrimSpace(output), "\n")
+		if len(lines) != 2 {
+			t.Errorf("expected 2 dependencies, got %d", len(lines))
+		}
+
+		// Verify alphabetical sorting (security-registry comes before test-registry)
+		if !strings.Contains(lines[0], "security-registry/security-ruleset@") {
+			t.Errorf("expected security-registry first (alphabetical), got: %s", lines[0])
+		}
+		if !strings.Contains(lines[1], "test-registry/test-ruleset@") {
+			t.Errorf("expected test-registry second (alphabetical), got: %s", lines[1])
+		}
+
+		// Verify dash-prefixed format
+		for _, line := range lines {
+			if !strings.HasPrefix(line, "- ") {
+				t.Errorf("expected dash-prefixed line, got: %s", line)
+			}
+		}
+	})
+
+	t.Run("UpdatesAfterUninstall", func(t *testing.T) {
+		arm.MustRun("uninstall")
+		output := arm.MustRun("list", "dependency")
+
+		if strings.TrimSpace(output) != "" {
+			t.Errorf("expected empty output after uninstall, got: %s", output)
+		}
+	})
+}

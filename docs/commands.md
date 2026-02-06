@@ -32,6 +32,7 @@
     - [arm upgrade](#arm-upgrade)
     - [arm list dependency](#arm-list-dependency)
     - [arm info dependency](#arm-info-dependency)
+    - [arm list versions](#arm-list-versions)
     - [arm outdated](#arm-outdated)
     - [arm set ruleset](#arm-set-ruleset)
     - [arm set promptset](#arm-set-promptset)
@@ -310,7 +311,7 @@ my-org:
 
 ### arm add sink
 
-`arm add sink --tool <cursor|copilot|amazonq|markdown> [--force] NAME PATH`
+`arm add sink --tool <cursor|copilot|amazonq|kiro|markdown> [--force] NAME PATH`
 
 Add a new sink to the ARM configuration. A sink defines where resources should be output for a specific use case. The `--force` flag allows overwriting an existing sink with the same name.
 
@@ -330,6 +331,12 @@ $ arm add sink --tool amazonq q-prompts .amazonq/prompts
 
 # Add GitHub Copilot sink
 $ arm add sink --tool copilot copilot-rules .github/copilot
+
+# Add Kiro CLI steering sink
+$ arm add sink --tool kiro kiro-steering .kiro/steering
+
+# Add Kiro CLI prompts sink
+$ arm add sink --tool kiro kiro-prompts .kiro/prompts
 
 # Overwrite an existing sink
 $ arm add sink --tool cursor --force cursor-rules .cursor/new-rules
@@ -625,6 +632,48 @@ sample-registry/code-review-promptset:
         - "review/**/*.yml"
 ```
 
+### arm list versions
+
+`arm list versions REGISTRY/PACKAGE`
+
+List all available versions for a package from its registry. This command queries the registry to show all versions that can be installed, including both semantic versions and branch references. Semantic versions are sorted in descending order (newest first), and branches are listed after semantic versions in the order they appear in the registry configuration.
+
+This is useful for:
+- Discovering what versions are available before installing
+- Checking if a specific version exists
+- Understanding the version history of a package
+- Verifying branch availability for development workflows
+
+**Examples:**
+
+```bash
+# List all versions for a package
+$ arm list versions sample-registry/clean-code-ruleset
+sample-registry/clean-code-ruleset:
+  - 2.1.0
+  - 2.0.0
+  - 1.5.0
+  - 1.0.0
+  - main (branch)
+  - develop (branch)
+
+# List versions from a different registry
+$ arm list versions my-org/security-rules
+my-org/security-rules:
+  - 3.0.0
+  - 2.5.1
+  - 2.5.0
+  - 2.0.0
+  - main (branch)
+```
+
+**Output format:**
+- Package name on first line with colon
+- Each version indented with 2 spaces and dash prefix
+- Semantic versions listed first in descending order (newest to oldest)
+- Branch versions labeled with "(branch)" suffix
+- Branches listed in the order defined in registry configuration
+
 ### arm outdated
 
 `arm outdated [--output <table|json|list>]`
@@ -763,9 +812,9 @@ $ arm clean sinks --nuke
 
 ### arm compile
 
-`arm compile [--tool <markdown|cursor|amazonq|copilot>] [--namespace NAMESPACE] [--force] [--recursive] [--validate-only] [--include GLOB...] [--exclude GLOB...] [--fail-fast] INPUT_PATH... [OUTPUT_PATH]`
+`arm compile [--tool <markdown|cursor|amazonq|copilot|kiro>] [--namespace NAMESPACE] [--force] [--recursive] [--validate-only] [--include GLOB...] [--exclude GLOB...] [--fail-fast] INPUT_PATH... [OUTPUT_PATH]`
 
-Compile rulesets and promptsets from source files. This command compiles source ruleset and promptset files to platform-specific formats. It supports different tool platforms (markdown, cursor, amazonq, copilot), recursive directory processing, validation-only mode, and various filtering and output options. This is useful for development and testing of rulesets and promptsets before publishing to registries.
+Compile rulesets and promptsets from source files. This command compiles source ruleset and promptset files to platform-specific formats. It supports different tool platforms (markdown, cursor, amazonq, copilot, kiro), recursive directory processing, validation-only mode, and various filtering and output options. This is useful for development and testing of rulesets and promptsets before publishing to registries.
 
 **INPUT_PATH** accepts both files and directories:
 - **Files**: Directly processes the specified file(s)
@@ -773,7 +822,7 @@ Compile rulesets and promptsets from source files. This command compiles source 
 - **Mixed**: Can combine files and directories in the same command
 
 **Flags:**
-- `--tool`: Target platform (markdown, cursor, amazonq, copilot)
+- `--tool`: Target platform (markdown, cursor, amazonq, copilot, kiro)
 - `--namespace`: Namespace for compiled files (defaults to resource metadata ID)
 - `--force`: Force overwrite existing files
 - `--recursive`: Process directories recursively
@@ -806,6 +855,9 @@ $ arm compile --tool cursor ./rulesets/ ./output/
 
 # Mix files and directories
 $ arm compile --tool cursor specific.yml ./more-rulesets/ ./output/
+
+# Compile for Kiro CLI
+$ arm compile --tool kiro ruleset.yml ./.kiro/steering/
 
 # Validate only (no output files)
 $ arm compile --validate-only ruleset.yml

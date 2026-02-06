@@ -749,25 +749,35 @@ func (s *ArmService) UpdateAll(ctx context.Context) error {
 		return err
 	}
 
+	successCount := 0
+	var lastErr error
+
 	for key, rulesetConfig := range rulesets {
 		registryName, packageName := manifest.ParseDependencyKey(key)
 
 		oldVersion := s.getOldVersionFromLock(lockFile, key)
 		newVersion, pkg, err := s.resolveAndFetchUpdate(ctx, registryName, packageName, rulesetConfig.Version, rulesetConfig.Include, rulesetConfig.Exclude)
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Warning: failed to update '%s': %v\n", key, err)
+			lastErr = err
+			continue
 		}
 
 		if oldVersion == newVersion {
+			successCount++
 			continue
 		}
 
 		if oldVersion != "" {
 			if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to uninstall '%s': %v\n", key, err)
+				lastErr = err
+				continue
 			}
 			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to remove lock for '%s': %v\n", key, err)
+				lastErr = err
+				continue
 			}
 		}
 
@@ -775,15 +785,21 @@ func (s *ArmService) UpdateAll(ctx context.Context) error {
 			sinkConfig := allSinks[sinkName]
 			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
 			if err := sinkMgr.InstallRuleset(pkg, rulesetConfig.Priority); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to install '%s' to sink '%s': %v\n", key, sinkName, err)
+				lastErr = err
+				continue
 			}
 		}
 
 		if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, newVersion, &packagelockfile.DependencyLockConfig{
 			Integrity: pkg.Integrity,
 		}); err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Warning: failed to update lock for '%s': %v\n", key, err)
+			lastErr = err
+			continue
 		}
+
+		successCount++
 	}
 
 	for key, promptsetConfig := range promptsets {
@@ -792,19 +808,26 @@ func (s *ArmService) UpdateAll(ctx context.Context) error {
 		oldVersion := s.getOldVersionFromLock(lockFile, key)
 		newVersion, pkg, err := s.resolveAndFetchUpdate(ctx, registryName, packageName, promptsetConfig.Version, promptsetConfig.Include, promptsetConfig.Exclude)
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Warning: failed to update '%s': %v\n", key, err)
+			lastErr = err
+			continue
 		}
 
 		if oldVersion == newVersion {
+			successCount++
 			continue
 		}
 
 		if oldVersion != "" {
 			if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to uninstall '%s': %v\n", key, err)
+				lastErr = err
+				continue
 			}
 			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to remove lock for '%s': %v\n", key, err)
+				lastErr = err
+				continue
 			}
 		}
 
@@ -812,15 +835,25 @@ func (s *ArmService) UpdateAll(ctx context.Context) error {
 			sinkConfig := allSinks[sinkName]
 			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
 			if err := sinkMgr.InstallPromptset(pkg); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to install '%s' to sink '%s': %v\n", key, sinkName, err)
+				lastErr = err
+				continue
 			}
 		}
 
 		if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, newVersion, &packagelockfile.DependencyLockConfig{
 			Integrity: pkg.Integrity,
 		}); err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Warning: failed to update lock for '%s': %v\n", key, err)
+			lastErr = err
+			continue
 		}
+
+		successCount++
+	}
+
+	if successCount == 0 && lastErr != nil {
+		return lastErr
 	}
 
 	return nil
@@ -905,25 +938,35 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 		return err
 	}
 
+	successCount := 0
+	var lastErr error
+
 	for key, rulesetConfig := range rulesets {
 		registryName, packageName := manifest.ParseDependencyKey(key)
 
 		oldVersion := s.getOldVersionFromLock(lockFile, key)
 		latestVersion, pkg, err := s.fetchLatest(ctx, registryName, packageName, rulesetConfig.Include, rulesetConfig.Exclude)
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Warning: failed to upgrade '%s': %v\n", key, err)
+			lastErr = err
+			continue
 		}
 
 		if oldVersion == latestVersion {
+			successCount++
 			continue
 		}
 
 		if oldVersion != "" {
 			if err := s.uninstallFromSinks(rulesetConfig.Sinks, allSinks, registryName, packageName); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to uninstall '%s': %v\n", key, err)
+				lastErr = err
+				continue
 			}
 			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to remove lock for '%s': %v\n", key, err)
+				lastErr = err
+				continue
 			}
 		}
 
@@ -931,21 +974,29 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 			sinkConfig := allSinks[sinkName]
 			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
 			if err := sinkMgr.InstallRuleset(pkg, rulesetConfig.Priority); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to install '%s' to sink '%s': %v\n", key, sinkName, err)
+				lastErr = err
+				continue
 			}
 		}
 
 		if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, latestVersion, &packagelockfile.DependencyLockConfig{
 			Integrity: pkg.Integrity,
 		}); err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Warning: failed to update lock for '%s': %v\n", key, err)
+			lastErr = err
+			continue
 		}
 
 		newConstraint := fmt.Sprintf("^%d.0.0", pkg.Metadata.Version.Major)
 		rulesetConfig.Version = newConstraint
 		if err := s.manifestMgr.UpsertRulesetDependencyConfig(ctx, registryName, packageName, rulesetConfig); err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Warning: failed to update manifest for '%s': %v\n", key, err)
+			lastErr = err
+			continue
 		}
+
+		successCount++
 	}
 
 	for key, promptsetConfig := range promptsets {
@@ -954,19 +1005,26 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 		oldVersion := s.getOldVersionFromLock(lockFile, key)
 		latestVersion, pkg, err := s.fetchLatest(ctx, registryName, packageName, promptsetConfig.Include, promptsetConfig.Exclude)
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Warning: failed to upgrade '%s': %v\n", key, err)
+			lastErr = err
+			continue
 		}
 
 		if oldVersion == latestVersion {
+			successCount++
 			continue
 		}
 
 		if oldVersion != "" {
 			if err := s.uninstallFromSinks(promptsetConfig.Sinks, allSinks, registryName, packageName); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to uninstall '%s': %v\n", key, err)
+				lastErr = err
+				continue
 			}
 			if err := s.lockfileMgr.RemoveDependencyLock(ctx, registryName, packageName); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to remove lock for '%s': %v\n", key, err)
+				lastErr = err
+				continue
 			}
 		}
 
@@ -974,21 +1032,33 @@ func (s *ArmService) UpgradeAll(ctx context.Context) error {
 			sinkConfig := allSinks[sinkName]
 			sinkMgr := sink.NewManager(sinkConfig.Directory, sinkConfig.Tool)
 			if err := sinkMgr.InstallPromptset(pkg); err != nil {
-				return err
+				fmt.Fprintf(os.Stderr, "Warning: failed to install '%s' to sink '%s': %v\n", key, sinkName, err)
+				lastErr = err
+				continue
 			}
 		}
 
 		if err := s.lockfileMgr.UpsertDependencyLock(ctx, registryName, packageName, latestVersion, &packagelockfile.DependencyLockConfig{
 			Integrity: pkg.Integrity,
 		}); err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Warning: failed to update lock for '%s': %v\n", key, err)
+			lastErr = err
+			continue
 		}
 
 		newConstraint := fmt.Sprintf("^%d.0.0", pkg.Metadata.Version.Major)
 		promptsetConfig.Version = newConstraint
 		if err := s.manifestMgr.UpsertPromptsetDependencyConfig(ctx, registryName, packageName, promptsetConfig); err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Warning: failed to update manifest for '%s': %v\n", key, err)
+			lastErr = err
+			continue
 		}
+
+		successCount++
+	}
+
+	if successCount == 0 && lastErr != nil {
+		return lastErr
 	}
 
 	return nil
@@ -1763,7 +1833,7 @@ func (s *ArmService) discoverInDirectory(dir string, recursive bool, include, ex
 func (s *ArmService) matchesPatterns(filePath string, include, exclude []string) bool {
 	// Check exclude patterns first
 	for _, pattern := range exclude {
-		if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
+		if core.MatchPattern(pattern, filePath) {
 			return false
 		}
 	}
@@ -1775,7 +1845,7 @@ func (s *ArmService) matchesPatterns(filePath string, include, exclude []string)
 
 	// Check include patterns
 	for _, pattern := range include {
-		if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
+		if core.MatchPattern(pattern, filePath) {
 			return true
 		}
 	}
@@ -1791,10 +1861,12 @@ func (s *ArmService) parseTool(toolStr string) (compiler.Tool, error) {
 		return compiler.Copilot, nil
 	case "amazonq":
 		return compiler.AmazonQ, nil
+	case "kiro":
+		return compiler.Kiro, nil
 	case "markdown":
 		return compiler.Markdown, nil
 	default:
-		return "", fmt.Errorf("invalid tool: %s (must be cursor, copilot, amazonq, or markdown)", toolStr)
+		return "", fmt.Errorf("invalid tool: %s (must be cursor, copilot, amazonq, kiro, or markdown)", toolStr)
 	}
 }
 

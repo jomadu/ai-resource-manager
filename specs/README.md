@@ -9,7 +9,7 @@
 4. **Resolve Rule Conflicts** - Apply priority-based resolution when multiple rulesets define overlapping rules with arm_index.* files
 5. **Cache and Optimize Performance** - Store packages locally to avoid redundant downloads, enable offline usage, and provide cleanup mechanisms (by age, access time, or nuke)
 6. **Authenticate with Registries** - Securely access private registries using token-based authentication via .armrc files with section matching
-7. **Filter Package Contents** - Selectively install files from packages using glob patterns with archive extraction (zip, tar.gz)
+7. **Filter Package Contents** - Selectively install files from packages using glob patterns with archive extraction (zip, tar.gz) to subdirectories (v5.0+)
 8. **Verify Package Integrity** - Ensure downloaded packages match expected content using SHA256 hashing stored in lock file
 9. **Test in Isolation** - Support environment variables (ARM_HOME, ARM_CONFIG_PATH, ARM_MANIFEST_PATH) for test isolation and custom configurations
 10. **Query Package Information** - List installed packages, check for outdated dependencies, view package details, and list available versions from registries
@@ -56,8 +56,8 @@
 
 ### Filtering & Patterns
 - **Glob Patterns** - Include/exclude files using ** (recursive) and * (single component) wildcards
-- **Archive Extraction** - Automatically extract .zip and .tar.gz files with security checks (path traversal prevention)
-- **Pattern Precedence** - Exclude overrides include; archives take precedence over loose files
+- **Archive Extraction** - Automatically extract .zip and .tar.gz files to subdirectories with security checks (path traversal prevention) - v5.0+
+- **Pattern Precedence** - Exclude overrides include; archives and loose files coexist (no merge)
 - **Default Patterns** - Use **/*.yml and **/*.yaml if no patterns specified
 
 ### Testing & Isolation

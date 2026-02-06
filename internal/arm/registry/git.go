@@ -165,7 +165,7 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 
 	// Extract archives and merge with loose files
 	extractor := core.NewExtractor()
-	files, err = extractor.ExtractAndMerge(files)
+	files, err = extractor.Extract(files)
 	if err != nil {
 		return nil, err
 	}
@@ -197,9 +197,9 @@ func (g *GitRegistry) GetPackage(ctx context.Context, packageName string, versio
 // matchesPatterns checks if file path matches include/exclude patterns.
 // Uses core.MatchPattern for glob pattern support with ** for recursive matching.
 func (g *GitRegistry) matchesPatterns(filePath string, include, exclude []string) bool {
-	// If no patterns, include all files
+	// Default to YAML files if no patterns specified
 	if len(include) == 0 && len(exclude) == 0 {
-		return true
+		include = []string{"**/*.yml", "**/*.yaml"}
 	}
 
 	// Check exclude patterns first

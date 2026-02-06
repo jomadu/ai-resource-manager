@@ -120,6 +120,31 @@ func TestCompilationToolFormats(t *testing.T) {
 			t.Error("expected .md file in markdown sink")
 		}
 	})
+
+	t.Run("KiroFormat", func(t *testing.T) {
+		arm.MustRun("add", "sink", "--tool", "kiro", "kiro-steering", ".kiro/steering")
+		arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "kiro-steering")
+
+		// Verify .md file in hierarchical structure
+		sinkDir := filepath.Join(workDir, ".kiro", "steering", "arm", "test-registry", "test-ruleset")
+		helpers.AssertDirExists(t, sinkDir)
+
+		// Find .md files recursively
+		foundMD := false
+		_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+			if err == nil && !info.IsDir() && strings.HasSuffix(info.Name(), ".md") && !strings.Contains(info.Name(), "arm_index") {
+				foundMD = true
+			}
+			return nil
+		})
+		if !foundMD {
+			t.Error("expected .md file in kiro sink")
+		}
+
+		// Verify priority index exists
+		indexFile := filepath.Join(workDir, ".kiro", "steering", "arm", "arm_index.md")
+		helpers.AssertFileExists(t, indexFile)
+	})
 }
 
 func TestCompilationPromptsets(t *testing.T) {
@@ -176,6 +201,27 @@ func TestCompilationPromptsets(t *testing.T) {
 		})
 		if !foundMD {
 			t.Error("expected .md file in amazonq prompts sink")
+		}
+	})
+
+	t.Run("KiroPrompts", func(t *testing.T) {
+		arm.MustRun("add", "sink", "--tool", "kiro", "kiro-prompts", ".kiro/prompts")
+		arm.MustRun("install", "promptset", "test-registry/test-promptset@1.0.0", "kiro-prompts")
+
+		// Verify .md file in hierarchical structure
+		sinkDir := filepath.Join(workDir, ".kiro", "prompts", "arm", "test-registry", "test-promptset")
+		helpers.AssertDirExists(t, sinkDir)
+
+		// Find .md files recursively
+		foundMD := false
+		_ = filepath.Walk(sinkDir, func(path string, info os.FileInfo, err error) error {
+			if err == nil && !info.IsDir() && strings.HasSuffix(info.Name(), ".md") {
+				foundMD = true
+			}
+			return nil
+		})
+		if !foundMD {
+			t.Error("expected .md file in kiro prompts sink")
 		}
 	})
 }

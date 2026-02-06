@@ -30,31 +30,23 @@ func TestArchiveTarGz(t *testing.T) {
 	// Create Git repository with .tar.gz archive
 	repo := helpers.NewGitRepo(t, repoDir)
 
-	// Create .tar.gz archive with rules
+	// Create .tar.gz archive with a single ruleset containing multiple rules
 	tarGzContent := createTarGzArchive(t, map[string]string{
-		"rule1.yml": `apiVersion: v1
+		"ruleset.yml": `apiVersion: v1
 kind: Ruleset
 metadata:
-  id: "rule1"
-  name: "Rule 1"
-  description: "Test rule 1 from archive"
+  id: "test-ruleset"
+  name: "Test Ruleset"
+  description: "Test ruleset from archive"
 spec:
   rules:
     rule1:
-      body: "This is rule 1 from tar.gz archive"`,
-		"rule2.yml": `apiVersion: v1
-kind: Ruleset
-metadata:
-  id: "rule2"
-  name: "Rule 2"
-  description: "Test rule 2 from archive"
-spec:
-  rules:
+      body: "This is rule 1 from tar.gz archive"
     rule2:
       body: "This is rule 2 from tar.gz archive"`,
 	})
 
-	repo.WriteFile("test-ruleset/rules.tar.gz", string(tarGzContent))
+	repo.WriteFile("test-ruleset/package.tar.gz", string(tarGzContent))
 	repo.Commit("Add tar.gz archive")
 	repo.Tag("v1.0.0")
 
@@ -65,11 +57,11 @@ spec:
 	arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "test-sink")
 
 	// Verify extracted files exist (filename format is {rulesetID}_{ruleID}.mdc)
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rule1_rule1.mdc"))
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rule2_rule2.mdc"))
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "package", "test-ruleset_rule1.mdc"))
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "package", "test-ruleset_rule2.mdc"))
 
 	// Verify archive file itself is not present
-	archivePath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rules.tar.gz")
+	archivePath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "package.tar.gz")
 	if _, err := os.Stat(archivePath); err == nil {
 		t.Errorf("archive file should not be present in sink: %s", archivePath)
 	}
@@ -92,31 +84,23 @@ func TestArchiveZip(t *testing.T) {
 	// Create Git repository with .zip archive
 	repo := helpers.NewGitRepo(t, repoDir)
 
-	// Create .zip archive with rules
+	// Create .zip archive with a single ruleset containing multiple rules
 	zipContent := createZipArchive(t, map[string]string{
-		"rule1.yml": `apiVersion: v1
+		"ruleset.yml": `apiVersion: v1
 kind: Ruleset
 metadata:
-  id: "rule1"
-  name: "Rule 1"
-  description: "Test rule 1 from zip"
+  id: "test-ruleset"
+  name: "Test Ruleset"
+  description: "Test ruleset from zip"
 spec:
   rules:
     rule1:
-      body: "This is rule 1 from zip archive"`,
-		"rule2.yml": `apiVersion: v1
-kind: Ruleset
-metadata:
-  id: "rule2"
-  name: "Rule 2"
-  description: "Test rule 2 from zip"
-spec:
-  rules:
+      body: "This is rule 1 from zip archive"
     rule2:
       body: "This is rule 2 from zip archive"`,
 	})
 
-	repo.WriteFile("test-ruleset/rules.zip", string(zipContent))
+	repo.WriteFile("test-ruleset/package.zip", string(zipContent))
 	repo.Commit("Add zip archive")
 	repo.Tag("v1.0.0")
 
@@ -127,11 +111,11 @@ spec:
 	arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "test-sink")
 
 	// Verify extracted files exist (filename format is {rulesetID}_{ruleID}.md for amazonq)
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".amazonq", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rule1_rule1.md"))
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".amazonq", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rule2_rule2.md"))
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".amazonq", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "package", "test-ruleset_rule1.md"))
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".amazonq", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "package", "test-ruleset_rule2.md"))
 
 	// Verify archive file itself is not present
-	archivePath := filepath.Join(projectDir, ".amazonq", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rules.zip")
+	archivePath := filepath.Join(projectDir, ".amazonq", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "package.zip")
 	if _, err := os.Stat(archivePath); err == nil {
 		t.Errorf("archive file should not be present in sink: %s", archivePath)
 	}
@@ -241,11 +225,11 @@ func TestArchivePrecedenceOverLooseFiles(t *testing.T) {
 
 	// Create archive with rule1.yml
 	tarGzContent := createTarGzArchive(t, map[string]string{
-		"rule1.yml": `apiVersion: v1
+		"ruleset.yml": `apiVersion: v1
 kind: Ruleset
 metadata:
-  id: "rule1"
-  name: "Rule 1"
+  id: "test-ruleset"
+  name: "Test Ruleset"
   description: "From archive"
 spec:
   rules:
@@ -254,17 +238,18 @@ spec:
 	})
 
 	// Create loose file with same name (will be overridden by archive)
-	repo.WriteFile("test-ruleset/rule1.yml", `apiVersion: v1
+	repo.WriteFile("test-ruleset/package.tar.gz", string(tarGzContent))
+	repo.WriteFile("test-ruleset/ruleset.yml", `apiVersion: v1
 kind: Ruleset
 metadata:
-  id: "rule1"
-  name: "Rule 1"
+  id: "test-ruleset"
+  name: "Test Ruleset"
   description: "Loose file"
 spec:
   rules:
     rule1:
       body: "This is the loose file"`)
-	repo.WriteFile("test-ruleset/rules.tar.gz", string(tarGzContent))
+	repo.WriteFile("test-ruleset/package.tar.gz", string(tarGzContent))
 	repo.Commit("Add conflicting files")
 	repo.Tag("v1.0.0")
 
@@ -275,7 +260,7 @@ spec:
 	arm.MustRun("install", "ruleset", "test-registry/test-ruleset@1.0.0", "test-sink")
 
 	// Verify archive version wins (filename format is {rulesetID}_{ruleID}.md for markdown)
-	rulePath := filepath.Join(projectDir, ".arm", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "rule1_rule1.md")
+	rulePath := filepath.Join(projectDir, ".arm", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "package", "test-ruleset_rule1.md")
 	helpers.AssertFileExists(t, rulePath)
 
 	content, err := os.ReadFile(rulePath)
@@ -332,49 +317,49 @@ func TestArchiveWithIncludeExcludePatterns(t *testing.T) {
 	repo := helpers.NewGitRepo(t, repoDir)
 
 	tarGzContent := createTarGzArchive(t, map[string]string{
-		"security/rule1.yml": `apiVersion: v1
+		"security/ruleset1.yml": `apiVersion: v1
 kind: Ruleset
 metadata:
-  id: "securityRule1"
-  name: "Security Rule 1"
-  description: "Security rule 1"
+  id: "security-ruleset1"
+  name: "Security Ruleset 1"
+  description: "Security ruleset 1"
 spec:
   rules:
     securityRule1:
       body: "Security content 1"`,
-		"security/rule2.yml": `apiVersion: v1
+		"security/ruleset2.yml": `apiVersion: v1
 kind: Ruleset
 metadata:
-  id: "securityRule2"
-  name: "Security Rule 2"
-  description: "Security rule 2"
+  id: "security-ruleset2"
+  name: "Security Ruleset 2"
+  description: "Security ruleset 2"
 spec:
   rules:
     securityRule2:
       body: "Security content 2"`,
-		"general/rule3.yml": `apiVersion: v1
+		"general/ruleset3.yml": `apiVersion: v1
 kind: Ruleset
 metadata:
-  id: "generalRule3"
-  name: "General Rule 3"
-  description: "General rule 3"
+  id: "general-ruleset3"
+  name: "General Ruleset 3"
+  description: "General ruleset 3"
 spec:
   rules:
     generalRule3:
       body: "General content 3"`,
-		"experimental/rule4.yml": `apiVersion: v1
+		"experimental/ruleset4.yml": `apiVersion: v1
 kind: Ruleset
 metadata:
-  id: "experimentalRule4"
-  name: "Experimental Rule 4"
-  description: "Experimental rule 4"
+  id: "experimental-ruleset4"
+  name: "Experimental Ruleset 4"
+  description: "Experimental ruleset 4"
 spec:
   rules:
     experimentalRule4:
       body: "Experimental content 4"`,
 	})
 
-	repo.WriteFile("test-ruleset/rules.tar.gz", string(tarGzContent))
+	repo.WriteFile("test-ruleset/package.tar.gz", string(tarGzContent))
 	repo.Commit("Add archive with multiple files")
 	repo.Tag("v1.0.0")
 
@@ -384,8 +369,9 @@ spec:
 	arm.MustRun("add", "sink", "--tool", "cursor", "test-sink", ".cursor/rules")
 
 	// Install with include pattern for security files, exclude experimental
+	// Note: Files are extracted from package.tar.gz to package/ subdirectory
 	stdout, stderr, err := arm.Run("install", "ruleset",
-		"--include", "security/**/*.yml",
+		"--include", "package/security/**/*.yml",
 		"--exclude", "**/experimental/**",
 		"test-registry/test-ruleset@1.0.0", "test-sink")
 	if err != nil {
@@ -394,16 +380,16 @@ spec:
 
 	// Verify only security files are present (filename format is {rulesetID}_{ruleID}.mdc)
 	// Files preserve directory structure from archive
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "security", "securityRule1_securityRule1.mdc"))
-	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "security", "securityRule2_securityRule2.mdc"))
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "package", "security", "security-ruleset1_securityRule1.mdc"))
+	helpers.AssertFileExists(t, filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "package", "security", "security-ruleset2_securityRule2.mdc"))
 
 	// Verify general and experimental files are not present
-	generalPath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "general", "generalRule3_generalRule3.mdc")
+	generalPath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "package", "general", "general-ruleset3_generalRule3.mdc")
 	if _, err := os.Stat(generalPath); err == nil {
 		t.Errorf("general file should not be present: %s", generalPath)
 	}
 
-	expPath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "experimental", "experimentalRule4_experimentalRule4.mdc")
+	expPath := filepath.Join(projectDir, ".cursor", "rules", "arm", "test-registry", "test-ruleset", "v1.0.0", "package", "experimental", "experimental-ruleset4_experimentalRule4.mdc")
 	if _, err := os.Stat(expPath); err == nil {
 		t.Errorf("experimental file should not be present: %s", expPath)
 	}

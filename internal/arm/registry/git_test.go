@@ -918,14 +918,14 @@ func TestGitRegistry_NoPatterns(t *testing.T) {
 		t.Fatalf("failed to list versions: %v", err)
 	}
 
-	// Test no patterns - should return all files
+	// Test no patterns - should return only YAML files by default
 	pkg, err := registry.GetPackage(ctx, "test-package", &versions[0], nil, nil)
 	if err != nil {
 		t.Fatalf("failed to get package: %v", err)
 	}
 
-	if len(pkg.Files) != 3 {
-		t.Errorf("expected 3 files, got %d", len(pkg.Files))
+	if len(pkg.Files) != 1 {
+		t.Errorf("expected 1 YAML file, got %d", len(pkg.Files))
 	}
 }
 
@@ -972,21 +972,14 @@ func TestGitRegistry_MultipleFileTypes(t *testing.T) {
 		t.Fatalf("failed to get package: %v", err)
 	}
 
-	if len(pkg.Files) != 4 {
-		t.Errorf("expected 4 files, got %d", len(pkg.Files))
+	// With no patterns, should only return YAML files by default
+	if len(pkg.Files) != 1 {
+		t.Errorf("expected 1 YAML file, got %d", len(pkg.Files))
 	}
 
-	// Verify all file types present
-	fileTypes := make(map[string]bool)
-	for _, file := range pkg.Files {
-		fileTypes[file.Path] = true
-	}
-
-	expected := []string{"rule.yml", "readme.md", "config.json", "script.js"}
-	for _, exp := range expected {
-		if !fileTypes[exp] {
-			t.Errorf("expected file %s not found", exp)
-		}
+	// Verify only YAML file present
+	if pkg.Files[0].Path != "rule.yml" {
+		t.Errorf("expected file rule.yml, got %s", pkg.Files[0].Path)
 	}
 }
 
@@ -1031,17 +1024,18 @@ func TestGitRegistry_NestedDirectories(t *testing.T) {
 		t.Fatalf("failed to get package: %v", err)
 	}
 
-	if len(pkg.Files) != 3 {
-		t.Errorf("expected 3 files, got %d", len(pkg.Files))
+	// With no patterns, should only return YAML files by default
+	if len(pkg.Files) != 2 {
+		t.Errorf("expected 2 YAML files, got %d", len(pkg.Files))
 	}
 
-	// Verify nested paths preserved
+	// Verify nested paths preserved for YAML files only
 	paths := make(map[string]bool)
 	for _, file := range pkg.Files {
 		paths[file.Path] = true
 	}
 
-	expected := []string{"build/cursor/rule.mdc", "rules/security/auth.yml", "root.yml"}
+	expected := []string{"rules/security/auth.yml", "root.yml"}
 	for _, exp := range expected {
 		if !paths[exp] {
 			t.Errorf("expected path %s not found", exp)
@@ -1103,8 +1097,12 @@ func TestGitRegistry_ArchiveSupport(t *testing.T) {
 
 	// Should have: 1 loose file + 2 from zip + 2 from tar.gz = 5 files
 	// (archive files themselves are not included after extraction)
+	// Archives extract to subdirectories named after the archive
 	if len(pkg.Files) != 5 {
 		t.Errorf("expected 5 files (1 loose + 2 from zip + 2 from tar.gz), got %d", len(pkg.Files))
+		for _, f := range pkg.Files {
+			t.Logf("  - %s", f.Path)
+		}
 	}
 
 	// Verify all expected files are present
@@ -1115,10 +1113,10 @@ func TestGitRegistry_ArchiveSupport(t *testing.T) {
 
 	expected := []string{
 		"test-package/loose-file.yml",
-		"from-zip/rule1.yml",
-		"from-zip/rule2.yml",
-		"from-tar/rule3.yml",
-		"from-tar/rule4.yml",
+		"archive/from-zip/rule1.yml", // archive.zip extracts to archive/ subdirectory
+		"archive/from-zip/rule2.yml",
+		"archive/from-tar/rule3.yml", // archive.tar.gz extracts to archive/ subdirectory
+		"archive/from-tar/rule4.yml",
 	}
 
 	for _, exp := range expected {

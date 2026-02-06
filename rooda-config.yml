@@ -1,0 +1,137 @@
+# OODA Loop Procedure Configuration
+#
+# Structure:
+#   procedures:
+#     procedure-name:
+#       observe: path/to/observe.md    (required)
+#       orient: path/to/orient.md      (required)
+#       decide: path/to/decide.md      (required)
+#       act: path/to/act.md            (required)
+#       default_iterations: N          (optional, defaults to 0 if not specified)
+#       display: "Name"                (optional, for future help text generation)
+#       summary: "Brief description"   (optional, for future help text generation)
+#       description: "Details"         (optional, for future help text generation)
+#
+# IMPORTANT: Path Resolution Behavior
+#   All file paths (observe/orient/decide/act) are resolved RELATIVE TO THE
+#   SCRIPT DIRECTORY, not the current working directory.
+#
+#   This means:
+#   - If rooda.sh is in /path/to/ralph-wiggum-ooda/src/
+#   - And config specifies: observe: src/prompts/observe_bootstrap.md
+#   - The script resolves to: /path/to/ralph-wiggum-ooda/src/prompts/observe_bootstrap.md
+#   - Regardless of where you invoke rooda.sh from
+#
+#   Example: You can run from any directory:
+#     cd /tmp
+#     /path/to/ralph-wiggum-ooda/src/rooda.sh bootstrap
+#   And paths still resolve correctly relative to the script location.
+#
+# Optional Fields:
+#   display, summary, and description are reserved for future help text generation.
+#   They do not affect procedure execution. default_iterations defaults to 0
+#   (unlimited) if not specified.
+
+# AI Tool Presets (optional)
+#   Define custom AI CLI tool presets that can be used with --ai-tool flag.
+#   Hardcoded presets (kiro-cli, claude, aider) are always available.
+#
+#   Usage: ./rooda.sh build --ai-tool fast
+#
+#   Example presets:
+#
+# ai_tools:
+#   fast: "kiro-cli chat --no-interactive --trust-all-tools --model claude-3-5-haiku-20241022"
+#   thorough: "kiro-cli chat --no-interactive --trust-all-tools --model claude-3-7-sonnet-20250219"
+#   custom: "your-ai-cli-command-here"
+
+procedures:
+  bootstrap:
+    display: "Bootstrap Repository"
+    summary: "Creates or updates AGENTS.md operational guide for the repository"
+    description: "Identifies work tracking system (beads/GitHub/tasks/etc), determines build/test/lint commands, defines what constitutes specs vs implementation, establishes quality criteria, captures operational learnings and project conventions"
+    observe: prompts/observe_bootstrap.md
+    orient: prompts/orient_bootstrap.md
+    decide: prompts/decide_bootstrap.md
+    act: prompts/act_bootstrap.md
+    default_iterations: 1
+
+  build:
+    display: "Build from Plan"
+    summary: "Implements tasks from plan (only procedure that modifies code)"
+    description: "Reads from work tracking system, picks most important task, spawns parallel subagents (only 1 for build/tests), runs tests, updates work tracking, commits when tests pass"
+    observe: prompts/observe_plan_specs_impl.md
+    orient: prompts/orient_build.md
+    decide: prompts/decide_build.md
+    act: prompts/act_build.md
+    default_iterations: 5
+
+  draft-plan-story-to-spec:
+    display: "Draft Plan Story to Spec"
+    summary: "Converge plan for incorporating story into specs"
+    description: "Analyzes new feature requirements, determines how to expand specs to accommodate story, writes tasks to draft plan"
+    observe: prompts/observe_story_task_specs_impl.md
+    orient: prompts/orient_story_task_incorporation.md
+    decide: prompts/decide_story_task_plan.md
+    act: prompts/act_plan.md
+    default_iterations: 5
+
+  draft-plan-bug-to-spec:
+    display: "Draft Plan Bug to Spec"
+    summary: "Converge plan for spec adjustments to drive bug fix"
+    description: "Analyzes bug report, determines spec adjustments (acceptance criteria, edge cases), writes tasks to draft plan"
+    observe: prompts/observe_bug_task_specs_impl.md
+    orient: prompts/orient_bug_task_incorporation.md
+    decide: prompts/decide_bug_task_plan.md
+    act: prompts/act_plan.md
+    default_iterations: 3
+
+  draft-plan-spec-to-impl:
+    display: "Draft Plan Spec to Implementation"
+    summary: "Converge plan from gap analysis (specs → code)"
+    description: "Compares specifications to implementation, identifies missing features, writes prioritized tasks to draft plan"
+    observe: prompts/observe_plan_specs_impl.md
+    orient: prompts/orient_gap.md
+    decide: prompts/decide_gap_plan.md
+    act: prompts/act_plan.md
+    default_iterations: 1
+
+  draft-plan-impl-to-spec:
+    display: "Draft Plan Implementation to Spec"
+    summary: "Converge plan from gap analysis (code → specs)"
+    description: "Compares implementation to specifications, identifies undocumented features, writes prioritized tasks to draft plan"
+    observe: prompts/observe_plan_specs_impl.md
+    orient: prompts/orient_gap.md
+    decide: prompts/decide_gap_plan.md
+    act: prompts/act_plan.md
+    default_iterations: 1
+
+  draft-plan-spec-refactor:
+    display: "Draft Plan Spec Refactoring"
+    summary: "Converge plan from quality assessment of specs"
+    description: "Applies quality criteria to specifications, writes refactoring tasks to draft plan if threshold fails"
+    observe: prompts/observe_specs.md
+    orient: prompts/orient_quality.md
+    decide: prompts/decide_refactor_plan.md
+    act: prompts/act_plan.md
+    default_iterations: 1
+
+  draft-plan-impl-refactor:
+    display: "Draft Plan Implementation Refactoring"
+    summary: "Converge plan from quality assessment of code"
+    description: "Applies quality criteria to implementation, writes refactoring tasks to draft plan if threshold fails"
+    observe: prompts/observe_impl.md
+    orient: prompts/orient_quality.md
+    decide: prompts/decide_refactor_plan.md
+    act: prompts/act_plan.md
+    default_iterations: 1
+
+  publish-plan:
+    display: "Publish Plan"
+    summary: "Publish converged draft plan to work tracking system"
+    description: "Reads converged draft plan and creates issues in work tracking system per AGENTS.md"
+    observe: prompts/observe_draft_plan.md
+    orient: prompts/orient_publish.md
+    decide: prompts/decide_publish.md
+    act: prompts/act_publish.md
+    default_iterations: 1

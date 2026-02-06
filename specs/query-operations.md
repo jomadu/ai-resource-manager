@@ -16,7 +16,7 @@ Query installed packages, check for outdated dependencies, view detailed package
 - [x] Check for outdated packages comparing current vs latest versions
 - [x] Display outdated packages in table or JSON format
 - [x] View detailed info for specific package (registry/package format)
-- [ ] List available versions for a package from registry
+- [x] List available versions for a package from registry
 - [x] Handle missing manifest gracefully
 - [x] Handle missing lock file gracefully
 - [x] Sort output alphabetically for deterministic results
