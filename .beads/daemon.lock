@@ -1,7 +1,7 @@
 {
-  "pid": 985,
-  "parent_pid": 976,
+  "pid": 74138,
+  "parent_pid": 74129,
   "database": "/Users/maxdunn/Dev/ai-resource-manager/.beads/beads.db",
   "version": "0.49.2",
-  "started_at": "2026-02-05T17:42:14.495581Z"
+  "started_at": "2026-02-15T14:46:24.974654Z"
 }
